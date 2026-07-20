@@ -1,15 +1,19 @@
 {
   "name": "stitch_coocoo_1.0_renew",
-  "version": "1.0.50",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "bun run --watch src/index.ts"
+    "build": "bun run --cwd apps/web build && bun run --cwd apps/api typecheck",
+    "lint": "bun run --cwd apps/web lint",
+    "test": "bun test packages/core apps/api apps/web",
+    "verify": "bun run lint && bun run test && bun run build"
   },
-  "dependencies": {
-    "elysia": "latest"
-  },
-  "devDependencies": {
-    "bun-types": "latest"
-  },
-  "module": "src/index.js"
+  "msw": {
+    "workerDirectory": [
+      "apps/web/public"
+    ]
+  }
 }
