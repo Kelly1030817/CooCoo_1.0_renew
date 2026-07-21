@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+
+<html lang="zh-Hant"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CooCoo 煮煮 - 週日採買</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .custom-checkbox:checked {
+            background-color: #81B29A;
+            border-color: #81B29A;
+        }
+        .matrix-grid {
+            background-image: radial-gradient(#dbc1ba 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+        .glass-effect {
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed": "#ffdeab",
+                        "on-tertiary": "#ffffff",
+                        "on-tertiary-fixed": "#271900",
+                        "outline": "#88726d",
+                        "primary": "#9a442d",
+                        "error-container": "#ffdad6",
+                        "primary-container": "#e07a5f",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-fixed": "#ffdbd2",
+                        "tertiary": "#765a28",
+                        "surface-bright": "#fdfae7",
+                        "on-error-container": "#93000a",
+                        "primary-fixed-dim": "#ffb4a1",
+                        "error": "#ba1a1a",
+                        "surface": "#fdfae7",
+                        "on-secondary-container": "#3d6c57",
+                        "on-primary": "#ffffff",
+                        "inverse-on-surface": "#f4f1de",
+                        "surface-container-highest": "#e6e3d0",
+                        "on-error": "#ffffff",
+                        "secondary": "#386753",
+                        "on-surface": "#1c1c11",
+                        "on-secondary-fixed-variant": "#1f4f3c",
+                        "surface-container": "#f1eedb",
+                        "tertiary-container": "#b3915a",
+                        "inverse-primary": "#ffb4a1",
+                        "on-primary-fixed-variant": "#7c2e19",
+                        "surface-tint": "#9a442d",
+                        "on-tertiary-container": "#402b00",
+                        "outline-variant": "#dbc1ba",
+                        "on-primary-container": "#5b1604",
+                        "tertiary-fixed-dim": "#e6c185",
+                        "surface-variant": "#e6e3d0",
+                        "on-secondary-fixed": "#002115",
+                        "on-surface-variant": "#55423e",
+                        "secondary-fixed": "#bbeed4",
+                        "surface-dim": "#dddbc8",
+                        "secondary-fixed-dim": "#9fd1b8",
+                        "background": "#fdfae7",
+                        "on-background": "#1c1c11",
+                        "inverse-surface": "#313124",
+                        "secondary-container": "#b8ebd1",
+                        "on-primary-fixed": "#3c0800",
+                        "on-tertiary-fixed-variant": "#5c4212",
+                        "surface-container-high": "#ece9d6",
+                        "on-secondary": "#ffffff",
+                        "surface-container-low": "#f7f4e1"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "16px",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "20px",
+                        "xs": "4px",
+                        "lg": "24px",
+                        "base": "4px",
+                        "xl": "40px",
+                        "sm": "8px",
+                        "md": "16px",
+                        "container-max": "1200px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Plus Jakarta Sans"],
+                        "label-lg": ["Plus Jakarta Sans"],
+                        "body-lg": ["Plus Jakarta Sans"],
+                        "headline-lg-mobile": ["Plus Jakarta Sans"],
+                        "headline-lg": ["Plus Jakarta Sans"],
+                        "label-sm": ["Plus Jakarta Sans"],
+                        "body-md": ["Plus Jakarta Sans"],
+                        "display-lg": ["Plus Jakarta Sans"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                        "label-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "700"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "700"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "700"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "800"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body-md min-h-screen pb-32">
+<!-- TopAppBar -->
+<header class="bg-surface sticky top-0 z-50 flex justify-between items-center px-lg py-sm w-full shadow-sm">
+<div class="flex items-center gap-md">
+<button class="material-symbols-outlined text-primary hover:bg-surface-container-high transition-colors p-2 rounded-full active:scale-95 duration-150" data-icon="menu">menu</button>
+<h1 class="font-headline-md text-headline-md font-bold text-primary">CooCoo 煮煮</h1>
+</div>
+<div class="flex items-center gap-sm">
+<button class="material-symbols-outlined text-primary hover:bg-surface-container-high transition-colors p-2 rounded-full active:scale-95 duration-150" data-icon="account_circle">account_circle</button>
+</div>
+</header>
+<main class="max-w-[1200px] mx-auto px-md mt-lg">
+<!-- Screen Header -->
+<div class="mb-lg">
+<h2 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface mb-xs">週日採買矩陣</h2>
+<p class="text-on-surface-variant font-body-md">根據您的冰箱沙漏預測，本週建議補充以下食材。</p>
+</div>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-lg">
+<!-- Main Matrix Card (Left/Center) -->
+<div class="md:col-span-8 bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/30 overflow-hidden">
+<div class="p-lg border-b border-outline-variant/20 flex justify-between items-center">
+<h3 class="font-headline-md text-headline-md text-[#3D405B]">待採買清單</h3>
+<span class="bg-[#E07A5F] text-white px-md py-xs rounded-full font-label-sm text-label-sm">預計 12 項</span>
+</div>
+<div class="matrix-grid p-lg">
+<!-- Category Section -->
+<div class="space-y-md">
+<div class="flex items-center gap-sm mb-sm">
+<span class="material-symbols-outlined text-secondary" data-icon="eco">eco</span>
+<h4 class="font-label-lg text-label-lg text-secondary uppercase tracking-wider">新鮮蔬果</h4>
+</div>
+<div class="grid grid-cols-1 gap-sm">
+<!-- Checklist Item -->
+<label class="flex items-center justify-between p-md bg-emerald-50/50 rounded-lg hover:bg-emerald-50 transition-colors cursor-pointer border border-transparent hover:border-secondary/20">
+<div class="flex items-center gap-md">
+<input class="custom-checkbox w-6 h-6 rounded border-outline-variant text-secondary focus:ring-secondary" type="checkbox"/>
+<span class="text-[#3D405B] font-body-md">有機小松菜 (2束)</span>
+</div>
+<span class="text-on-surface-variant font-label-sm text-label-sm">剩餘 10%</span>
+</label>
+<label class="flex items-center justify-between p-md bg-emerald-50/50 rounded-lg hover:bg-emerald-50 transition-colors cursor-pointer border border-transparent hover:border-secondary/20">
+<div class="flex items-center gap-md">
+<input class="custom-checkbox w-6 h-6 rounded border-outline-variant text-secondary focus:ring-secondary" type="checkbox"/>
+<span class="text-[#3D405B] font-body-md">牛番茄 (4顆)</span>
+</div>
+<span class="text-on-surface-variant font-label-sm text-label-sm">已耗盡</span>
+</label>
+<label class="flex items-center justify-between p-md bg-emerald-50/50 rounded-lg hover:bg-emerald-50 transition-colors cursor-pointer border border-transparent hover:border-secondary/20">
+<div class="flex items-center gap-md">
+<input checked="" class="custom-checkbox w-6 h-6 rounded border-outline-variant text-secondary focus:ring-secondary" type="checkbox"/>
+<span class="text-[#3D405B] font-body-md line-through opacity-50">富士蘋果 (3顆)</span>
+</div>
+<span class="text-on-surface-variant font-label-sm text-label-sm">已選取</span>
+</label>
+</div>
+<div class="flex items-center gap-sm mt-lg mb-sm">
+<span class="material-symbols-outlined text-primary" data-icon="egg">egg</span>
+<h4 class="font-label-lg text-label-lg text-primary uppercase tracking-wider">蛋白質與乳製品</h4>
+</div>
+<div class="grid grid-cols-1 gap-sm">
+<label class="flex items-center justify-between p-md bg-emerald-50/50 rounded-lg hover:bg-emerald-50 transition-colors cursor-pointer border border-transparent hover:border-secondary/20">
+<div class="flex items-center gap-md">
+<input class="custom-checkbox w-6 h-6 rounded border-outline-variant text-secondary focus:ring-secondary" type="checkbox"/>
+<span class="text-[#3D405B] font-body-md">放牧土雞蛋 (10入)</span>
+</div>
+<span class="text-[#E07A5F] font-label-sm text-label-sm">急需補貨</span>
+</label>
+<label class="flex items-center justify-between p-md bg-emerald-50/50 rounded-lg hover:bg-emerald-50 transition-colors cursor-pointer border border-transparent hover:border-secondary/20">
+<div class="flex items-center gap-md">
+<input class="custom-checkbox w-6 h-6 rounded border-outline-variant text-secondary focus:ring-secondary" type="checkbox"/>
+<span class="text-[#3D405B] font-body-md">全脂鮮乳 (936ml)</span>
+</div>
+<span class="text-on-surface-variant font-label-sm text-label-sm">剩餘 20%</span>
+</label>
+</div>
+</div>
+</div>
+</div>
+<!-- Side Cards (Right) -->
+<div class="md:col-span-4 space-y-lg">
+<!-- Benefit Card -->
+<div class="bg-[#F2CC8F]/20 border-2 border-[#F2CC8F] rounded-xl p-lg">
+<div class="flex items-center gap-sm mb-md">
+<span class="material-symbols-outlined text-tertiary" data-icon="lightbulb">lightbulb</span>
+<h4 class="font-headline-md text-headline-md text-on-tertiary-container">採買小撇步</h4>
+</div>
+<p class="text-on-tertiary-fixed-variant font-body-md mb-md">
+                        本週由於天氣變冷，建議多備一些根莖類蔬菜，這類食材在冰箱的保存期限較長。
+                    </p>
+<div class="bg-white/50 rounded-lg p-md">
+<div class="flex justify-between items-center mb-xs">
+<span class="font-label-sm text-label-sm">預計節省金額</span>
+<span class="text-primary font-bold">NT$ 120</span>
+</div>
+<div class="w-full bg-outline-variant/30 h-2 rounded-full overflow-hidden">
+<div class="bg-tertiary h-full w-2/3"></div>
+</div>
+</div>
+</div>
+<!-- Shopping Image Card -->
+<div class="relative rounded-xl overflow-hidden shadow-lg h-64 group cursor-pointer">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="A warm, atmospheric photo of a sun-drenched wooden kitchen counter with a wicker basket filled with fresh, vibrant organic vegetables like tomatoes, kale, and carrots. The lighting is soft morning sun, creating a cozy and inviting saffron and cream toned scene. The style is boutique cookbook photography with shallow depth of field, focusing on the textures of the natural produce." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDFdT7khBw1YySuMG6E-BiRBWW4kKbq9Gz-QBazxn2Ilby4IN-LKEP6eiWDx4QWzxlh2FDFLaCM-PFOQF6Wh1ydvyc9bbtj1t83cay8giDmykEUvU6mADMS-5x99ZcX2J_2KYepRHQ0ZtMqISHMZTV-T2Kliao_hhgLCVkbiMugMzuVGdwVnKONXnPWeez1drVdxZlBCF_kF21lVR0C9MG1Fh3eGV49AyZu9MW43pjYm_KG8ijgyxr5A8Unnq6DpcqbxHbAwxNdnaw"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex flex-col justify-end p-lg">
+<span class="text-white font-headline-md text-headline-md">鄰近有機市集</span>
+<p class="text-white/80 font-label-sm text-label-sm">今日 17:00 結束營業</p>
+</div>
+</div>
+<!-- Action Section -->
+<div class="bg-surface-container rounded-xl p-lg border border-outline-variant/30">
+<div class="flex justify-between items-end mb-lg">
+<div>
+<p class="text-on-surface-variant font-label-sm text-label-sm">預估總額</p>
+<p class="text-[#3D405B] font-display-lg text-display-lg">~850</p>
+</div>
+<span class="text-on-surface-variant font-body-md mb-sm">TWD</span>
+</div>
+<button class="w-full bg-[#E07A5F] hover:bg-primary text-white font-headline-md text-headline-md py-md rounded-xl transition-all shadow-md hover:shadow-lg active:scale-[0.98]">
+                        確認補貨
+                    </button>
+<p class="text-center text-on-surface-variant font-label-sm text-label-sm mt-md">點擊後將自動更新冰箱庫存</p>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-safe h-16 bg-surface-container-lowest shadow-[0_-4px_12px_rgba(154,68,45,0.05)] rounded-t-xl">
+<button class="flex flex-col items-center justify-center text-outline px-4 py-1 hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined" data-icon="kitchen">kitchen</span>
+<span class="font-label-sm text-label-sm">冰箱沙漏</span>
+</button>
+<button class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1">
+<span class="material-symbols-outlined" data-icon="shopping_cart">shopping_cart</span>
+<span class="font-label-sm text-label-sm">週日採買</span>
+</button>
+<button class="flex flex-col items-center justify-center text-outline px-4 py-1 hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined" data-icon="insights">insights</span>
+<span class="font-label-sm text-label-sm">圓夢看板</span>
+</button>
+</nav>
+<script>
+        // Micro-interaction for checkboxes
+        document.querySelectorAll('.custom-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const label = this.closest('label');
+                const text = label.querySelector('span:first-of-type');
+                const status = label.querySelector('span:last-of-type');
+                
+                if (this.checked) {
+                    text.classList.add('line-through', 'opacity-50');
+                    status.textContent = '已選取';
+                    label.classList.add('bg-surface-container-highest');
+                } else {
+                    text.classList.remove('line-through', 'opacity-50');
+                    status.textContent = '剩餘 ' + (Math.floor(Math.random() * 20) + 10) + '%';
+                    label.classList.remove('bg-surface-container-highest');
+                }
+            });
+        });
+    </script>
+</body></html>

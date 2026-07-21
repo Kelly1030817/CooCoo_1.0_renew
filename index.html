@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>CooCoo 煮煮 - 自煮生活系統化管家</title>
+    <script>
+        window.onerror = function(message, source, lineno, colno, error) {
+            alert("網頁偵測到 JS 錯誤！\n\n訊息: " + message + "\n檔案: " + source + "\n行號: " + lineno + "\n堆疊:\n" + (error && error.stack ? error.stack : "無"));
+            return false;
+        };
+    </script>
+    <!-- Precompiled Tailwind CSS -->
+    <link href="./assets/tailwind.css" rel="stylesheet"/>
+    
+    <!-- Google Fonts & Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+    
+    <!-- Custom Style Sheet -->
+    <link href="./style.css" rel="stylesheet"/>
+    
+</head>
+<body class="bg-background text-on-surface min-h-screen flex flex-col pb-20 select-none">
+    <!-- TopAppBar -->
+    <header class="bg-surface border-b border-surface-container-high sticky top-0 z-50 shadow-sm">
+        <div class="max-w-[1200px] mx-auto flex justify-between items-center px-md sm:px-lg py-sm w-full">
+            <div class="flex items-center gap-sm sm:gap-md min-w-0">
+                <span class="material-symbols-outlined text-primary text-3xl">kitchen</span>
+                <h1 class="text-base sm:text-xl font-extrabold text-primary tracking-wide whitespace-nowrap">CooCoo 煮煮</h1>
+            </div>
+            <div class="flex items-center gap-xs sm:gap-sm shrink-0">
+                <button onclick="renderCookwareSetup()" title="廚房裝備設定" aria-label="廚房裝備設定" class="text-on-surface-variant hover:bg-surface-container-high/40 p-2 rounded-full transition-colors active:scale-95 duration-150 flex items-center justify-center focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20">
+                    <span class="material-symbols-outlined text-xl">skillet</span>
+                </button>
+                <button id="reset-data-btn" title="重設範例資料" aria-label="重設範例資料" class="text-on-surface-variant hover:bg-surface-container-high/40 p-2 rounded-full transition-colors active:scale-95 duration-150 flex items-center justify-center focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20">
+                    <span class="material-symbols-outlined text-xl">restart_alt</span>
+                </button>
+                <div class="h-8 w-[1px] bg-outline-variant/40"></div>
+                <div id="user-auth-badge" class="flex items-center gap-2">
+                    <!-- Dynamic Auth Badge from app.js -->
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main id="app-view" class="flex-1 min-w-0 w-full max-w-[1200px] mx-auto px-md md:px-lg py-md md:py-lg transition-all duration-300">
+        <!-- Views will be dynamically injected here by app.js -->
+    </main>
+
+    <!-- Bottom Navigation Bar -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-outline-variant/30 shadow-lg z-50">
+        <div class="max-w-[600px] mx-auto flex justify-around items-center h-16 px-md">
+            <!-- Tab: ROI Board -->
+            <button id="nav-roi" onclick="switchTab('roi')" class="flex flex-col items-center justify-center w-20 h-full text-on-surface-variant hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20">
+                <span class="material-symbols-outlined text-2xl transition-transform duration-200">savings</span>
+                <span class="text-[11px] font-bold mt-1">圓夢看板</span>
+            </button>
+
+            <!-- Tab: Fridge Hourglass -->
+            <button id="nav-fridge" onclick="switchTab('fridge')" class="flex flex-col items-center justify-center w-20 h-full text-on-surface-variant hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 relative">
+                <span class="material-symbols-outlined text-2xl transition-transform duration-200">hourglass_empty</span>
+                <span class="text-[11px] font-bold mt-1">冰箱沙漏</span>
+                <!-- Badge for urgent items count -->
+                <span id="fridge-badge" class="absolute top-1 right-4 bg-rust-orange text-white text-[9px] font-extrabold w-4.5 h-4.5 flex items-center justify-center rounded-full border border-white hidden">0</span>
+            </button>
+            
+            <!-- Tab: Kitchen -->
+            <button id="nav-kitchen" onclick="switchTab('kitchen')" class="flex flex-col items-center justify-center w-20 h-full text-on-surface-variant hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20">
+                <span class="material-symbols-outlined text-2xl transition-transform duration-200">blender</span>
+                <span class="text-[11px] font-bold mt-1">小廚房</span>
+            </button>
+
+            <!-- Tab: Sunday Shopping Matrix -->
+            <button id="nav-shopping" onclick="switchTab('shopping')" class="flex flex-col items-center justify-center w-20 h-full text-on-surface-variant hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 relative">
+                <span class="material-symbols-outlined text-2xl transition-transform duration-200">shopping_cart</span>
+                <span class="text-[11px] font-bold mt-1">補貨區</span>
+                <!-- Badge for shopping items count -->
+                <span id="shopping-badge" class="absolute top-1 right-4 bg-terracotta text-white text-[9px] font-extrabold w-4.5 h-4.5 flex items-center justify-center rounded-full border border-white hidden">0</span>
+            </button>
+
+        </div>
+    </nav>
+
+    <!-- Supabase JS Client SDK -->
+    <script src="./libs/supabase.js?v=2"></script>
+    <!-- Core App Scripts -->
+    <script src="./src/dream-space/single-goal.js?v=1"></script>
+    <script src="./src/dream-space/single-goal-app.js?v=1"></script>
+    <script src="./app.js?v=42"></script>
+</body>
+</html>

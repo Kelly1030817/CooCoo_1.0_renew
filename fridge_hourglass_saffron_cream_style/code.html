@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+
+<html lang="zh-Hant"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CooCoo 煮煮 - 冰箱沙漏</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary-fixed": "#ffdeab",
+                    "on-tertiary": "#ffffff",
+                    "on-tertiary-fixed": "#271900",
+                    "outline": "#88726d",
+                    "primary": "#9a442d",
+                    "error-container": "#ffdad6",
+                    "primary-container": "#e07a5f",
+                    "surface-container-lowest": "#ffffff",
+                    "primary-fixed": "#ffdbd2",
+                    "tertiary": "#765a28",
+                    "surface-bright": "#fdfae7",
+                    "on-error-container": "#93000a",
+                    "primary-fixed-dim": "#ffb4a1",
+                    "error": "#ba1a1a",
+                    "surface": "#fdfae7",
+                    "on-secondary-container": "#3d6c57",
+                    "on-primary": "#ffffff",
+                    "inverse-on-surface": "#f4f1de",
+                    "surface-container-highest": "#e6e3d0",
+                    "on-error": "#ffffff",
+                    "secondary": "#386753",
+                    "on-surface": "#1c1c11",
+                    "on-secondary-fixed-variant": "#1f4f3c",
+                    "surface-container": "#f1eedb",
+                    "tertiary-container": "#b3915a",
+                    "inverse-primary": "#ffb4a1",
+                    "on-primary-fixed-variant": "#7c2e19",
+                    "surface-tint": "#9a442d",
+                    "on-tertiary-container": "#402b00",
+                    "outline-variant": "#dbc1ba",
+                    "on-primary-container": "#5b1604",
+                    "tertiary-fixed-dim": "#e6c185",
+                    "surface-variant": "#e6e3d0",
+                    "on-secondary-fixed": "#002115",
+                    "on-surface-variant": "#55423e",
+                    "secondary-fixed": "#bbeed4",
+                    "surface-dim": "#dddbc8",
+                    "secondary-fixed-dim": "#9fd1b8",
+                    "background": "#fdfae7",
+                    "on-background": "#1c1c11",
+                    "inverse-surface": "#313124",
+                    "secondary-container": "#b8ebd1",
+                    "on-primary-fixed": "#3c0800",
+                    "on-tertiary-fixed-variant": "#5c4212",
+                    "surface-container-high": "#ece9d6",
+                    "on-secondary": "#ffffff",
+                    "surface-container-low": "#f7f4e1",
+                    "rust-orange": "#D95D39",
+                    "slate-blue": "#3D405B",
+                    "sage-green": "#81B29A",
+                    "ochre-gold": "#F2CC8F"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "gutter": "20px",
+                    "xs": "4px",
+                    "lg": "24px",
+                    "base": "4px",
+                    "xl": "40px",
+                    "sm": "8px",
+                    "md": "16px",
+                    "container-max": "1200px"
+            },
+            "fontFamily": {
+                    "headline-md": ["Plus Jakarta Sans"],
+                    "label-lg": ["Plus Jakarta Sans"],
+                    "body-lg": ["Plus Jakarta Sans"],
+                    "headline-lg-mobile": ["Plus Jakarta Sans"],
+                    "headline-lg": ["Plus Jakarta Sans"],
+                    "label-sm": ["Plus Jakarta Sans"],
+                    "body-md": ["Plus Jakarta Sans"],
+                    "display-lg": ["Plus Jakarta Sans"]
+            },
+            "fontSize": {
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                    "label-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "700"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "700"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "700"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "800"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        @keyframes pulse-urgent {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.85; transform: scale(1.02); }
+        }
+        .animate-pulse-urgent {
+            animation: pulse-urgent 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            height: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1eedb;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #e07a5f;
+            border-radius: 10px;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-[#F4F1DE] text-on-surface min-h-screen font-body-md">
+<!-- TopAppBar -->
+<header class="bg-slate-blue sticky top-0 z-50 shadow-sm flex justify-between items-center px-lg py-sm w-full">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-[#E07A5F] text-3xl" data-icon="kitchen">kitchen</span>
+<h1 class="font-headline-md text-headline-md text-white">CooCoo 煮煮</h1>
+</div>
+<div class="flex items-center gap-md">
+<button class="text-white hover:bg-surface-container-high/20 p-2 rounded-full transition-colors active:scale-95 duration-150">
+<span class="material-symbols-outlined" data-icon="search">search</span>
+</button>
+<button class="text-white hover:bg-surface-container-high/20 p-2 rounded-full transition-colors active:scale-95 duration-150">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+</button>
+</div>
+</header>
+<main class="max-w-container-max mx-auto pb-32">
+<!-- Urgent Banner -->
+<section class="mx-md mt-md">
+<div class="bg-rust-orange rounded-xl p-md flex items-center justify-between shadow-lg text-white">
+<div class="flex items-center gap-md">
+<div class="bg-white/20 p-2 rounded-full">
+<span class="material-symbols-outlined animate-bounce" data-icon="hourglass_empty">hourglass_empty</span>
+</div>
+<div>
+<h2 class="font-headline-md text-lg leading-tight">食材警報：3件即將到期</h2>
+<p class="font-label-sm opacity-90">這些食材若不處理，預計將在 24 小時內浪費。</p>
+</div>
+</div>
+<button class="bg-white text-rust-orange px-md py-sm rounded-xl font-label-lg shadow-sm hover:bg-surface-bright transition-all active:scale-95">
+                    立即清理
+                </button>
+</div>
+</section>
+<!-- Refrigerator Grid: Dual Chamber Layout -->
+<section class="px-md mt-lg">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-lg">
+<!-- Cold Chamber (Chilled) -->
+<div class="border-4 border-slate-blue rounded-3xl p-md bg-white shadow-xl relative overflow-hidden">
+<div class="flex items-center justify-between mb-md">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-slate-blue" data-icon="ac_unit">ac_unit</span>
+<h3 class="font-headline-md text-slate-blue">冷藏室</h3>
+</div>
+<span class="text-slate-blue font-label-sm bg-slate-blue/10 px-3 py-1 rounded-full">4°C 穩定</span>
+</div>
+<div class="grid grid-cols-2 sm:grid-cols-3 gap-md">
+<!-- Urgent Item -->
+<div class="bg-rust-orange/10 border-2 border-rust-orange rounded-xl p-3 animate-pulse-urgent relative flex flex-col items-center text-center">
+<div class="absolute top-2 right-2 flex gap-1">
+<span class="bg-sage-green text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">保鮮中</span>
+</div>
+<div class="w-16 h-16 rounded-full bg-white mb-2 shadow-inner overflow-hidden border-2 border-rust-orange/20">
+<img class="w-full h-full object-cover" data-alt="A macro high-resolution close-up of a perfectly ripe, halved avocado with a rich green creamy texture and a dark brown pit, set against a warm, soft minimalist kitchen background with organic tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDdDfNSxxGjlHNotFR11Hpy8v0T59noNyOTeU1h1IVOWbvlNmeTxfenbqWlC9JlJd2C1uWaeGZG5NUNKAFPYf5DBYM0bqUZOJWTlGNP1mUVsE6KZuaqJaz4zegaSUCfDR9UIpbsS9babhgQP6pMXTPYuOXIC9YJTOBEonszTcpAxPE6ez7AWXLSJhAMj_VTRmcmzJKUxlOd4TjUmLfHCNZz6Txsts4f__iskIIzk63tGPapSOtIPGucoJDUZxE8L4U9g-NqDIYHwgw"/>
+</div>
+<p class="font-label-lg text-rust-orange">酪梨 (1顆)</p>
+<p class="text-[10px] text-rust-orange/80 font-bold">今天到期</p>
+</div>
+<!-- Mid-life Item -->
+<div class="bg-ochre-gold/10 border-2 border-ochre-gold rounded-xl p-3 flex flex-col items-center text-center">
+<div class="w-16 h-16 rounded-full bg-white mb-2 shadow-inner overflow-hidden border-2 border-ochre-gold/20">
+<img class="w-full h-full object-cover" data-alt="A professional studio shot of fresh, crisp organic carrots with vibrant green tops, arranged neatly on a light wood surface, emphasizing a healthy and fresh culinary aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCB6T3B4nig1ziAwIm1wSVgPv1ecoPiWrdICCeoGct9PZinlrXcpUQLkGSEkHJRIslOBINUxs6ZNwMBLnl1vyhYVduguWMa7x2HkBsxzHDaEOmF0agjsTINBgjsqQ7chfP3fC_mI20majBIld1HnR5Y8PNI7IT3u5wuu-5PNjoRFOkG_jreA3ffAQg0QVtjW-dvNnx_0Qj_eTq5Gessw8I9whoGXuCch4ME-JSUEsoNEJVFPUQcZhXzDIdVtyiXojBxpudh8aWhmeo"/>
+</div>
+<p class="font-label-lg text-on-surface">胡蘿蔔 (3條)</p>
+<p class="text-[10px] text-tertiary font-bold">剩餘 3 天</p>
+</div>
+<!-- Fresh Item -->
+<div class="bg-sage-green/10 border-2 border-sage-green rounded-xl p-3 flex flex-col items-center text-center">
+<div class="absolute top-2 right-2">
+<span class="bg-sage-green text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">NEW</span>
+</div>
+<div class="w-16 h-16 rounded-full bg-white mb-2 shadow-inner overflow-hidden border-2 border-sage-green/20">
+<img class="w-full h-full object-cover" data-alt="A top-down view of a carton of fresh organic eggs in a warm ceramic bowl, lit by soft morning sunlight, creating a cozy and inviting home kitchen atmosphere." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBIkd8DDrNZLiSgFOwLZMm56-FPFbbYvtbQKQotyuuCix-LU3AO5mFP6Trce_mer2gBPcrHDQY7QVdQ7aQRLqlcY-9A1Y5ZqnJD9Kf2g9Tb02-8EXNcAlMrz-U8bpU3MBfkIAEUAHs1uUwiZLwkqMBSJMDYzWutfYrFdxdnB4l0q651uhvzxy6gpkSnklZVHRKCTUWsdvOQFBhSGwL-Re8FQbx7AoMP3dKUkKSDX3NULYorgFhGUSAT0bDxJPnDjyGEsoQgSp3LV-k"/>
+</div>
+<p class="font-label-lg text-on-surface">雞蛋 (6顆)</p>
+<p class="text-[10px] text-secondary font-bold">剩餘 10 天</p>
+</div>
+<!-- Mid-life Item -->
+<div class="bg-ochre-gold/10 border-2 border-ochre-gold rounded-xl p-3 flex flex-col items-center text-center">
+<div class="w-16 h-16 rounded-full bg-white mb-2 shadow-inner overflow-hidden border-2 border-ochre-gold/20">
+<img class="w-full h-full object-cover" data-alt="A stack of premium cheddar cheese blocks on a marble board, with a soft blur in the background, showcasing the textures of high-quality dairy products in a modern kitchen." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAsdLsTuOlvKjmOqP6m-wWjblzWJfC1TpbjHQz_O1cotBDXmXcvDKp4AmutQnCyC7653riqE4Y_wql5V06eWELmkrTAHUsg7sY4zSjaOSbQoJXlCvSo_R0dnrhxzpWykh2Neq8HMgzYM4PJeuZgXRTpV5cm_mRM6rpgjDylz4nmDz-wTWCxxHew-EKajA7Q8ZioqSXNlLrSKGEtE_dCRd57jjDzt1XXSyWrOGV4Skw1latyJ1fBrAHdLaU2MC25rMNDxHP0PYNaDxQ"/>
+</div>
+<p class="font-label-lg text-on-surface">起司 (150g)</p>
+<p class="text-[10px] text-tertiary font-bold">剩餘 4 天</p>
+</div>
+</div>
+</div>
+<!-- Freezer Chamber (Frozen) -->
+<div class="border-4 border-slate-blue rounded-3xl p-md bg-white shadow-xl relative overflow-hidden">
+<div class="flex items-center justify-between mb-md">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-slate-blue" data-icon="severe_cold">severe_cold</span>
+<h3 class="font-headline-md text-slate-blue">冷凍庫</h3>
+</div>
+<span class="text-slate-blue font-label-sm bg-slate-blue/10 px-3 py-1 rounded-full">-18°C 穩定</span>
+</div>
+<div class="grid grid-cols-2 sm:grid-cols-3 gap-md">
+<!-- Fresh Item -->
+<div class="bg-sage-green/10 border-2 border-sage-green rounded-xl p-3 flex flex-col items-center text-center">
+<div class="w-16 h-16 rounded-full bg-white mb-2 shadow-inner overflow-hidden border-2 border-sage-green/20">
+<img class="w-full h-full object-cover" data-alt="High-quality raw salmon fillets with deep pink color and white marbling, placed on a slate surface with subtle ice crystals, conveying a sense of premium frozen freshness." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA6dY5HW5Sfpo5lwYOKgdf3wK0YGceYHNJkVEq9Lo2ssC96bZfivNbkOQJQHNAzQQQCCorFOLtWyoWq36O-TP8ayemePMJz_jPYafduq4jQAU99E0c05W7xavkGx2fsOtT42YY4az5VAqHka2eTqUe7qoiqDJaQLwtHfoOTmaxshZKaqXlp-_z3CAbyiIxBOwcjeq9me-EDV8Jg0PnmI5OWyQJLbqy68bVt0QO4xnqmuScAzxT5oMSZ6cSrn41c0IfX26JvVVMXgKo"/>
+</div>
+<p class="font-label-lg text-on-surface">鮭魚 (2片)</p>
+<p class="text-[10px] text-secondary font-bold">剩餘 3 個月</p>
+</div>
+<!-- Fresh Item -->
+<div class="bg-sage-green/10 border-2 border-sage-green rounded-xl p-3 flex flex-col items-center text-center">
+<div class="w-16 h-16 rounded-full bg-white mb-2 shadow-inner overflow-hidden border-2 border-sage-green/20">
+<img class="w-full h-full object-cover" data-alt="A bowl of assorted frozen berries including blueberries, raspberries, and blackberries, covered in a light frost, creating a cool and appetizing visual for healthy ingredients." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCa5gj9PLU1Q9NoxiorfXJ2_JF82pUL6fyDNYaq9Y3iErHzgDV6iJYyq8FV3-iViBFhk_uD9n3H0Bq25QSyKXHS-Rv_pIoXvdV8PFrG64pD7rCxiIQ2xx8NNZZxthiFXayKdMdclHLi35UlxRamo6_qoQw0Y69WTRMhi2QKtPTHHtv1WS_jEqp9WSDCyULNpux8VM8FvPMZSalBZlMJsbMwayi9XI_F4QUVLpIdJoBkShTJHRdAKGnOeZGF1Y4QETY-MmXuvx2zpe0"/>
+</div>
+<p class="font-label-lg text-on-surface">綜合莓果</p>
+<p class="text-[10px] text-secondary font-bold">剩餘 5 個月</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Recipe Deck (Horizontal Scroll) -->
+<section class="mt-xl">
+<div class="px-md flex items-center justify-between mb-md">
+<h3 class="font-headline-md text-slate-blue">「即刻救援」食譜推薦</h3>
+<a class="text-primary font-label-lg flex items-center gap-1 hover:underline" href="#">
+                    查看全部 <span class="material-symbols-outlined text-sm" data-icon="arrow_forward">arrow_forward</span>
+</a>
+</div>
+<div class="flex overflow-x-auto gap-md px-md pb-md custom-scrollbar">
+<!-- Recipe Card 1 -->
+<div class="min-w-[280px] bg-white rounded-2xl shadow-sm border border-outline-variant overflow-hidden hover:shadow-md transition-shadow group cursor-pointer">
+<div class="h-40 overflow-hidden relative">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="A beautifully plated creamy avocado toast with a perfectly poached egg on top, garnished with chili flakes and microgreens, served on a rustic ceramic plate in a bright kitchen." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDpweVaOcGxcFJRMC0G08ar7UaJawYRLZqZBqVSuU52i5Ofi9HjScAh-yPhXuUe64m3YmCwYEfVO1IO-I1e4B3VWh3ufOjCcsAfoFH1ScdPnSSkRRH8B2WP6O2JLZ2SueNY37G7VD-zttx9NbM1dYigz56r3NSSkcy3MetLtF4xYK6xgAxTuEsEMwebDqD_vPaOnxG8Q_WLeHy7ZdB5uYMHekGor2tEzqYCVavQGU7pwzjLGC3PA27B64RVuH5ekbD0042x-KwoA3k"/>
+<div class="absolute top-3 left-3 bg-rust-orange text-white px-2 py-1 rounded-lg text-[10px] font-bold">包含即期食材</div>
+</div>
+<div class="p-md">
+<h4 class="font-headline-md text-md text-on-surface mb-2">暖心酪梨水波蛋吐司</h4>
+<div class="flex items-center gap-lg">
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-sm" data-icon="timer">timer</span>
+<span class="text-[12px]">15 分鐘</span>
+</div>
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-sm" data-icon="payments">payments</span>
+<span class="text-[12px]">低成本 ($45)</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Recipe Card 2 -->
+<div class="min-w-[280px] bg-white rounded-2xl shadow-sm border border-outline-variant overflow-hidden hover:shadow-md transition-shadow group cursor-pointer">
+<div class="h-40 overflow-hidden relative">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="A vibrant honey-glazed carrot salad with toasted walnuts and feta cheese, captured in a professional culinary style with warm lighting and appetizing textures." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDBDBp8DF3sWjgBtbbItq_OPpHQNTELYrxvXlAC70aipwbQWxcA0zjN8y23tXTQwn_JCGHHPT8ViT9sHIUuzjWUSBunrhWRInC3c1crwLdE8GgJ-3E4c51Gyzr-OzL23-3bHRaLGA_osZjKz-rfzAAR3PNHYU0GzOvVwVJDshfZplt1xYtXRSGMnnv_jrbX9mpUDcockY2GJIkG7GvbUjeCLGcyH2vihxjyeFzxXfpUqymYo8-cSfGT8XLRquVaoe8YGDUej__gWrY"/>
+<div class="absolute top-3 left-3 bg-ochre-gold text-tertiary-container text-white px-2 py-1 rounded-lg text-[10px] font-bold">清空冷藏庫</div>
+</div>
+<div class="p-md">
+<h4 class="font-headline-md text-md text-on-surface mb-2">蜂蜜烤胡蘿蔔溫沙拉</h4>
+<div class="flex items-center gap-lg">
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-sm" data-icon="timer">timer</span>
+<span class="text-[12px]">25 分鐘</span>
+</div>
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-sm" data-icon="payments">payments</span>
+<span class="text-[12px]">超值 ($30)</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Recipe Card 3 -->
+<div class="min-w-[280px] bg-white rounded-2xl shadow-sm border border-outline-variant overflow-hidden hover:shadow-md transition-shadow group cursor-pointer">
+<div class="h-40 overflow-hidden relative">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="Pan-seared salmon with a golden crust, served with a side of steamed berries and greens, emphasizing a healthy, sophisticated, and vibrant dinner option." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAnX88saF5eVOfepTt2WA0hE0WMB94tYtdPni3E9J7x5t5YCLppLnivM0ajeZ90VprL16kcUkAiavbpn2dMVDqnmhXVc7a3DZ_euUSKhxk94fDzIpuSOCEWdt6FrsFpkhLFO_viA1eylQtibfA_B0ti22j4SgJ-DLlPgFzXvPLnZT2wQRZ8guevrOh4Kuq-VWAEtzCNQvE-O3j9FH8Q1kd-U8oMdTM4UDPkmyPE2aeeGdXV2dxmYpFDTwLJF9bFwqQB9yqpkhW4uE4"/>
+</div>
+<div class="p-md">
+<h4 class="font-headline-md text-md text-on-surface mb-2">香煎鮭魚佐莓果醬</h4>
+<div class="flex items-center gap-lg">
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-sm" data-icon="timer">timer</span>
+<span class="text-[12px]">20 分鐘</span>
+</div>
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-sm" data-icon="payments">payments</span>
+<span class="text-[12px]">中高成本 ($120)</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-safe h-16 bg-surface-container-lowest shadow-[0_-4px_12px_rgba(154,68,45,0.05)] rounded-t-xl">
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1 active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="kitchen" style="font-variation-settings: 'FILL' 1;">kitchen</span>
+<span class="font-label-sm text-label-sm">冰箱沙漏</span>
+</a>
+<a class="flex flex-col items-center justify-center text-outline px-4 py-1 hover:bg-surface-container-high transition-colors active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="shopping_cart">shopping_cart</span>
+<span class="font-label-sm text-label-sm">週日採買</span>
+</a>
+<a class="flex flex-col items-center justify-center text-outline px-4 py-1 hover:bg-surface-container-high transition-colors active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="insights">insights</span>
+<span class="font-label-sm text-label-sm">圓夢看板</span>
+</a>
+</nav>
+<script>
+        // Simple micro-interaction for cards
+        document.querySelectorAll('.cursor-pointer').forEach(card => {
+            card.addEventListener('click', () => {
+                card.style.transform = 'scale(0.98)';
+                setTimeout(() => {
+                    card.style.transform = 'scale(1)';
+                }, 100);
+            });
+        });
+    </script>
+</body></html>
