@@ -1,6 +1,8 @@
 import React from 'react';
 
-const RecipeModal = ({ isLoading, recipe, onClose, currentStyle }) => {
+const RecipeModal = ({ isLoading, recipe, onClose, currentStyle, selectedItemIds = [], onFinishCooking }) => {
+  const [completedSteps, setCompletedSteps] = React.useState({});
+
   if (isLoading) {
     return (
       <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center backdrop-blur-sm">
@@ -17,14 +19,28 @@ const RecipeModal = ({ isLoading, recipe, onClose, currentStyle }) => {
 
   if (!recipe) return null;
 
+  const toggleStep = (index) => {
+    setCompletedSteps(prev => ({ ...prev, [index]: !prev[index] }));
+  };
+
+  const totalSteps = recipe.steps ? recipe.steps.length : 0;
+  const doneCount = Object.values(completedSteps).filter(Boolean).length;
+
+  const handleFinish = () => {
+    if (onFinishCooking) {
+      onFinishCooking({ recipe, selectedItemIds });
+    }
+    onClose();
+  };
+
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center backdrop-blur-sm">
-      <div className="bg-white rounded-3xl p-lg shadow-2xl max-w-[500px] w-full mx-gutter border border-primary/5 flex flex-col max-h-[85vh]">
+      <div className="bg-white rounded-3xl p-lg shadow-2xl max-w-[500px] w-full mx-gutter border border-primary/5 flex flex-col max-h-[85vh] animate-fade-in">
         {/* Header */}
         <div className="flex justify-between items-center pb-md border-b border-outline-variant/30 flex-shrink-0">
           <div className="flex items-center gap-xs text-ochre-gold">
             <span className="material-symbols-outlined text-2xl">auto_awesome</span>
-            <h3 className="text-lg font-extrabold text-slate-blue">AI 專屬食譜</h3>
+            <h3 className="text-lg font-extrabold text-slate-blue">AI 任務專屬食譜</h3>
           </div>
           <button onClick={onClose} className="text-on-surface-variant hover:text-error hover:bg-surface-container p-1 rounded-full transition-colors flex items-center justify-center">
             <span className="material-symbols-outlined text-xl">close</span>
@@ -61,32 +77,75 @@ const RecipeModal = ({ isLoading, recipe, onClose, currentStyle }) => {
             </p>
           </div>
 
-          {/* Steps */}
+          {/* Steps with Checkbox */}
           <div>
-            <h5 className="text-sm font-extrabold text-slate-blue mb-sm flex items-center gap-1">
-              <span className="material-symbols-outlined text-base">format_list_numbered</span> 料理步驟
-            </h5>
+            <div className="flex justify-between items-center mb-sm">
+              <h5 className="text-sm font-extrabold text-slate-blue flex items-center gap-1">
+                <span className="material-symbols-outlined text-base">format_list_numbered</span> 料理步驟清單
+              </h5>
+              <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                doneCount === totalSteps ? 'text-emerald-700 bg-emerald-100 font-black' : 'text-emerald-600 bg-emerald-50'
+              }`}>
+                完成度 {doneCount}/{totalSteps}
+              </span>
+            </div>
             <div className="space-y-sm">
-              {recipe.steps.map((step, index) => (
-                <div key={index} className="flex gap-3 bg-surface-container-low p-3 rounded-xl border border-outline-variant/20 hover:border-secondary/30 transition-colors">
-                  <span className="w-6 h-6 rounded-full bg-slate-blue text-white text-[10px] font-extrabold flex items-center justify-center shrink-0 shadow-sm mt-0.5">
-                    {index + 1}
-                  </span>
-                  <p className="text-sm text-on-surface-variant leading-relaxed">{step}</p>
-                </div>
-              ))}
+              {recipe.steps.map((step, index) => {
+                const isChecked = !!completedSteps[index];
+                return (
+                  <div
+                    key={index}
+                    onClick={() => toggleStep(index)}
+                    className={`flex gap-3 p-3 rounded-xl border transition-all cursor-pointer select-none ${
+                      isChecked
+                        ? 'bg-emerald-50 border-emerald-300 shadow-xs'
+                        : 'bg-surface-container-low border-outline-variant/20 hover:border-secondary/30'
+                    }`}
+                  >
+                    <div className={`w-6 h-6 rounded-full text-xs font-black flex items-center justify-center shrink-0 shadow-sm mt-0.5 transition-all ${
+                      isChecked ? 'bg-emerald-500 text-white scale-110' : 'bg-slate-blue text-white'
+                    }`}>
+                      {isChecked ? '✓' : index + 1}
+                    </div>
+                    <p className={`text-sm leading-relaxed font-bold ${isChecked ? 'text-emerald-900 font-extrabold' : 'text-on-surface-variant'}`}>
+                      {step}
+                    </p>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
 
         {/* Footer Actions */}
         <div className="pt-md border-t border-outline-variant/30 flex gap-sm flex-shrink-0">
-          <button onClick={() => alert('【換一道】\n將重新向 AI 請求新的食譜組合！')} className="flex-1 bg-surface-container hover:bg-surface-container-high text-on-surface font-extrabold py-2.5 rounded-xl text-xs transition-all active:scale-[0.98]">
-            不喜歡，換一道
+          <button onClick={onClose} className="bg-surface-container hover:bg-surface-container-high text-on-surface font-extrabold px-4 py-2.5 rounded-xl text-xs transition-all">
+            取消
           </button>
-          <button onClick={() => { alert('【開始料理】\n已記錄為今日目標！'); onClose(); }} className="flex-1 bg-[#F2CC8F] hover:bg-[#F2CC8F]/80 text-[#765a28] font-extrabold py-2.5 rounded-xl text-xs transition-all active:scale-[0.98] flex items-center justify-center gap-1">
-            <span className="material-symbols-outlined text-sm fill">skillet</span> 開始料理
-          </button>
+          {(() => {
+            const isAllDone = totalSteps > 0 && doneCount === totalSteps;
+            return (
+              <button
+                onClick={handleFinish}
+                disabled={!isAllDone}
+                className={`flex-1 font-extrabold py-2.5 rounded-xl text-xs transition-all flex items-center justify-center gap-1 ${
+                  isAllDone
+                    ? 'bg-gradient-to-r from-emerald-500 to-teal-600 hover:brightness-110 text-white shadow-md active:scale-[0.98] cursor-pointer animate-pulse'
+                    : 'bg-gray-150 bg-gray-200 text-gray-400 cursor-not-allowed border border-gray-300/60'
+                }`}
+              >
+                {isAllDone ? (
+                  <>
+                    <span className="material-symbols-outlined text-sm fill">task_alt</span> 🎉 完成料理並領取獎勵！
+                  </>
+                ) : (
+                  <>
+                    <span className="material-symbols-outlined text-sm">lock</span> 請點擊勾選完所有步驟 ({doneCount}/{totalSteps})
+                  </>
+                )}
+              </button>
+            );
+          })()}
         </div>
       </div>
     </div>

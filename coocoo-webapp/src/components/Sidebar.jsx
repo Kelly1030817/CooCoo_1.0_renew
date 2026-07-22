@@ -1,19 +1,34 @@
 import React from 'react';
 
-const Sidebar = ({ activeTab, setActiveTab }) => {
+const Sidebar = ({ activeTab, setActiveTab, onOpenChefConsultation }) => {
   const navItems = [
-    { id: 'fridge', icon: 'hourglass_empty', label: '冰箱沙漏' },
     { id: 'shopping', icon: 'shopping_cart', label: '補貨區' },
+    { id: 'fridge', icon: 'hourglass_empty', label: '冰箱沙漏' },
     { id: 'kitchen', icon: 'blender', label: '小廚房' },
     { id: 'roi', icon: 'savings', label: '圓夢看板' }
   ];
 
   return (
     <nav className="w-64 bg-surface-container-highest border-r border-outline-variant/40 h-screen flex flex-col p-md shrink-0">
-      <div className="flex items-center gap-sm mb-xl">
+      <div className="flex items-center gap-sm mb-lg">
         <span className="material-symbols-outlined text-terracotta text-3xl">kitchen</span>
         <h1 className="text-xl font-extrabold text-slate-blue tracking-wide">CooCoo 煮煮</h1>
       </div>
+
+      {/* 「主廚相談室」按鈕 (放置於補貨區上方) */}
+      <button
+        onClick={onOpenChefConsultation}
+        className="mb-md flex items-center gap-md px-md py-3 rounded-2xl bg-amber-500/15 border border-amber-500/35 text-amber-950 hover:bg-amber-600 hover:text-white transition-all shadow-sm group active:scale-95 text-left"
+        title="點擊返回主廚相談室重新討論目標"
+      >
+        <span className="material-symbols-outlined text-2xl text-amber-700 group-hover:text-white transition-colors">
+          restaurant_menu
+        </span>
+        <div className="flex flex-col min-w-0">
+          <span className="font-extrabold text-sm leading-tight truncate">主廚相談室 👨‍🍳</span>
+          <span className="text-[10px] text-amber-800/80 group-hover:text-white/90 truncate mt-0.5">討論目標與菜色</span>
+        </div>
+      </button>
 
       <div className="flex flex-col gap-sm flex-1">
         {navItems.map(item => {

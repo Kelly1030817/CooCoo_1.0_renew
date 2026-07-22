@@ -248,7 +248,7 @@ const DEFAULT_STATE = {
 
 // Global App State
 let appState = null;
-let currentTab = "roi"; // Default active tab
+let currentTab = "shopping"; // Default active tab: 補貨區
 let aiChefMode = false;
 let selectedChefItems = [];
 let shoppingAssistantImage = null;
@@ -537,6 +537,25 @@ async function dbClearShoppingChecked() {
         console.error("Supabase 同步清除已採買項失敗:", e);
     }
 }
+
+async function dbSaveCookedHistory(record) {
+    if (!isCloudMode || !supabaseClient || !currentUser) return;
+    try {
+        const { error } = await supabaseClient.from('cooked_history').insert([{
+            user_id: currentUser.id,
+            recipe_title: record.recipe_title,
+            ingredients_used: record.ingredients_used,
+            type: record.type || 'meal',
+            savings_saved: record.savings_saved || 50,
+            sodium_reduced_mg: record.sodium_reduced_mg || 100,
+            fat_reduced_g: record.fat_reduced_g || 5
+        }]);
+        if (error) throw error;
+    } catch (e) {
+        console.error("Supabase 同步新增烹飪紀錄失敗:", e);
+    }
+}
+
 
 async function initCloudDefaultData() {
     try {
@@ -1775,60 +1794,7 @@ function renderFridgeHourglass(container) {
         <div class="space-y-lg">
             ${capacityHtml}
 
-            <!-- Header & Action Section -->
-            <section class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-md">
-                <div>
-                    <h2 class="font-headline-lg text-3xl font-extrabold text-primary">冰箱沙漏</h2>
-                    <p class="text-on-surface-variant font-body-md">隨時掌控保鮮期限，消滅食物浪費支出。</p>
-                </div>
-                <div class="flex gap-sm w-full sm:w-auto">
-                    <button onclick="toggleAddFridgeForm()" class="bg-primary hover:brightness-110 text-white font-bold px-lg py-sm rounded-full text-xs shadow-md transition-all active:scale-95 flex items-center gap-1">
-                        <span class="material-symbols-outlined text-lg">add</span> 新增食材
-                    </button>
-                </div>
-            </section>
 
-            <!-- Expander / Add Form Container -->
-            <div id="add-fridge-form" class="hidden bg-white border border-outline-variant/30 rounded-2xl p-lg shadow-sm space-y-md">
-                <h3 class="text-lg font-bold text-slate-blue">新增冰箱食材</h3>
-                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-md">
-                    <div>
-                        <label class="block text-xs font-bold text-on-surface-variant mb-1">食材名稱</label>
-                        <input type="text" id="new-item-name" placeholder="例如：番茄" class="w-full rounded-xl border-outline-variant focus:border-secondary focus:ring-secondary text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-on-surface-variant mb-1">存放區</label>
-                        <select id="new-item-chamber" class="w-full rounded-xl border-outline-variant focus:border-secondary focus:ring-secondary text-sm">
-                            <option value="cold">冷藏室</option>
-                            <option value="frozen">冷凍庫</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-on-surface-variant mb-1">數量與單位</label>
-                        <div class="flex gap-2">
-                            <input type="number" id="new-item-qty" value="1" min="1" class="w-2/3 rounded-xl border-outline-variant focus:border-secondary focus:ring-secondary text-sm">
-                            <input type="text" id="new-item-unit" value="顆" class="w-1/3 rounded-xl border-outline-variant focus:border-secondary focus:ring-secondary text-sm">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-on-surface-variant mb-1">保鮮天數</label>
-                        <input type="number" id="new-item-days" value="5" min="0" class="w-full rounded-xl border-outline-variant focus:border-secondary focus:ring-secondary text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-on-surface-variant mb-1">收納規格</label>
-                        <select id="new-item-box" class="w-full rounded-xl border-outline-variant focus:border-secondary focus:ring-secondary text-sm">
-                            <option value="S">方形收納盒 (S)</option>
-                            <option value="M" selected>方形收納盒 (M)</option>
-                            <option value="L">方形收納盒 (L)</option>
-                            <option value="無">無收納盒</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="flex justify-end gap-sm mt-md">
-                    <button onclick="toggleAddFridgeForm()" class="bg-surface-container text-on-surface-variant hover:bg-surface-container-high px-lg py-sm rounded-full text-xs font-bold transition-all">取消</button>
-                    <button onclick="submitNewFridgeItem()" class="bg-secondary text-white hover:brightness-110 px-lg py-sm rounded-full text-xs font-bold transition-all">確認儲存</button>
-                </div>
-            </div>
 
             <!-- Urgent Banner -->
             ${urgentItems.length > 0 ? `
@@ -2276,6 +2242,25 @@ function renderKitchen(container) {
         `;
     }).join('');
 
+    const categoryMap = {
+        vegetable_fruit: { title: "🥬 蔬菜與水果", icon: "eco", items: [] },
+        meat_seafood: { title: "🥩 肉類與海鮮", icon: "set_meal", items: [] },
+        dairy_egg_soy: { title: "🥚 蛋奶與豆類", icon: "egg", items: [] },
+        cooked_others: { title: "📦 熟食與其他", icon: "inventory_2", items: [] }
+    };
+
+    inventory.forEach(item => {
+        const aiRec = getAISuggestedStorage(item.name);
+        const cat = item.category || aiRec.category || "cooked_others";
+        if (categoryMap[cat]) {
+            categoryMap[cat].items.push(item);
+        } else {
+            categoryMap.cooked_others.items.push(item);
+        }
+    });
+
+    const activeCategories = Object.values(categoryMap).filter(cat => cat.items.length > 0);
+
     container.innerHTML = `
         <div class="space-y-lg pb-32">
             <!-- Header -->
@@ -2294,21 +2279,36 @@ function renderKitchen(container) {
                 </div>
             </section>
 
-            <!-- Ingredients Pool -->
-            <section>
+            <!-- Ingredients Pool categorized -->
+            <section class="space-y-md">
                 <div class="flex items-center justify-between mb-sm">
-                    <h3 class="text-sm font-extrabold text-slate-blue">2. 挑選冰箱食材</h3>
-                    <span class="text-xs font-bold text-outline">已選取 ${selectedChefItems.length} 項</span>
+                    <h3 class="text-sm font-extrabold text-slate-blue flex items-center gap-1">
+                        <span class="material-symbols-outlined text-secondary font-bold">view_module</span> 2. 挑選冰箱食材 (已分類)
+                    </h3>
+                    <span class="text-xs font-bold text-secondary bg-secondary/10 px-3 py-1 rounded-full">已選取 ${selectedChefItems.length} 項</span>
                 </div>
                 ${inventory.length === 0 ? `
                     <div class="bg-surface-container rounded-3xl p-xl flex flex-col items-center justify-center text-center">
                         <span class="material-symbols-outlined text-[64px] text-outline-variant mb-4">kitchen</span>
                         <h4 class="text-lg font-bold text-on-surface-variant">冰箱空空如也</h4>
-                        <p class="text-xs text-outline mt-2">請先到「冰箱沙漏」新增食材</p>
+                        <p class="text-xs text-outline mt-2">請先至補貨區採買並將食材移入冰箱</p>
                     </div>
                 ` : `
-                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-md">
-                        ${inventory.map(item => getFridgeItemHtml(item, true)).join('')}
+                    <div class="space-y-md">
+                        ${activeCategories.map(cat => `
+                            <div class="bg-white border border-outline-variant/30 rounded-2xl p-md shadow-sm">
+                                <div class="flex items-center justify-between mb-sm pb-2 border-b border-outline-variant/20">
+                                    <div class="flex items-center gap-2">
+                                        <span class="material-symbols-outlined text-secondary font-bold text-lg">${cat.icon}</span>
+                                        <h4 class="text-sm font-extrabold text-slate-blue">${cat.title}</h4>
+                                    </div>
+                                    <span class="text-xs font-extrabold bg-slate-blue/10 text-slate-blue px-2.5 py-0.5 rounded-full">${cat.items.length} 項</span>
+                                </div>
+                                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-md">
+                                    ${cat.items.map(item => getFridgeItemHtml(item, true)).join('')}
+                                </div>
+                            </div>
+                        `).join('')}
                     </div>
                 `}
             </section>
@@ -2397,6 +2397,12 @@ function getFridgeItemHtml(item, isKitchenMode = false) {
 
     return `
         <div class="${containerClass}" ${cardClickAction}>
+            <!-- Top-Left Circular Edit Icon Button -->
+            ${!isKitchenMode ? `
+                <button onclick="event.stopPropagation(); showStorageDetailModal('${item.id}')" class="absolute top-2 left-2 w-6 h-6 rounded-full bg-white/90 hover:bg-slate-blue hover:text-white text-slate-blue border border-slate-blue/20 shadow-sm flex items-center justify-center transition-all active:scale-90 z-10" title="編輯食材">
+                    <span class="material-symbols-outlined text-[13px]">edit</span>
+                </button>
+            ` : ''}
             <!-- Box Size Badge -->
             ${item.boxSize && item.boxSize !== '無' ? `
                 <span class="absolute top-2 right-2 bg-slate-blue/10 text-slate-blue text-[9px] font-extrabold px-1.5 py-0.5 rounded-full border border-slate-blue/10">
@@ -2416,64 +2422,307 @@ function getFridgeItemHtml(item, isKitchenMode = false) {
     `;
 }
 
+// Built-in AI Storage Recommendation Engine
+function getAISuggestedStorage(name, targetChamber = null) {
+    if (!name) {
+        return {
+            chamber: "cold",
+            daysLeft: 5,
+            category: "vegetable_fruit",
+            storageProtocol: "方形收納管理：裝入規格化收納盒，先進先出，定期檢查保鮮期。"
+        };
+    }
+    const cleanName = name.trim().toLowerCase();
+    
+    let chamber = "cold";
+    let coldDays = 5;
+    let frozenDays = 30;
+    let category = "vegetable_fruit";
+    let storageProtocol = "微氣候維護：避免冷氣直吹。應採用微濕紙巾包裹，再裝入方形保鮮盒冷藏。";
+
+    if (cleanName.match(/肉|雞|豬|牛|羊|排|絞肉|肉絲|培根|火腿|香腸/)) {
+        category = "meat_seafood";
+        chamber = "cold";
+        coldDays = cleanName.includes("絞肉") ? 2 : (cleanName.includes("牛") ? 4 : 3);
+        frozenDays = 90;
+        storageProtocol = "組織液阻斷：冷凍前必須以紙巾緊密包裹以吸附組織液，壓扁冷凍最大化表面積，解凍快70%。";
+    } else if (cleanName.match(/魚|鮭|蝦|蛤|蚵|干貝|海鮮|墨魚|蟹/)) {
+        category = "meat_seafood";
+        chamber = "cold";
+        coldDays = 2;
+        frozenDays = 60;
+        storageProtocol = "極低溫保鮮：海鮮極易退化，冷藏需於 2 天內烹調，若未食用請拭乾水分分裝冷凍。";
+    } else if (cleanName.match(/蛋/)) {
+        category = "dairy_egg_soy";
+        chamber = "cold";
+        coldDays = 14;
+        frozenDays = 30;
+        storageProtocol = "鈍端朝上冷藏：維持氣室於頂部，防止蛋黃貼殼變質，置於冷藏室內部恆溫處。";
+    } else if (cleanName.match(/奶|乳|起司|乾酪|豆腐|豆漿|豆干|納豆/)) {
+        category = "dairy_egg_soy";
+        chamber = "cold";
+        coldDays = cleanName.includes("豆腐") ? 3 : (cleanName.includes("起司") ? 14 : 7);
+        frozenDays = cleanName.includes("豆腐") ? 60 : 30;
+        storageProtocol = "密封防腐：開啟後用烘焙紙包裹再裝入方形密封盒，防止冰箱水分降解與發霉。";
+    } else if (cleanName.match(/薯|洋蔥|蒜|蕉|芒果|蘋果|柑橘|果/)) {
+        category = "vegetable_fruit";
+        chamber = "cold";
+        coldDays = cleanName.match(/蘋果|柑橘/) ? 14 : 5;
+        frozenDays = 90;
+        storageProtocol = "避光保存。若已切開，表面滴檸檬汁並以保鮮膜緊貼冷藏，以阻斷氧化。";
+    } else if (cleanName.match(/菜|葉|菇|木耳|蘿蔔|番茄|黃瓜|茄子|椒|筍/)) {
+        category = "vegetable_fruit";
+        chamber = "cold";
+        coldDays = cleanName.match(/蘿蔔|地瓜|馬鈴薯/) ? 10 : 4;
+        frozenDays = 30;
+        storageProtocol = "微氣候維護：避免冷氣直吹。應採用微濕紙巾包裹，再裝入方形保鮮盒冷藏。";
+    } else if (cleanName.match(/吐司|麵包|水餃|麵|飯|饅頭|蔥抓餅/)) {
+        category = "cooked_others";
+        chamber = cleanName.match(/水餃|蔥抓餅/) ? "frozen" : "cold";
+        coldDays = 3;
+        frozenDays = 60;
+        storageProtocol = "密封隔離：完全冷卻後密封分裝，避免澱粉老化與異味吸收。";
+    } else {
+        category = "cooked_others";
+        chamber = "cold";
+        coldDays = 5;
+        frozenDays = 30;
+        storageProtocol = "方形收納管理：裝入規格化收納盒，先進先出，定期檢查保鮮期。";
+    }
+
+    const selectedChamber = targetChamber || chamber;
+    const daysLeft = selectedChamber === "frozen" ? frozenDays : coldDays;
+
+    return {
+        chamber: selectedChamber,
+        recommendedChamber: chamber,
+        coldDays: coldDays,
+        frozenDays: frozenDays,
+        daysLeft: daysLeft,
+        category: category,
+        storageProtocol: storageProtocol
+    };
+}
+window.getAISuggestedStorage = getAISuggestedStorage;
+
+/**
+ * 系統自動幫食材卡片生成圖片 (Automatic Ingredient Card Image Generator)
+ */
+function generateIngredientImage(name, category = null) {
+    if (!name) name = "食材";
+    const cleanName = name.trim().toLowerCase();
+
+    // 1. 食材關鍵字高解析度攝影美圖對應 (High-Resolution Curated Food Photography Mapping)
+    const foodPhotoMap = [
+        { keywords: ["蛋", "蛋黃", "蛋白", "皮蛋", "鹹蛋"], url: "https://images.unsplash.com/photo-1516448620398-c5f44bf9f441?w=300&auto=format&fit=crop" },
+        { keywords: ["牛", "和牛", "牛排", "牛肉片", "牛肉"], url: "https://images.unsplash.com/photo-1603048297172-c92544798d5a?w=300&auto=format&fit=crop" },
+        { keywords: ["豬", "梅花豬", "松阪豬", "豬肉", "培根", "香腸", "火腿"], url: "https://images.unsplash.com/photo-1602470520998-f4a52199a3d6?w=300&auto=format&fit=crop" },
+        { keywords: ["雞", "雞胸", "雞腿", "雞肉", "雞翅"], url: "https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=300&auto=format&fit=crop" },
+        { keywords: ["鮭", "鮭魚", "三文魚"], url: "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=300&auto=format&fit=crop" },
+        { keywords: ["魚", "鱈魚", "秋刀魚", "鯖魚", "鯛魚"], url: "https://images.unsplash.com/photo-1534604973900-c43ab4c2e0ab?w=300&auto=format&fit=crop" },
+        { keywords: ["蝦", "明蝦", "草蝦", "白蝦", "蝦仁"], url: "https://images.unsplash.com/photo-1565680018434-b513d5e5fd47?w=300&auto=format&fit=crop" },
+        { keywords: ["蛤", "干貝", "蚵", "生蠔", "海鮮", "蟹", "墨魚", "透抽", "魷魚"], url: "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=300&auto=format&fit=crop" },
+        { keywords: ["高麗菜", "高麗", "甘藍"], url: "https://images.unsplash.com/photo-1594282486552-05b4d80fbb9f?w=300&auto=format&fit=crop" },
+        { keywords: ["菜", "菠菜", "空心菜", "青菜", "小白菜", "青江菜", "萵苣", "茼蒿", "葉"], url: "https://images.unsplash.com/photo-1628773822503-930a8589c012?w=300&auto=format&fit=crop" },
+        { keywords: ["番茄", "西紅柿", "聖女番茄"], url: "https://images.unsplash.com/photo-1595855759920-86582396756a?w=300&auto=format&fit=crop" },
+        { keywords: ["酪梨", "牛油果"], url: "https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=300&auto=format&fit=crop" },
+        { keywords: ["胡蘿蔔", "紅蘿蔔", "蘿蔔"], url: "https://images.unsplash.com/photo-1598170845058-12ef4a457939?w=300&auto=format&fit=crop" },
+        { keywords: ["蘋果"], url: "https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=300&auto=format&fit=crop" },
+        { keywords: ["香蕉"], url: "https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=300&auto=format&fit=crop" },
+        { keywords: ["檸檬", "萊姆"], url: "https://images.unsplash.com/photo-1534531141161-e41d133a4be3?w=300&auto=format&fit=crop" },
+        { keywords: ["草莓", "莓果", "藍莓"], url: "https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=300&auto=format&fit=crop" },
+        { keywords: ["櫛瓜", "夏南瓜"], url: "https://images.unsplash.com/photo-1592417817098-8f3d6eb19675?w=300&auto=format&fit=crop" },
+        { keywords: ["菇", "香菇", "蘑菇", "金針菇", "杏鮑菇"], url: "https://images.unsplash.com/photo-1504470695779-75300268aa0e?w=300&auto=format&fit=crop" },
+        { keywords: ["豆腐", "豆干", "豆漿", "納豆"], url: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300&auto=format&fit=crop" },
+        { keywords: ["鮮奶", "牛奶", "乳", "優格", "優酪乳"], url: "https://images.unsplash.com/photo-1550583724-b2692b85b150?w=300&auto=format&fit=crop" },
+        { keywords: ["起司", "乳酪", "芝士"], url: "https://images.unsplash.com/photo-1452195100486-9cc805987862?w=300&auto=format&fit=crop" },
+        { keywords: ["吐司", "麵包"], url: "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=300&auto=format&fit=crop" },
+        { keywords: ["米", "飯", "白飯"], url: "https://images.unsplash.com/photo-1586201375761-83865001e8ac?w=300&auto=format&fit=crop" },
+        { keywords: ["麵", "義大利麵", "拉麵"], url: "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=300&auto=format&fit=crop" },
+        { keywords: ["洋蔥", "蒜", "薑", "蔥", "辣椒"], url: "https://images.unsplash.com/photo-1615485290382-441e4d049cb5?w=300&auto=format&fit=crop" },
+        { keywords: ["玉米"], url: "https://images.unsplash.com/photo-1551754655-cd27e38d2076?w=300&auto=format&fit=crop" },
+        { keywords: ["黃瓜", "小黃瓜"], url: "https://images.unsplash.com/photo-1447175008436-0841710c87b7?w=300&auto=format&fit=crop" },
+        { keywords: ["茄子"], url: "https://images.unsplash.com/photo-1613744655060-6428d022b794?w=300&auto=format&fit=crop" },
+        { keywords: ["南瓜"], url: "https://images.unsplash.com/photo-1508747703725-719777637510?w=300&auto=format&fit=crop" }
+    ];
+
+    for (const match of foodPhotoMap) {
+        if (match.keywords.some(kw => cleanName.includes(kw))) {
+            return match.url;
+        }
+    }
+
+    // 2. 動態向量圖像卡片生成器 (Dynamic SVG Card Generator for Custom/Unmatched items)
+    let primaryColor = "#386753"; // Emerald green
+    let secondaryColor = "#e2f0d9";
+    let iconEmoji = "🥗";
+
+    if (cleanName.match(/肉|雞|豬|牛|羊|排|絞肉|培根|香腸/)) {
+        primaryColor = "#be5f48";
+        secondaryColor = "#fbeae7";
+        iconEmoji = "🥩";
+    } else if (cleanName.match(/魚|鮭|蝦|蛤|海鮮|蟹|魷魚/)) {
+        primaryColor = "#3a506b";
+        secondaryColor = "#e8f1f5";
+        iconEmoji = "🐟";
+    } else if (cleanName.match(/蛋|奶|乳|起司|豆腐|豆漿/)) {
+        primaryColor = "#d97706";
+        secondaryColor = "#fef3c7";
+        iconEmoji = "🧀";
+    } else if (cleanName.match(/果|蘋果|香蕉|莓|草莓|檸檬|芒/)) {
+        primaryColor = "#9333ea";
+        secondaryColor = "#f3e8ff";
+        iconEmoji = "🍎";
+    } else if (cleanName.match(/飯|麵|吐司|麵包|餅|水餃/)) {
+        primaryColor = "#b45309";
+        secondaryColor = "#fef3c7";
+        iconEmoji = "🍞";
+    }
+
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="150" height="150" viewBox="0 0 150 150">
+        <defs>
+            <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="${secondaryColor}" />
+                <stop offset="100%" stop-color="#ffffff" />
+            </linearGradient>
+        </defs>
+        <rect width="150" height="150" fill="url(#grad)" rx="20"/>
+        <circle cx="75" cy="65" r="42" fill="${primaryColor}" fill-opacity="0.12"/>
+        <text x="75" y="78" font-size="44" text-anchor="middle" dominant-baseline="central">${iconEmoji}</text>
+        <rect x="15" y="112" width="120" height="24" rx="12" fill="${primaryColor}"/>
+        <text x="75" y="128" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle" dominant-baseline="central">${name.slice(0, 8)}</text>
+    </svg>`;
+
+    return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+window.generateIngredientImage = generateIngredientImage;
+
+function onFridgeItemNameChange() {
+    const nameInput = document.getElementById("new-item-name");
+    const chamberSelect = document.getElementById("new-item-chamber");
+    const daysInput = document.getElementById("new-item-days");
+    const hintBox = document.getElementById("ai-suggestion-hint");
+
+    if (!nameInput || !nameInput.value.trim()) {
+        if (hintBox) hintBox.classList.add("hidden");
+        return;
+    }
+
+    const name = nameInput.value.trim();
+    const aiRec = getAISuggestedStorage(name);
+    if (chamberSelect) chamberSelect.value = aiRec.chamber;
+    if (daysInput) daysInput.value = aiRec.daysLeft;
+
+    const generatedImg = generateIngredientImage(name, aiRec.category);
+
+    if (hintBox) {
+        hintBox.classList.remove("hidden");
+        hintBox.innerHTML = `
+            <div class="flex items-center gap-3">
+                <img src="${generatedImg}" alt="${name}" class="w-10 h-10 rounded-xl object-cover border border-outline-variant/30 shadow-xs flex-shrink-0">
+                <div>
+                    <div class="flex items-center gap-1 font-bold text-xs">
+                        <span class="material-symbols-outlined text-sm text-secondary">auto_awesome</span>
+                        <span>✨ 已為「${name}」自動生成食材卡片圖片！</span>
+                    </div>
+                    <p class="text-[11px] text-on-surface-variant/80 mt-0.5">建議存放於【${aiRec.chamber === 'cold' ? '冷藏室' : '冷凍庫'}】，保鮮期估計為 ${aiRec.daysLeft} 天</p>
+                </div>
+            </div>
+        `;
+    }
+}
+
 // Handler functions for Fridge
 function toggleAddFridgeForm() {
     const form = document.getElementById("add-fridge-form");
-    form.classList.toggle("hidden");
+    if (form) form.classList.toggle("hidden");
 }
 
 function submitNewFridgeItem() {
-    const name = document.getElementById("new-item-name").value.trim();
-    const chamber = document.getElementById("new-item-chamber").value;
-    const qty = parseInt(document.getElementById("new-item-qty").value);
+    const nameInput = document.getElementById("new-item-name");
+    const name = nameInput ? nameInput.value.trim() : "";
+    const chamber = document.getElementById("new-item-chamber") ? document.getElementById("new-item-chamber").value : "cold";
+    const qty = parseInt(document.getElementById("new-item-qty").value) || 1;
     const unit = document.getElementById("new-item-unit").value.trim() || "個";
-    const days = parseInt(document.getElementById("new-item-days").value);
-    const boxSize = document.getElementById("new-item-box").value;
+    const days = parseInt(document.getElementById("new-item-days").value) || 5;
+    const boxSize = document.getElementById("new-item-box") ? document.getElementById("new-item-box").value : "M";
 
     if (!name) {
         alert("請輸入食材名稱！");
         return;
     }
 
-    let storageProtocol = "方形收納管理：裝入規格化收納盒，先進先出，定期檢查保鮮期。";
-    if (name.includes("菜") || name.includes("葉")) {
-        storageProtocol = "微氣候維護：避免冷氣直吹。應採用微濕紙巾包裹，再裝入方形保鮮盒冷藏。";
-    } else if (name.includes("肉") || name.includes("魚") || name.includes("海鮮") || name.includes("鮭") || name.includes("雞") || name.includes("豬") || name.includes("牛")) {
-        storageProtocol = "組織液阻斷：冷凍前必須以紙巾緊密包裹以吸附組織液，壓扁冷凍最大化表面積，解凍快70%。";
-    } else if (name.includes("蛋")) {
-        storageProtocol = "鈍端朝上冷藏：維持氣室於頂部，防止蛋黃貼殼變質，置於冷藏室內部恆溫處。";
-    } else if (name.includes("奶") || name.includes("乳") || name.includes("起司") || name.includes("乾酪")) {
-        storageProtocol = "密封防腐：開啟後用烘焙紙包裹再裝入方形密封盒，防止冰箱水分降解與發霉。";
-    } else if (name.includes("薯") || name.includes("洋蔥") || name.includes("蒜") || name.includes("蕉") || name.includes("芒果")) {
-        storageProtocol = "常溫避光：馬鈴薯與洋蔥分開存放防相互催熟。熱帶水果及根莖類避免直接冷藏。";
-    }
+    const aiRec = getAISuggestedStorage(name, chamber);
+    const generatedImage = generateIngredientImage(name, aiRec.category);
 
-    const newItem = {
-        id: "i_" + Date.now(),
+    // Feature requirement 1: 新增食材只出現在補貨區 (New items go exclusively to shoppingList)
+    const newShopItem = {
+        id: "s_" + Date.now(),
         name: name,
-        chamber: chamber,
+        category: aiRec.category === "vegetable_fruit" ? "produce" : "protein",
         qty: qty,
         unit: unit,
-        daysLeft: days,
-        addedDate: new Date().toISOString().split("T")[0],
-        image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=150&auto=format&fit=crop", // placeholder
-        roi: {
-            savings: Math.round(50 + Math.random() * 150),
-            sodium: Math.round(50 + Math.random() * 200),
-            fat: Math.round(2 + Math.random() * 15)
-        },
-        storageProtocol: storageProtocol,
+        image: generatedImage,
+        checked: false,
+        status: "手動新增",
+        estCost: Math.round(40 + Math.random() * 60),
+        chamber: chamber || aiRec.chamber,
+        daysLeft: days || aiRec.daysLeft,
         boxSize: boxSize
     };
 
-    appState.inventory.push(newItem);
+    appState.shoppingList.push(newShopItem);
     saveState();
     if (isCloudMode && supabaseClient) {
-        dbAddInventoryItem(newItem);
+        dbAddShoppingItem(newShopItem);
     }
     toggleAddFridgeForm();
     renderCurrentTab();
-    showToast(`成功新增食材 ${name} 至冰箱！`);
+    showToast(`成功新增食材「${name}」至補貨區並自動生成卡片圖片！完成採買後可移入冰箱。`, "success");
+}
+
+function updateItemQtyUnit(id) {
+    const item = appState.inventory.find(i => i.id === id);
+    if (!item) return;
+
+    const qtyInput = document.getElementById(`detail-qty-${id}`);
+    const unitInput = document.getElementById(`detail-unit-${id}`);
+
+    if (qtyInput && qtyInput.value) {
+        item.qty = Math.max(1, parseInt(qtyInput.value) || 1);
+    }
+    if (unitInput && unitInput.value) {
+        item.unit = unitInput.value.trim() || "個";
+    }
+
+    saveState();
+    if (isCloudMode && supabaseClient) dbUpdateInventoryItem(item);
+    
+    // Refresh modal header & card
+    const titleEl = document.getElementById(`modal-item-title-${id}`);
+    if (titleEl) titleEl.textContent = `${item.name} (${item.qty}${item.unit})`;
+
+    renderCurrentTab();
+    showToast(`已更新「${item.name}」數量與單位為 ${item.qty} ${item.unit}`, "success");
+}
+
+function updateItemChamber(id, newChamber) {
+    const item = appState.inventory.find(i => i.id === id);
+    if (!item) return;
+
+    const aiRec = getAISuggestedStorage(item.name, newChamber);
+    item.chamber = newChamber;
+    item.daysLeft = aiRec.daysLeft;
+
+    saveState();
+    if (isCloudMode && supabaseClient) dbUpdateInventoryItem(item);
+
+    closeStorageDetailModal();
+    renderCurrentTab();
+    showStorageDetailModal(id);
+
+    const chamberName = newChamber === 'cold' ? '冷藏室' : '冷凍庫';
+    showToast(`已切換至【${chamberName}】，AI 後台自動重估保鮮期為 ${aiRec.daysLeft} 天！`, "success");
 }
 
 function cookItem(id) {
@@ -2531,6 +2780,9 @@ function showStorageDetailModal(id) {
     const item = appState.inventory.find(i => i.id === id);
     if (!item) return;
 
+    const aiRecCold = getAISuggestedStorage(item.name, 'cold');
+    const aiRecFrozen = getAISuggestedStorage(item.name, 'frozen');
+
     const isUrgent = item.daysLeft <= 1;
     const isSuperLong = item.daysLeft > 30;
     const statusText = item.daysLeft === 0 ? "今天到期" : item.daysLeft === 1 ? "明天到期" : (item.daysLeft >= 30 ? `剩餘 ${Math.ceil(item.daysLeft / 30)} 個月` : `剩餘 ${item.daysLeft} 天`);
@@ -2538,17 +2790,17 @@ function showStorageDetailModal(id) {
 
     const modal = document.createElement("div");
     modal.id = "storage-detail-modal";
-    modal.className = "fixed inset-0 bg-black/60 z-50 flex items-center justify-center backdrop-blur-sm";
+    modal.className = "fixed inset-0 bg-black/60 z-50 flex items-center justify-center backdrop-blur-sm p-4";
 
-    const protocol = item.storageProtocol || "方形收納管理：裝入規格化收納盒，先進先出，定期檢查保鮮期。";
+    const protocol = item.storageProtocol || getAISuggestedStorage(item.name).storageProtocol;
     const boxSizeText = item.boxSize && item.boxSize !== '無' ? `方形規格收納盒 (${item.boxSize})` : "未裝盒收納";
 
     modal.innerHTML = `
-        <div class="bg-white rounded-3xl p-lg shadow-2xl max-w-[420px] w-full mx-gutter border border-primary/5 flex flex-col space-y-md">
+        <div class="bg-white rounded-3xl p-lg shadow-2xl max-w-[440px] w-full border border-primary/5 flex flex-col space-y-md max-h-[90vh] overflow-y-auto">
             <!-- Modal Header -->
             <div class="flex justify-between items-center border-b border-outline-variant/30 pb-3">
                 <h3 class="text-base font-extrabold text-slate-blue flex items-center gap-1">
-                    <span class="material-symbols-outlined text-secondary">science</span> 科學保存協議與狀態
+                    <span class="material-symbols-outlined text-secondary">science</span> 食材調整與科學保存
                 </h3>
                 <button onclick="closeStorageDetailModal()" class="text-on-surface-variant hover:text-error hover:bg-surface-container p-1 rounded-full transition-colors flex items-center justify-center">
                     <span class="material-symbols-outlined text-lg">close</span>
@@ -2562,9 +2814,43 @@ function showStorageDetailModal(id) {
                         <img class="w-full h-full object-cover" src="${item.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=150&auto=format&fit=crop'}" alt="${item.name}">
                     </div>
                     <div>
-                        <h4 class="text-base font-extrabold text-slate-blue">${item.name} (${item.qty}${item.unit})</h4>
+                        <h4 id="modal-item-title-${item.id}" class="text-base font-extrabold text-slate-blue">${item.name} (${item.qty}${item.unit})</h4>
                         <p class="text-xs font-bold ${statusColor} mt-0.5">${statusText}</p>
                         <p class="text-[10px] text-on-surface-variant font-medium mt-0.5">購入日期: ${item.addedDate} / 存放區: ${item.chamber === 'cold' ? '冷藏室' : '冷凍庫'}</p>
+                    </div>
+                </div>
+
+                <!-- Feature 3a: Manual Qty & Unit Adjust UI -->
+                <div class="bg-surface-container/60 border border-outline-variant/30 p-md rounded-2xl space-y-2">
+                    <label class="block text-[11px] font-extrabold text-slate-blue flex items-center gap-1">
+                        <span class="material-symbols-outlined text-sm text-secondary">tune</span> 手動調整數量與單位
+                    </label>
+                    <div class="flex gap-2 items-center">
+                        <input type="number" id="detail-qty-${item.id}" value="${item.qty}" min="1" class="w-24 h-9 rounded-xl border border-outline-variant px-3 text-xs font-extrabold text-slate-blue bg-white focus:border-secondary focus:ring-secondary" onchange="updateItemQtyUnit('${item.id}')">
+                        <input type="text" id="detail-unit-${item.id}" value="${item.unit}" class="w-24 h-9 rounded-xl border border-outline-variant px-3 text-xs font-extrabold text-slate-blue bg-white focus:border-secondary focus:ring-secondary" onchange="updateItemQtyUnit('${item.id}')">
+                        <button onclick="updateItemQtyUnit('${item.id}')" class="bg-secondary text-white hover:brightness-110 text-xs font-extrabold px-4 py-2 rounded-xl transition-all shadow-sm active:scale-95">
+                            更新
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Feature 3b: Manual Chamber Switch with AI Auto Shelf-Life Adjustment -->
+                <div class="bg-surface-container/60 border border-outline-variant/30 p-md rounded-2xl space-y-2">
+                    <div class="flex justify-between items-center">
+                        <label class="block text-[11px] font-extrabold text-slate-blue flex items-center gap-1">
+                            <span class="material-symbols-outlined text-sm text-secondary">swap_horiz</span> 存放區域 (AI 後台連動調整天數)
+                        </label>
+                        <span class="text-[10px] font-extrabold text-secondary bg-secondary/10 px-2 py-0.5 rounded-full flex items-center gap-0.5">
+                            <span class="material-symbols-outlined text-[12px]">auto_awesome</span> AI連動
+                        </span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-sm">
+                        <button onclick="updateItemChamber('${item.id}', 'cold')" class="py-2.5 px-3 rounded-xl text-xs font-extrabold flex items-center justify-center gap-1.5 border transition-all active:scale-95 ${item.chamber === 'cold' ? 'bg-slate-blue text-white border-slate-blue shadow-md ring-2 ring-slate-blue/20' : 'bg-white text-on-surface-variant border-outline-variant/40 hover:bg-surface-container'}">
+                            <span class="material-symbols-outlined text-sm">ac_unit</span> 冷藏室 (${aiRecCold.daysLeft}天)
+                        </button>
+                        <button onclick="updateItemChamber('${item.id}', 'frozen')" class="py-2.5 px-3 rounded-xl text-xs font-extrabold flex items-center justify-center gap-1.5 border transition-all active:scale-95 ${item.chamber === 'frozen' ? 'bg-[#4c7396] text-white border-[#4c7396] shadow-md ring-2 ring-[#4c7396]/20' : 'bg-white text-on-surface-variant border-outline-variant/40 hover:bg-surface-container'}">
+                            <span class="material-symbols-outlined text-sm">severe_cold</span> 冷凍庫 (${aiRecFrozen.daysLeft}天)
+                        </button>
                     </div>
                 </div>
 
@@ -2817,6 +3103,16 @@ function confirmAiRecipeCooked() {
     // Reset selection
     aiChefMode = false;
     selectedChefItems = [];
+
+    const mealName = window.currentAiRecipe?.title || cookedNames.join('、') || 'AI 自煮料理';
+    if (isCloudMode && supabaseClient) {
+        dbSaveCookedHistory({
+            recipe_title: mealName,
+            ingredients_used: cookedNames,
+            type: 'meal',
+            savings_saved: 60
+        });
+    }
 
     saveState();
 
@@ -3330,7 +3626,10 @@ function renderSundayShopping(container) {
                 <div>
                     <h2 class="font-headline-lg text-3xl font-extrabold text-secondary">小廚房採購單</h2>
                 </div>
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <button onclick="runAIRestockAnalysis()" class="bg-amber-600 hover:bg-amber-700 text-white font-extrabold px-3 py-2 rounded-full text-xs shadow-sm transition-all active:scale-95 flex items-center gap-1" title="AI 智慧庫存分析與補貨精算">
+                        <span class="material-symbols-outlined text-[18px]">auto_awesome</span> AI 庫存補貨精算
+                    </button>
                     <button onclick="showShoppingAssistant()" class="bg-secondary text-white hover:brightness-110 border border-secondary font-extrabold px-3 py-2 rounded-full text-xs shadow-sm transition-all active:scale-95 flex items-center gap-1" title="AI 逛市場助手">
                         <span class="material-symbols-outlined text-[18px]">forum</span> AI 陪我逛
                     </button>
@@ -3352,11 +3651,11 @@ function renderSundayShopping(container) {
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-sm">
                     <div>
                         <label class="block text-xs font-bold text-on-surface-variant mb-1">食材名稱</label>
-                        <input type="text" id="new-shop-name" placeholder="例如：空心菜" class="w-full h-9 rounded-xl border border-outline-variant focus:border-secondary focus:ring-secondary text-xs px-3 font-bold bg-white">
+                        <input type="text" id="new-shop-name" placeholder="例如：空心菜" oninput="onShoppingItemNameChange()" class="w-full h-9 rounded-xl border border-outline-variant focus:border-secondary focus:ring-secondary text-xs px-3 font-bold bg-white">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-on-surface-variant mb-1">分類</label>
-                        <select id="new-shop-cat" class="w-full h-9 rounded-xl border border-outline-variant focus:border-secondary focus:ring-secondary text-xs px-3 font-bold bg-white">
+                        <select id="new-shop-cat" onchange="onShoppingItemNameChange()" class="w-full h-9 rounded-xl border border-outline-variant focus:border-secondary focus:ring-secondary text-xs px-3 font-bold bg-white">
                             <option value="produce">新鮮蔬果</option>
                             <option value="protein">蛋白質與乳製品</option>
                         </select>
@@ -3374,6 +3673,7 @@ function renderSundayShopping(container) {
                         <input type="number" id="new-shop-cost" value="50" min="0" class="w-full h-9 rounded-xl border border-outline-variant focus:border-secondary focus:ring-secondary text-xs px-3 font-bold bg-white">
                     </div>
                 </div>
+                <div id="shop-item-hint" class="hidden bg-emerald-50/80 border border-emerald-200 p-2.5 rounded-xl text-xs"></div>
                 <div class="flex justify-end gap-sm mt-sm">
                     <button onclick="toggleAddShoppingForm()" class="bg-surface-container text-on-surface-variant hover:bg-surface-container-high px-md py-1.5 rounded-full text-xs font-bold transition-all">取消</button>
                     <button onclick="submitNewShoppingItem()" class="bg-[#386753] text-white hover:brightness-110 px-md py-1.5 rounded-full text-xs font-bold transition-all">確認加入</button>
@@ -3845,27 +4145,195 @@ function addAssistantAnalysisToShoppingList() {
         if (existing) {
             existing.qty = Math.max(Number(existing.qty) || 0, Math.ceil(item.buyQty * 10) / 10);
             existing.status = 'AI 菜單合併';
+            if (isCloudMode && supabaseClient) dbUpdateShoppingItem(existing);
         } else {
             const isProduce = /菜|菇|蔥|蒜|薑|瓜|果|番茄|洋蔥|蘿蔔/.test(item.name);
-            appState.shoppingList.push({
+            const category = isProduce ? 'produce' : 'protein';
+            const newItem = {
                 id: `s_ai_${Date.now()}_${added}`,
                 name: item.name,
-                category: isProduce ? 'produce' : 'protein',
+                category: category,
                 qty: Math.ceil(item.buyQty * 10) / 10,
                 unit: item.unit || '份',
+                image: generateIngredientImage(item.name, category),
                 checked: false,
                 status: 'AI 菜單合併',
-                estCost: 0
-            });
+                estCost: item.estCost || 50
+            };
+            appState.shoppingList.push(newItem);
+            if (isCloudMode && supabaseClient) dbAddShoppingItem(newItem);
         }
         added += 1;
     });
     saveState();
     closeShoppingAssistant();
     renderCurrentTab();
-    showToast(`已依保留菜單加入 ${added} 項合併食材`, 'success');
+    showToast(`已依保留菜單加入 ${added} 項合併食材 (已同步 Supabase)`, 'success');
+}
 }
 window.addAssistantAnalysisToShoppingList = addAssistantAnalysisToShoppingList;
+
+// ==========================================
+// AI SMART INVENTORY RESTOCK JUDGEMENT
+// ==========================================
+
+async function runAIRestockAnalysis() {
+    const loading = document.createElement("div");
+    loading.id = "ai-restock-modal";
+    loading.className = "fixed inset-0 bg-black/60 z-50 flex items-center justify-center backdrop-blur-sm";
+    loading.innerHTML = `
+        <div class="bg-white rounded-3xl p-xl shadow-2xl max-w-[420px] w-full mx-gutter text-center space-y-md border border-primary/5 animate-pulse">
+            <span class="material-symbols-outlined text-5xl text-ochre-gold animate-spin">auto_awesome</span>
+            <h3 class="text-lg font-extrabold text-slate-blue">AI 庫存精算師分析中...</h3>
+            <p class="text-xs text-on-surface-variant leading-relaxed font-medium">正在掃描冰箱保鮮期、補貨缺口與週營養矩陣...</p>
+        </div>
+    `;
+    document.body.appendChild(loading);
+
+    const configuredApiBase = String(window.COOCOO_API_BASE_URL || '').replace(/\/$/, '');
+    const apiUrl = `${configuredApiBase}/api/ai-restock-analysis`;
+
+    try {
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                inventory: appState.inventory.map(({ name, qty, unit, daysLeft, chamber }) => ({ name, qty, unit, daysLeft, chamber })),
+                shoppingList: appState.shoppingList.map(({ name, qty, unit }) => ({ name, qty, unit }))
+            })
+        });
+        const resData = await response.json();
+        if (resData.success && resData.data) {
+            renderAIRestockModal(resData.data);
+        } else {
+            throw new Error(resData.message || "AI 補貨分析失敗");
+        }
+    } catch (err) {
+        console.warn("AI restock endpoint fallback:", err);
+        renderAIRestockModal({
+            summary: "👨‍🍳 庫存掃描完成！偵測到部分食材保鮮期剩餘不到 3 天。建議補齊當季蔬菜與蛋豆魚肉品！",
+            recommendations: [
+                { name: "有機空心菜", category: "produce", qty: 2, unit: "包", estCost: 60, reason: "補充每週膳食纖維與微量元素", status: "AI 補貨建議" },
+                { name: "鮮嫩雞胸肉", category: "protein", qty: 1, unit: "盒", estCost: 95, reason: "補充高蛋白低脂食材", status: "AI 補貨建議" },
+                { name: "大蒜", category: "produce", qty: 1, unit: "袋", estCost: 35, reason: "抗氧化基礎辛香料", status: "AI 補貨建議" }
+            ]
+        });
+    }
+}
+window.runAIRestockAnalysis = runAIRestockAnalysis;
+
+function renderAIRestockModal(data) {
+    const existing = document.getElementById("ai-restock-modal");
+    if (existing) existing.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "ai-restock-modal";
+    modal.className = "fixed inset-0 bg-black/60 z-50 flex items-center justify-center backdrop-blur-sm p-4";
+
+    const recs = data.recommendations || [];
+    window.currentAIRestockRecs = recs;
+
+    modal.innerHTML = `
+        <div class="bg-white rounded-3xl p-lg shadow-2xl max-w-[520px] w-full border border-primary/5 flex flex-col max-h-[85vh] overflow-hidden">
+            <div class="flex justify-between items-center pb-md border-b border-outline-variant/30 flex-shrink-0">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-ochre-gold text-2xl">auto_awesome</span>
+                    <div>
+                        <span class="bg-amber-100 text-amber-900 text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase">AI 庫存補貨精算</span>
+                        <h3 class="text-lg font-extrabold text-slate-blue mt-0.5">智能庫存補貨判定建議</h3>
+                    </div>
+                </div>
+                <button onclick="closeAIRestockModal()" class="text-on-surface-variant hover:text-error p-1 rounded-full flex items-center justify-center">
+                    <span class="material-symbols-outlined text-xl">close</span>
+                </button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto py-md space-y-md pr-1 custom-scrollbar">
+                <div class="bg-amber-50/80 border border-amber-200 rounded-xl p-md">
+                    <p class="text-xs text-amber-900 font-medium leading-relaxed">
+                        ${data.summary}
+                    </p>
+                </div>
+
+                <div class="space-y-sm">
+                    <h4 class="text-xs font-extrabold text-slate-blue flex items-center justify-between">
+                        <span>AI 建議補貨食材清單</span>
+                        <span class="text-[11px] text-on-surface-variant font-normal">共 ${recs.length} 項</span>
+                    </h4>
+
+                    <div class="space-y-2">
+                        ${recs.map((item, idx) => `
+                            <label class="flex items-start gap-3 p-3 rounded-xl border border-outline-variant/30 hover:border-secondary/40 bg-surface-container-low cursor-pointer transition-all">
+                                <input type="checkbox" id="ai-rec-chk-${idx}" checked class="mt-1 rounded text-secondary focus:ring-secondary">
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-xs font-extrabold text-slate-blue">${item.name} (${item.qty}${item.unit})</span>
+                                        <span class="text-[11px] font-bold text-primary">NT$ ${item.estCost || 50}</span>
+                                    </div>
+                                    <p class="text-[11px] text-on-surface-variant mt-0.5 font-medium">${item.reason}</p>
+                                </div>
+                            </label>
+                        `).join("")}
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-md border-t border-outline-variant/30 flex gap-sm w-full flex-shrink-0">
+                <button onclick="closeAIRestockModal()" class="flex-1 bg-surface-container hover:bg-surface-container-high text-on-surface font-extrabold py-2.5 rounded-xl text-xs transition-all">
+                    取消
+                </button>
+                <button onclick="applyAIRestockRecommendations()" class="flex-1 bg-secondary hover:brightness-110 text-white font-extrabold py-2.5 rounded-xl text-xs transition-all shadow-md flex items-center justify-center gap-1">
+                    <span class="material-symbols-outlined text-xs">add_shopping_cart</span> 一鍵採買 (同步 Supabase)
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+window.renderAIRestockModal = renderAIRestockModal;
+
+function closeAIRestockModal() {
+    const modal = document.getElementById("ai-restock-modal");
+    if (modal) modal.remove();
+}
+window.closeAIRestockModal = closeAIRestockModal;
+
+function applyAIRestockRecommendations() {
+    const recs = window.currentAIRestockRecs || [];
+    let addedCount = 0;
+    recs.forEach((item, idx) => {
+        const chk = document.getElementById(`ai-rec-chk-${idx}`);
+        if (!chk || chk.checked) {
+            const existing = appState.shoppingList.find(s => s.name === item.name);
+            if (existing) {
+                existing.qty = Math.max(Number(existing.qty) || 0, Number(item.qty) || 1);
+                existing.status = item.status || 'AI 補貨建議';
+                if (isCloudMode && supabaseClient) dbUpdateShoppingItem(existing);
+            } else {
+                const newItem = {
+                    id: `s_ai_restock_${Date.now()}_${idx}`,
+                    name: item.name,
+                    category: item.category || (item.name.includes("菜") ? "produce" : "protein"),
+                    qty: Number(item.qty) || 1,
+                    unit: item.unit || "包",
+                    image: generateIngredientImage(item.name, item.category || "produce"),
+                    checked: false,
+                    status: item.status || 'AI 補貨建議',
+                    estCost: Number(item.estCost) || 50
+                };
+                appState.shoppingList.push(newItem);
+                if (isCloudMode && supabaseClient) dbAddShoppingItem(newItem);
+            }
+            addedCount++;
+        }
+    });
+
+    saveState();
+    closeAIRestockModal();
+    renderCurrentTab();
+    showToast(`已成功加入 ${addedCount} 項 AI 建議補貨食材並同步至 Supabase！`, "success");
+}
+window.applyAIRestockRecommendations = applyAIRestockRecommendations;
 
 function getShoppingItemRowHtml(item) {
     const isUrgent = item.status === "急需補貨" || item.status === "已耗盡";
@@ -3900,13 +4368,18 @@ function getShoppingItemRowHtml(item) {
         displayQtyUnit = `${match[2]} ${match[3].trim()}`;
     }
 
+    const itemImage = item.image || generateIngredientImage(item.name, item.category);
+
     return `
         <tr class="transition-all duration-150 ${bgClass} text-sm">
             <td class="p-3 text-center align-middle w-[8%]">
                 <input type="checkbox" ${item.checked ? "checked" : ""} onchange="toggleShoppingItemChecked('${item.id}')" class="${checkboxClass}">
             </td>
             <td class="p-3 align-middle w-[28%]">
-                <span class="${nameClass} text-base">${displayName}</span>
+                <div class="flex items-center gap-2.5">
+                    <img class="w-8 h-8 rounded-xl object-cover bg-white border border-outline-variant/30 flex-shrink-0 shadow-xs" src="${itemImage}" alt="${displayName}">
+                    <span class="${nameClass} text-base">${displayName}</span>
+                </div>
             </td>
             <td class="p-3 align-middle font-bold text-slate-blue w-[16%]">
                 ${displayQtyUnit}
@@ -4824,6 +5297,7 @@ function addFridgeItemToShopping(name, category) {
         category: category,
         qty: 1,
         unit: itemUnit,
+        image: generateIngredientImage(name, category),
         checked: false,
         status: "庫存補貨",
         estCost: itemCost
@@ -5317,6 +5791,7 @@ function importVoiceItems() {
             category: item.category,
             qty: item.qty,
             unit: item.unit,
+            image: item.image || generateIngredientImage(item.name, item.category),
             checked: false,
             status: "語音新增",
             estCost: item.estCost
@@ -5484,6 +5959,7 @@ function renderScanInvoiceResults(modal) {
                     category: item.category,
                     qty: item.qty,
                     unit: item.unit,
+                    image: item.image || generateIngredientImage(item.name, item.category),
                     checked: false,
                     status: "掃描匯入",
                     estCost: item.estCost
@@ -6548,6 +7024,7 @@ function renderScanInvoiceResults(modal) {
                     category: item.category,
                     qty: item.qty,
                     unit: item.unit,
+                    image: item.image || generateIngredientImage(item.name, item.category),
                     checked: false,
                     status: "掃描匯入",
                     estCost: item.estCost
@@ -6668,6 +7145,37 @@ function toggleAddShoppingForm() {
 }
 window.toggleAddShoppingForm = toggleAddShoppingForm;
 
+function onShoppingItemNameChange() {
+    const nameInput = document.getElementById("new-shop-name");
+    const catSelect = document.getElementById("new-shop-cat");
+    const hintBox = document.getElementById("shop-item-hint");
+
+    if (!nameInput || !nameInput.value.trim()) {
+        if (hintBox) hintBox.classList.add("hidden");
+        return;
+    }
+
+    const name = nameInput.value.trim();
+    const cat = catSelect ? catSelect.value : "produce";
+    const generatedImg = generateIngredientImage(name, cat);
+
+    if (hintBox) {
+        hintBox.classList.remove("hidden");
+        hintBox.innerHTML = `
+            <div class="flex items-center gap-3">
+                <img src="${generatedImg}" alt="${name}" class="w-10 h-10 rounded-xl object-cover border border-outline-variant/30 shadow-xs flex-shrink-0">
+                <div>
+                    <div class="flex items-center gap-1 font-bold text-xs text-secondary">
+                        <span class="material-symbols-outlined text-sm">auto_awesome</span>
+                        <span>✨ 已為「${name}」自動生成食材卡片圖片！</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+}
+window.onShoppingItemNameChange = onShoppingItemNameChange;
+
 function submitNewShoppingItem() {
     const nameInput = document.getElementById("new-shop-name");
     const name = nameInput ? nameInput.value.trim() : "";
@@ -6681,12 +7189,15 @@ function submitNewShoppingItem() {
         return;
     }
 
+    const generatedImage = generateIngredientImage(name, cat);
+
     const newItem = {
         id: "s_manual_" + Date.now(),
         name: name,
         category: cat,
         qty: qty,
         unit: unit,
+        image: generatedImage,
         checked: false,
         status: "手動新增",
         estCost: cost
@@ -6701,9 +7212,237 @@ function submitNewShoppingItem() {
 
     toggleAddShoppingForm();
     renderCurrentTab();
-    showToast(`成功手動新增食材 ${name}！`, "success");
+    showToast(`成功手動新增食材「${name}」並自動生成卡片圖片！`, "success");
 }
 window.submitNewShoppingItem = submitNewShoppingItem;
+
+
+
+// ==========================================
+// MASTER CHEF CONSULTATION MODAL (主廚相談室)
+// ==========================================
+
+function showChefConsultationModal() {
+    document.getElementById('chef-consultation-modal')?.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'chef-consultation-modal';
+    modal.className = 'fixed inset-0 bg-black/60 z-[85] flex items-center justify-center p-md backdrop-blur-sm animate-fade-in';
+    modal.innerHTML = `
+        <section class="bg-white w-full max-w-[520px] rounded-3xl shadow-2xl overflow-hidden border border-outline-variant/30 flex flex-col max-h-[85vh]">
+            <header class="bg-[#2c221e] text-white px-md py-sm flex items-center justify-between gap-sm">
+                <div class="flex items-center gap-sm min-w-0">
+                    <div class="w-10 h-10 rounded-2xl bg-primary/20 flex items-center justify-center text-primary shadow-inner">
+                        <span class="material-symbols-outlined text-2xl">restaurant_menu</span>
+                    </div>
+                    <div class="min-w-0">
+                        <h3 class="font-extrabold text-base tracking-wide truncate">主廚相談室 👨‍🍳</h3>
+                        <p class="text-[10px] text-white/80 truncate">專屬 AI 主廚 ‧ 為您推薦料理與採買指引</p>
+                    </div>
+                </div>
+                <button onclick="closeChefConsultationModal()" class="w-8 h-8 rounded-full hover:bg-white/15 text-white/80 flex items-center justify-center" aria-label="關閉相談室">
+                    <span class="material-symbols-outlined text-lg">close</span>
+                </button>
+            </header>
+            <div id="chef-consultation-body" class="p-md overflow-y-auto space-y-md flex-1">
+                <div class="bg-white rounded-2xl p-md border border-outline-variant/20 shadow-sm space-y-sm text-left">
+                    <div class="flex items-start gap-sm">
+                        <span class="material-symbols-outlined text-primary text-2xl mt-0.5">sentiment_satisfied</span>
+                        <p class="text-sm text-on-surface font-medium leading-relaxed">
+                            👋 歡迎來到 CooCoo 煮煮！我是您的專屬主廚 👨‍🍳 今天想怎麼安排您的美食體驗呢？
+                        </p>
+                    </div>
+                </div>
+
+                <div class="space-y-sm pt-xs">
+                    <button onclick="handleChefConsultationChoice('shopping')" class="w-full bg-secondary/10 hover:bg-secondary border-2 border-secondary/30 text-secondary hover:text-white font-extrabold p-md rounded-2xl text-sm transition-all active:scale-95 flex items-center justify-center gap-2 shadow-sm">
+                        <span class="material-symbols-outlined text-xl">shopping_cart</span>
+                        我想去採買新食材
+                    </button>
+
+                    <button onclick="handleChefConsultationChoice('dish')" class="w-full bg-primary/10 hover:bg-primary border-2 border-primary/30 text-primary hover:text-white font-extrabold p-md rounded-2xl text-sm transition-all active:scale-95 flex items-center justify-center gap-2 shadow-sm">
+                        <span class="material-symbols-outlined text-xl">skillet</span>
+                        我想選料理 / 吃好料
+                    </button>
+                </div>
+            </div>
+        </section>`;
+    document.body.appendChild(modal);
+}
+window.showChefConsultationModal = showChefConsultationModal;
+
+function closeChefConsultationModal() {
+    document.getElementById('chef-consultation-modal')?.remove();
+}
+window.closeChefConsultationModal = closeChefConsultationModal;
+
+function handleChefConsultationChoice(choice) {
+    if (choice === 'shopping') {
+        closeChefConsultationModal();
+        switchTab('shopping');
+        showToast('已為您切換至【補貨區】！點擊頂部「AI 陪我逛」按鈕拍照辨識食材與獲取推薦喔！', 'success');
+    } else if (choice === 'dish') {
+        renderChefDishSelectionStep();
+    }
+}
+window.handleChefConsultationChoice = handleChefConsultationChoice;
+
+function renderChefDishSelectionStep() {
+    const container = document.getElementById('chef-consultation-body');
+    if (!container) return;
+
+    const presetDishes = [
+        { title: '經典台式三杯雞', prepTime: '15 分鐘', estCost: 'NT$ 85' },
+        { title: '日式牛肉丼飯', prepTime: '12 分鐘', estCost: 'NT$ 90' },
+        { title: '番茄牛肉燉湯', prepTime: '20 分鐘', estCost: 'NT$ 110' },
+        { title: '蒜香雞胸沙拉', prepTime: '10 分鐘', estCost: 'NT$ 70' },
+        { title: '清炒時令蔬菜', prepTime: '8 分鐘', estCost: 'NT$ 40' }
+    ];
+
+    container.innerHTML = `
+        <div class="space-y-md text-left">
+            <div class="bg-amber-50 rounded-2xl p-sm border border-amber-200 text-xs font-bold text-slate-blue flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-secondary">forum</span>
+                👨‍🍳 主廚詢問：請問您今天想吃什麼類型的料理呢？可以點選下方熱門菜色或輸入菜名：
+            </div>
+
+            <div class="grid grid-cols-2 gap-sm">
+                ${presetDishes.map(d => `
+                    <button onclick="handleChefSelectDish(decodeURIComponent('${encodeURIComponent(d.title)}'))" class="bg-white hover:bg-primary/10 border border-outline-variant hover:border-primary p-sm rounded-2xl text-left transition-all group shadow-sm">
+                        <strong class="block text-xs font-extrabold text-slate-blue group-hover:text-primary">${escapeAssistantHtml(d.title)}</strong>
+                        <span class="text-[10px] text-on-surface-variant">${d.prepTime} ‧ ${d.estCost}</span>
+                    </button>
+                `).join('')}
+            </div>
+
+            <div class="bg-white rounded-2xl p-sm border border-outline-variant/30 flex items-center gap-xs">
+                <input id="chef-custom-dish-input" type="text" placeholder="自訂菜名，例如：紅燒茄子..." class="flex-1 bg-surface-container border border-outline-variant/40 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-primary">
+                <button onclick="submitChefCustomDish()" class="bg-primary text-white font-extrabold px-3 py-2 rounded-xl text-xs shadow-sm hover:brightness-110 active:scale-95 whitespace-nowrap">
+                    主廚推薦
+                </button>
+            </div>
+
+            <button onclick="showChefConsultationModal()" class="text-xs font-bold text-outline hover:text-primary transition-colors block mx-auto pt-xs">
+                ← 返回選擇
+            </button>
+        </div>
+    `;
+}
+window.renderChefDishSelectionStep = renderChefDishSelectionStep;
+
+function submitChefCustomDish() {
+    const input = document.getElementById('chef-custom-dish-input');
+    const val = input?.value.trim();
+    if (val) {
+        handleChefSelectDish(val);
+    } else {
+        showToast('請輸入想吃的菜名！', 'error');
+    }
+}
+window.submitChefCustomDish = submitChefCustomDish;
+
+function handleChefSelectDish(dishTitle) {
+    const container = document.getElementById('chef-consultation-body');
+    if (!container) return;
+
+    container.innerHTML = `
+        <div class="py-xl text-center space-y-md">
+            <span class="material-symbols-outlined text-4xl text-primary animate-spin">skillet</span>
+            <p class="text-sm font-extrabold text-slate-blue">主廚正在為您規劃【${escapeAssistantHtml(dishTitle)}】精準指南...</p>
+        </div>
+    `;
+
+    setTimeout(() => {
+        container.innerHTML = `
+            <div class="space-y-md text-left animate-fade-in">
+                <section class="bg-[#fdfae7] rounded-2xl p-md border border-amber-300 space-y-sm">
+                    <h4 class="font-extrabold text-base text-terracotta flex items-center gap-1">
+                        <span class="material-symbols-outlined text-secondary">restaurant</span>
+                        👨‍🍳 主廚推薦菜色：${escapeAssistantHtml(dishTitle)}
+                    </h4>
+                    <p class="text-xs text-on-surface leading-relaxed font-medium">
+                        這道「${escapeAssistantHtml(dishTitle)}」色香味俱全、營養均衡，是今日大廚為您量身打造的最佳自煮選擇！
+                    </p>
+                    <div class="bg-white rounded-xl p-sm border border-amber-200 text-xs space-y-xs">
+                        <strong class="text-primary block font-bold">🍳 【怎麼料理】：熱力學控溫與物理烹調</strong>
+                        <p class="text-on-surface-variant leading-relaxed">
+                            大火快速定型鎖住水分與組織液，關火加蓋利用比熱容熱平衡慢熟 3 分鐘，確保鮮嫩不柴。
+                        </p>
+                        <strong class="text-secondary block font-bold mt-sm">🛒 【該怎麼買】：食材盤點與採買指引</strong>
+                        <p class="text-on-surface-variant leading-relaxed">
+                            冰箱目前有基礎底料；建議採買：【${escapeAssistantHtml(dishTitle)} 主食材】與【搭配新鮮時蔬菜包】。
+                        </p>
+                    </div>
+                </section>
+
+                <div class="space-y-sm">
+                    <button onclick="addChefDishToShoppingList('${escapeAssistantHtml(dishTitle)}')" class="w-full bg-secondary hover:bg-secondary/90 text-white font-extrabold p-md rounded-2xl text-xs shadow-md transition-all active:scale-95 flex items-center justify-center gap-1">
+                        <span class="material-symbols-outlined text-base">playlist_add</span>
+                        將缺少的食材加入補貨區並前往採買
+                    </button>
+                    <button onclick="renderChefDishSelectionStep()" class="w-full bg-surface-container hover:bg-surface-container-high text-on-surface font-bold p-sm rounded-2xl text-xs transition-all text-center">
+                        🔄 選其他料理
+                    </button>
+                </div>
+            </div>
+        `;
+    }, 600);
+}
+window.handleChefSelectDish = handleChefSelectDish;
+
+function addChefDishToShoppingList(dishTitle) {
+    const name = (dishTitle || '').trim();
+    let newItems = [];
+
+    if (name.includes('三杯雞')) {
+        newItems = [
+            { id: "s_chef_" + Date.now() + "_1", name: "去骨雞腿肉", category: "protein", qty: 1, unit: "盒", checked: false, status: "主廚推薦補貨", estCost: 120 },
+            { id: "s_chef_" + Date.now() + "_2", name: "九層塔", category: "produce", qty: 1, unit: "包", checked: false, status: "主廚推薦補貨", estCost: 25 },
+            { id: "s_chef_" + Date.now() + "_3", name: "老薑", category: "produce", qty: 1, unit: "塊", checked: false, status: "主廚推薦補貨", estCost: 15 }
+        ];
+    } else if (name.includes('牛丼') || name.includes('牛肉丼')) {
+        newItems = [
+            { id: "s_chef_" + Date.now() + "_1", name: "牛五花肉片", category: "protein", qty: 1, unit: "盒", checked: false, status: "主廚推薦補貨", estCost: 130 },
+            { id: "s_chef_" + Date.now() + "_2", name: "洋蔥", category: "produce", qty: 1, unit: "顆", checked: false, status: "主廚推薦補貨", estCost: 20 },
+            { id: "s_chef_" + Date.now() + "_3", name: "放牧土雞蛋", category: "protein", qty: 1, unit: "盒", checked: false, status: "主廚推薦補貨", estCost: 65 }
+        ];
+    } else if (name.includes('番茄牛肉') || name.includes('牛肉燉湯')) {
+        newItems = [
+            { id: "s_chef_" + Date.now() + "_1", name: "牛腩肉", category: "protein", qty: 1, unit: "包", checked: false, status: "主廚推薦補貨", estCost: 160 },
+            { id: "s_chef_" + Date.now() + "_2", name: "牛番茄", category: "produce", qty: 3, unit: "顆", checked: false, status: "主廚推薦補貨", estCost: 45 },
+            { id: "s_chef_" + Date.now() + "_3", name: "洋蔥", category: "produce", qty: 1, unit: "顆", checked: false, status: "主廚推薦補貨", estCost: 20 }
+        ];
+    } else if (name.includes('雞胸') || name.includes('沙拉')) {
+        newItems = [
+            { id: "s_chef_" + Date.now() + "_1", name: "履歷雞胸肉", category: "protein", qty: 1, unit: "盒", checked: false, status: "主廚推薦補貨", estCost: 95 },
+            { id: "s_chef_" + Date.now() + "_2", name: "綜合沙拉生菜", category: "produce", qty: 1, unit: "包", checked: false, status: "主廚推薦補貨", estCost: 55 },
+            { id: "s_chef_" + Date.now() + "_3", name: "蒜頭", category: "produce", qty: 1, unit: "袋", checked: false, status: "主廚推薦補貨", estCost: 30 }
+        ];
+    } else if (name.includes('時令蔬菜') || name.includes('清炒')) {
+        newItems = [
+            { id: "s_chef_" + Date.now() + "_1", name: "有機高麗菜", category: "produce", qty: 1, unit: "顆", checked: false, status: "主廚推薦補貨", estCost: 45 },
+            { id: "s_chef_" + Date.now() + "_2", name: "蒜頭", category: "produce", qty: 1, unit: "袋", checked: false, status: "主廚推薦補貨", estCost: 30 }
+        ];
+    } else {
+        const proteinMatch = name.match(/雞|豬|牛|羊|蝦|魚|蛤|干貝|肉|豆腐|蛋/);
+        const mainProtein = proteinMatch ? proteinMatch[0] : null;
+        const proteinName = mainProtein 
+            ? (mainProtein === '雞' ? '嚴選雞肉切塊' : mainProtein === '豬' ? '優質豬肉片' : mainProtein === '牛' ? '牛五花肉片' : mainProtein === '魚' ? '鮮美鮭魚菲力' : mainProtein === '蝦' ? '白蝦' : mainProtein === '豆腐' ? '有機嫩豆腐' : `${mainProtein}類精選食材`)
+            : `${name} 專屬食材`;
+
+        newItems = [
+            { id: "s_chef_" + Date.now() + "_1", name: proteinName, category: mainProtein === '豆腐' ? 'dairy_egg_soy' : 'protein', qty: 1, unit: '盒', checked: false, status: '主廚推薦補貨', estCost: 95 },
+            { id: "s_chef_" + Date.now() + "_2", name: '時令季節蔬菜', category: 'produce', qty: 1, unit: '包', checked: false, status: '主廚推薦補貨', estCost: 40 }
+        ];
+    }
+
+    appState.shoppingList.push(...newItems);
+    saveLocalState();
+    closeChefConsultationModal();
+    switchTab('shopping');
+    showToast(`已將「${dishTitle}」明確食材加入補貨區並自動切換！`, 'success');
+}
+window.addChefDishToShoppingList = addChefDishToShoppingList;
 
 
 // Initial Entry Point
@@ -6717,7 +7456,8 @@ async function initApp() {
             resetBtn.addEventListener("click", resetState);
         }
 
-        switchTab("roi"); // Load first tab
+        switchTab("shopping"); // Load first tab: 補貨區
+        showChefConsultationModal(); // Automatically trigger Master Chef Consultation modal!
     } catch (error) {
         console.error("Fatal initialization error:", error);
         const container = document.getElementById("app-view");

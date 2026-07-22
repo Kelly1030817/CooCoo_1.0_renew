@@ -1,16 +1,130 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import FridgeView from './components/FridgeView/FridgeView';
 import ShoppingView from './components/ShoppingView/ShoppingView';
 import KitchenView from './components/KitchenView/KitchenView';
 import RoiView from './components/RoiView/RoiView';
+import AiAssistantOnboarding from './components/AiAssistantOnboarding';
+import SettlementModal from './components/SettlementModal';
+import AddFridgeForm from './components/FridgeView/AddFridgeForm';
+import DevToolsPanel from './components/DevToolsPanel';
+import ToastContainer from './components/Common/ToastContainer';
+import { ToastProvider } from './context/ToastContext';
 import { defaultInventory, defaultFridgeProfile, defaultShoppingList, defaultDreams, defaultSavingsGoal } from './data/mockData';
 
-function App() {
-  const [activeTab, setActiveTab] = useState('fridge');
-  const [inventory, setInventory] = useState(defaultInventory);
+function AppContent() {
+  const [activeTab, setActiveTab] = useState('shopping');
+  
+  // Persistence for Inventory
+  const [inventory, setInventory] = useState(() => {
+    const saved = localStorage.getItem('coocoo_inventory');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error("Failed to parse saved inventory", e);
+      }
+    }
+    return defaultInventory;
+  });
+
   const [fridgeProfile, setFridgeProfile] = useState(defaultFridgeProfile);
   const [shoppingList, setShoppingList] = useState(defaultShoppingList);
+  
+  // Default showOnboarding to true on every reload as requested
+  const [showOnboarding, setShowOnboarding] = useState(true);
+  const [activeQuest, setActiveQuest] = useState(null);
+  const [preselectedItemIds, setPreselectedItemIds] = useState([]);
+  const [settlementData, setSettlementData] = useState(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+
+  // Save inventory to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('coocoo_inventory', JSON.stringify(inventory));
+  }, [inventory]);
+
+  const handleAcceptQuest = (quest) => {
+    setActiveQuest(quest);
+    if (quest.targetIngredientIds) {
+      setPreselectedItemIds(quest.targetIngredientIds);
+    }
+    setActiveTab('kitchen');
+    setShowOnboarding(false);
+  };
+
+  const handleSkipOnboarding = () => {
+    setShowOnboarding(false);
+  };
+
+  const handleFinishCooking = ({ recipe, selectedItemIds = [] }) => {
+    const consumedItems = inventory.filter(item => selectedItemIds.includes(item.id));
+    const consumedNames = consumedItems.map(item => item.name);
+
+    if (selectedItemIds.length > 0) {
+      setInventory(prev => prev.filter(item => !selectedItemIds.includes(item.id)));
+    }
+
+    setSettlementData({
+      questTitle: activeQuest ? activeQuest.title : null,
+      exp: activeQuest ? activeQuest.exp : 30,
+      savings: 120,
+      consumedNames,
+    });
+
+    setActiveQuest(null);
+    setPreselectedItemIds([]);
+  };
+
+  // DevTools Handlers
+  const handleAddTestItem = () => {
+    const testItems = [
+      { name: '雪花牛肉片', unit: '盒', chamber: 'cold', daysLeft: 4 },
+      { name: '希臘優格', unit: '罐', chamber: 'cold', daysLeft: 7 },
+      { name: '有機花椰菜', unit: '朵', chamber: 'cold', daysLeft: 5 },
+      { name: '鮭魚菲力', unit: '片', chamber: 'frozen', daysLeft: 20 },
+    ];
+    const picked = testItems[Math.floor(Math.random() * testItems.length)];
+    const newItem = {
+      id: `item-${Date.now()}`,
+      name: picked.name,
+      chamber: picked.chamber,
+      qty: 1,
+      unit: picked.unit,
+      daysLeft: picked.daysLeft,
+      boxSize: 'M',
+      addedDate: new Date().toISOString().split('T')[0],
+      roi: { savings: 60, sodium: 0, fat: 0 },
+    };
+    setInventory(prev => [newItem, ...prev]);
+  };
+
+  const handleAddExpiringItem = () => {
+    const newItem = {
+      id: `expiring-${Date.now()}`,
+      name: '即期九層塔',
+      chamber: 'cold',
+      qty: 1,
+      unit: '包',
+      daysLeft: 1,
+      boxSize: 'S',
+      addedDate: new Date().toISOString().split('T')[0],
+      roi: { savings: 20, sodium: 0, fat: 0 },
+    };
+    setInventory(prev => [newItem, ...prev]);
+  };
+
+  const handleClearInventory = () => {
+    setInventory([]);
+  };
+
+  const handleResetAll = () => {
+    setInventory(defaultInventory);
+    setShoppingList(defaultShoppingList);
+    setFridgeProfile(defaultFridgeProfile);
+    setActiveQuest(null);
+    setShowOnboarding(true);
+    localStorage.removeItem('coocoo_inventory');
+  };
 
   // Placeholder components for the 4 tabs
   const renderContent = () => {
@@ -21,6 +135,8 @@ function App() {
             inventory={inventory}
             setInventory={setInventory}
             fridgeProfile={fridgeProfile}
+            onOpenAddModal={() => setShowAddModal(true)}
+            onAcceptQuest={handleAcceptQuest}
           />
         );
       case 'shopping':
@@ -33,36 +149,120 @@ function App() {
           />
         );
       case 'kitchen':
-        return <KitchenView inventory={inventory} />;
+        return (
+          <KitchenView
+            inventory={inventory}
+            preselectedIds={preselectedItemIds}
+            activeQuest={activeQuest}
+            onFinishCooking={handleFinishCooking}
+          />
+        );
       case 'roi':
         return <RoiView dreams={defaultDreams} savingsGoal={defaultSavingsGoal} />;
       default:
-        return null;
+        return (
+          <FridgeView
+            inventory={inventory}
+            setInventory={setInventory}
+            fridgeProfile={fridgeProfile}
+            onOpenAddModal={() => setShowAddModal(true)}
+            onAcceptQuest={handleAcceptQuest}
+          />
+        );
     }
   };
 
   return (
     <div className="flex h-screen w-full bg-background overflow-hidden text-on-surface">
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+      <ToastContainer />
+      {/* Onboarding Modal */}
+      {showOnboarding && (
+        <AiAssistantOnboarding
+          inventory={inventory}
+          onAcceptQuest={handleAcceptQuest}
+          onAddShoppingItems={(items) => {
+            const formatted = items.map((item, idx) => ({
+              id: `s_chef_${Date.now()}_${idx}`,
+              name: item.name,
+              category: item.category || 'produce',
+              qty: item.qty || 1,
+              unit: item.unit || '包',
+              checked: false,
+              status: '主廚推薦補貨',
+              estCost: item.estCost || 80
+            }));
+            setShoppingList(prev => [...formatted, ...prev]);
+          }}
+          onGoShopping={() => {
+            setActiveTab('shopping');
+            setShowOnboarding(false);
+          }}
+          onSkip={handleSkipOnboarding}
+        />
+      )}
+
+      {/* Settlement Rewards Modal */}
+      {settlementData && (
+        <SettlementModal
+          data={settlementData}
+          onClose={() => setSettlementData(null)}
+        />
+      )}
+
+      {/* Global Add Ingredient Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center backdrop-blur-sm px-4">
+          <div className="w-full max-w-2xl bg-white rounded-3xl p-6 shadow-2xl animate-fade-in relative max-h-[90vh] overflow-y-auto">
+            <AddFridgeForm
+              onAdd={(newItem) => {
+                setInventory(prev => [newItem, ...prev]);
+                setShowAddModal(false);
+              }}
+              onCancel={() => setShowAddModal(false)}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Developer & Debug Sandbox Toolbar */}
+      <DevToolsPanel
+        onTriggerOnboarding={() => setShowOnboarding(true)}
+        onAddTestItem={handleAddTestItem}
+        onAddExpiringItem={handleAddExpiringItem}
+        onClearInventory={handleClearInventory}
+        onResetAll={handleResetAll}
+      />
+
+      <Sidebar 
+        activeTab={activeTab} 
+        setActiveTab={setActiveTab} 
+        onOpenChefConsultation={() => setShowOnboarding(true)}
+      />
       
       <main className="flex-1 p-lg overflow-y-auto">
-        <header className="mb-lg flex justify-between items-center">
-          <div>
-            <h2 className="text-3xl font-extrabold text-slate-blue">
-              {activeTab === 'fridge' && '冰箱庫存'}
-              {activeTab === 'shopping' && '每週採買'}
-              {activeTab === 'kitchen' && '開始下廚'}
-              {activeTab === 'roi' && '圓夢進度'}
-            </h2>
-            <p className="text-on-surface-variant text-sm mt-xs">
-              Welcome back to your modern hearth.
-            </p>
+        {/* Active Quest HUD Banner */}
+        {activeQuest && (
+          <div className="mb-md flex items-center justify-between bg-amber-50 border-2 border-primary/30 rounded-2xl p-md shadow-sm animate-fade-in">
+            <div className="flex items-center gap-3">
+              <span className="material-symbols-outlined text-primary text-2xl">stars</span>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-extrabold text-slate-blue text-sm">🎯 進行中任務：{activeQuest.title}</span>
+                  <span className="bg-emerald-100 text-emerald-700 text-xs font-bold px-2 py-0.5 rounded-full">EXP +{activeQuest.exp}</span>
+                </div>
+                <p className="text-xs text-on-surface-variant mt-0.5">{activeQuest.description}</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setActiveQuest(null)}
+              className="text-xs font-bold text-outline hover:text-terracotta transition-colors px-2 py-1"
+            >
+              放棄任務
+            </button>
           </div>
-          <button className="bg-white border-2 border-outline-variant px-md py-sm rounded-xl font-bold text-terracotta hover:border-terracotta transition-colors shadow-sm">
-            <span className="material-symbols-outlined text-lg align-bottom mr-xs">add</span>
-            新增食材
-          </button>
-        </header>
+        )}
+
+
         
         {/* Main Content Area */}
         <div className="h-[calc(100%-80px)]">
@@ -70,6 +270,14 @@ function App() {
         </div>
       </main>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <ToastProvider>
+      <AppContent />
+    </ToastProvider>
   );
 }
 

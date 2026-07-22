@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import CapacityCard from './CapacityCard';
 import UrgentBanner from './UrgentBanner';
-import AddFridgeForm from './AddFridgeForm';
 import FridgeItem from './FridgeItem';
+import EditFridgeItemModal from './EditFridgeItemModal';
 import RescueDecisionCenter from './RescueDecisionCenter';
 
 const FridgeView = ({ inventory, setInventory, fridgeProfile }) => {
-  const [showAddForm, setShowAddForm] = useState(false);
+  const [editingItem, setEditingItem] = useState(null);
 
   // Computed state
   const urgentItems = inventory.filter(item => item.daysLeft <= 1 && item.chamber === 'cold');
@@ -15,9 +15,9 @@ const FridgeView = ({ inventory, setInventory, fridgeProfile }) => {
   const rescueCandidates = inventory.filter(item => item.daysLeft <= 3 && item.chamber === 'cold');
 
   // Handlers
-  const handleAddItem = (newItem) => {
-    setInventory([...inventory, newItem]);
-    setShowAddForm(false);
+  const handleSaveItem = (updatedItem) => {
+    setInventory(inventory.map(item => item.id === updatedItem.id ? updatedItem : item));
+    setEditingItem(null);
   };
 
   const handleDiscardItem = (id) => {
@@ -46,27 +46,7 @@ const FridgeView = ({ inventory, setInventory, fridgeProfile }) => {
     <div className="space-y-lg max-w-5xl mx-auto pb-24">
       <CapacityCard profile={fridgeProfile} inventoryLength={inventory.length} />
 
-      {/* Header & Action Section */}
-      <section className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-md">
-        <div>
-          <h2 className="text-3xl font-extrabold text-primary">冰箱沙漏</h2>
-          <p className="text-on-surface-variant text-sm mt-1">隨時掌控保鮮期限，消滅食物浪費支出。</p>
-        </div>
-        <div className="flex gap-sm w-full sm:w-auto">
-          <button
-            onClick={() => setShowAddForm(!showAddForm)}
-            className="bg-primary hover:brightness-110 text-white font-bold px-4 py-2 rounded-full text-sm shadow-md transition-all active:scale-95 flex items-center gap-1"
-          >
-            <span className="material-symbols-outlined text-lg">{showAddForm ? 'close' : 'add'}</span>
-            {showAddForm ? '取消新增' : '新增食材'}
-          </button>
-        </div>
-      </section>
 
-      {/* Add Form */}
-      {showAddForm && (
-        <AddFridgeForm onAdd={handleAddItem} onCancel={() => setShowAddForm(false)} />
-      )}
 
       {/* Urgent Banner */}
       <UrgentBanner urgentItems={urgentItems} />
@@ -86,12 +66,12 @@ const FridgeView = ({ inventory, setInventory, fridgeProfile }) => {
             <div className="flex-1 flex flex-col items-center justify-center text-center p-xl">
               <span className="material-symbols-outlined text-outline-variant text-[64px] mb-2">kitchen</span>
               <p className="text-sm font-semibold text-on-surface-variant">冷藏室空空的...</p>
-              <p className="text-xs text-outline mt-1">點擊上方按鈕手動新增，或在補貨區確認補貨！</p>
+              <p className="text-xs text-outline mt-1">前往補貨區採買，確認後自動移入冷藏庫存！</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-md">
               {coldItems.map(item => (
-                <FridgeItem key={item.id} item={item} />
+                <FridgeItem key={item.id} item={item} onEdit={(selected) => setEditingItem(selected)} />
               ))}
             </div>
           )}
@@ -115,7 +95,7 @@ const FridgeView = ({ inventory, setInventory, fridgeProfile }) => {
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-md">
               {frozenItems.map(item => (
-                <FridgeItem key={item.id} item={item} />
+                <FridgeItem key={item.id} item={item} onEdit={(selected) => setEditingItem(selected)} />
               ))}
             </div>
           )}
@@ -128,6 +108,15 @@ const FridgeView = ({ inventory, setInventory, fridgeProfile }) => {
         onDiscard={handleDiscardItem}
         onRescue={handleRescueAction}
       />
+
+      {/* Edit Fridge Item Modal */}
+      {editingItem && (
+        <EditFridgeItemModal
+          item={editingItem}
+          onSave={handleSaveItem}
+          onClose={() => setEditingItem(null)}
+        />
+      )}
     </div>
   );
 };

@@ -1,15 +1,19 @@
 import React from 'react';
 
-const FridgeItem = ({ item, isKitchenMode = false, isSelected = false, onToggleSelect }) => {
+const FridgeItem = ({ item, isKitchenMode = false, isSelected = false, isTaskTarget = false, onToggleSelect, onEdit }) => {
   const isUrgent = item.daysLeft <= 1;
   const isSuperLong = item.daysLeft > 30;
   const isFresh = item.daysLeft > 7;
 
-  let containerClass = "rounded-2xl p-3 relative flex flex-col shadow-sm hover:shadow transition-shadow group cursor-pointer ";
+  let containerClass = "rounded-2xl p-3 relative flex flex-col shadow-sm hover:shadow transition-all group cursor-pointer ";
   let statusText = "";
   let statusClass = "";
 
-  if (isKitchenMode && isSelected) {
+  if (isTaskTarget) {
+    containerClass += "border-2 border-amber-500 bg-amber-50/80 ring-4 ring-amber-400/50 scale-[0.98] shadow-md ";
+    statusText = item.daysLeft <= 1 ? (item.daysLeft === 0 ? "今天到期" : "明天到期") : `剩餘 ${item.daysLeft} 天`;
+    statusClass = "text-amber-700 font-extrabold";
+  } else if (isKitchenMode && isSelected) {
     containerClass += "border-2 border-secondary bg-secondary/15 ring-2 ring-secondary/20 scale-[0.98]";
     statusText = item.daysLeft <= 1 ? (item.daysLeft === 0 ? "今天到期" : "明天到期") : (item.daysLeft >= 30 ? `剩餘 ${Math.ceil(item.daysLeft / 30)} 個月` : `剩餘 ${item.daysLeft} 天`);
     statusClass = "text-secondary font-bold";
@@ -34,12 +38,32 @@ const FridgeItem = ({ item, isKitchenMode = false, isSelected = false, onToggleS
   const handleClick = (e) => {
     if (isKitchenMode && onToggleSelect) {
       onToggleSelect(item.id);
+    } else if (!isKitchenMode && onEdit) {
+      onEdit(item);
     }
-    // Normal fridge mode click goes here (e.g. open details)
   };
 
   return (
     <div className={containerClass} onClick={handleClick}>
+      {/* Top-Left Circular Edit Icon Button */}
+      {!isKitchenMode && onEdit && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit(item);
+          }}
+          className="absolute top-2 left-2 w-6 h-6 rounded-full bg-white/90 hover:bg-slate-blue hover:text-white text-slate-blue border border-slate-blue/20 shadow-sm flex items-center justify-center transition-all active:scale-90 z-10"
+          title="編輯食材"
+        >
+          <span className="material-symbols-outlined text-[13px]">edit</span>
+        </button>
+      )}
+
+      {isTaskTarget && (
+        <span className="absolute -top-2 -left-2 bg-gradient-to-r from-amber-500 to-primary text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-md z-10 flex items-center gap-0.5">
+          🎯 任務食材
+        </span>
+      )}
       {item.boxSize && item.boxSize !== '無' && (
         <span className="absolute top-2 right-2 bg-slate-blue/10 text-slate-blue text-[9px] font-extrabold px-1.5 py-0.5 rounded-full border border-slate-blue/10">
           盒:{item.boxSize}

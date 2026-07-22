@@ -30,6 +30,10 @@
                 <h1 class="text-base sm:text-xl font-extrabold text-primary tracking-wide whitespace-nowrap">CooCoo 煮煮</h1>
             </div>
             <div class="flex items-center gap-xs sm:gap-sm shrink-0">
+                <button onclick="showChefConsultationModal()" title="主廚相談室" aria-label="主廚相談室" class="bg-amber-500/10 hover:bg-amber-500 text-amber-800 hover:text-white border border-amber-500/30 px-3 py-1.5 rounded-full font-extrabold text-xs transition-all active:scale-95 flex items-center gap-1">
+                    <span class="material-symbols-outlined text-lg">restaurant_menu</span>
+                    主廚相談室 👨‍🍳
+                </button>
                 <button onclick="renderCookwareSetup()" title="廚房裝備設定" aria-label="廚房裝備設定" class="text-on-surface-variant hover:bg-surface-container-high/40 p-2 rounded-full transition-colors active:scale-95 duration-150 flex items-center justify-center focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20">
                     <span class="material-symbols-outlined text-xl">skillet</span>
                 </button>
@@ -52,10 +56,12 @@
     <!-- Bottom Navigation Bar -->
     <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-outline-variant/30 shadow-lg z-50">
         <div class="max-w-[600px] mx-auto flex justify-around items-center h-16 px-md">
-            <!-- Tab: ROI Board -->
-            <button id="nav-roi" onclick="switchTab('roi')" class="flex flex-col items-center justify-center w-20 h-full text-on-surface-variant hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20">
-                <span class="material-symbols-outlined text-2xl transition-transform duration-200">savings</span>
-                <span class="text-[11px] font-bold mt-1">圓夢看板</span>
+            <!-- Tab: Sunday Shopping Matrix -->
+            <button id="nav-shopping" onclick="switchTab('shopping')" class="flex flex-col items-center justify-center w-20 h-full text-on-surface-variant hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 relative">
+                <span class="material-symbols-outlined text-2xl transition-transform duration-200">shopping_cart</span>
+                <span class="text-[11px] font-bold mt-1">補貨區</span>
+                <!-- Badge for shopping items count -->
+                <span id="shopping-badge" class="absolute top-1 right-4 bg-terracotta text-white text-[9px] font-extrabold w-4.5 h-4.5 flex items-center justify-center rounded-full border border-white hidden">0</span>
             </button>
 
             <!-- Tab: Fridge Hourglass -->
@@ -72,14 +78,11 @@
                 <span class="text-[11px] font-bold mt-1">小廚房</span>
             </button>
 
-            <!-- Tab: Sunday Shopping Matrix -->
-            <button id="nav-shopping" onclick="switchTab('shopping')" class="flex flex-col items-center justify-center w-20 h-full text-on-surface-variant hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 relative">
-                <span class="material-symbols-outlined text-2xl transition-transform duration-200">shopping_cart</span>
-                <span class="text-[11px] font-bold mt-1">補貨區</span>
-                <!-- Badge for shopping items count -->
-                <span id="shopping-badge" class="absolute top-1 right-4 bg-terracotta text-white text-[9px] font-extrabold w-4.5 h-4.5 flex items-center justify-center rounded-full border border-white hidden">0</span>
+            <!-- Tab: ROI Board -->
+            <button id="nav-roi" onclick="switchTab('roi')" class="flex flex-col items-center justify-center w-20 h-full text-on-surface-variant hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20">
+                <span class="material-symbols-outlined text-2xl transition-transform duration-200">savings</span>
+                <span class="text-[11px] font-bold mt-1">圓夢看板</span>
             </button>
-
         </div>
     </nav>
 
