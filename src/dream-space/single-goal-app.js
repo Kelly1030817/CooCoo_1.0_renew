@@ -258,8 +258,86 @@
         return `<section class="rounded-3xl border border-outline-variant/30 bg-white p-lg shadow-sm"><p class="text-[10px] font-extrabold text-secondary">完成紀錄</p><h3 class="mt-1 text-lg font-extrabold text-slate-blue">走過的目標</h3><div class="mt-md space-y-sm">${state.archivedGoals.slice(0, 5).map((goal) => `<div class="flex items-center justify-between gap-md rounded-2xl bg-surface-container-low p-md"><div class="min-w-0"><strong class="block truncate text-sm text-slate-blue">${escapeHtml(goal.name)}</strong><span class="text-[10px] text-outline">完成於 ${escapeHtml((goal.completedAt || "").slice(0, 10))}</span></div><span class="shrink-0 text-xs font-bold text-secondary">${formatMoney(goal.finalSavedAmount || goal.targetAmount)}</span></div>`).join("")}</div></section>`;
     }
 
+    const BASELINE_KEY = "coocoo.single-goal.baseline-plan.v1";
+
+    function getSavedBaselinePlan() {
+        try {
+            const saved = JSON.parse(localStorage.getItem(BASELINE_KEY) || "null");
+            if (saved && saved.targetAmount > 0) return saved;
+        } catch (e) {
+            console.warn("無法讀取基準計畫，使用標準預設值", e);
+        }
+        return {
+            purpose: "travel",
+            name: "日本旅行",
+            targetAmount: 30000,
+            currentSavedAmount: 7500,
+            targetDate: "2026-12-31",
+            homeCookBudget: 90,
+            weeklyCookingMeals: 3,
+            eatingOutMeals: 7,
+            eatingOutTotal: 1050,
+            directEatingOutCost: 150,
+            shortPercent: 25,
+            mediumPercent: 60,
+            shortLabel: "啟動準備",
+            mediumLabel: "機票半數",
+            longLabel: "完成日本旅行"
+        };
+    }
+
+    function persistBaselinePlan(goal, cookingPlan, savedAmount) {
+        if (!goal || !cookingPlan) return;
+        const baseline = {
+            purpose: goal.purpose || "travel",
+            name: goal.name || "日本旅行",
+            targetAmount: Number(goal.targetAmount) || 30000,
+            currentSavedAmount: Number.isFinite(savedAmount) ? savedAmount : 7500,
+            targetDate: goal.targetDate || "2026-12-31",
+            homeCookBudget: Number(cookingPlan.homeCookBudget) || 90,
+            weeklyCookingMeals: Number(cookingPlan.weeklyCookingMeals) || 3,
+            eatingOutMeals: Number(cookingPlan.eatingOutMeals) || 7,
+            eatingOutTotal: Number(cookingPlan.eatingOutTotal) || 1050,
+            directEatingOutCost: Number(cookingPlan.eatingOutCost) || 150,
+            shortPercent: goal.milestones?.[0]?.percent || 25,
+            mediumPercent: goal.milestones?.[1]?.percent || 60,
+            shortLabel: goal.milestones?.[0]?.label || "啟動準備",
+            mediumLabel: goal.milestones?.[1]?.label || "機票半數",
+            longLabel: goal.milestones?.[2]?.label || "完成日本旅行"
+        };
+        try {
+            localStorage.setItem(BASELINE_KEY, JSON.stringify(baseline));
+        } catch (e) {
+            console.warn("無法寫入基準計畫", e);
+        }
+    }
+
+    function ensureTestActiveGoal(completed = false) {
+        if (!state.activeGoal) {
+            const baselineDraft = getSavedBaselinePlan();
+            if (completed) {
+                baselineDraft.currentSavedAmount = baselineDraft.targetAmount;
+            }
+            const result = domain.createGoalFromDraft(baselineDraft, {
+                id: globalScope.crypto?.randomUUID?.() || `goal_${Date.now()}`
+            });
+            state.activeGoal = result.goal;
+            state.cookingPlan = result.cookingPlan;
+            state.amountEvents.push(result.openingEvent);
+        }
+        if (completed && state.activeGoal) {
+            state.activeGoal.status = "completed";
+            state.activeGoal.completedAt = state.activeGoal.completedAt || new Date().toISOString();
+        }
+        const goalEvents = state.amountEvents.filter((event) => event.goalId === state.activeGoal.id);
+        const currentSaved = domain.calculateCurrentSaved(goalEvents);
+        persistBaselinePlan(state.activeGoal, state.cookingPlan, currentSaved);
+        persistState();
+    }
+
     function openCompletionPrompt() {
-        if (!state.activeGoal || state.activeGoal.status !== "completed" || document.getElementById("single-goal-completed")) return;
+        ensureTestActiveGoal(true);
+        document.getElementById("single-goal-completed")?.remove();
         const modal = document.createElement("div");
         modal.id = "single-goal-completed";
         modal.className = "fixed inset-0 z-[90] flex items-end justify-center bg-black/55 p-sm backdrop-blur-sm sm:items-center";
@@ -306,6 +384,8 @@
 
     function openSettings() {
         closeSettings();
+        ensureTestActiveGoal(false);
+        if (!state.activeGoal || !state.cookingPlan) return;
         const goalEvents = state.amountEvents.filter((event) => event.goalId === state.activeGoal.id);
         const saved = domain.calculateCurrentSaved(goalEvents);
         const modal = document.createElement("div");
@@ -391,6 +471,7 @@
         state.cookingPlan.weeklyCookingMeals = weeklyCookingMeals;
         state.cookingPlan.estimatedSavingPerMeal = domain.calculateEstimatedSaving(state.cookingPlan.eatingOutCost, homeCookBudget);
         state.cookingPlan.updatedAt = new Date().toISOString();
+        persistBaselinePlan(state.activeGoal, state.cookingPlan, desiredSaved);
         persistState();
         closeSettings();
         renderActive();
@@ -667,17 +748,45 @@
     }
 
     function renderMilestoneStep() {
-        const result = domain.createMilestones(draft.targetAmount, draft);
+        if (draft && draft.name) {
+            draft.longLabel = draft.name.startsWith("完成") ? draft.name : `完成${draft.name}`;
+        }
+        draft.shortPercent = 25;
+        draft.mediumPercent = 60;
+        draft.shortLabel = draft.shortLabel || "先完成第一筆累積";
+        draft.mediumLabel = draft.mediumLabel || "穩定存到一半以上";
+
+        const shortAmount = Math.round((draft.targetAmount || 0) * 0.25);
+        const mediumAmount = Math.round((draft.targetAmount || 0) * 0.60);
+
         return `
             <div>
                 <p class="text-xs font-extrabold text-secondary">同一個終極夢想的三個階段</p>
-                <h3 class="mt-1 text-xl font-extrabold text-slate-blue">系統先分段，你可以改名稱與門檻</h3>
+                <h3 class="mt-1 text-xl font-extrabold text-slate-blue">系統預設分段與累積門檻</h3>
                 <div class="mt-md space-y-sm">
-                    <div class="rounded-2xl border border-outline-variant/40 p-md grid grid-cols-[1fr_90px] gap-sm items-end"><label class="text-xs font-bold text-on-surface-variant">短期名稱<input id="sg-short-label" class="${fieldClass()}" value="${escapeHtml(draft.shortLabel)}"></label><label class="text-xs font-bold text-on-surface-variant">短期比例<input id="sg-short-percent" class="${fieldClass()}" type="number" inputmode="numeric" min="1" max="98" value="${draft.shortPercent}"></label></div>
-                    <div class="rounded-2xl border border-outline-variant/40 p-md grid grid-cols-[1fr_90px] gap-sm items-end"><label class="text-xs font-bold text-on-surface-variant">中期名稱<input id="sg-medium-label" class="${fieldClass()}" value="${escapeHtml(draft.mediumLabel)}"></label><label class="text-xs font-bold text-on-surface-variant">中期比例<input id="sg-medium-percent" class="${fieldClass()}" type="number" inputmode="numeric" min="2" max="99" value="${draft.mediumPercent}"></label></div>
-                    <div class="rounded-2xl border border-primary/20 bg-primary/5 p-md"><span class="text-xs font-bold text-on-surface-variant">長期 100%</span><strong class="mt-1 block text-sm text-slate-blue">${escapeHtml(draft.longLabel)}</strong><span class="text-[11px] text-outline">${formatMoney(draft.targetAmount)}</span></div>
+                    <div class="rounded-2xl border border-outline-variant/40 bg-white p-md flex justify-between items-center shadow-xs">
+                        <div>
+                            <span class="text-xs font-bold text-secondary">短期 25%</span>
+                            <strong class="mt-0.5 block text-sm text-slate-blue">${escapeHtml(draft.shortLabel)}</strong>
+                        </div>
+                        <span class="text-xs font-extrabold text-slate-blue">${formatMoney(shortAmount)}</span>
+                    </div>
+                    <div class="rounded-2xl border border-outline-variant/40 bg-white p-md flex justify-between items-center shadow-xs">
+                        <div>
+                            <span class="text-xs font-bold text-secondary">中期 60%</span>
+                            <strong class="mt-0.5 block text-sm text-slate-blue">${escapeHtml(draft.mediumLabel)}</strong>
+                        </div>
+                        <span class="text-xs font-extrabold text-slate-blue">${formatMoney(mediumAmount)}</span>
+                    </div>
+                    <div class="rounded-2xl border border-primary/20 bg-primary/5 p-md flex justify-between items-center">
+                        <div>
+                            <span class="text-xs font-bold text-primary">長期 100%</span>
+                            <strong class="mt-0.5 block text-sm text-slate-blue">${escapeHtml(draft.longLabel)}</strong>
+                        </div>
+                        <span class="text-xs font-extrabold text-primary">${formatMoney(draft.targetAmount)}</span>
+                    </div>
                 </div>
-                ${result.errors.length ? `<p class="mt-sm text-xs font-bold text-error">${escapeHtml(result.errors.join(" "))}</p>` : `<p class="mt-sm text-[11px] text-on-surface-variant">三個數字是累積門檻，不會相加成新的總額。</p>`}
+                <p class="mt-sm text-[11px] text-on-surface-variant">三個數字為系統預設累積門檻，不會相加成新的總額。</p>
             </div>`;
     }
 
@@ -710,6 +819,9 @@
             if (!draft.name) errorMessage = "請輸入目標名稱。";
             else if (!Number.isFinite(draft.targetAmount) || draft.targetAmount <= 0) errorMessage = "目標金額必須大於 0 元。";
             else if (!Number.isFinite(draft.currentSavedAmount) || draft.currentSavedAmount < 0) errorMessage = "目前已存金額不能小於 0 元。";
+            if (!errorMessage) {
+                draft.longLabel = draft.name.startsWith("完成") ? draft.name : `完成${draft.name}`;
+            }
         } else if (step === 2) {
             draft.eatingOutMeals = Number(document.getElementById("sg-eating-meals")?.value);
             draft.eatingOutTotal = Number(document.getElementById("sg-eating-total")?.value);
@@ -727,13 +839,13 @@
             if (!Number.isFinite(draft.homeCookBudget) || draft.homeCookBudget < 0) errorMessage = "每餐自煮預算不能小於 0。";
             else if (!Number.isInteger(draft.weeklyCookingMeals) || draft.weeklyCookingMeals < 0 || draft.weeklyCookingMeals > 21) errorMessage = "每週自煮餐數請填 0 到 21 的整數。";
         } else if (step === 5) {
-            draft.shortLabel = document.getElementById("sg-short-label")?.value.trim() || "短期累積";
-            draft.mediumLabel = document.getElementById("sg-medium-label")?.value.trim() || "中期累積";
-            draft.shortPercent = Number(document.getElementById("sg-short-percent")?.value);
-            draft.mediumPercent = Number(document.getElementById("sg-medium-percent")?.value);
-            const validation = domain.validateMilestonePercents(draft.shortPercent, draft.mediumPercent);
-            if (!validation.valid) errorMessage = validation.errors.join(" ");
-            draft.longLabel = `完成${draft.name}`;
+            draft.shortPercent = 25;
+            draft.mediumPercent = 60;
+            draft.shortLabel = draft.shortLabel || "先完成第一筆累積";
+            draft.mediumLabel = draft.mediumLabel || "穩定存到一半以上";
+            if (draft.name) {
+                draft.longLabel = draft.name.startsWith("完成") ? draft.name : `完成${draft.name}`;
+            }
         }
         return !errorMessage;
     }
@@ -798,6 +910,7 @@
         setMealDeposit,
         updateMealEstimate,
         confirmMealDeposit,
+        openCompletionPrompt,
         dismissCompletionPrompt,
         startNextGoal,
         exportLegacyDreams,

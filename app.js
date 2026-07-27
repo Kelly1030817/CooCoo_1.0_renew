@@ -3622,11 +3622,8 @@ function renderSundayShopping(container) {
     container.innerHTML = `
         <div class="space-y-lg">
             <!-- Header Section -->
-            <section class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-md">
-                <div>
-                    <h2 class="font-headline-lg text-3xl font-extrabold text-secondary">小廚房採購單</h2>
-                </div>
-                <div class="flex items-center gap-2 flex-wrap">
+            <section class="space-y-md">
+                <div class="flex items-center justify-end gap-2 flex-wrap">
                     <button onclick="runAIRestockAnalysis()" class="bg-amber-600 hover:bg-amber-700 text-white font-extrabold px-3 py-2 rounded-full text-xs shadow-sm transition-all active:scale-95 flex items-center gap-1" title="AI 智慧庫存分析與補貨精算">
                         <span class="material-symbols-outlined text-[18px]">auto_awesome</span> AI 庫存補貨精算
                     </button>
@@ -3642,6 +3639,54 @@ function renderSundayShopping(container) {
                     <button onclick="toggleAddShoppingForm()" class="bg-[#be5f48]/10 hover:bg-[#be5f48]/20 border border-[#be5f48]/30 text-[#be5f48] font-bold px-lg py-sm rounded-full text-xs shadow-sm transition-all active:scale-95 flex items-center gap-1">
                         <span class="material-symbols-outlined text-lg">add</span> 手動新增
                     </button>
+                </div>
+
+                <!-- Lean Health Guide Widget (Dynamic Visual Gauge - Moved to Top Header) -->
+                <div class="w-full bg-gradient-to-r from-[#81b29a]/10 via-white to-[#e07a5f]/10 rounded-2xl p-md border border-outline-variant/30 shadow-sm space-y-3">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-xl text-[#386753]">health_metrics</span>
+                            <div>
+                                <strong class="font-extrabold text-sm text-[#386753]">精益健康指南 · 每週 5 蔬 3 蛋白缺口精算</strong>
+                                <p class="text-xs text-on-surface-variant/70 font-medium">比對冷藏庫存與採買清單，自動算出膳食營養覆蓋率</p>
+                            </div>
+                        </div>
+                        <span class="px-3 py-1 rounded-full text-xs font-black bg-[#81b29a]/20 text-[#386753] border border-[#81b29a]/40 shadow-xs">
+                            ${(vegCount >= 5 && protCount >= 3) ? '🎉 本週膳食纖維與蛋白全數達標！' : `膳食覆蓋率 ${Math.round(((Math.min(5, vegCount)/5 + Math.min(3, protCount)/3)/2)*100)}%`}
+                        </span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-md pt-1">
+                        <!-- Veg Gauge -->
+                        <div class="bg-white p-sm rounded-xl border border-outline-variant/20 space-y-1">
+                            <div class="flex justify-between items-center text-xs font-extrabold text-slate-blue">
+                                <span class="flex items-center gap-1 text-[#386753]"><span class="material-symbols-outlined text-sm">eco</span> 蔬菜 (目標 5 種)</span>
+                                <span class="text-[#386753] font-black">${vegCount} / 5 種</span>
+                            </div>
+                            <div class="w-full h-2.5 bg-surface-container rounded-full overflow-hidden p-0.5">
+                                <div class="h-full bg-gradient-to-r from-[#81b29a] to-[#386753] rounded-full transition-all duration-500" style="width: ${Math.min(100, Math.round((vegCount/5)*100))}%;"></div>
+                            </div>
+                            <div class="flex justify-between items-center text-[10px] font-bold">
+                                <span class="text-outline">包含庫存與待採買</span>
+                                ${vegShortage > 0 ? `<span class="text-[#be5f48] bg-[#e07a5f]/15 px-2 py-0.5 rounded-full">還差 ${vegShortage} 種</span>` : '<span class="text-[#386753] bg-[#81b29a]/20 px-2 py-0.5 rounded-full">已達標!</span>'}
+                            </div>
+                        </div>
+
+                        <!-- Protein Gauge -->
+                        <div class="bg-white p-sm rounded-xl border border-outline-variant/20 space-y-1">
+                            <div class="flex justify-between items-center text-xs font-extrabold text-slate-blue">
+                                <span class="flex items-center gap-1 text-[#be5f48]"><span class="material-symbols-outlined text-sm">egg</span> 蛋白質 (目標 3 種)</span>
+                                <span class="text-[#be5f48] font-black">${protCount} / 3 種</span>
+                            </div>
+                            <div class="w-full h-2.5 bg-surface-container rounded-full overflow-hidden p-0.5">
+                                <div class="h-full bg-gradient-to-r from-[#e07a5f] to-[#9a442d] rounded-full transition-all duration-500" style="width: ${Math.min(100, Math.round((protCount/3)*100))}%;"></div>
+                            </div>
+                            <div class="flex justify-between items-center text-[10px] font-bold">
+                                <span class="text-outline">包含庫存與待採買</span>
+                                ${protShortage > 0 ? `<span class="text-[#be5f48] bg-[#e07a5f]/15 px-2 py-0.5 rounded-full">還差 ${protShortage} 種</span>` : '<span class="text-[#386753] bg-[#81b29a]/20 px-2 py-0.5 rounded-full">已達標!</span>'}
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -3771,35 +3816,6 @@ function renderSundayShopping(container) {
                             `}
                         </div>
 
-                        <!-- Lean Health Guide Banner (as a permanent reminder right above the footer button with shimmer effect) -->
-                        <div class="px-lg pb-md">
-                            <div class="w-full bg-[#81b29a]/10 border border-[#81b29a]/35 rounded-2xl p-md text-xs text-[#386753] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-md shadow-sm">
-                                <div class="flex items-start gap-md">
-                                    <span class="material-symbols-outlined text-xl text-[#386753] fill animate-pulse">restaurant</span>
-                                    <div class="space-y-xs">
-                                        <strong class="font-extrabold text-sm text-[#386753]">精益健康指南</strong>
-                                        <p class="font-bold leading-relaxed text-on-surface-variant/80">
-                                            每週建議備齊 <span class="text-xl font-black text-[#be5f48] mx-0.5">5</span> 種蔬菜 ＋ <span class="text-xl font-black text-[#be5f48] mx-0.5">3</span> 種優質蛋白與乳品。<br>交給 AI 大廚魔術搭配，營養全照顧！
-                                        </p>
-                                    </div>
-                                </div>
-                                <div class="w-full sm:w-auto flex flex-col gap-1.5 bg-[#81b29a]/20 p-sm rounded-xl border border-[#81b29a]/30 min-w-[190px] text-[13px] font-black tracking-wide">
-                                    <div class="flex items-center justify-between w-full gap-3">
-                                        <div class="flex items-center gap-xs">
-                                            <span class="tracking-wide">蔬菜:</span>
-                                            <span class="text-slate-blue tracking-wide">${vegCount}</span>
-                                        </div>
-                                        ${vegShortage > 0 ? `<span class="text-[#be5f48] font-black">(還差 ${vegShortage} 種)</span>` : '<span class="text-[#386753]">(已達標!)</span>'}
-                                    </div>
-                                    <div class="flex items-center justify-between w-full gap-3">
-                                        <div class="flex items-center gap-xs">
-                                            <span class="tracking-wide">蛋白質:</span>
-                                            <span class="text-slate-blue tracking-wide">${protCount}</span>
-                                        </div>
-                                        ${protShortage > 0 ? `<span class="text-[#be5f48] font-black">(還差 ${protShortage} 種)</span>` : '<span class="text-[#386753]">(已達標!)</span>'}
-                                    </div>
-                                </div>
-                            </div>
                         </div>
 
                         <!-- Footer Calculator inside Checklist Card -->
@@ -3819,13 +3835,39 @@ function renderSundayShopping(container) {
                         ` : ''}
                     </div>
 
+                    <!-- Sticky Bottom Restock Bar for Mobile/Quick Access -->
+                    ${list.length > 0 ? `
+                        <div class="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-outline-variant/30 p-3 sm:px-6 shadow-2xl transition-all">
+                            <div class="max-w-7xl mx-auto flex items-center justify-between gap-md">
+                                <div class="flex items-center gap-md">
+                                    <div class="w-10 h-10 rounded-2xl bg-[#386753]/15 text-[#386753] flex items-center justify-center font-black">
+                                        <span class="material-symbols-outlined text-xl">shopping_bag</span>
+                                    </div>
+                                    <div>
+                                        <div class="text-xs text-on-surface-variant font-bold">
+                                            已選 <span class="font-extrabold text-[#386753] text-sm">${list.filter(item => item.checked).length}</span> 項食材
+                                        </div>
+                                        <div class="flex items-baseline gap-1">
+                                            <span class="text-xl font-black text-slate-blue">$${list.filter(item => item.checked).reduce((sum, item) => sum + item.estCost, 0)}</span>
+                                            <span class="text-[10px] text-outline font-bold">TWD</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button onclick="confirmRestock()" class="bg-[#9a442d] hover:bg-[#e07a5f] text-white font-extrabold px-6 py-3 rounded-2xl text-xs sm:text-sm shadow-md active:scale-95 transition-all flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-lg">check_circle</span>
+                                    <span>確認補貨 (移入冰箱)</span>
+                                </button>
+                            </div>
+                        </div>
+                    ` : ''}
+
                 </div>
 
                 <!-- Side Cards (Right Column) -->
                 <div class="lg:col-span-4 space-y-lg">
                     <!-- Benefit Card -->
                     <div class="bg-white/50 backdrop-blur-md border border-[#F2CC8F] rounded-3xl p-md shadow-sm flex flex-col justify-center min-h-[140px] transition-all duration-300 hover:shadow-md relative overflow-hidden group select-none">
-                        <!-- Tiny decorative top color band -->
                         <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#F2CC8F] to-secondary"></div>
 
                         <div id="saving-tip-container" class="space-y-sm">
@@ -3844,21 +3886,24 @@ function renderSundayShopping(container) {
                         </div>
                     </div>
 
-                    <!-- Shopping Image Card -->
-                    <div onclick="showMarketModal()" class="relative rounded-2xl overflow-hidden shadow-lg h-56 group cursor-pointer border border-primary/5">
-                        <img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDFdT7khBw1YySuMG6E-BiRBWW4kKbq9Gz-QBazxn2Ilby4IN-LKEP6eiWDx4QWzxlh2FDFLaCM-PFOQF6Wh1ydvyc9bbtj1t83cay8giDmykEUvU6mADMS-5x99ZcX2J_2KYepRHQ0ZtMqISHMZTV-T2Kliao_hhgLCVkbiMugMzuVGdwVnKONXnPWeez1drVdxZlBCF_kF21lVR0C9MG1Fh3eGV49AyZu9MW43pjYm_KG8ijgyxr5A8Unnq6DpcqbxHbAwxNdnaw" alt="鄰近有機市集">
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-md">
-                            <span class="text-white font-extrabold text-base">鄰近有機市集</span>
-                            <p class="text-white/80 text-[11px] font-semibold mt-1">每週日上午 08:00 - 17:00 開市</p>
-                        </div>
-                    </div>
-
-                    <!-- Traditional Market Card -->
-                    <div onclick="showTraditionalMarketModal()" class="relative rounded-2xl overflow-hidden shadow-lg h-56 group cursor-pointer border border-primary/5">
-                        <img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" src="./taiwan_traditional_market.jpg" alt="全台傳統菜市場">
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-md">
-                            <span class="text-white font-extrabold text-base">全台傳統菜市場</span>
-                            <p class="text-white/80 text-[11px] font-semibold mt-1">包含熱鬧早市與溫馨黃昏市場</p>
+                    <!-- Shopping Image Card with Live Location Pill & Hover Zoom -->
+                    <div onclick="showMarketModal()" class="relative rounded-3xl overflow-hidden shadow-md group cursor-pointer border border-outline-variant/30 h-60 transition-all duration-500 hover:-translate-y-1">
+                        <img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" src="https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80" alt="鄰近黃昏市集">
+                        <div class="absolute inset-0 bg-gradient-to-t from-slate-blue/90 via-slate-blue/40 to-transparent flex flex-col justify-between p-5 text-white">
+                            <div class="flex justify-between items-center">
+                                <span class="bg-white/95 text-slate-blue backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black flex items-center gap-1 shadow-sm">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                                    📍 離你最近：西屯黃昏市場
+                                </span>
+                                <span class="bg-[#9a442d]/85 text-white backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] font-extrabold">步行 5 mins</span>
+                            </div>
+                            <div class="space-y-1">
+                                <div class="flex items-center gap-1.5">
+                                    <span class="material-symbols-outlined text-emerald-400 text-lg">storefront</span>
+                                    <h4 class="font-black text-base tracking-wide text-white">鄰近生鮮黃昏市集</h4>
+                                </div>
+                                <p class="text-xs text-slate-200 line-clamp-2">生鮮海產、在地農家蔬果直送！點擊開啟 AI 採買地圖與實時特惠資訊...</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -4337,6 +4382,8 @@ window.applyAIRestockRecommendations = applyAIRestockRecommendations;
 
 function getShoppingItemRowHtml(item) {
     const isUrgent = item.status === "急需補貨" || item.status === "已耗盡";
+    const isAi = item.status === "AI 補貨建議" || item.status === "AI 庫存精算" || item.status === "AI 智慧建議";
+    const isChef = item.status === "主廚推薦" || item.status === "主廚推薦補貨";
 
     let bgClass = "";
     let checkboxClass = "";
@@ -4344,16 +4391,25 @@ function getShoppingItemRowHtml(item) {
 
     if (item.checked) {
         bgClass = "bg-surface-container-highest/40 opacity-60";
-        checkboxClass = "custom-checkbox w-4.5 h-4.5 rounded border-outline-variant text-slate-blue focus:ring-slate-blue cursor-pointer";
-        nameClass = "font-extrabold text-on-surface-variant/40";
+        checkboxClass = "custom-checkbox w-5 h-5 rounded-lg border-outline-variant text-slate-blue focus:ring-slate-blue cursor-pointer";
+        nameClass = "font-extrabold text-on-surface-variant/70";
     } else {
         if (item.category === "produce") {
-            bgClass = "bg-[#81b29a]/50 hover:bg-[#81b29a]/60";
-            checkboxClass = "custom-checkbox w-4.5 h-4.5 rounded border-[#81b29a]/60 text-secondary focus:ring-secondary cursor-pointer";
+            bgClass = "bg-[#81b29a]/10 hover:bg-[#81b29a]/20";
+            checkboxClass = "custom-checkbox w-5 h-5 rounded-lg border-[#81b29a]/60 text-secondary focus:ring-secondary cursor-pointer";
         } else {
-            bgClass = "bg-[#e07a5f]/50 hover:bg-[#e07a5f]/60";
-            checkboxClass = "custom-checkbox w-4.5 h-4.5 rounded border-[#e07a5f]/60 text-primary focus:ring-primary cursor-pointer";
+            bgClass = "bg-[#e07a5f]/10 hover:bg-[#e07a5f]/20";
+            checkboxClass = "custom-checkbox w-5 h-5 rounded-lg border-[#e07a5f]/60 text-primary focus:ring-primary cursor-pointer";
         }
+    }
+
+    let statusBadgeHtml = "";
+    if (isUrgent) {
+        statusBadgeHtml = `<span class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-[#e07a5f]/15 text-[#9a442d] border border-[#e07a5f]/30 text-[10px] font-black"><span class="material-symbols-outlined text-[12px]">warning</span> 急需補貨</span>`;
+    } else if (isAi) {
+        statusBadgeHtml = `<span class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-[#f2cc8f]/30 text-[#765a28] border border-[#f2cc8f]/50 text-[10px] font-black"><span class="material-symbols-outlined text-[12px]">auto_awesome</span> AI 智慧建議</span>`;
+    } else if (isChef) {
+        statusBadgeHtml = `<span class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-[#81b29a]/20 text-[#386753] border border-[#81b29a]/40 text-[10px] font-black"><span class="material-symbols-outlined text-[12px]">skillet</span> 主廚推薦</span>`;
     }
 
     const catBadge = item.category === "produce"
@@ -4378,7 +4434,10 @@ function getShoppingItemRowHtml(item) {
             <td class="p-3 align-middle w-[28%]">
                 <div class="flex items-center gap-2.5">
                     <img class="w-8 h-8 rounded-xl object-cover bg-white border border-outline-variant/30 flex-shrink-0 shadow-xs" src="${itemImage}" alt="${displayName}">
-                    <span class="${nameClass} text-base">${displayName}</span>
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                        <span class="${nameClass} text-base">${displayName}</span>
+                        ${statusBadgeHtml}
+                    </div>
                 </div>
             </td>
             <td class="p-3 align-middle font-bold text-slate-blue w-[16%]">

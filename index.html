@@ -37,8 +37,8 @@
                 <button onclick="renderCookwareSetup()" title="廚房裝備設定" aria-label="廚房裝備設定" class="text-on-surface-variant hover:bg-surface-container-high/40 p-2 rounded-full transition-colors active:scale-95 duration-150 flex items-center justify-center focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20">
                     <span class="material-symbols-outlined text-xl">skillet</span>
                 </button>
-                <button id="reset-data-btn" title="重設範例資料" aria-label="重設範例資料" class="text-on-surface-variant hover:bg-surface-container-high/40 p-2 rounded-full transition-colors active:scale-95 duration-150 flex items-center justify-center focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20">
-                    <span class="material-symbols-outlined text-xl">restart_alt</span>
+                <button onclick="toggleDevMenu()" title="開發者測試選單 (Dev Tools)" aria-label="開發者測試選單" class="text-amber-600 hover:bg-amber-500/10 p-2 rounded-full transition-colors active:scale-95 duration-150 flex items-center justify-center focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-500/20">
+                    <span class="material-symbols-outlined text-xl">bug_report</span>
                 </button>
                 <div class="h-8 w-[1px] bg-outline-variant/40"></div>
                 <div id="user-auth-badge" class="flex items-center gap-2">
@@ -85,6 +85,72 @@
             </button>
         </div>
     </nav>
+
+    <!-- Developer Tools Floating Menu & Trigger Modal -->
+    <div id="dev-tools-fab" class="fixed bottom-20 right-4 z-50 flex flex-col items-end">
+        <!-- Floating Dev Menu Panel (Hidden by default) -->
+        <div id="dev-menu-panel" class="hidden mb-3 w-72 bg-slate-900 text-white rounded-2xl shadow-2xl border border-amber-500/30 p-4 space-y-3 backdrop-blur-md bg-opacity-95 text-xs animate-in fade-in slide-in-from-bottom-3 duration-200">
+            <div class="flex items-center justify-between border-b border-slate-700/60 pb-2">
+                <span class="font-extrabold text-amber-400 flex items-center gap-1.5 text-sm">
+                    <span class="material-symbols-outlined text-base">developer_mode</span>
+                    開發者彈窗測試選單
+                </span>
+                <button onclick="toggleDevMenu()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800">
+                    <span class="material-symbols-outlined text-sm">close</span>
+                </button>
+            </div>
+            
+            <div class="space-y-2">
+                <p class="text-[10px] font-bold text-slate-400 tracking-wider uppercase">1. 盤點與設定調整</p>
+                <div class="grid grid-cols-2 gap-1.5">
+                    <button onclick="SingleGoalApp.startOnboarding(); toggleDevMenu();" class="w-full bg-slate-800 hover:bg-indigo-600 text-slate-100 hover:text-white px-2.5 py-2 rounded-xl text-[11px] font-bold border border-slate-700 flex items-center gap-1 transition-all text-left">
+                        <span class="material-symbols-outlined text-sm text-indigo-400">restart_alt</span>
+                        重新盤點
+                    </button>
+                    <button onclick="SingleGoalApp.openSettings(); toggleDevMenu();" class="w-full bg-slate-800 hover:bg-indigo-600 text-slate-100 hover:text-white px-2.5 py-2 rounded-xl text-[11px] font-bold border border-slate-700 flex items-center gap-1 transition-all text-left">
+                        <span class="material-symbols-outlined text-sm text-amber-400">tune</span>
+                        計畫調整
+                    </button>
+                </div>
+            </div>
+
+            <div class="space-y-1.5">
+                <p class="text-[10px] font-bold text-slate-400 tracking-wider uppercase">2. 小廚房結算劃撥</p>
+                <button onclick="SingleGoalApp.promptMealCompletion({ mealName: '開發者測試：高麗菜牛肉煲', homeCookCost: 45 }); toggleDevMenu();" class="w-full bg-slate-800 hover:bg-emerald-600 text-slate-100 hover:text-white px-3 py-2 rounded-xl text-[11px] font-bold border border-slate-700 flex items-center justify-between transition-all">
+                    <span class="flex items-center gap-1">
+                        <span class="material-symbols-outlined text-sm text-emerald-400">skillet</span>
+                        料理完成劃撥彈窗
+                    </span>
+                    <span class="text-[9px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded">測試</span>
+                </button>
+            </div>
+
+            <div class="space-y-1.5">
+                <p class="text-[10px] font-bold text-slate-400 tracking-wider uppercase">3. 慶祝與解鎖</p>
+                <button onclick="SingleGoalApp.openCompletionPrompt(); toggleDevMenu();" class="w-full bg-slate-800 hover:bg-amber-600 text-slate-100 hover:text-white px-3 py-2 rounded-xl text-[11px] font-bold border border-slate-700 flex items-center justify-between transition-all">
+                    <span class="flex items-center gap-1">
+                        <span class="material-symbols-outlined text-sm text-amber-400">celebration</span>
+                        圓夢達成慶祝彈窗
+                    </span>
+                    <span class="text-[9px] bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded">100%</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Floating Action Icon Button (FAB) -->
+        <button onclick="toggleDevMenu()" title="開發者測試選單 (Dev Tools)" aria-label="開發者測試選單" class="bg-slate-900 hover:bg-slate-800 text-amber-400 border border-amber-500/40 p-3 rounded-full shadow-2xl transition-all duration-200 active:scale-95 flex items-center justify-center relative group focus:outline-none focus:ring-4 focus:ring-amber-400/30">
+            <span class="material-symbols-outlined text-2xl group-hover:rotate-12 transition-transform">bug_report</span>
+            <span class="absolute -top-1 -right-1 bg-amber-500 text-slate-900 text-[9px] font-black px-1.5 py-0.2 rounded-full border border-slate-900">DEV</span>
+        </button>
+    </div>
+
+    <script>
+        function toggleDevMenu() {
+            const panel = document.getElementById('dev-menu-panel');
+            if (panel) panel.classList.toggle('hidden');
+        }
+        window.toggleDevMenu = toggleDevMenu;
+    </script>
 
     <!-- Supabase JS Client SDK -->
     <script src="./libs/supabase.js?v=2"></script>

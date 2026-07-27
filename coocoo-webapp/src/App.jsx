@@ -7,8 +7,8 @@ import RoiView from './components/RoiView/RoiView';
 import AiAssistantOnboarding from './components/AiAssistantOnboarding';
 import SettlementModal from './components/SettlementModal';
 import AddFridgeForm from './components/FridgeView/AddFridgeForm';
-import DevToolsPanel from './components/DevToolsPanel';
 import ToastContainer from './components/Common/ToastContainer';
+import DevToolsFab from './components/Common/DevToolsFab';
 import { ToastProvider } from './context/ToastContext';
 import { defaultInventory, defaultFridgeProfile, defaultShoppingList, defaultDreams, defaultSavingsGoal } from './data/mockData';
 
@@ -64,6 +64,13 @@ function AppContent() {
       setInventory(prev => prev.filter(item => !selectedItemIds.includes(item.id)));
     }
 
+    if (window.SingleGoalApp?.promptMealCompletion) {
+      window.SingleGoalApp.promptMealCompletion({
+        mealName: recipe?.title || (consumedNames.length ? `${consumedNames.join('炒')}創意外食` : '小廚房自煮美味'),
+        homeCookCost: 45
+      });
+    }
+
     setSettlementData({
       questTitle: activeQuest ? activeQuest.title : null,
       exp: activeQuest ? activeQuest.exp : 30,
@@ -73,57 +80,6 @@ function AppContent() {
 
     setActiveQuest(null);
     setPreselectedItemIds([]);
-  };
-
-  // DevTools Handlers
-  const handleAddTestItem = () => {
-    const testItems = [
-      { name: '雪花牛肉片', unit: '盒', chamber: 'cold', daysLeft: 4 },
-      { name: '希臘優格', unit: '罐', chamber: 'cold', daysLeft: 7 },
-      { name: '有機花椰菜', unit: '朵', chamber: 'cold', daysLeft: 5 },
-      { name: '鮭魚菲力', unit: '片', chamber: 'frozen', daysLeft: 20 },
-    ];
-    const picked = testItems[Math.floor(Math.random() * testItems.length)];
-    const newItem = {
-      id: `item-${Date.now()}`,
-      name: picked.name,
-      chamber: picked.chamber,
-      qty: 1,
-      unit: picked.unit,
-      daysLeft: picked.daysLeft,
-      boxSize: 'M',
-      addedDate: new Date().toISOString().split('T')[0],
-      roi: { savings: 60, sodium: 0, fat: 0 },
-    };
-    setInventory(prev => [newItem, ...prev]);
-  };
-
-  const handleAddExpiringItem = () => {
-    const newItem = {
-      id: `expiring-${Date.now()}`,
-      name: '即期九層塔',
-      chamber: 'cold',
-      qty: 1,
-      unit: '包',
-      daysLeft: 1,
-      boxSize: 'S',
-      addedDate: new Date().toISOString().split('T')[0],
-      roi: { savings: 20, sodium: 0, fat: 0 },
-    };
-    setInventory(prev => [newItem, ...prev]);
-  };
-
-  const handleClearInventory = () => {
-    setInventory([]);
-  };
-
-  const handleResetAll = () => {
-    setInventory(defaultInventory);
-    setShoppingList(defaultShoppingList);
-    setFridgeProfile(defaultFridgeProfile);
-    setActiveQuest(null);
-    setShowOnboarding(true);
-    localStorage.removeItem('coocoo_inventory');
   };
 
   // Placeholder components for the 4 tabs
@@ -175,6 +131,10 @@ function AppContent() {
   return (
     <div className="flex h-screen w-full bg-background overflow-hidden text-on-surface">
       <ToastContainer />
+      <DevToolsFab 
+        onOpenOnboarding={() => setShowOnboarding(true)}
+        onOpenSettlement={(data) => setSettlementData(data)}
+      />
       {/* Onboarding Modal */}
       {showOnboarding && (
         <AiAssistantOnboarding
@@ -223,15 +183,6 @@ function AppContent() {
           </div>
         </div>
       )}
-
-      {/* Developer & Debug Sandbox Toolbar */}
-      <DevToolsPanel
-        onTriggerOnboarding={() => setShowOnboarding(true)}
-        onAddTestItem={handleAddTestItem}
-        onAddExpiringItem={handleAddExpiringItem}
-        onClearInventory={handleClearInventory}
-        onResetAll={handleResetAll}
-      />
 
       <Sidebar 
         activeTab={activeTab} 

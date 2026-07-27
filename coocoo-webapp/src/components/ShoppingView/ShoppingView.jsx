@@ -73,11 +73,9 @@ const ShoppingView = ({ shoppingList, setShoppingList, inventory, setInventory }
   return (
     <div className="space-y-lg max-w-5xl mx-auto pb-24">
       {/* Header Section */}
-      <section className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-md">
-        <div>
-          <h2 className="text-3xl font-extrabold text-secondary">小廚房採購單</h2>
-        </div>
-        <div className="flex items-center gap-2">
+      <section className="space-y-md">
+        {/* Top Action Buttons Bar */}
+        <div className="flex justify-end items-center gap-2">
           {/* AI Assistant Button Placeholder */}
           <button
             onClick={() => alert('AI 逛市場助手元件化尚在開發中...')}
@@ -110,6 +108,12 @@ const ShoppingView = ({ shoppingList, setShoppingList, inventory, setInventory }
             {showAddForm ? '取消新增' : '手動新增'}
           </button>
         </div>
+
+        {/* Lean Health Guide Widget moved to Top Header */}
+        <LeanHealthGuide
+          vegCount={uniqueVegCount}
+          protCount={uniqueProtCount}
+        />
       </section>
 
       {/* Add Form */}
@@ -128,10 +132,6 @@ const ShoppingView = ({ shoppingList, setShoppingList, inventory, setInventory }
             onToggleAll={handleToggleAll}
             onDeleteShoppingItem={handleDeleteItem}
             onConfirmRestock={handleConfirmRestock}
-          />
-          <LeanHealthGuide
-            vegCount={uniqueVegCount}
-            protCount={uniqueProtCount}
           />
         </div>
 

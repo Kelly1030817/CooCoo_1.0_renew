@@ -49,29 +49,36 @@ const SideCards = () => {
         </div>
       </div>
 
-      {/* Shopping Image Card */}
-      <div className="relative rounded-2xl overflow-hidden shadow-lg h-56 group cursor-pointer border border-primary/5">
+      {/* Market Map Card with Live Location Pill & Hover Zoom */}
+      <div className="relative rounded-3xl overflow-hidden shadow-md group cursor-pointer border border-outline-variant/30 h-60 transition-all duration-500 hover:-translate-y-1">
         <img
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-          src="https://lh3.googleusercontent.com/aida-public/AB6AXuDFdT7khBw1YySuMG6E-BiRBWW4kKbq9Gz-QBazxn2Ilby4IN-LKEP6eiWDx4QWzxlh2FDFLaCM-PFOQF6Wh1ydvyc9bbtj1t83cay8giDmykEUvU6mADMS-5x99ZcX2J_2KYepRHQ0ZtMqISHMZTV-T2Kliao_hhgLCVkbiMugMzuVGdwVnKONXnPWeez1drVdxZlBCF_kF21lVR0C9MG1Fh3eGV49AyZu9MW43pjYm_KG8ijgyxr5A8Unnq6DpcqbxHbAwxNdnaw"
-          alt="鄰近有機市集"
+          src="https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80"
+          alt="鄰近黃昏市集"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-md">
-          <span className="text-white font-extrabold text-base">鄰近有機市集</span>
-          <p className="text-white/80 text-[11px] font-semibold mt-1">每週日上午 08:00 - 17:00 開市</p>
-        </div>
-      </div>
+        
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-blue/90 via-slate-blue/40 to-transparent flex flex-col justify-between p-5 text-white">
+          {/* Top Live Pill */}
+          <div className="flex justify-between items-center">
+            <span className="bg-white/95 text-slate-blue backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black flex items-center gap-1 shadow-sm">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+              📍 離你最近：西屯黃昏市場
+            </span>
+            <span className="bg-[#9a442d]/85 text-white backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] font-extrabold">
+              步行 5 mins
+            </span>
+          </div>
 
-      {/* Traditional Market Card */}
-      <div className="relative rounded-2xl overflow-hidden shadow-lg h-56 group cursor-pointer border border-primary/5">
-        <img
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-          src="https://images.unsplash.com/photo-1533900298318-6b8da08a523e?q=80&w=2070&auto=format&fit=crop"
-          alt="全台傳統菜市場"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-md">
-          <span className="text-white font-extrabold text-base">全台傳統菜市場</span>
-          <p className="text-white/80 text-[11px] font-semibold mt-1">包含熱鬧早市與溫馨黃昏市場</p>
+          {/* Bottom Content */}
+          <div className="space-y-1">
+            <div className="flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-emerald-400 text-lg">storefront</span>
+              <h4 className="font-black text-base tracking-wide text-white">鄰近生鮮黃昏市集</h4>
+            </div>
+            <p className="text-xs text-slate-200 line-clamp-2">
+              生鮮海產、在地農家蔬果直送！點擊開啟 AI 採買地圖與實時特惠資訊...
+            </p>
+          </div>
         </div>
       </div>
     </div>
