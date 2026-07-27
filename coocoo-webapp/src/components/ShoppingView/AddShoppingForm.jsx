@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
-import { useToast } from '../../context/ToastContext';
 
 const AddShoppingForm = ({ onAdd, onCancel }) => {
-  const { showToast } = useToast();
   const [name, setName] = useState('');
   const [category, setCategory] = useState('produce');
   const [qty, setQty] = useState(1);
@@ -12,15 +10,9 @@ const AddShoppingForm = ({ onAdd, onCancel }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!name) {
-      showToast("請輸入食材名稱！", "warning");
+      alert("請輸入食材名稱！");
       return;
     }
-    const generateIngredientImage = (itemName) => {
-      const clean = (itemName || '').trim();
-      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="150" height="150" viewBox="0 0 150 150"><defs><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#e2f0d9"/><stop offset="100%" stop-color="#ffffff"/></linearGradient></defs><rect width="150" height="150" fill="url(#g)" rx="20"/><circle cx="75" cy="65" r="42" fill="#386753" fill-opacity="0.12"/><text x="75" y="78" font-size="44" text-anchor="middle" dominant-baseline="central">🥗</text><rect x="15" y="112" width="120" height="24" rx="12" fill="#386753"/><text x="75" y="128" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle" dominant-baseline="central">${clean.slice(0, 8)}</text></svg>`;
-      return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
-    };
-
     const newItem = {
       id: `shop-new-${Date.now()}`,
       name,
@@ -28,7 +20,6 @@ const AddShoppingForm = ({ onAdd, onCancel }) => {
       qty: Number(qty),
       unit,
       estCost: Number(cost),
-      image: generateIngredientImage(name),
       checked: false
     };
     onAdd(newItem);
