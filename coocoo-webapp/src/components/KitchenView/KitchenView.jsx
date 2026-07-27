@@ -82,10 +82,10 @@ const KitchenView = ({ inventory, preselectedItemIds = [], onFinishCooking }) =>
 
   // Categorize inventory items
   const categoryMap = {
-    vegetable_fruit: { title: "🥬 蔬菜與水果", icon: "eco", items: [] },
-    meat_seafood: { title: "🥩 肉類與海鮮", icon: "set_meal", items: [] },
-    dairy_egg_soy: { title: "🥚 蛋奶與豆類", icon: "egg", items: [] },
-    cooked_others: { title: "📦 熟食與其他", icon: "inventory_2", items: [] }
+    vegetable_fruit: { title: "蔬菜與水果", icon: "eco", badgeBg: "bg-emerald-100 text-emerald-800", items: [] },
+    meat_seafood: { title: "肉類與海鮮", icon: "set_meal", badgeBg: "bg-rose-100 text-rose-800", items: [] },
+    dairy_egg_soy: { title: "蛋奶與豆類", icon: "egg", badgeBg: "bg-amber-100 text-amber-800", items: [] },
+    cooked_others: { title: "熟食與其他", icon: "inventory_2", badgeBg: "bg-slate-100 text-slate-800", items: [] }
   };
 
   inventory.forEach(item => {
@@ -102,22 +102,55 @@ const KitchenView = ({ inventory, preselectedItemIds = [], onFinishCooking }) =>
     .filter(([_, cat]) => cat.items.length > 0)
     .map(([key, cat]) => ({ key, ...cat }));
 
-  return (
-    <div className="space-y-lg pb-32 max-w-5xl mx-auto">
+  const handleSelectUrgent = () => {
+    const urgentIds = inventory.filter(item => item.daysLeft <= 3).map(item => item.id);
+    setSelectedItemIds(prev => Array.from(new Set([...prev, ...urgentIds])));
+  };
 
+  const handleClearAll = () => {
+    setSelectedItemIds([]);
+  };
+
+  return (
+    <div className="space-y-lg pb-40 max-w-5xl mx-auto">
 
       {/* Style Selector */}
       <StyleSelector currentStyle={currentStyle} setStyle={setCurrentStyle} />
 
       {/* Ingredients Pool */}
       <section className="space-y-md">
-        <div className="flex items-center justify-between mb-sm">
-          <h3 className="text-sm font-extrabold text-slate-blue flex items-center gap-1">
-            <span className="material-symbols-outlined text-secondary font-bold">view_module</span> 2. 挑選冰箱食材 (已分類)
-          </h3>
-          <span className="text-xs font-bold text-secondary bg-secondary/10 px-3 py-1 rounded-full">
-            已選取 {selectedItemIds.length} 項
-          </span>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-sm mb-sm bg-white/60 backdrop-blur-sm border border-outline-variant/30 rounded-2xl p-md shadow-sm">
+          <div className="flex items-center gap-2">
+            <span className="w-6 h-6 rounded-full bg-secondary text-white font-black text-xs flex items-center justify-center shadow-sm">
+              2
+            </span>
+            <h3 className="text-base font-extrabold text-slate-blue">挑選冰箱食材</h3>
+          </div>
+          
+          <div className="flex items-center gap-sm flex-wrap">
+            {inventory.length > 0 && (
+              <>
+                <button
+                  onClick={handleSelectUrgent}
+                  className="bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 px-3 py-1 rounded-full text-xs font-extrabold flex items-center gap-1 transition-all active:scale-95 shadow-sm"
+                  title="優先打包 3 天內即期食材"
+                >
+                  <span className="material-symbols-outlined text-xs text-rust-orange font-bold">bolt</span> ⚡ 一鍵救援即期
+                </button>
+                {selectedItemIds.length > 0 && (
+                  <button
+                    onClick={handleClearAll}
+                    className="bg-surface-container-high hover:bg-outline-variant/30 text-on-surface-variant px-3 py-1 rounded-full text-xs font-bold transition-all active:scale-95"
+                  >
+                    🧹 清空
+                  </button>
+                )}
+              </>
+            )}
+            <span className="text-xs font-bold text-secondary bg-secondary/10 px-3 py-1 rounded-full border border-secondary/20">
+              已選取 {selectedItemIds.length} 項
+            </span>
+          </div>
         </div>
 
         {inventory.length === 0 ? (
@@ -129,13 +162,15 @@ const KitchenView = ({ inventory, preselectedItemIds = [], onFinishCooking }) =>
         ) : (
           <div className="space-y-md">
             {activeCategories.map(cat => (
-              <div key={cat.key} className="bg-white border border-outline-variant/30 rounded-2xl p-md shadow-sm">
+              <div key={cat.key} className="bg-white/60 backdrop-blur-sm border border-outline-variant/30 rounded-2xl p-md shadow-sm">
                 <div className="flex items-center justify-between mb-sm pb-2 border-b border-outline-variant/20">
                   <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-secondary font-bold text-lg">{cat.icon}</span>
+                    <span className="w-8 h-8 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center">
+                      <span className="material-symbols-outlined font-bold text-lg">{cat.icon}</span>
+                    </span>
                     <h4 className="text-sm font-extrabold text-slate-blue">{cat.title}</h4>
                   </div>
-                  <span className="text-xs font-extrabold bg-slate-blue/10 text-slate-blue px-2.5 py-0.5 rounded-full">
+                  <span className={`text-xs font-extrabold px-2.5 py-0.5 rounded-full ${cat.badgeBg}`}>
                     {cat.items.length} 項
                   </span>
                 </div>
