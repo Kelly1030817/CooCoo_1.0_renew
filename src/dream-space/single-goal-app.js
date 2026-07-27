@@ -760,33 +760,58 @@
         const mediumAmount = Math.round((draft.targetAmount || 0) * 0.60);
 
         return `
-            <div>
-                <p class="text-xs font-extrabold text-secondary">同一個終極夢想的三個階段</p>
-                <h3 class="mt-1 text-xl font-extrabold text-slate-blue">系統預設分段與累積門檻</h3>
-                <div class="mt-md space-y-sm">
-                    <div class="rounded-2xl border border-outline-variant/40 bg-white p-md flex justify-between items-center shadow-xs">
-                        <div>
-                            <span class="text-xs font-bold text-secondary">短期 25%</span>
-                            <strong class="mt-0.5 block text-sm text-slate-blue">${escapeHtml(draft.shortLabel)}</strong>
-                        </div>
-                        <span class="text-xs font-extrabold text-slate-blue">${formatMoney(shortAmount)}</span>
+            <div class="select-none cursor-default">
+                <div class="flex items-center justify-between gap-sm">
+                    <div>
+                        <p class="text-xs font-extrabold text-secondary">同一個終極夢想的三個階段</p>
+                        <h3 class="mt-1 text-xl font-extrabold text-slate-blue">系統預設分段與累積門檻</h3>
                     </div>
-                    <div class="rounded-2xl border border-outline-variant/40 bg-white p-md flex justify-between items-center shadow-xs">
+                    <span class="inline-flex items-center gap-xs rounded-full bg-surface-container-high px-3 py-1 text-[10px] font-bold text-on-surface-variant shrink-0">
+                        <span class="material-symbols-outlined text-sm text-outline" aria-hidden="true">info</span>純示意的階段預覽
+                    </span>
+                </div>
+
+                <div class="mt-md relative pl-6 space-y-md before:absolute before:left-3 before:top-3 before:bottom-3 before:w-0.5 before:bg-outline-variant/40">
+                    <!-- 短期 25% -->
+                    <div class="relative flex items-start justify-between gap-md rounded-2xl bg-surface-container-low/70 p-md border border-outline-variant/20">
+                        <span class="absolute -left-6 top-3 flex h-6 w-6 -translate-x-1/2 items-center justify-center rounded-full bg-secondary/15 border-2 border-white text-[10px] font-black text-secondary">1</span>
                         <div>
-                            <span class="text-xs font-bold text-secondary">中期 60%</span>
-                            <strong class="mt-0.5 block text-sm text-slate-blue">${escapeHtml(draft.mediumLabel)}</strong>
+                            <div class="flex items-center gap-xs">
+                                <span class="rounded-md bg-secondary/10 px-2 py-0.5 text-[10px] font-extrabold text-secondary">短期 25%</span>
+                            </div>
+                            <strong class="mt-1 block text-sm text-slate-blue">${escapeHtml(draft.shortLabel)}</strong>
                         </div>
-                        <span class="text-xs font-extrabold text-slate-blue">${formatMoney(mediumAmount)}</span>
+                        <span class="text-xs font-extrabold text-slate-blue shrink-0">${formatMoney(shortAmount)}</span>
                     </div>
-                    <div class="rounded-2xl border border-primary/20 bg-primary/5 p-md flex justify-between items-center">
+
+                    <!-- 中期 60% -->
+                    <div class="relative flex items-start justify-between gap-md rounded-2xl bg-surface-container-low/70 p-md border border-outline-variant/20">
+                        <span class="absolute -left-6 top-3 flex h-6 w-6 -translate-x-1/2 items-center justify-center rounded-full bg-secondary/15 border-2 border-white text-[10px] font-black text-secondary">2</span>
                         <div>
-                            <span class="text-xs font-bold text-primary">長期 100%</span>
-                            <strong class="mt-0.5 block text-sm text-slate-blue">${escapeHtml(draft.longLabel)}</strong>
+                            <div class="flex items-center gap-xs">
+                                <span class="rounded-md bg-secondary/10 px-2 py-0.5 text-[10px] font-extrabold text-secondary">中期 60%</span>
+                            </div>
+                            <strong class="mt-1 block text-sm text-slate-blue">${escapeHtml(draft.mediumLabel)}</strong>
                         </div>
-                        <span class="text-xs font-extrabold text-primary">${formatMoney(draft.targetAmount)}</span>
+                        <span class="text-xs font-extrabold text-slate-blue shrink-0">${formatMoney(mediumAmount)}</span>
+                    </div>
+
+                    <!-- 長期 100% -->
+                    <div class="relative flex items-start justify-between gap-md rounded-2xl bg-primary/5 p-md border-l-4 border-primary border-t border-r border-b border-primary/20">
+                        <span class="absolute -left-6 top-3 flex h-6 w-6 -translate-x-1/2 items-center justify-center rounded-full bg-primary text-white text-[11px] font-black shadow-xs">
+                            <span class="material-symbols-outlined text-xs" aria-hidden="true">flag</span>
+                        </span>
+                        <div>
+                            <div class="flex items-center gap-xs">
+                                <span class="rounded-md bg-primary/10 px-2 py-0.5 text-[10px] font-extrabold text-primary">長期 100% · 終極目標</span>
+                            </div>
+                            <strong class="mt-1 block text-base font-extrabold text-slate-blue">${escapeHtml(draft.longLabel)}</strong>
+                        </div>
+                        <span class="text-sm font-black text-primary shrink-0">${formatMoney(draft.targetAmount)}</span>
                     </div>
                 </div>
-                <p class="mt-sm text-[11px] text-on-surface-variant">三個數字為系統預設累積門檻，不會相加成新的總額。</p>
+
+                <p class="mt-md text-[11px] text-outline text-center">此頁面為系統內建試算階段，無須調整；三個數字為階段累積門檻，不會相加。</p>
             </div>`;
     }
 
