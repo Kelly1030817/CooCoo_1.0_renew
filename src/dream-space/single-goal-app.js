@@ -89,10 +89,10 @@
     function createDraft() {
         return {
             purpose: "travel",
-            name: "日本旅行",
-            targetAmount: 30000,
-            currentSavedAmount: 0,
-            targetDate: "",
+            name: "綠島遊",
+            targetAmount: 20000,
+            currentSavedAmount: 5000,
+            targetDate: "2026-12-31",
             eatingOutMeals: 7,
             eatingOutTotal: 1050,
             directEatingOutCost: 150,
@@ -102,7 +102,7 @@
             mediumPercent: 60,
             shortLabel: "先完成第一筆累積",
             mediumLabel: "穩定存到一半以上",
-            longLabel: "完成日本旅行基金"
+            longLabel: "完成綠島遊"
         };
     }
 
@@ -269,9 +269,9 @@
         }
         return {
             purpose: "travel",
-            name: "日本旅行",
-            targetAmount: 30000,
-            currentSavedAmount: 7500,
+            name: "綠島遊",
+            targetAmount: 20000,
+            currentSavedAmount: 5000,
             targetDate: "2026-12-31",
             homeCookBudget: 90,
             weeklyCookingMeals: 3,
@@ -280,9 +280,9 @@
             directEatingOutCost: 150,
             shortPercent: 25,
             mediumPercent: 60,
-            shortLabel: "啟動準備",
-            mediumLabel: "機票半數",
-            longLabel: "完成日本旅行"
+            shortLabel: "先完成第一筆累積",
+            mediumLabel: "穩定存到一半以上",
+            longLabel: "完成綠島遊"
         };
     }
 
@@ -290,9 +290,9 @@
         if (!goal || !cookingPlan) return;
         const baseline = {
             purpose: goal.purpose || "travel",
-            name: goal.name || "日本旅行",
-            targetAmount: Number(goal.targetAmount) || 30000,
-            currentSavedAmount: Number.isFinite(savedAmount) ? savedAmount : 7500,
+            name: goal.name || "綠島遊",
+            targetAmount: Number(goal.targetAmount) || 20000,
+            currentSavedAmount: Number.isFinite(savedAmount) ? savedAmount : 5000,
             targetDate: goal.targetDate || "2026-12-31",
             homeCookBudget: Number(cookingPlan.homeCookBudget) || 90,
             weeklyCookingMeals: Number(cookingPlan.weeklyCookingMeals) || 3,
@@ -301,9 +301,9 @@
             directEatingOutCost: Number(cookingPlan.eatingOutCost) || 150,
             shortPercent: goal.milestones?.[0]?.percent || 25,
             mediumPercent: goal.milestones?.[1]?.percent || 60,
-            shortLabel: goal.milestones?.[0]?.label || "啟動準備",
-            mediumLabel: goal.milestones?.[1]?.label || "機票半數",
-            longLabel: goal.milestones?.[2]?.label || "完成日本旅行"
+            shortLabel: goal.milestones?.[0]?.label || "先完成第一筆累積",
+            mediumLabel: goal.milestones?.[1]?.label || "穩定存到一半以上",
+            longLabel: goal.milestones?.[2]?.label || "完成綠島遊"
         };
         try {
             localStorage.setItem(BASELINE_KEY, JSON.stringify(baseline));
