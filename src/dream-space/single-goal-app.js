@@ -777,48 +777,44 @@
                         <p class="text-xs font-extrabold text-secondary">同一個終極夢想的三個階段</p>
                         <h3 class="mt-1 text-xl font-extrabold text-slate-blue">系統預設分段與累積門檻</h3>
                     </div>
-                    <span class="inline-flex items-center gap-xs rounded-full bg-surface-container-high px-3 py-1 text-[10px] font-bold text-on-surface-variant shrink-0">
-                        <span class="material-symbols-outlined text-sm text-outline" aria-hidden="true">info</span>純示意的階段預覽
+                    <span class="inline-flex items-center gap-xs rounded-full bg-amber-500/10 px-3 py-1 text-[11px] font-extrabold text-amber-800 shrink-0">
+                        <span class="material-symbols-outlined text-sm text-amber-700" aria-hidden="true">info</span>純示意的階段預覽
                     </span>
                 </div>
 
-                <div class="mt-md relative pl-6 space-y-md before:absolute before:left-3 before:top-3 before:bottom-3 before:w-0.5 before:bg-outline-variant/40">
+                <div class="mt-lg ml-4 pl-8 border-l-2 border-outline-variant/40 space-y-md">
                     <!-- 短期 25% -->
-                    <div class="relative flex items-start justify-between gap-md rounded-2xl bg-surface-container-low/70 p-md border border-outline-variant/20">
-                        <span class="absolute -left-6 top-3 flex h-6 w-6 -translate-x-1/2 items-center justify-center rounded-full bg-secondary/15 border-2 border-white text-[10px] font-black text-secondary">1</span>
-                        <div>
-                            <div class="flex items-center gap-xs">
-                                <span class="rounded-md bg-secondary/10 px-2 py-0.5 text-[10px] font-extrabold text-secondary">短期 25%</span>
-                            </div>
-                            <strong class="mt-1 block text-sm text-slate-blue">${escapeHtml(draft.shortLabel)}</strong>
+                    <div class="relative flex items-center justify-between gap-md rounded-2xl bg-white p-md border border-outline-variant/40 shadow-xs">
+                        <span class="absolute -left-[45px] top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-full bg-secondary/15 border-2 border-white text-xs font-black text-secondary shadow-xs">1</span>
+                        <div class="space-y-1">
+                            <span class="inline-flex items-center rounded-md bg-secondary/10 px-2.5 py-0.5 text-[11px] font-extrabold text-secondary">短期 25%</span>
+                            <strong class="block text-sm font-extrabold text-slate-blue">${escapeHtml(draft.shortLabel)}</strong>
                         </div>
-                        <span class="text-xs font-extrabold text-slate-blue shrink-0">${formatMoney(shortAmount)}</span>
+                        <span class="text-sm font-extrabold text-slate-blue shrink-0">${formatMoney(shortAmount)}</span>
                     </div>
 
                     <!-- 中期 60% -->
-                    <div class="relative flex items-start justify-between gap-md rounded-2xl bg-surface-container-low/70 p-md border border-outline-variant/20">
-                        <span class="absolute -left-6 top-3 flex h-6 w-6 -translate-x-1/2 items-center justify-center rounded-full bg-secondary/15 border-2 border-white text-[10px] font-black text-secondary">2</span>
-                        <div>
-                            <div class="flex items-center gap-xs">
-                                <span class="rounded-md bg-secondary/10 px-2 py-0.5 text-[10px] font-extrabold text-secondary">中期 60%</span>
-                            </div>
-                            <strong class="mt-1 block text-sm text-slate-blue">${escapeHtml(draft.mediumLabel)}</strong>
+                    <div class="relative flex items-center justify-between gap-md rounded-2xl bg-white p-md border border-outline-variant/40 shadow-xs">
+                        <span class="absolute -left-[45px] top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-full bg-secondary/15 border-2 border-white text-xs font-black text-secondary shadow-xs">2</span>
+                        <div class="space-y-1">
+                            <span class="inline-flex items-center rounded-md bg-secondary/10 px-2.5 py-0.5 text-[11px] font-extrabold text-secondary">中期 60%</span>
+                            <strong class="block text-sm font-extrabold text-slate-blue">${escapeHtml(draft.mediumLabel)}</strong>
                         </div>
-                        <span class="text-xs font-extrabold text-slate-blue shrink-0">${formatMoney(mediumAmount)}</span>
+                        <span class="text-sm font-extrabold text-slate-blue shrink-0">${formatMoney(mediumAmount)}</span>
                     </div>
 
                     <!-- 長期 100% -->
-                    <div class="relative flex items-start justify-between gap-md rounded-2xl bg-primary/5 p-md border-l-4 border-primary border-t border-r border-b border-primary/20">
-                        <span class="absolute -left-6 top-3 flex h-6 w-6 -translate-x-1/2 items-center justify-center rounded-full bg-primary text-white text-[11px] font-black shadow-xs">
-                            <span class="material-symbols-outlined text-xs" aria-hidden="true">flag</span>
+                    <div class="relative flex items-center justify-between gap-md rounded-2xl bg-terracotta/5 p-md border-2 border-terracotta/30 shadow-xs">
+                        <span class="absolute -left-[45px] top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-full bg-terracotta text-white text-xs font-black shadow-xs">
+                            <span class="material-symbols-outlined text-sm" aria-hidden="true">flag</span>
                         </span>
-                        <div>
-                            <div class="flex items-center gap-xs">
-                                <span class="rounded-md bg-primary/10 px-2 py-0.5 text-[10px] font-extrabold text-primary">長期 100% · 終極目標</span>
-                            </div>
-                            <strong class="mt-1 block text-base font-extrabold text-slate-blue">${escapeHtml(draft.longLabel)}</strong>
+                        <div class="space-y-1">
+                            <span class="inline-flex items-center gap-1 rounded-md bg-terracotta/15 px-2.5 py-0.5 text-[11px] font-extrabold text-terracotta">
+                                <span class="material-symbols-outlined text-xs">stars</span>長期 100% · 終極目標
+                            </span>
+                            <strong class="block text-base font-black text-slate-blue">${escapeHtml(draft.longLabel)}</strong>
                         </div>
-                        <span class="text-sm font-black text-primary shrink-0">${formatMoney(draft.targetAmount)}</span>
+                        <span class="text-base font-black text-terracotta shrink-0">${formatMoney(draft.targetAmount)}</span>
                     </div>
                 </div>
 
