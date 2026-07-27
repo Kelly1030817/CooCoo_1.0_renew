@@ -43,7 +43,7 @@
 
     function normalizeState(input) {
         const empty = domain.createEmptyState();
-        return {
+        const normalized = {
             ...empty,
             ...input,
             archivedGoals: Array.isArray(input.archivedGoals) ? input.archivedGoals : [],
@@ -60,6 +60,17 @@
                 events: Array.isArray(input.healthAssets?.events) ? input.healthAssets.events : []
             }
         };
+        if (normalized.activeGoal && (normalized.activeGoal.name === "日本旅行" || !normalized.activeGoal.name)) {
+            normalized.activeGoal.name = "綠島遊";
+            normalized.activeGoal.targetAmount = 20000;
+            if (Array.isArray(normalized.activeGoal.milestones) && normalized.activeGoal.milestones.length >= 3) {
+                normalized.activeGoal.milestones[0].label = "先完成第一筆累積";
+                normalized.activeGoal.milestones[1].label = "穩定存到一半以上";
+                normalized.activeGoal.milestones[2].label = "完成綠島遊";
+                normalized.activeGoal.milestones[2].targetAmount = 20000;
+            }
+        }
+        return normalized;
     }
 
     function ensureLegacyBackup() {
