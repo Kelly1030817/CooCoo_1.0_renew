@@ -45,7 +45,7 @@ const ShoppingChecklist = ({
       );
     }
     return (
-      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-surface-container text-on-surface-variant/70 border border-outline-variant/30">
+      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-surface-container-low text-on-surface-variant/70 border border-outline-variant/20">
         待採買
       </span>
     );
@@ -58,8 +58,8 @@ const ShoppingChecklist = ({
         key={item.id}
         className={`flex flex-wrap sm:flex-nowrap items-center justify-between p-3.5 rounded-2xl border shadow-xs transition-all gap-3 ${
           item.checked
-            ? 'bg-emerald-50/60 border-[#81b29a]/50'
-            : 'bg-white border-outline-variant/30 hover:border-[#81b29a]/40'
+            ? 'bg-white border-outline-variant/40'
+            : 'bg-white border-outline-variant/30 hover:border-outline-variant/50'
         }`}
       >
         <div className="flex items-center gap-3 min-w-[200px]">
@@ -68,8 +68,8 @@ const ShoppingChecklist = ({
             onClick={() => onToggleCheck(item.id)}
             className={`w-11 h-11 rounded-xl flex items-center justify-center border transition-all active:scale-90 ${
               item.checked
-                ? 'bg-[#386753]/20 border-[#386753]/40 text-[#386753]'
-                : 'bg-surface-container border-outline-variant/30 text-outline hover:bg-secondary/10'
+                ? 'bg-[#386753]/15 border-[#386753]/40 text-[#386753]'
+                : 'bg-surface-container-low border-outline-variant/30 text-outline hover:bg-secondary/10'
             }`}
             title="勾選/取消勾選"
           >
@@ -80,7 +80,7 @@ const ShoppingChecklist = ({
 
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <span className={`font-extrabold text-sm sm:text-base ${item.checked ? 'text-slate-blue/80' : 'text-slate-blue'}`}>
+              <span className={`font-extrabold text-sm sm:text-base ${item.checked ? 'text-slate-blue/70' : 'text-slate-blue'}`}>
                 {item.name}
               </span>
               {renderStatusBadge(item.status)}
@@ -112,7 +112,7 @@ const ShoppingChecklist = ({
             <span className="text-xs text-outline font-bold pr-1">{item.unit || '項'}</span>
           </div>
 
-          <span className={`font-black text-sm min-w-[50px] text-right ${item.checked ? 'text-slate-blue/80' : 'text-slate-blue'}`}>
+          <span className={`font-black text-sm min-w-[50px] text-right ${item.checked ? 'text-slate-blue/70' : 'text-slate-blue'}`}>
             ${item.estCost * (item.qty || 1)}
           </span>
 
@@ -139,7 +139,7 @@ const ShoppingChecklist = ({
     <div className="bg-white rounded-3xl shadow-sm border border-outline-variant/30 overflow-hidden flex flex-col justify-between">
       <div>
         {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-outline-variant/20 flex justify-between items-center bg-surface-container-low">
+        <div className="p-4 sm:p-5 border-b border-outline-variant/20 flex justify-between items-center bg-white">
           <div className="flex items-center gap-2">
             <span className="material-symbols-outlined text-secondary fill">format_list_bulleted</span>
             <h3 className="text-base sm:text-lg font-extrabold text-slate-blue">採買清單確認</h3>
@@ -150,9 +150,9 @@ const ShoppingChecklist = ({
           {shoppingList.length > 0 && (
             <button
               onClick={onToggleAll}
-              className="text-xs bg-slate-blue hover:brightness-110 text-white font-extrabold px-3.5 py-1.5 rounded-xl transition-all flex items-center gap-1 shadow-xs active:scale-95"
+              className="text-xs bg-white border border-outline-variant/30 hover:bg-surface-container-low text-slate-blue font-extrabold px-3.5 py-1.5 rounded-xl transition-all flex items-center gap-1 shadow-xs active:scale-95"
             >
-              <span className="material-symbols-outlined text-sm">
+              <span className="material-symbols-outlined text-sm text-secondary">
                 {allChecked ? 'check_box' : 'check_box_outline_blank'}
               </span>
               {allChecked ? '取消全選' : '全選'}
@@ -168,17 +168,17 @@ const ShoppingChecklist = ({
             <p className="text-xs text-outline">可點擊右上角「手動新增」或使用 AI 建議加入缺口食材！</p>
           </div>
         ) : (
-          <div className="p-4 sm:p-5 space-y-6">
+          <div className="p-4 sm:p-5 space-y-4">
             {/* Category: Produce (新鮮蔬果) */}
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               <button
                 onClick={() => toggleCategory('produce')}
-                className="w-full flex items-center justify-between p-3 rounded-2xl bg-emerald-50/80 border border-emerald-200/60 hover:bg-emerald-100/60 transition-colors text-left select-none"
+                className="w-full flex items-center justify-between p-3 rounded-2xl bg-[#81b29a]/10 border border-[#81b29a]/25 hover:bg-[#81b29a]/20 transition-colors text-left select-none"
               >
                 <div className="flex items-center gap-2">
                   <span className="material-symbols-outlined text-[#386753]">eco</span>
                   <span className="font-extrabold text-xs sm:text-sm text-[#386753]">新鮮蔬果 (Produce)</span>
-                  <span className="text-[11px] font-bold text-[#386753] bg-white px-2 py-0.5 rounded-full border border-[#81b29a]/40">
+                  <span className="text-[11px] font-bold text-[#386753] bg-white px-2 py-0.5 rounded-full border border-[#81b29a]/30">
                     {shopProduce.length} 品項
                   </span>
                 </div>
@@ -188,9 +188,9 @@ const ShoppingChecklist = ({
               </button>
 
               {openCategories.produce && (
-                <div className="space-y-2.5">
+                <div className="space-y-2">
                   {shopProduce.length === 0 ? (
-                    <div className="text-xs text-outline p-3 bg-surface-container-low rounded-xl border border-dashed border-outline-variant/30 text-center">
+                    <div className="text-xs text-outline p-3 bg-white rounded-xl border border-dashed border-outline-variant/30 text-center">
                       此類別無待採買品項
                     </div>
                   ) : (
@@ -201,15 +201,15 @@ const ShoppingChecklist = ({
             </div>
 
             {/* Category: Protein (蛋白質與乳製品) */}
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               <button
                 onClick={() => toggleCategory('protein')}
-                className="w-full flex items-center justify-between p-3 rounded-2xl bg-orange-50/80 border border-orange-200/60 hover:bg-orange-100/60 transition-colors text-left select-none"
+                className="w-full flex items-center justify-between p-3 rounded-2xl bg-[#e07a5f]/10 border border-[#e07a5f]/25 hover:bg-[#e07a5f]/20 transition-colors text-left select-none"
               >
                 <div className="flex items-center gap-2">
                   <span className="material-symbols-outlined text-[#9a442d]">egg</span>
                   <span className="font-extrabold text-xs sm:text-sm text-[#9a442d]">蛋白質與乳製品 (Protein & Dairy)</span>
-                  <span className="text-[11px] font-bold text-[#9a442d] bg-white px-2 py-0.5 rounded-full border border-[#e07a5f]/40">
+                  <span className="text-[11px] font-bold text-[#9a442d] bg-white px-2 py-0.5 rounded-full border border-[#e07a5f]/30">
                     {shopProtein.length} 品項
                   </span>
                 </div>
@@ -219,9 +219,9 @@ const ShoppingChecklist = ({
               </button>
 
               {openCategories.protein && (
-                <div className="space-y-2.5">
+                <div className="space-y-2">
                   {shopProtein.length === 0 ? (
-                    <div className="text-xs text-outline p-3 bg-surface-container-low rounded-xl border border-dashed border-outline-variant/30 text-center">
+                    <div className="text-xs text-outline p-3 bg-white rounded-xl border border-dashed border-outline-variant/30 text-center">
                       此類別無待採買品項
                     </div>
                   ) : (
@@ -236,7 +236,7 @@ const ShoppingChecklist = ({
 
       {/* Desktop Footer Calculator */}
       {shoppingList.length > 0 && (
-        <div className="p-4 sm:p-5 bg-surface-container-low border-t border-outline-variant/20 flex flex-col sm:flex-row justify-between items-center gap-3">
+        <div className="p-4 sm:p-5 bg-white border-t border-outline-variant/20 flex flex-col sm:flex-row justify-between items-center gap-3">
           <div className="flex items-baseline gap-1">
             <span className="text-xs font-bold text-on-surface-variant">
               已勾選 {shoppingList.filter(i => i.checked).length} 項，預估總額：
