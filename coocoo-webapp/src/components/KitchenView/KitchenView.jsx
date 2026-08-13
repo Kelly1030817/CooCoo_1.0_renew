@@ -8,6 +8,7 @@ import { getAISuggestedStorage } from '../../utils/aiStorage';
 const KitchenView = ({ inventory, preselectedItemIds = [], onFinishCooking }) => {
   const [currentStyle, setCurrentStyle] = useState('無特定風格 (AI 自由發揮)');
   const [selectedItemIds, setSelectedItemIds] = useState(preselectedItemIds);
+  const [openCategories, setOpenCategories] = useState(['vegetable_fruit', 'meat_seafood', 'dairy_egg_soy', 'cooked_others']);
   
   useEffect(() => {
     if (preselectedItemIds.length > 0) {
@@ -22,6 +23,12 @@ const KitchenView = ({ inventory, preselectedItemIds = [], onFinishCooking }) =>
   const handleToggleSelect = (id) => {
     setSelectedItemIds(prev =>
       prev.includes(id) ? prev.filter(itemId => itemId !== id) : [...prev, id]
+    );
+  };
+
+  const toggleCategoryOpen = (catKey) => {
+    setOpenCategories(prev =>
+      prev.includes(catKey) ? prev.filter(k => k !== catKey) : [...prev, catKey]
     );
   };
 
@@ -117,9 +124,10 @@ const KitchenView = ({ inventory, preselectedItemIds = [], onFinishCooking }) =>
       {/* Style Selector */}
       <StyleSelector currentStyle={currentStyle} setStyle={setCurrentStyle} />
 
-      {/* Ingredients Pool */}
-      <section className="space-y-md">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-sm mb-sm bg-white/60 backdrop-blur-sm border border-outline-variant/30 rounded-2xl p-md shadow-sm">
+      {/* Ingredients Pool Master Container */}
+      <section className="bg-white/60 backdrop-blur-sm border border-outline-variant/30 rounded-2xl p-md sm:p-lg shadow-sm space-y-md">
+        {/* Step 2 Header & Action Toolbar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-sm pb-md border-b border-outline-variant/20">
           <div className="flex items-center gap-2">
             <span className="w-6 h-6 rounded-full bg-secondary text-white font-black text-xs flex items-center justify-center shadow-sm">
               2
@@ -154,40 +162,62 @@ const KitchenView = ({ inventory, preselectedItemIds = [], onFinishCooking }) =>
         </div>
 
         {inventory.length === 0 ? (
-          <div className="bg-surface-container rounded-3xl p-xl flex flex-col items-center justify-center text-center">
+          <div className="bg-surface-container/50 rounded-2xl p-xl flex flex-col items-center justify-center text-center">
             <span className="material-symbols-outlined text-[64px] text-outline-variant mb-4">kitchen</span>
             <h4 className="text-lg font-bold text-on-surface-variant">冰箱空空如也</h4>
             <p className="text-xs text-outline mt-2">請先到「冰箱沙漏」新增食材</p>
           </div>
         ) : (
-          <div className="space-y-md">
-            {activeCategories.map(cat => (
-              <div key={cat.key} className="bg-white/60 backdrop-blur-sm border border-outline-variant/30 rounded-2xl p-md shadow-sm">
-                <div className="flex items-center justify-between mb-sm pb-2 border-b border-outline-variant/20">
-                  <div className="flex items-center gap-2">
-                    <span className="w-8 h-8 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center">
-                      <span className="material-symbols-outlined font-bold text-lg">{cat.icon}</span>
-                    </span>
-                    <h4 className="text-sm font-extrabold text-slate-blue">{cat.title}</h4>
-                  </div>
-                  <span className={`text-xs font-extrabold px-2.5 py-0.5 rounded-full ${cat.badgeBg}`}>
-                    {cat.items.length} 項
-                  </span>
+          <div className="space-y-sm">
+            {activeCategories.map(cat => {
+              const isOpen = openCategories.includes(cat.key);
+              return (
+                <div key={cat.key} className="border border-outline-variant/20 rounded-xl overflow-hidden bg-white/70 backdrop-blur-xs transition-all">
+                  {/* Accordion Header */}
+                  <button
+                    onClick={() => toggleCategoryOpen(cat.key)}
+                    className="w-full flex items-center justify-between p-sm sm:px-md bg-slate-50/60 hover:bg-slate-100/80 transition-all cursor-pointer text-left select-none"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="w-7 h-7 rounded-lg bg-secondary/10 text-secondary flex items-center justify-center">
+                        <span className="material-symbols-outlined font-bold text-base">{cat.icon}</span>
+                      </span>
+                      <h4 className="text-sm font-extrabold text-slate-blue">{cat.title}</h4>
+                      <span className={`text-[11px] font-extrabold px-2.5 py-0.5 rounded-full ml-1 ${cat.badgeBg}`}>
+                        {cat.items.length} 項
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-1 text-on-surface-variant">
+                      <span className="text-xs font-bold text-outline">
+                        {isOpen ? '收合' : '展開'}
+                      </span>
+                      <span className={`material-symbols-outlined text-lg transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}>
+                        expand_more
+                      </span>
+                    </div>
+                  </button>
+
+                  {/* Accordion Content Grid */}
+                  {isOpen && (
+                    <div className="p-sm sm:p-md pt-2 border-t border-outline-variant/15 animate-in fade-in-50 duration-150">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-md">
+                        {cat.items.map(item => (
+                          <FridgeItem
+                            key={item.id}
+                            item={item}
+                            isKitchenMode={true}
+                            isSelected={selectedItemIds.includes(item.id)}
+                            isTaskTarget={preselectedItemIds.includes(item.id)}
+                            onToggleSelect={handleToggleSelect}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-md">
-                  {cat.items.map(item => (
-                    <FridgeItem
-                      key={item.id}
-                      item={item}
-                      isKitchenMode={true}
-                      isSelected={selectedItemIds.includes(item.id)}
-                      isTaskTarget={preselectedItemIds.includes(item.id)}
-                      onToggleSelect={handleToggleSelect}
-                    />
-                  ))}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </section>

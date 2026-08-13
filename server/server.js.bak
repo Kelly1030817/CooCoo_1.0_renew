@@ -10,7 +10,14 @@ const PORT = process.env.PORT || 5001;
 // Middlewares
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
-app.use(express.static(path.join(__dirname, '../')));
+const fs = require('fs');
+const reactDistPath = path.join(__dirname, '../coocoo-webapp/dist');
+if (fs.existsSync(reactDistPath)) {
+    console.log("Serving React webapp build from:", reactDistPath);
+    app.use(express.static(reactDistPath));
+} else {
+    app.use(express.static(path.join(__dirname, '../')));
+}
 
 // Initialize Gemini AI Client
 const aiApiKey = process.env.GEMINI_API_KEY;
@@ -180,6 +187,106 @@ app.post('/api/generate-recipe', async (req, res) => {
                 ingredientsNeeded: ingredients.map(name => ({ name, qty: 1, unit: "份" }))
             }
         });
+    }
+});
+
+// POST /api/generate-recipe-stream - SSE streaming AI recipe generation
+app.post('/api/generate-recipe-stream', async (req, res) => {
+    const { ingredients, style, excludeTitle } = req.body;
+    if (!ingredients || ingredients.length === 0) {
+        return res.status(400).json({ success: false, message: "At least one ingredient is required." });
+    }
+
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+
+    const ingredientsList = ingredients.join("、");
+    const styleName = style || "自煮家常";
+
+    const systemPrompt = `你是一位極度專業且嚴謹的「自煮管理AI大廚與食物物理專家」。
+請依據提供的食材清單，設計出一道符合現代都會套房廚務標準的美味食譜。
+
+設計必須符合以下四大科學自煮物理原理之一，並在「scientificPrinciple」欄位中詳細說明：
+1. 滲透壓脫水法 (Osmotic Dehydration)：蔬菜先灑鹽靜置5分鐘脫水，防止下鍋產生過多蒸汽降低鍋溫。
+2. 熱平衡燜泡法 (Thermal Equilibrium)：肉類/蛋白質大火煎封定型後，利用液體高比熱容關火密封加壓浸沒慢熟。
+3. 一鍋到底疊加效應 + 澱粉漿化保護法 (Cornstarch Protection)：澱粉層保護蛋白質，高壓微環境保持軟嫩。
+4. 組織液阻斷與冷凍扁平化技術：利用包覆紙巾阻斷 purge，扁平冷凍最大化熱傳導表面積以縮短解凍時間。
+
+套房廚具與環境限制規範（極重要）：
+* 廚具限制：使用者位於套房，僅有「單口電磁爐/IH爐」、「平底鍋」、「小湯鍋」、「小電鍋」或「氣炸鍋/小烤箱」。絕對不得使用需要大火多口瓦斯爐、大型專業烤箱或深油炸鍋。
+* 油煙限制：必須為「低油煙」料理，避免大火爆炒或深油炸，步驟需極簡、易上手、烹飪時間短（10-20分鐘）。
+
+食材限制規範：
+* 主食材必須嚴格限於使用者選取的食材（${ingredientsList}）。
+* 鹽、糖、油、醬油、醋、水、胡椒、太白粉、蒜頭等基本調味品可預設使用，但不得憑空增加其他主要食材（如吐司、麵包、大骨等）。
+
+請務必返回單一純 JSON 物件（切勿加額外說明文字），格式如下：
+{
+  "title": "食譜標題（包含科學與風格名稱）",
+  "style": "${styleName}",
+  "prepTime": "15 分鐘",
+  "estCost": "NT$ 60",
+  "scientificPrinciple": "【物理學應用】：詳細說明的原理...",
+  "steps": [
+    "步驟一...",
+    "步驟二...",
+    "步驟三..."
+  ],
+  "ingredientsNeeded": [
+    { "name": "${ingredients[0]}", "qty": 1, "unit": "份" }
+  ]
+}`;
+
+    let userPrompt = `食材清單：${ingredientsList}\n料理風格：${styleName}`;
+    if (excludeTitle) {
+        userPrompt += `\n請避免推薦與「${excludeTitle}」相同或高度相似的菜色，請提供另外一個完全不同的食譜選項。`;
+    }
+
+    if (!aiModel) {
+        const mockData = {
+            title: `${styleName}風味【${ingredients[0]}】物理學自煮料理`,
+            style: styleName,
+            prepTime: "15 分鐘",
+            estCost: "NT$ 55",
+            scientificPrinciple: "【物理學熱平衡與比熱容】：利用食材的高比熱容在加蓋鍋體內形成溫和熱流，使核心溫度平緩上升，避免蛋白質過度緊縮流失組織液，達到鮮嫩口感。",
+            steps: [
+                `處理食材 ${ingredients[0]}，若有水分請先用紙巾吸乾。`,
+                ingredients[1] ? `將 ${ingredients[1]} 切細絲，加入少許鹽靜置 3 分鐘，利用滲透壓排乾多餘水分。` : `將食材預備完成，裝入方形規格收納盒備用。`,
+                "起油鍋，大火快速翻炒食材 2 分鐘，隨即加入調味料並關火加蓋，利用餘溫熱平衡慢熟 3 分鐘，出鍋。"
+            ],
+            ingredientsNeeded: ingredients.map(name => ({ name, qty: 1, unit: "份" }))
+        };
+
+        const jsonString = JSON.stringify(mockData, null, 2);
+        const chunkSize = Math.ceil(jsonString.length / 4);
+        for (let i = 0; i < jsonString.length; i += chunkSize) {
+            const chunk = jsonString.slice(i, i + chunkSize);
+            res.write(`data: ${JSON.stringify({ type: 'chunk', text: chunk })}\n\n`);
+            await new Promise(r => setTimeout(r, 120));
+        }
+        res.write(`data: ${JSON.stringify({ type: 'complete', data: mockData })}\n\n`);
+        return res.end();
+    }
+
+    try {
+        const prompt = `${systemPrompt}\n\n${userPrompt}`;
+        const responseStream = await aiModel.generateContentStream(prompt);
+        let fullText = "";
+
+        for await (const chunk of responseStream.stream) {
+            const textChunk = chunk.text();
+            fullText += textChunk;
+            res.write(`data: ${JSON.stringify({ type: 'chunk', text: textChunk })}\n\n`);
+        }
+
+        const recipeData = cleanJsonResponse(fullText);
+        res.write(`data: ${JSON.stringify({ type: 'complete', data: recipeData || { title: `${styleName}自煮料理`, style: styleName, prepTime: "15 分鐘", estCost: "NT$ 50", scientificPrinciple: "物理熱力學原理控溫", steps: [fullText] } })}\n\n`);
+        res.end();
+    } catch (error) {
+        console.error("Gemini stream generation error:", error);
+        res.write(`data: ${JSON.stringify({ type: 'error', message: error.message })}\n\n`);
+        res.end();
     }
 });
 

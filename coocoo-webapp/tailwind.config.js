@@ -40,6 +40,11 @@ module.exports = {
         'slate-blue': '#3d405b',
         'rust-orange': '#d95d39',
         'oatmeal-sand': '#f4f1de',
+        oatmeal: '#f4f1de',
+        sage: '#81b29a',
+        ochre: '#f2cc8f',
+        slate: '#3d405b',
+        rust: '#d95d39',
       },
       borderRadius: {
         DEFAULT: '0.25rem',

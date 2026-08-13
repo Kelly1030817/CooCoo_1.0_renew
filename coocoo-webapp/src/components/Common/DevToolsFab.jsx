@@ -5,7 +5,9 @@ export default function DevToolsFab({ onOpenOnboarding, onOpenSettlement }) {
 
   const handleStartOnboarding = () => {
     setIsOpen(false);
-    if (window.SingleGoalApp?.startOnboarding) {
+    if (onOpenOnboarding) {
+      onOpenOnboarding();
+    } else if (window.SingleGoalApp?.startOnboarding) {
       window.SingleGoalApp.startOnboarding();
     }
   };
@@ -65,22 +67,25 @@ export default function DevToolsFab({ onOpenOnboarding, onOpenSettlement }) {
 
           <div className="space-y-1.5">
             <p className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">1. 盤點與設定調整</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+            <div class="grid grid-cols-1 gap-1.5">
               <button 
                 onClick={handleStartOnboarding}
-                title="開啟圓夢看板六步引導盤點"
-                className="w-full bg-slate-800 hover:bg-indigo-600 text-slate-100 hover:text-white px-2.5 py-2 rounded-xl text-[11px] font-bold border border-slate-700 flex items-center gap-1 transition-all text-left"
+                title="重新觸發首進打招呼與圓夢許願罐設定"
+                className="w-full bg-[#e07a5f] hover:bg-[#d95d39] text-white px-3 py-2.5 rounded-xl text-[11px] font-extrabold flex items-center justify-between shadow-sm transition-all text-left"
               >
-                <span className="material-symbols-outlined text-sm text-indigo-400">flag</span>
-                調整圓夢看板目標內容
+                <span className="flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-sm">handshake</span>
+                  👋 重新觸發首進打招呼與圓夢設定
+                </span>
+                <span class="text-[9px] bg-white/20 text-white px-1.5 py-0.5 rounded font-mono">Step 1-3</span>
               </button>
               <button 
                 onClick={handleOpenSettings}
                 title="開啟當前計畫設定調整彈窗"
-                className="w-full bg-slate-800 hover:bg-indigo-600 text-slate-100 hover:text-white px-2.5 py-2 rounded-xl text-[11px] font-bold border border-slate-700 flex items-center gap-1 transition-all text-left"
+                className="w-full bg-slate-800 hover:bg-slate-700 text-slate-100 hover:text-white px-2.5 py-2 rounded-xl text-[11px] font-bold border border-slate-700 flex items-center gap-1 transition-all text-left"
               >
                 <span className="material-symbols-outlined text-sm text-amber-400">tune</span>
-                計畫調整
+                計畫調整與圓夢問答
               </button>
             </div>
           </div>

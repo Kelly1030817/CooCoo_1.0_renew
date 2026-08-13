@@ -138,24 +138,12 @@ function AppContent() {
       {/* Onboarding Modal */}
       {showOnboarding && (
         <AiAssistantOnboarding
-          inventory={inventory}
-          onAcceptQuest={handleAcceptQuest}
-          onAddShoppingItems={(items) => {
-            const formatted = items.map((item, idx) => ({
-              id: `s_chef_${Date.now()}_${idx}`,
-              name: item.name,
-              category: item.category || 'produce',
-              qty: item.qty || 1,
-              unit: item.unit || '包',
-              checked: false,
-              status: '主廚推薦補貨',
-              estCost: item.estCost || 80
-            }));
-            setShoppingList(prev => [...formatted, ...prev]);
-          }}
-          onGoShopping={() => {
-            setActiveTab('shopping');
+          onCompleteSetup={(goal) => {
+            if (window.SingleGoalApp?.updateActiveGoal) {
+              window.SingleGoalApp.updateActiveGoal(goal);
+            }
             setShowOnboarding(false);
+            setActiveTab('roi');
           }}
           onSkip={handleSkipOnboarding}
         />

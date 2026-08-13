@@ -428,131 +428,275 @@ async function handleLogout() {
 }
 
 // ==========================================
-// SUPABASE CLOUD DATABASE SYNC HELPERS (Optimistic Sync)
+// SUPABASE CLOUD DATABASE SYNC HELPERS (Optimistic Sync & Offline Queue)
 // ==========================================
+
+const OFFLINE_QUEUE_KEY = 'coocoo_offline_sync_queue';
+
+function getOfflineQueue() {
+    try {
+        const raw = localStorage.getItem(OFFLINE_QUEUE_KEY);
+        return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+        return [];
+    }
+}
+
+function saveOfflineQueue(queue) {
+    try {
+        localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(queue));
+    } catch (e) {}
+}
+
+function enqueueOfflineAction(actionType, payload) {
+    const queue = getOfflineQueue();
+    queue.push({
+        id: `action_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+        actionType,
+        payload,
+        timestamp: Date.now()
+    });
+    saveOfflineQueue(queue);
+    showToast("已存入離線同步佇列，重連網路時自動上傳 Supabase", "info");
+}
+
+async function flushOfflineQueue() {
+    if (!isCloudMode || !supabaseClient || !currentUser || !navigator.onLine) return;
+    const queue = getOfflineQueue();
+    if (queue.length === 0) return;
+
+    console.log(`開始處理離線佇列，共 ${queue.length} 項...`);
+    const remainingQueue = [];
+    let flushedCount = 0;
+
+    for (const item of queue) {
+        try {
+            let error = null;
+            if (item.actionType === 'add_inventory') {
+                const res = await supabaseClient.from('inventory').insert([{ ...item.payload, user_id: currentUser.id }]);
+                error = res.error;
+            } else if (item.actionType === 'update_inventory') {
+                const res = await supabaseClient.from('inventory').update(item.payload.data).eq('id', item.payload.id);
+                error = res.error;
+            } else if (item.actionType === 'delete_inventory') {
+                const res = await supabaseClient.from('inventory').delete().eq('id', item.payload.id);
+                error = res.error;
+            } else if (item.actionType === 'add_shopping') {
+                const res = await supabaseClient.from('shopping_list').insert([{ ...item.payload, user_id: currentUser.id }]);
+                error = res.error;
+            } else if (item.actionType === 'update_shopping') {
+                const res = await supabaseClient.from('shopping_list').update(item.payload.data).eq('id', item.payload.id);
+                error = res.error;
+            } else if (item.actionType === 'delete_shopping') {
+                const res = await supabaseClient.from('shopping_list').delete().eq('id', item.payload.id);
+                error = res.error;
+            } else if (item.actionType === 'clear_shopping_checked') {
+                const res = await supabaseClient.from('shopping_list').delete().eq('user_id', currentUser.id).eq('checked', true);
+                error = res.error;
+            } else if (item.actionType === 'add_cooked_history') {
+                const res = await supabaseClient.from('cooked_history').insert([{ ...item.payload, user_id: currentUser.id }]);
+                error = res.error;
+            }
+
+            if (error) {
+                console.warn("離線動作補發失敗，保留至佇列:", item, error);
+                remainingQueue.push(item);
+            } else {
+                flushedCount++;
+            }
+        } catch (err) {
+            console.warn("離線動作執行例外，保留至佇列:", item, err);
+            remainingQueue.push(item);
+        }
+    }
+
+    saveOfflineQueue(remainingQueue);
+    if (flushedCount > 0) {
+        showToast(`已成功離線同步 ${flushedCount} 項操作至 Supabase！`, "success");
+    }
+}
+
+window.addEventListener('online', () => {
+    showToast("網路已恢復連線，觸發 Supabase 佇列同步...", "info");
+    flushOfflineQueue();
+});
 
 async function dbAddInventoryItem(item) {
     if (!isCloudMode || !supabaseClient || !currentUser) return;
+    const payload = {
+        id: item.id,
+        user_id: currentUser.id,
+        name: item.name,
+        chamber: item.chamber,
+        qty: item.qty,
+        unit: item.unit,
+        days_left: item.daysLeft,
+        image_url: item.image,
+        added_date: item.addedDate,
+        savings_reward: item.roi?.savings || 50,
+        sodium_mg: item.roi?.sodium || 100,
+        fat_g: item.roi?.fat || 5,
+        storage_protocol: item.storageProtocol,
+        box_size: item.boxSize
+    };
+    if (!navigator.onLine) {
+        enqueueOfflineAction('add_inventory', payload);
+        return;
+    }
     try {
-        const { error } = await supabaseClient.from('inventory').insert([{
-            id: item.id,
-            user_id: currentUser.id,
-            name: item.name,
-            chamber: item.chamber,
-            qty: item.qty,
-            unit: item.unit,
-            days_left: item.daysLeft,
-            image_url: item.image,
-            added_date: item.addedDate,
-            savings_reward: item.roi?.savings || 50,
-            sodium_mg: item.roi?.sodium || 100,
-            fat_g: item.roi?.fat || 5,
-            storage_protocol: item.storageProtocol,
-            box_size: item.boxSize
-        }]);
+        const { error } = await supabaseClient.from('inventory').insert([payload]);
         if (error) throw error;
     } catch (e) {
-        console.error("Supabase 同步新增食材失敗:", e);
+        console.error("Supabase 同步新增食材失敗，存入離線佇列:", e);
+        enqueueOfflineAction('add_inventory', payload);
     }
 }
 
 async function dbUpdateInventoryItem(item) {
     if (!isCloudMode || !supabaseClient || !currentUser) return;
-    try {
-        const { error } = await supabaseClient.from('inventory').update({
+    const payload = {
+        id: item.id,
+        data: {
             qty: item.qty,
             days_left: item.daysLeft,
             chamber: item.chamber,
             box_size: item.boxSize,
             storage_protocol: item.storageProtocol
-        }).eq('id', item.id);
+        }
+    };
+    if (!navigator.onLine) {
+        enqueueOfflineAction('update_inventory', payload);
+        return;
+    }
+    try {
+        const { error } = await supabaseClient.from('inventory').update(payload.data).eq('id', item.id);
         if (error) throw error;
     } catch (e) {
-        console.error("Supabase 同步更新食材失敗:", e);
+        console.error("Supabase 同步更新食材失敗，存入離線佇列:", e);
+        enqueueOfflineAction('update_inventory', payload);
     }
 }
 
 async function dbDeleteInventoryItem(id) {
     if (!isCloudMode || !supabaseClient || !currentUser) return;
+    const payload = { id };
+    if (!navigator.onLine) {
+        enqueueOfflineAction('delete_inventory', payload);
+        return;
+    }
     try {
         const { error } = await supabaseClient.from('inventory').delete().eq('id', id);
         if (error) throw error;
     } catch (e) {
-        console.error("Supabase 同步刪除食材失敗:", e);
+        console.error("Supabase 同步刪除食材失敗，存入離線佇列:", e);
+        enqueueOfflineAction('delete_inventory', payload);
     }
 }
 
 async function dbAddShoppingItem(item) {
     if (!isCloudMode || !supabaseClient || !currentUser) return;
+    const payload = {
+        id: item.id,
+        user_id: currentUser.id,
+        name: item.name,
+        category: item.category,
+        qty: item.qty,
+        unit: item.unit,
+        checked: item.checked,
+        status: item.status,
+        est_cost: item.estCost
+    };
+    if (!navigator.onLine) {
+        enqueueOfflineAction('add_shopping', payload);
+        return;
+    }
     try {
-        const { error } = await supabaseClient.from('shopping_list').insert([{
-            id: item.id,
-            user_id: currentUser.id,
-            name: item.name,
-            category: item.category,
-            qty: item.qty,
-            unit: item.unit,
-            checked: item.checked,
-            status: item.status,
-            est_cost: item.estCost
-        }]);
+        const { error } = await supabaseClient.from('shopping_list').insert([payload]);
         if (error) throw error;
     } catch (e) {
-        console.error("Supabase 同步新增採買項失敗:", e);
+        console.error("Supabase 同步新增採買項失敗，存入離線佇列:", e);
+        enqueueOfflineAction('add_shopping', payload);
     }
 }
 
 async function dbUpdateShoppingItem(item) {
     if (!isCloudMode || !supabaseClient || !currentUser) return;
-    try {
-        const { error } = await supabaseClient.from('shopping_list').update({
+    const payload = {
+        id: item.id,
+        data: {
             checked: item.checked,
             qty: item.qty,
             unit: item.unit,
             status: item.status,
             est_cost: item.estCost
-        }).eq('id', item.id);
+        }
+    };
+    if (!navigator.onLine) {
+        enqueueOfflineAction('update_shopping', payload);
+        return;
+    }
+    try {
+        const { error } = await supabaseClient.from('shopping_list').update(payload.data).eq('id', item.id);
         if (error) throw error;
     } catch (e) {
-        console.error("Supabase 同步更新採買項失敗:", e);
+        console.error("Supabase 同步更新採買項失敗，存入離線佇列:", e);
+        enqueueOfflineAction('update_shopping', payload);
     }
 }
 
 async function dbDeleteShoppingItem(id) {
     if (!isCloudMode || !supabaseClient || !currentUser) return;
+    const payload = { id };
+    if (!navigator.onLine) {
+        enqueueOfflineAction('delete_shopping', payload);
+        return;
+    }
     try {
         const { error } = await supabaseClient.from('shopping_list').delete().eq('id', id);
         if (error) throw error;
     } catch (e) {
-        console.error("Supabase 同步刪除採買項失敗:", e);
+        console.error("Supabase 同步刪除採買項失敗，存入離線佇列:", e);
+        enqueueOfflineAction('delete_shopping', payload);
     }
 }
 
 async function dbClearShoppingChecked() {
     if (!isCloudMode || !supabaseClient || !currentUser) return;
+    const payload = {};
+    if (!navigator.onLine) {
+        enqueueOfflineAction('clear_shopping_checked', payload);
+        return;
+    }
     try {
         const { error } = await supabaseClient.from('shopping_list').delete().eq('user_id', currentUser.id).eq('checked', true);
         if (error) throw error;
     } catch (e) {
-        console.error("Supabase 同步清除已採買項失敗:", e);
+        console.error("Supabase 同步清除已採買項失敗，存入離線佇列:", e);
+        enqueueOfflineAction('clear_shopping_checked', payload);
     }
 }
 
 async function dbSaveCookedHistory(record) {
     if (!isCloudMode || !supabaseClient || !currentUser) return;
+    const payload = {
+        user_id: currentUser.id,
+        recipe_title: record.recipe_title,
+        ingredients_used: record.ingredients_used,
+        type: record.type || 'meal',
+        savings_saved: record.savings_saved || 50,
+        sodium_reduced_mg: record.sodium_reduced_mg || 100,
+        fat_reduced_g: record.fat_reduced_g || 5
+    };
+    if (!navigator.onLine) {
+        enqueueOfflineAction('add_cooked_history', payload);
+        return;
+    }
     try {
-        const { error } = await supabaseClient.from('cooked_history').insert([{
-            user_id: currentUser.id,
-            recipe_title: record.recipe_title,
-            ingredients_used: record.ingredients_used,
-            type: record.type || 'meal',
-            savings_saved: record.savings_saved || 50,
-            sodium_reduced_mg: record.sodium_reduced_mg || 100,
-            fat_reduced_g: record.fat_reduced_g || 5
-        }]);
+        const { error } = await supabaseClient.from('cooked_history').insert([payload]);
         if (error) throw error;
     } catch (e) {
-        console.error("Supabase 同步新增烹飪紀錄失敗:", e);
+        console.error("Supabase 同步新增烹飪紀錄失敗，存入離線佇列:", e);
+        enqueueOfflineAction('add_cooked_history', payload);
     }
 }
 
@@ -3446,56 +3590,112 @@ function generateAiRecipe(style = '無特定風格', excludeTitle = null) {
     const existing = document.getElementById("ai-recipe-modal");
     if (existing) existing.remove();
 
-    // Create loading screen overlay
+    // Create loading screen overlay with dynamic streaming preview
     const loading = document.createElement("div");
     loading.id = "ai-recipe-modal";
     loading.className = "fixed inset-0 bg-black/60 z-50 flex items-center justify-center backdrop-blur-sm";
     loading.innerHTML = `
-        <div class="bg-white rounded-3xl p-xl shadow-2xl max-w-[420px] w-full mx-gutter text-center space-y-md border border-primary/5 animate-pulse">
+        <div class="bg-white rounded-3xl p-xl shadow-2xl max-w-[420px] w-full mx-gutter text-center space-y-md border border-primary/5">
             <span class="material-symbols-outlined text-5xl text-ochre-gold animate-spin">auto_awesome</span>
             <h3 class="text-lg font-extrabold text-slate-blue">AI 大廚正在精算中...</h3>
             <p class="text-xs text-on-surface-variant leading-relaxed font-medium">正在為您融合「${style}」風格與食材，規劃食譜...</p>
+            <div class="bg-amber-50/80 border border-amber-200/60 rounded-xl p-3 text-left">
+                <div class="text-[10px] font-bold text-amber-900 flex items-center gap-1 mb-1">
+                    <span class="material-symbols-outlined text-xs animate-bounce">bolt</span>
+                    AI 流式即時運算中...
+                </div>
+                <div id="ai-recipe-stream-preview" class="text-[11px] font-mono text-stone-600 line-clamp-3 leading-relaxed">
+                    初始化科學熱力學模型...
+                </div>
+            </div>
         </div>
     `;
     document.body.appendChild(loading);
 
     const configuredApiBase = String(window.COOCOO_API_BASE_URL || '').replace(/\/$/, '');
-    const apiUrl = configuredApiBase
-        ? `${configuredApiBase}/api/generate-recipe`
-        : '/api/generate-recipe';
+    const streamUrl = configuredApiBase ? `${configuredApiBase}/api/generate-recipe-stream` : '/api/generate-recipe-stream';
+    const fallbackApiUrl = configuredApiBase ? `${configuredApiBase}/api/generate-recipe` : '/api/generate-recipe';
 
-    // Call local server endpoint
-    fetch(apiUrl, {
+    let isStreamHandled = false;
+
+    // Try SSE streaming API first
+    fetch(streamUrl, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             ingredients: itemNames,
             style: style,
             excludeTitle: excludeTitle
         })
     })
-    .then(res => {
-        if (!res.ok) throw new Error("Server responded with error status");
-        return res.json();
-    })
-    .then(resData => {
-        if (resData.success && resData.data) {
-            resData.data.style = style; // Ensure style is attached
-            renderRecipeModal(resData.data, itemNames);
+    .then(async (res) => {
+        if (!res.ok || !res.body) throw new Error("Stream endpoint unready");
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder("utf-8");
+        let buffer = "";
+        let finalData = null;
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split("\n\n");
+            buffer = lines.pop() || "";
+
+            for (const line of lines) {
+                if (line.startsWith("data: ")) {
+                    try {
+                        const payload = JSON.parse(line.replace(/^data:\s*/, ""));
+                        if (payload.type === 'chunk' && payload.text) {
+                            const subEl = document.getElementById("ai-recipe-stream-preview");
+                            if (subEl) {
+                                subEl.textContent = (subEl.textContent + " " + payload.text).slice(-150);
+                            }
+                        } else if (payload.type === 'complete' && payload.data) {
+                            finalData = payload.data;
+                        }
+                    } catch (e) {}
+                }
+            }
+        }
+
+        if (finalData && finalData.title) {
+            isStreamHandled = true;
+            finalData.style = style;
+            renderRecipeModal(finalData, itemNames);
         } else {
-            throw new Error(resData.message || "Recipe generation failed");
+            throw new Error("No valid JSON structure from stream");
         }
     })
     .catch(err => {
-        console.warn("Backend API not reachable or returned error, falling back to local mock recipe...", err);
-        // Fallback to local mock recipe
-        setTimeout(() => {
-            const mockRecipe = getLocalMockRecipe(itemNames, style, excludeTitle);
-            mockRecipe.style = style;
-            renderRecipeModal(mockRecipe, itemNames);
-        }, 800);
+        if (isStreamHandled) return;
+        console.warn("Stream API fallback to standard API:", err);
+        // Fallback to standard endpoint
+        fetch(fallbackApiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ingredients: itemNames, style: style, excludeTitle: excludeTitle })
+        })
+        .then(res => {
+            if (!res.ok) throw new Error("Server responded with error status");
+            return res.json();
+        })
+        .then(resData => {
+            if (resData.success && resData.data) {
+                resData.data.style = style;
+                renderRecipeModal(resData.data, itemNames);
+            } else {
+                throw new Error(resData.message || "Recipe generation failed");
+            }
+        })
+        .catch(fallbackErr => {
+            console.warn("Backend API not reachable, using local mock recipe:", fallbackErr);
+            setTimeout(() => {
+                const mockRecipe = getLocalMockRecipe(itemNames, style, excludeTitle);
+                mockRecipe.style = style;
+                renderRecipeModal(mockRecipe, itemNames);
+            }, 600);
+        });
     });
 }
 
@@ -6485,10 +6685,6 @@ const TAIWAN_TRADITIONAL_MARKETS = [
     {
         id: "chiayi_county_minxiong",
         city: "嘉義縣",
-        name: "民雄鄉公有零售市場",
-        address: "嘉義縣民雄鄉民雄路96號",
-        hours: "每日 06:00 - 12:30",
-        desc: "民雄最大傳統生鮮市場，除了新鮮家禽、鮮魚、溫體黑豬肉外，還有民雄特產鳳梨、小農野菜等。",
         badge: "嘉義縣早市",
         gmapsUrl: "https://maps.google.com/?q=民雄鄉公有零售市場"
     },
@@ -7278,11 +7474,235 @@ window.submitNewShoppingItem = submitNewShoppingItem;
 
 
 // ==========================================
-// MASTER CHEF CONSULTATION MODAL (主廚相談室)
+// MASTER CHEF CONSULTATION & ONBOARDING (Step 1 -> Step 2 Wish Jar A+B Hybrid -> Step 3 Chef)
 // ==========================================
 
-function showChefConsultationModal() {
+function startCooCooOnboarding() {
+    renderOnboardingStepWelcome();
+}
+window.startCooCooOnboarding = startCooCooOnboarding;
+
+function renderOnboardingStepWelcome() {
+    document.getElementById('coocoo-onboarding-modal')?.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'coocoo-onboarding-modal';
+    modal.className = 'fixed inset-0 bg-black/65 z-[90] flex items-center justify-center p-4 backdrop-blur-md animate-fade-in';
+    modal.innerHTML = `
+        <div class="bg-[#fdfae7] w-full max-w-[480px] rounded-3xl shadow-2xl overflow-hidden border border-amber-200/80 p-6 space-y-5 text-left relative">
+            <div class="flex items-center gap-3 border-b border-amber-200/60 pb-4">
+                <div class="w-12 h-12 rounded-2xl bg-[#e07a5f]/15 text-[#e07a5f] flex items-center justify-center shrink-0 shadow-inner">
+                    <span class="material-symbols-outlined text-3xl">restaurant_menu</span>
+                </div>
+                <div>
+                    <h2 class="text-xl font-extrabold text-slate-blue">歡迎來到 CooCoo 煮煮 👋</h2>
+                    <p class="text-xs text-on-surface-variant/80 mt-0.5">專為單身租屋族設計的「智慧自煮與圓夢儲蓄系統」</p>
+                </div>
+            </div>
+
+            <div class="space-y-3 text-xs text-on-surface leading-relaxed font-medium">
+                <div class="bg-white p-4 rounded-2xl border border-amber-200/60 space-y-2 shadow-xs">
+                    <div class="flex items-center gap-2 text-sm font-extrabold text-[#9a442d]">
+                        <span class="material-symbols-outlined text-lg">bolt</span>
+                        15 分鐘極速自適應烹飪
+                    </div>
+                    <p class="text-on-surface-variant text-[11px]">對齊套房單口爐、快煮鍋與平底鍋，無油煙極速上菜，洗滌件數極限控制在 1-2 件。</p>
+                </div>
+
+                <div class="bg-white p-4 rounded-2xl border border-amber-200/60 space-y-2 shadow-xs">
+                    <div class="flex items-center gap-2 text-sm font-extrabold text-[#386753]">
+                        <span class="material-symbols-outlined text-lg">savings</span>
+                        外送差額圓夢儲蓄
+                    </div>
+                    <p class="text-on-surface-variant text-[11px]">每自煮一餐，系統自動將省下的「外送差額」轉入您的實體願望清單，讓自煮成果看得到！</p>
+                </div>
+            </div>
+
+            <button onclick="renderOnboardingStepWishJar()" class="w-full bg-[#e07a5f] hover:bg-[#d95d39] text-white font-extrabold py-3.5 px-4 rounded-2xl text-xs sm:text-sm shadow-md transition-all active:scale-95 flex items-center justify-center gap-2">
+                <span>設定我的第一個圓夢目標</span>
+                <span class="material-symbols-outlined text-base">arrow_forward</span>
+            </button>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+window.renderOnboardingStepWelcome = renderOnboardingStepWelcome;
+
+function renderOnboardingStepWishJar() {
+    document.getElementById('coocoo-onboarding-modal')?.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'coocoo-onboarding-modal';
+    modal.className = 'fixed inset-0 bg-black/65 z-[90] flex items-center justify-center p-4 backdrop-blur-md animate-fade-in overflow-y-auto';
+
+    const promptPlaceholders = [
+        "例如：去京都看櫻花 🍁",
+        "例如：買台極致油煙氣炸鍋 🍳",
+        "例如：存下第一筆自煮緊急備用金 💰",
+        "例如：東京五天四夜自由行 ✈️"
+    ];
+
+    modal.innerHTML = `
+        <div class="bg-[#fdfae7] w-full max-w-[500px] rounded-3xl shadow-2xl overflow-hidden border border-amber-200/80 p-5 space-y-4 text-left relative my-auto">
+            <!-- Header -->
+            <div class="flex items-center justify-between pb-2 border-b border-amber-200/60">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-amber-600 text-2xl">auto_awesome</span>
+                    <h3 class="text-base font-extrabold text-slate-blue">圓夢許願罐 × 通行票券立印器</h3>
+                </div>
+                <span class="text-[10px] font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full">Step 2 / 3</span>
+            </div>
+
+            <!-- Jar & Ticket Container -->
+            <div class="space-y-4">
+                <!-- Option B: Wish Jar Visualization -->
+                <div class="bg-white/80 rounded-2xl p-4 border border-amber-200/70 shadow-xs flex items-center gap-4 relative overflow-hidden">
+                    <!-- Glass Jar Graphic -->
+                    <div class="relative w-20 h-28 border-3 border-slate-700/80 rounded-b-2xl rounded-t-lg bg-sky-50/40 flex flex-col justify-end overflow-hidden shrink-0 shadow-inner">
+                        <!-- Jar Cork Top -->
+                        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-14 h-2.5 bg-amber-800/80 rounded-t-sm z-10 border-b border-amber-900/40"></div>
+                        
+                        <!-- Dynamic Tag Label inside Jar -->
+                        <div id="jar-tag-label" class="absolute top-5 left-1.5 right-1.5 bg-amber-100 border border-amber-300 text-[9px] font-extrabold text-slate-800 p-1 rounded text-center truncate shadow-xs hidden animate-tag-fly z-10">
+                            未定願望
+                        </div>
+
+                        <!-- Liquid Gold Fill Level -->
+                        <div id="jar-liquid-fill" class="w-full bg-gradient-to-t from-[#f2cc8f] to-[#e07a5f] transition-all duration-500 rounded-b-xl opacity-90" style="height: 30%;"></div>
+                    </div>
+
+                    <!-- Dynamic Calculation Feedback -->
+                    <div class="flex-1 space-y-1.5 min-w-0">
+                        <div class="flex items-center gap-1 text-xs font-extrabold text-[#386753]">
+                            <span class="material-symbols-outlined text-sm">savings</span>
+                            <span>圓夢儲蓄進度預估</span>
+                        </div>
+                        <p id="jar-timeline-calc" class="text-[11px] text-stone-600 leading-relaxed font-medium">
+                            請輸入您的願望與目標金額，系統將自動換算外送替代週數...
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Option A: Dream Ticket Form Card -->
+                <div class="bg-white rounded-2xl p-4 border-2 border-dashed border-amber-300 space-y-3 relative overflow-hidden shadow-xs">
+                    <!-- Ticket Header -->
+                    <div class="flex justify-between items-center pb-2 border-b border-stone-100 text-xs font-extrabold text-slate-blue">
+                        <span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm text-[#e07a5f]">confirmation_number</span> CooCoo 圓夢通行證</span>
+                        <span class="text-[10px] text-stone-400 font-mono">№ ${Date.now().toString().slice(-6)}</span>
+                    </div>
+
+                    <!-- Input 1: Wish Title -->
+                    <div>
+                        <label class="block text-[11px] font-extrabold text-slate-blue mb-1">1. 輸入你的圓夢願望</label>
+                        <input id="onboard-wish-title" type="text" placeholder="例如：去日本看櫻花 🍁" oninput="onWishTitleInput(this.value)" class="w-full h-9 rounded-xl border border-amber-200 px-3 text-xs font-bold bg-amber-50/30 focus:bg-white focus:border-[#e07a5f] focus:outline-none transition-all">
+                    </div>
+
+                    <!-- Input 2: Wish Amount -->
+                    <div>
+                        <label class="block text-[11px] font-extrabold text-slate-blue mb-1">2. 預估需要多少金額 (TWD)</label>
+                        <input id="onboard-wish-amount" type="number" value="30000" min="1000" step="1000" oninput="onWishAmountInput(this.value)" class="w-full h-9 rounded-xl border border-amber-200 px-3 text-xs font-extrabold text-[#9a442d] bg-amber-50/30 focus:bg-white focus:border-[#e07a5f] focus:outline-none transition-all">
+                    </div>
+
+                    <!-- Stamp Target Overlay -->
+                    <div id="ticket-stamp-mark" class="hidden absolute right-3 bottom-3 border-4 border-red-600 text-red-600 font-black text-xs px-2.5 py-1 rounded-lg uppercase tracking-widest pointer-events-none animate-stamp-in bg-white/90 shadow-md">
+                        圓夢契約已立<br><span class="text-[8px] tracking-normal block text-center">DREAM SEALED</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <button onclick="completeWishJarSetup()" class="w-full bg-[#386753] hover:bg-[#2c5242] text-white font-extrabold py-3.5 px-4 rounded-2xl text-xs sm:text-sm shadow-md transition-all active:scale-95 flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined text-base">edit_document</span>
+                <span>🖋️ 蓋章立約 ➔ 啟動圓夢計畫</span>
+            </button>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    let idx = 0;
+    const titleInput = document.getElementById("onboard-wish-title");
+    if (titleInput) {
+        window._onboardPlaceholderInterval = setInterval(() => {
+            if (titleInput && !titleInput.value) {
+                idx = (idx + 1) % promptPlaceholders.length;
+                titleInput.placeholder = promptPlaceholders[idx];
+            }
+        }, 3500);
+    }
+    onWishAmountInput(30000);
+}
+window.renderOnboardingStepWishJar = renderOnboardingStepWishJar;
+
+function onWishTitleInput(val) {
+    const tag = document.getElementById("jar-tag-label");
+    if (tag) {
+        if (val.trim()) {
+            tag.classList.remove("hidden");
+            tag.textContent = val.trim();
+        } else {
+            tag.classList.add("hidden");
+        }
+    }
+}
+window.onWishTitleInput = onWishTitleInput;
+
+function onWishAmountInput(val) {
+    const amount = Math.max(1000, Number(val) || 0);
+    const fillEl = document.getElementById("jar-liquid-fill");
+    const calcEl = document.getElementById("jar-timeline-calc");
+
+    const fillPct = Math.min(95, Math.max(15, Math.round((amount / 100000) * 100)));
+    if (fillEl) fillEl.style.height = `${fillPct}%`;
+
+    const weeklyMealSavings = 4 * 120;
+    const weeks = Math.max(1, Math.ceil(amount / weeklyMealSavings));
+    const takeoutCount = Math.ceil(amount / 200);
+
+    if (calcEl) {
+        calcEl.innerHTML = `
+            💡 每週自煮 4 餐 ➔ 相當於少叫 <strong class="text-[#9a442d] font-black">${takeoutCount}</strong> 次外送，約 <strong class="text-[#386753] font-black">${weeks} 週</strong> (${Math.ceil(weeks/4.3)} 個月) 即可完美解鎖這罐夢想！
+        `;
+    }
+}
+window.onWishAmountInput = onWishAmountInput;
+
+function completeWishJarSetup() {
+    if (window._onboardPlaceholderInterval) {
+        clearInterval(window._onboardPlaceholderInterval);
+    }
+
+    const titleInput = document.getElementById("onboard-wish-title");
+    const amountInput = document.getElementById("onboard-wish-amount");
+
+    const wishTitle = (titleInput && titleInput.value.trim()) ? titleInput.value.trim() : "首個自煮圓夢願望";
+    const wishAmount = (amountInput && Number(amountInput.value)) ? Math.max(1000, Number(amountInput.value)) : 30000;
+
+    const stampMark = document.getElementById("ticket-stamp-mark");
+    if (stampMark) {
+        stampMark.classList.remove("hidden");
+    }
+
+    if (!appState.roiGoal) appState.roiGoal = {};
+    appState.roiGoal.title = wishTitle;
+    appState.roiGoal.targetAmount = wishAmount;
+    appState.roiGoal.currentAmount = 0;
+    saveState();
+
+    if (isCloudMode && supabaseClient && currentUser) {
+        supabaseClient.from('profiles').update({ savings_target: wishAmount }).eq('id', currentUser.id);
+    }
+
+    setTimeout(() => {
+        document.getElementById('coocoo-onboarding-modal')?.remove();
+        showChefConsultationModal(wishTitle);
+    }, 750);
+}
+window.completeWishJarSetup = completeWishJarSetup;
+
+function showChefConsultationModal(customWishTitle = null) {
     document.getElementById('chef-consultation-modal')?.remove();
+
+    const wishName = customWishTitle || appState.roiGoal?.title || '圓夢自煮';
 
     const modal = document.createElement('div');
     modal.id = 'chef-consultation-modal';
@@ -7303,23 +7723,26 @@ function showChefConsultationModal() {
                     <span class="material-symbols-outlined text-lg">close</span>
                 </button>
             </header>
-            <div id="chef-consultation-body" class="p-md overflow-y-auto space-y-md flex-1">
-                <div class="bg-white rounded-2xl p-md border border-outline-variant/20 shadow-sm space-y-sm text-left">
+            <div id="chef-consultation-body" class="p-md overflow-y-auto space-y-md flex-1 text-left">
+                <div class="bg-amber-50/80 rounded-2xl p-md border border-amber-200 shadow-xs space-y-sm">
                     <div class="flex items-start gap-sm">
                         <span class="material-symbols-outlined text-primary text-2xl mt-0.5">sentiment_satisfied</span>
-                        <p class="text-sm text-on-surface font-medium leading-relaxed">
-                            👋 歡迎來到 CooCoo 煮煮！我是您的專屬主廚 👨‍🍳 今天想怎麼安排您的美食體驗呢？
-                        </p>
+                        <div class="space-y-1">
+                            <p class="text-xs font-black text-slate-blue">👋 歡迎來到 CooCoo 煮煮！我是您的專屬主廚 👨‍🍳</p>
+                            <p class="text-xs text-on-surface font-medium leading-relaxed">
+                                太棒了！您的「<strong class="text-[#e07a5f] font-black">${escapeAssistantHtml(wishName)}</strong>」圓夢計畫已正式啟動！今天想怎麼安排您的美食體驗呢？
+                            </p>
+                        </div>
                     </div>
                 </div>
 
                 <div class="space-y-sm pt-xs">
-                    <button onclick="handleChefConsultationChoice('shopping')" class="w-full bg-secondary/10 hover:bg-secondary border-2 border-secondary/30 text-secondary hover:text-white font-extrabold p-md rounded-2xl text-sm transition-all active:scale-95 flex items-center justify-center gap-2 shadow-sm">
+                    <button onclick="handleChefConsultationChoice('shopping')" class="w-full bg-[#81b29a]/20 hover:bg-[#81b29a] border-2 border-[#81b29a]/40 text-[#386753] hover:text-white font-extrabold p-md rounded-2xl text-sm transition-all active:scale-95 flex items-center justify-center gap-2 shadow-sm">
                         <span class="material-symbols-outlined text-xl">shopping_cart</span>
                         我想去採買新食材
                     </button>
 
-                    <button onclick="handleChefConsultationChoice('dish')" class="w-full bg-primary/10 hover:bg-primary border-2 border-primary/30 text-primary hover:text-white font-extrabold p-md rounded-2xl text-sm transition-all active:scale-95 flex items-center justify-center gap-2 shadow-sm">
+                    <button onclick="handleChefConsultationChoice('dish')" class="w-full bg-[#e07a5f]/20 hover:bg-[#e07a5f] border-2 border-[#e07a5f]/40 text-[#9a442d] hover:text-white font-extrabold p-md rounded-2xl text-sm transition-all active:scale-95 flex items-center justify-center gap-2 shadow-sm">
                         <span class="material-symbols-outlined text-xl">skillet</span>
                         我想選料理 / 吃好料
                     </button>
@@ -7515,8 +7938,14 @@ async function initApp() {
             resetBtn.addEventListener("click", resetState);
         }
 
-        switchTab("shopping"); // Load first tab: 補貨區
-        showChefConsultationModal(); // Automatically trigger Master Chef Consultation modal!
+        switchTab("shopping"); // Load default active tab: 補貨區
+
+        // If user hasn't configured a goal yet or is first entry, start onboarding flow!
+        if (!appState.roiGoal || !appState.roiGoal.title || appState.roiGoal.title === '預設願望') {
+            startCooCooOnboarding();
+        } else {
+            showChefConsultationModal();
+        }
     } catch (error) {
         console.error("Fatal initialization error:", error);
         const container = document.getElementById("app-view");
