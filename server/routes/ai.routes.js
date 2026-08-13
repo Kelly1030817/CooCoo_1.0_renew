@@ -1,12 +1,8 @@
 import express from 'express';
-import { analyzeRestock } from '../services/shopping.service.js';
+import { analyzeRestock } from '../controllers/shopping.controller.js';
 
 const router = express.Router();
 
-router.post('/ai-restock-analysis', async (req, res) => {
-    const { inventory, shoppingList } = req.body;
-    const result = await analyzeRestock(inventory, shoppingList);
-    res.json({ success: true, ...result });
-});
+router.post('/ai-restock-analysis', analyzeRestock);
 
 export default router;

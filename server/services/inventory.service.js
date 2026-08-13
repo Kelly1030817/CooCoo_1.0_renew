@@ -1,9 +1,11 @@
-import { mockInventory } from './mock.service.js';
+import * as inventoryRepo from '../repositories/inventory.repository.js';
 import { getStorageProtocol } from '../prompts/storage.prompt.js';
 
-export const getInventory = () => mockInventory;
+export const getAllInventory = async () => {
+    return await inventoryRepo.getAll();
+};
 
-export const addInventoryItem = (itemData) => {
+export const addInventoryItem = async (itemData) => {
     const { name, chamber, qty, unit, daysLeft, boxSize } = itemData;
     const storageProtocol = getStorageProtocol(name);
     
@@ -14,6 +16,5 @@ export const addInventoryItem = (itemData) => {
         addedDate: new Date().toISOString().split("T")[0]
     };
     
-    mockInventory.push(newItem);
-    return newItem;
+    return await inventoryRepo.add(newItem);
 };

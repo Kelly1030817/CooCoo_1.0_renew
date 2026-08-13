@@ -1,4 +1,10 @@
-// Basic placeholder for rate limiting
-export const rateLimiter = (req, res, next) => {
-    next();
-};
+import rateLimit from 'express-rate-limit';
+
+export const aiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  message: {
+    success: false,
+    error: 'Too many requests, please try again later.'
+  }
+});

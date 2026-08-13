@@ -1,9 +1,8 @@
-import { getModel } from './gemini.service.js';
+import * as geminiClient from '../clients/gemini.client.js';
 import { cleanJsonResponse } from '../utils/response.js';
 import { getRecipeSystemPrompt } from '../prompts/recipe.prompt.js';
 
 export const generateRecipe = async (ingredients, style, excludeTitle) => {
-    const aiModel = getModel();
     const ingredientsList = ingredients.join("、");
     const styleName = style || "自煮家常";
 
@@ -13,30 +12,9 @@ export const generateRecipe = async (ingredients, style, excludeTitle) => {
         userPrompt += `\n請避免推薦與「${excludeTitle}」相同或高度相似的菜色，請提供另外一個完全不同的食譜選項。`;
     }
 
-    if (!aiModel) {
-        console.log("Mock Gemini response triggered (No API Key).");
-        return {
-            provider: "mock",
-            data: {
-                title: `${styleName}風味【${ingredients[0]}】物理學自煮料理`,
-                style: styleName,
-                prepTime: "15 分鐘",
-                estCost: "NT$ 55",
-                scientificPrinciple: "【物理學熱平衡與比熱容】：利用食材的高比熱容在加蓋鍋體內形成溫和熱流，使核心溫度平緩上升，避免蛋白質過度緊縮流失組織液，達到鮮嫩口感。",
-                steps: [
-                    `處理食材 ${ingredients[0]}，若有水分請先用紙巾吸乾。`,
-                    ingredients[1] ? `將 ${ingredients[1]} 切細絲，加入少許鹽靜置 3 分鐘，利用滲透壓排乾多餘水分。` : `將食材預備完成，裝入方形規格收納盒備用。`,
-                    "起油鍋，大火快速翻炒食材 2 分鐘，隨即加入調味料並關火加蓋，利用餘溫熱平衡慢熟 3 分鐘，出鍋。"
-                ],
-                ingredientsNeeded: ingredients.map(name => ({ name, qty: 1, unit: "份" }))
-            }
-        };
-    }
-
     try {
         const prompt = `${systemPrompt}\n\n${userPrompt}`;
-        const result = await aiModel.generateContent(prompt);
-        const responseText = result.response.text();
+        const responseText = await geminiClient.generateText(prompt);
         const recipeData = cleanJsonResponse(responseText);
         
         if (recipeData && recipeData.title) {
@@ -66,7 +44,6 @@ export const generateRecipe = async (ingredients, style, excludeTitle) => {
 };
 
 export const generateRecipeStream = async (ingredients, style, excludeTitle, res) => {
-    const aiModel = getModel();
     const ingredientsList = ingredients.join("、");
     const styleName = style || "自煮家常";
 
@@ -76,38 +53,12 @@ export const generateRecipeStream = async (ingredients, style, excludeTitle, res
         userPrompt += `\n請避免推薦與「${excludeTitle}」相同或高度相似的菜色，請提供另外一個完全不同的食譜選項。`;
     }
 
-    if (!aiModel) {
-        const mockData = {
-            title: `${styleName}風味【${ingredients[0]}】物理學自煮料理`,
-            style: styleName,
-            prepTime: "15 分鐘",
-            estCost: "NT$ 55",
-            scientificPrinciple: "【物理學熱平衡與比熱容】：利用食材的高比熱容在加蓋鍋體內形成溫和熱流，使核心溫度平緩上升，避免蛋白質過度緊縮流失組織液，達到鮮嫩口感。",
-            steps: [
-                `處理食材 ${ingredients[0]}，若有水分請先用紙巾吸乾。`,
-                ingredients[1] ? `將 ${ingredients[1]} 切細絲，加入少許鹽靜置 3 分鐘，利用滲透壓排乾多餘水分。` : `將食材預備完成，裝入方形規格收納盒備用。`,
-                "起油鍋，大火快速翻炒食材 2 分鐘，隨即加入調味料並關火加蓋，利用餘溫熱平衡慢熟 3 分鐘，出鍋。"
-            ],
-            ingredientsNeeded: ingredients.map(name => ({ name, qty: 1, unit: "份" }))
-        };
-
-        const jsonString = JSON.stringify(mockData, null, 2);
-        const chunkSize = Math.ceil(jsonString.length / 4);
-        for (let i = 0; i < jsonString.length; i += chunkSize) {
-            const chunk = jsonString.slice(i, i + chunkSize);
-            res.write(`data: ${JSON.stringify({ type: 'chunk', text: chunk })}\n\n`);
-            await new Promise(r => setTimeout(r, 120));
-        }
-        res.write(`data: ${JSON.stringify({ type: 'complete', data: mockData })}\n\n`);
-        return res.end();
-    }
-
     try {
         const prompt = `${systemPrompt}\n\n${userPrompt}`;
-        const responseStream = await aiModel.generateContentStream(prompt);
+        const stream = await geminiClient.generateStream(prompt);
         let fullText = "";
 
-        for await (const chunk of responseStream.stream) {
+        for await (const chunk of stream) {
             const textChunk = chunk.text();
             fullText += textChunk;
             res.write(`data: ${JSON.stringify({ type: 'chunk', text: textChunk })}\n\n`);

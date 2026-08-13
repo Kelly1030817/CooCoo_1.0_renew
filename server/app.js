@@ -9,6 +9,7 @@ import inventoryRoutes from './routes/inventory.routes.js';
 import recipeRoutes from './routes/recipe.routes.js';
 import shoppingRoutes from './routes/shopping.routes.js';
 import aiRoutes from './routes/ai.routes.js';
+import v1Routes from './routes/v1/index.js';
 import { requestLogger } from './middleware/requestLogger.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
@@ -34,6 +35,7 @@ app.use('/api', inventoryRoutes);
 app.use('/api', recipeRoutes);
 app.use('/api', shoppingRoutes);
 app.use('/api', aiRoutes);
+app.use('/api/v1', v1Routes);
 
 app.use(errorHandler);
 
