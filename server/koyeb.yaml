@@ -1,0 +1,26 @@
+name: coocoo-backend
+type: web
+git:
+  workdir: server
+  build_command: npm ci --only=production
+  run_command: node index.js
+instance:
+  type: nano
+ports:
+  - port: 5001
+    path: /
+routes:
+  - path: /
+    port: 5001
+health_checks:
+  - http:
+      path: /api/v1/health
+      port: 5001
+    interval: 60
+    timeout: 5
+    grace_period: 15
+env:
+  - key: NODE_ENV
+    value: production
+  - key: PORT
+    value: "5001"
