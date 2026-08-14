@@ -3,7 +3,7 @@ import { recipes } from './data/recipes';
 import { blogs } from './data/blogs';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://coocoo.tw';
+  const baseUrl = 'https://coocoo-marketing.vercel.app';
 
   const recipeUrls = recipes.map((recipe) => ({
     url: `${baseUrl}/recipes/${recipe.slug}`,

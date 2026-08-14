@@ -8,11 +8,11 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'CooCoo煮煮 | 智慧自煮與圓夢儲蓄系統',
     description: '專為都市單身套房租屋族打造。精益採買、科學分裝、15分鐘烹飪，幫你省下大筆外食費。',
-    url: 'https://coocoo.tw',
+    url: 'https://coocoo-marketing.vercel.app',
     siteName: 'CooCoo煮煮',
     images: [
       {
-        url: 'https://coocoo.tw/og-image.jpg',
+        url: 'https://coocoo-marketing.vercel.app/og-image.jpg',
         width: 1200,
         height: 630,
         alt: 'CooCoo煮煮',
@@ -25,10 +25,10 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'CooCoo煮煮 | 智慧自煮與圓夢儲蓄系統',
     description: '專為都市單身套房租屋族打造的智慧自煮系統。',
-    images: ['https://coocoo.tw/og-image.jpg'],
+    images: ['https://coocoo-marketing.vercel.app/og-image.jpg'],
   },
   alternates: {
-    canonical: 'https://coocoo.tw',
+    canonical: 'https://coocoo-marketing.vercel.app',
   },
 };
 

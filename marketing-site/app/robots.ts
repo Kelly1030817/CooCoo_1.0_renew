@@ -6,6 +6,6 @@ export default function robots(): MetadataRoute.Robots {
       userAgent: '*',
       allow: '/',
     },
-    sitemap: 'https://coocoo.tw/sitemap.xml',
+    sitemap: 'https://coocoo-marketing.vercel.app/sitemap.xml',
   };
 }
