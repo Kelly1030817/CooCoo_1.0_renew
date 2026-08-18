@@ -33,6 +33,23 @@ app.use('/api/v1', v1Routes);
 // Legacy API — backward-compatible aliases for existing frontends (no breaking changes)
 app.use('/api', legacyRoutes);
 
+// Root endpoint — Service status & API directory
+app.get('/', (req, res) => {
+    res.json({
+        success: true,
+        service: 'CooCoo Backend API Server',
+        status: 'online',
+        version: '1.0.0',
+        endpoints: {
+            health: '/api/v1/health',
+            inventory: '/api/v1/inventory',
+            recipes: '/api/v1/recipes/generate',
+            shopping: '/api/v1/shopping/assistant'
+        },
+        marketingSite: 'https://coocoo-marketing.vercel.app'
+    });
+});
+
 app.use(errorHandler);
 
 export default app;
