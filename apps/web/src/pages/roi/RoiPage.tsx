@@ -3,6 +3,7 @@ import {
   calculateCurrentSaved,
   calculateGoalProjection,
   getMilestoneProgress,
+  getWeekStart,
 } from "@coocoo/core";
 import { useAppState } from "@/entities/app-state/model";
 import { UiContext } from "@/app/ui-context";
@@ -13,6 +14,9 @@ export function RoiPage() {
   const { data } = useAppState();
   const ui = useContext(UiContext);
   if (!data) return null;
+  const weekKey = getWeekStart(new Date())!;
+  const weeklyMeals = data.habitProgress.weeklyCompletions[weekKey] || 0;
+  const weeklyVegetables = new Set((data.mealServings || []).filter((serving) => serving.status === "eaten" && Boolean(serving.eatenAt && serving.eatenAt.slice(0, 10) >= weekKey)).flatMap((serving) => serving.vegetableKeys)).size;
   if (!data.activeGoal)
     return (
       <div className="mx-auto max-w-[760px] space-y-md">
@@ -157,15 +161,15 @@ export function RoiPage() {
         <div className="rounded-2xl bg-secondary/10 p-md">
           <span className="text-[10px] text-on-surface-variant">本週自煮</span>
           <strong className="block text-2xl text-secondary">
-            {data.habitProgress.totalMeals} 餐
+            {weeklyMeals} 餐
           </strong>
         </div>
         <div className="rounded-2xl bg-ochre-gold/30 p-md">
           <span className="text-[10px] text-on-surface-variant">
-            健康自主餐
+            本週蔬菜種類
           </span>
           <strong className="block text-2xl text-tertiary">
-            {data.healthAssets.healthyAutonomyMeals} 餐
+            {weeklyVegetables} 種
           </strong>
         </div>
       </div>

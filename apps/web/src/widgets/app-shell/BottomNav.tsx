@@ -1,4 +1,52 @@
-import type { TabId } from './types'
+import type { MouseEvent } from "react";
+import { pathForRoute, type AppRoute } from "@/app/routing/routes";
+import "./BottomNav.css";
 
-const tabs:[TabId,string,string][]=[['roi','savings','圓夢看板'],['fridge','hourglass_empty','冰箱沙漏'],['kitchen','blender','小廚房'],['shopping','shopping_cart','補貨區']]
-export function BottomNav({active,onChange,urgent,shopping}:{active:TabId;onChange:(tab:TabId)=>void;urgent:number;shopping:number}){return <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-outline-variant/30 bg-white shadow-lg"><div className="mx-auto flex h-16 max-w-[600px] items-center justify-around px-md">{tabs.map(([id,icon,label])=><button key={id} onClick={()=>onChange(id)} className={`relative flex h-full w-20 flex-col items-center justify-center transition-colors ${active===id?'text-primary':'text-on-surface-variant hover:text-primary'}`}><span className={`material-symbols-outlined text-2xl ${active===id?'fill':''}`}>{icon}</span><span className="mt-1 text-[11px] font-bold">{label}</span>{id==='fridge'&&urgent>0&&<span className="absolute right-4 top-1 flex h-4.5 w-4.5 items-center justify-center rounded-full border border-white bg-rust-orange text-[9px] font-extrabold text-white">{urgent}</span>}{id==='shopping'&&shopping>0&&<span className="absolute right-4 top-1 flex h-4.5 w-4.5 items-center justify-center rounded-full border border-white bg-terracotta text-[9px] font-extrabold text-white">{shopping}</span>}</button>)}</div></nav>}
+const tabs: [AppRoute, string, string][] = [
+  ["today", "today", "今日"],
+  ["shopping", "shopping_bag", "採買"],
+  ["fridge", "kitchen", "冰箱"],
+  ["kitchen", "skillet", "廚房"],
+  ["dream", "savings", "圓夢"],
+];
+
+function shouldUseBrowserNavigation(event: MouseEvent<HTMLAnchorElement>) {
+  return event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey;
+}
+
+export function BottomNav({
+  active,
+  onNavigate,
+  urgent,
+  shopping,
+}: {
+  active: AppRoute;
+  onNavigate: (route: AppRoute) => void;
+  urgent: number;
+  shopping: number;
+}) {
+  return (
+    <nav aria-label="主要功能" className="bottom-nav">
+      <div>
+        {tabs.map(([id, icon, label]) => (
+          <a
+            key={id}
+            href={pathForRoute(id)}
+            onClick={(event) => {
+              if (shouldUseBrowserNavigation(event)) return;
+              event.preventDefault();
+              onNavigate(id);
+            }}
+            aria-current={active === id ? "page" : undefined}
+            className={active === id ? "active" : ""}
+          >
+            <span className={`material-symbols-outlined ${active === id ? "fill" : ""}`}>{icon}</span>
+            <span>{label}</span>
+            {id === "fridge" && urgent > 0 && <b>{urgent}</b>}
+            {id === "shopping" && shopping > 0 && <b>{shopping}</b>}
+          </a>
+        ))}
+      </div>
+    </nav>
+  );
+}

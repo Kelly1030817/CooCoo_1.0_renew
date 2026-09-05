@@ -7,10 +7,14 @@ import type {
   HealthAssets,
   InventoryItem,
   MoneyGoal,
+  OnboardingProfile,
   Recipe,
   RescuePlan,
   ShoppingItem,
 } from "@coocoo/contracts";
+
+export * from "./mvp";
+import { completeCookingSession } from "./mvp";
 
 const DAY_MS = 86_400_000;
 const int = (value: unknown, fallback = 0) =>
@@ -232,6 +236,41 @@ export function createGoalFromDraft(
       now,
     }),
   };
+}
+
+export function goalDraftFromOnboarding(profile: OnboardingProfile): GoalDraft {
+  const plannedMealCount = Math.max(1, profile.plannedMealSlots.length);
+  return {
+    purpose: "dream",
+    name: profile.dreamName,
+    targetAmount: profile.dreamTargetAmount,
+    currentSavedAmount: 0,
+    targetDate: null,
+    eatingOutMeals: 1,
+    eatingOutTotal: profile.outsideMealComparisonPrice,
+    directEatingOutCost: profile.outsideMealComparisonPrice,
+    homeCookBudget: Math.floor(profile.dailyMealBudget / plannedMealCount),
+    weeklyCookingMeals: profile.weeklyHomeCookTarget,
+  };
+}
+
+export function applyOnboardingProfile(
+  state: AppState,
+  profile: OnboardingProfile,
+  options: { id?: string; now?: Date } = {},
+) {
+  const next = structuredClone(state);
+  next.onboardingProfile = structuredClone(profile);
+
+  if (next.activeGoal) return next;
+
+  const result = createGoalFromDraft(goalDraftFromOnboarding(profile), options);
+  if (!result.valid) throw new Error("INVALID_ONBOARDING_GOAL");
+
+  next.activeGoal = result.goal;
+  next.cookingPlan = result.cookingPlan;
+  next.amountEvents = [result.openingEvent, ...next.amountEvents];
+  return next;
 }
 
 export function getMilestoneProgress(
@@ -696,6 +735,18 @@ export class CooCooService {
     this.repository.write(s);
     return s.session;
   }
+  completeOnboarding(profile: OnboardingProfile) {
+    const next = applyOnboardingProfile(this.state(), profile, {
+      id: this.runtime.id(),
+      now: this.runtime.now(),
+    });
+    this.repository.write(next);
+    return {
+      profile: structuredClone(profile),
+      goal: structuredClone(next.activeGoal),
+      cookingPlan: structuredClone(next.cookingPlan),
+    };
+  }
   createGoal(draft: GoalDraft) {
     const s = this.state();
     const result = createGoalFromDraft(draft, {
@@ -850,6 +901,8 @@ export class CooCooService {
     vegetables: boolean;
     lowOil: boolean;
     mindfulSeasoning: boolean;
+    servingsCooked?: number;
+    servingsEaten?: number;
   }) {
     const s = this.state();
     const estimated = s.cookingPlan
@@ -873,6 +926,15 @@ export class CooCooService {
       { id: this.runtime.id(), now: this.runtime.now() },
     );
     if (!result.accepted) return result;
+    const servingsCooked = input.servingsCooked ?? 1;
+    const servingsEaten = input.servingsEaten ?? 1;
+    const servingResult = completeCookingSession(
+      { completedOperationIds: [], servings: s.mealServings ?? [], savingsEvents: s.savingsEvents ?? [] },
+      { operationId: input.completionKey, sessionId: result.outcome.id, servingsCooked, servingsEaten, outsideMealPrice: s.cookingPlan?.eatingOutCost || 0, ingredientCost: input.homeCookCost, confirmedSavings: input.actualDeposit },
+      this.runtime.now().toISOString(),
+    );
+    s.mealServings = servingResult.servings.map((serving) => ({ ...serving, vegetableKeys: input.vegetables && serving.status === "eaten" ? ["reported-vegetable"] : [] }));
+    s.savingsEvents = servingResult.savingsEvents;
     s.cookingOutcomes.push(result.outcome);
     s.amountEvents.push(...result.amountEvents);
     s.inventory = s.inventory.filter(
@@ -891,6 +953,15 @@ export class CooCooService {
     );
     s.habitProgress = progress.habitProgress;
     s.healthAssets = progress.healthAssets;
+    for (let index = 1; index < servingsEaten; index += 1) {
+      const extra = recordMealProgress(
+        s,
+        { outcomeId: `${result.outcome.id}:serving:${index + 1}`, foodSafe: input.foodSafe, vegetables: input.vegetables, lowOil: false, mindfulSeasoning: false },
+        this.runtime.now(),
+      );
+      s.habitProgress = extra.habitProgress;
+      s.healthAssets = extra.healthAssets;
+    }
     if (s.activeGoal)
       s.activeGoal = applyGoalProgress(
         s.activeGoal,

@@ -9,8 +9,10 @@
 # testing
 /coverage
 
-# next.js
-/.next/
+# generated framework and production output at any workspace depth
+**/.next/
+**/dist/
+**/*.tsbuildinfo
 /out/
 
 # production
@@ -31,8 +33,11 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 
+# downloaded OAuth credentials must never be committed
+client_secret_*.apps.googleusercontent.com.json
+
 # vercel
-.vercel
+**/.vercel/
 
 **/*.trace
 **/*.zip
@@ -41,3 +46,5 @@ yarn-error.log*
 **/*.log
 package-lock.json
 **/*.bun
+/coocoo-webapp/
+/marketing-site/

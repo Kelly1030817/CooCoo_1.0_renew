@@ -1,0 +1,12 @@
+{
+  "name": "CooCoo 煮煮",
+  "short_name": "CooCoo",
+  "description": "陪你從採買走進小廚房的自煮夥伴",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fdf8ea",
+  "theme_color": "#9a442d",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

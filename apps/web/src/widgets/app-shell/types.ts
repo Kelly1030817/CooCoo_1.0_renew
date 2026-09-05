@@ -1,1 +1,1 @@
-export type TabId='roi'|'fridge'|'kitchen'|'shopping'
+export type { AppRoute as TabId } from "@/app/routing/routes";

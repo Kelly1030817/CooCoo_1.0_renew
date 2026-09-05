@@ -7,6 +7,236 @@ export const DateOnlySchema = Type.String({
 });
 export const MoneySchema = Type.Integer({ minimum: 0 });
 
+export const MealSlotSchema = Type.Union([
+  Type.Literal("breakfast"),
+  Type.Literal("lunch"),
+  Type.Literal("dinner"),
+]);
+export type MealSlot = Static<typeof MealSlotSchema>;
+
+export const DietaryRestrictionSchema = Type.Object({
+  id: IdSchema,
+  label: Type.String({ minLength: 1 }),
+  kind: Type.Union([Type.Literal("allergy"), Type.Literal("avoid"), Type.Literal("preference")]),
+  ingredientKeys: Type.Array(Type.String({ minLength: 1 })),
+  isHardLimit: Type.Boolean(),
+});
+export type DietaryRestriction = Static<typeof DietaryRestrictionSchema>;
+
+export const OnboardingProfileSchema = Type.Object({
+  status: Type.Union([Type.Literal("draft"), Type.Literal("complete")]),
+  currentStep: Type.Integer({ minimum: 1, maximum: 10 }),
+  householdServings: Type.Integer({ minimum: 1, maximum: 12 }),
+  cookware: Type.Array(Type.Object({
+    type: Type.String({ minLength: 1 }),
+    capacity: Type.Optional(Type.String()),
+    limitations: Type.Array(Type.String()),
+  })),
+  restrictions: Type.Array(DietaryRestrictionSchema),
+  preferredFlavors: Type.Array(Type.String()),
+  inventoryReviewed: Type.Boolean(),
+  hasNoInventory: Type.Boolean(),
+  dailyMealBudget: MoneySchema,
+  outsideMealComparisonPrice: MoneySchema,
+  plannedMealSlots: Type.Array(MealSlotSchema, { minItems: 1 }),
+  weeklyHomeCookTarget: Type.Integer({ minimum: 1, maximum: 21 }),
+  dreamName: Type.String({ minLength: 1 }),
+  dreamTargetAmount: MoneySchema,
+  completedAt: Type.Union([IsoDateTimeSchema, Type.Null()]),
+});
+export type OnboardingProfile = Static<typeof OnboardingProfileSchema>;
+
+export const IngredientRequirementSchema = Type.Object({
+  ingredientKey: Type.String({ minLength: 1 }),
+  name: Type.String({ minLength: 1 }),
+  quantity: Type.Number({ exclusiveMinimum: 0 }),
+  unit: Type.String({ minLength: 1 }),
+  isPantryStaple: Type.Boolean(),
+  isVegetable: Type.Boolean(),
+  coveredByInventory: Type.Boolean(),
+});
+export type IngredientRequirement = Static<typeof IngredientRequirementSchema>;
+
+export const PlannedMealSchema = Type.Object({
+  id: IdSchema,
+  date: DateOnlySchema,
+  slot: MealSlotSchema,
+  recipeId: IdSchema,
+  title: Type.String(),
+  status: Type.Union([Type.Literal("planned"), Type.Literal("postponed"), Type.Literal("cancelled"), Type.Literal("cooked")]),
+  servings: Type.Integer({ minimum: 1 }),
+  ingredients: Type.Array(IngredientRequirementSchema),
+  estimatedCost: MoneySchema,
+  totalMinutes: Type.Integer({ minimum: 1 }),
+  cookwareTypes: Type.Array(Type.String()),
+  energyLevel: Type.Union([Type.Literal("low"), Type.Literal("normal")]),
+});
+export type PlannedMeal = Static<typeof PlannedMealSchema>;
+
+export const MealPlanSchema = Type.Object({
+  id: IdSchema,
+  weekStart: DateOnlySchema,
+  meals: Type.Array(PlannedMealSchema),
+  overlapRate: Type.Number({ minimum: 0, maximum: 1 }),
+  inventoryCoverageRate: Type.Number({ minimum: 0, maximum: 1 }),
+  updatedAt: IsoDateTimeSchema,
+});
+export type MealPlan = Static<typeof MealPlanSchema>;
+
+export const ReceiptItemSchema = Type.Object({
+  id: IdSchema,
+  name: Type.String(),
+  quantity: Type.Number({ exclusiveMinimum: 0 }),
+  unit: Type.String(),
+  unitPrice: MoneySchema,
+  actualPrice: MoneySchema,
+  storageLocation: Type.Union([Type.Literal("cold"), Type.Literal("frozen"), Type.Literal("pantry")]),
+  expiresOn: Type.Union([DateOnlySchema, Type.Null()]),
+  confidence: Type.Object({
+    name: Type.Number({ minimum: 0, maximum: 1 }),
+    quantity: Type.Number({ minimum: 0, maximum: 1 }),
+    unitPrice: Type.Number({ minimum: 0, maximum: 1 }),
+    actualPrice: Type.Number({ minimum: 0, maximum: 1 }),
+  }),
+  confirmed: Type.Boolean(),
+});
+export type ReceiptItem = Static<typeof ReceiptItemSchema>;
+
+export const ReceiptSchema = Type.Object({
+  id: IdSchema,
+  purchasedOn: Type.Union([DateOnlySchema, Type.Null()]),
+  originalImagePath: Type.String(),
+  status: Type.Union([Type.Literal("uploaded"), Type.Literal("recognizing"), Type.Literal("needs_review"), Type.Literal("confirmed"), Type.Literal("failed")]),
+  items: Type.Array(ReceiptItemSchema),
+  createdAt: IsoDateTimeSchema,
+});
+export type Receipt = Static<typeof ReceiptSchema>;
+export const ReceiptRecognitionSchema = Type.Object({
+  purchasedOn: Type.Union([DateOnlySchema, Type.Null()]),
+  items: Type.Array(Type.Object({
+    name: Type.String({ minLength: 1 }),
+    quantity: Type.Number({ exclusiveMinimum: 0 }),
+    unit: Type.String({ minLength: 1 }),
+    unitPrice: MoneySchema,
+    actualPrice: MoneySchema,
+    confidence: ReceiptItemSchema.properties.confidence,
+  })),
+});
+export type ReceiptRecognition = Static<typeof ReceiptRecognitionSchema>;
+
+export const RecipeStepSchema = Type.Object({
+  id: IdSchema,
+  order: Type.Integer({ minimum: 1 }),
+  instruction: Type.String({ minLength: 1 }),
+  voiceText: Type.String({ minLength: 1 }),
+  timerSeconds: Type.Union([Type.Integer({ minimum: 1 }), Type.Null()]),
+  safetyNote: Type.Union([Type.String(), Type.Null()]),
+});
+export type RecipeStep = Static<typeof RecipeStepSchema>;
+
+export const RecipePackageSchema = Type.Object({
+  id: IdSchema,
+  recipeId: IdSchema,
+  title: Type.String(),
+  servings: Type.Integer({ minimum: 1 }),
+  prepMinutes: Type.Integer({ minimum: 0 }),
+  totalMinutes: Type.Integer({ minimum: 1 }),
+  estimatedCost: MoneySchema,
+  cookwareTypes: Type.Array(Type.String()),
+  ingredients: Type.Array(IngredientRequirementSchema),
+  steps: Type.Array(RecipeStepSchema, { minItems: 1 }),
+  imageUrl: Type.Union([Type.String(), Type.Null()]),
+  fallbackImageUrl: Type.String(),
+  downloadedAt: Type.Union([IsoDateTimeSchema, Type.Null()]),
+});
+export type RecipePackage = Static<typeof RecipePackageSchema>;
+
+export const RecipeGenerationSchema = Type.Object({
+  recipe: RecipePackageSchema,
+  source: Type.Union([Type.Literal("gemini"), Type.Literal("brand_safe")]),
+  notice: Type.Union([Type.String(), Type.Null()]),
+});
+export type RecipeGeneration = Static<typeof RecipeGenerationSchema>;
+export const TodayDecisionSchema = Type.Object({
+  date: DateOnlySchema,
+  slot: MealSlotSchema,
+  primary: Type.Union([RecipePackageSchema, Type.Null()]),
+  alternatives: Type.Array(RecipePackageSchema, { maxItems: 2 }),
+  source: Type.Literal("brand_safe"),
+  notice: Type.String(),
+});
+export type TodayDecision = Static<typeof TodayDecisionSchema>;
+export const MealPlanCreateSchema = Type.Object({ weekStart: DateOnlySchema });
+export const MealPostponeSchema = Type.Object({
+  weekStart: DateOnlySchema,
+  kind: Type.Union([Type.Literal("next_slot"), Type.Literal("specific_date"), Type.Literal("cancel")]),
+  date: Type.Optional(DateOnlySchema),
+  slot: Type.Optional(MealSlotSchema),
+  expectedUpdatedAt: IsoDateTimeSchema,
+});
+export type MealPostpone = Static<typeof MealPostponeSchema>;
+export interface MealPlanResult { plan: MealPlan; packages: RecipePackage[]; expiryWarnings: string[] }
+
+export const CookingSessionSchema = Type.Object({
+  id: IdSchema,
+  operationId: IdSchema,
+  recipePackageId: IdSchema,
+  status: Type.Union([Type.Literal("active"), Type.Literal("completed"), Type.Literal("needs_sync")]),
+  servingsCooked: Type.Integer({ minimum: 1 }),
+  currentStep: Type.Integer({ minimum: 0 }),
+  startedAt: IsoDateTimeSchema,
+  completedAt: Type.Union([IsoDateTimeSchema, Type.Null()]),
+});
+export type CookingSession = Static<typeof CookingSessionSchema>;
+
+export const MealServingSchema = Type.Object({
+  id: IdSchema,
+  cookingSessionId: IdSchema,
+  status: Type.Union([Type.Literal("eaten"), Type.Literal("prepared_inventory")]),
+  eatenAt: Type.Union([IsoDateTimeSchema, Type.Null()]),
+  vegetableKeys: Type.Array(Type.String()),
+});
+export type MealServing = Static<typeof MealServingSchema>;
+
+export const SavingsEventSchema = Type.Object({
+  id: IdSchema,
+  cookingSessionId: IdSchema,
+  outsideMealPrice: MoneySchema,
+  actualIngredientCost: MoneySchema,
+  confirmedAmount: MoneySchema,
+  createdAt: IsoDateTimeSchema,
+});
+export type SavingsEvent = Static<typeof SavingsEventSchema>;
+
+export const OfflineOperationSchema = Type.Object({
+  id: IdSchema,
+  kind: Type.String(),
+  payload: Type.Unknown(),
+  status: Type.Union([Type.Literal("pending"), Type.Literal("synced"), Type.Literal("conflict")]),
+  createdAt: IsoDateTimeSchema,
+});
+export type OfflineOperation = Static<typeof OfflineOperationSchema>;
+
+export const SyncConflictSchema = Type.Object({
+  id: IdSchema,
+  operationId: IdSchema,
+  kind: Type.String(),
+  message: Type.String(),
+  createdAt: IsoDateTimeSchema,
+  resolvedAt: Type.Union([IsoDateTimeSchema, Type.Null()]),
+});
+export type SyncConflict = Static<typeof SyncConflictSchema>;
+
+export const BetaInviteSchema = Type.Object({
+  id: IdSchema,
+  email: Type.String({ format: "email" }),
+  status: Type.Union([Type.Literal("invited"), Type.Literal("accepted"), Type.Literal("revoked")]),
+  invitedBy: IdSchema,
+  createdAt: IsoDateTimeSchema,
+  acceptedAt: Type.Union([IsoDateTimeSchema, Type.Null()]),
+});
+export type BetaInvite = Static<typeof BetaInviteSchema>;
+
 export const SessionSchema = Type.Object({
   user: Type.Union([
     Type.Null(),
@@ -175,6 +405,32 @@ export const ShoppingItemSchema = Type.Object({
 });
 export type ShoppingItem = Static<typeof ShoppingItemSchema>;
 
+export const ShoppingAnalysisRecommendationSchema = Type.Object({
+  item: ShoppingItemSchema,
+  action: Type.Union([
+    Type.Literal("buy_now"),
+    Type.Literal("buy_later"),
+    Type.Literal("skip"),
+  ]),
+  reason: Type.String({ minLength: 1 }),
+});
+export type ShoppingAnalysisRecommendation = Static<typeof ShoppingAnalysisRecommendationSchema>;
+
+export const ShoppingAnalysisSchema = Type.Object({
+  summary: Type.String({ minLength: 1 }),
+  recommendations: Type.Array(ShoppingAnalysisRecommendationSchema, { maxItems: 5 }),
+  estimatedTotal: MoneySchema,
+  budgetStatus: Type.Union([
+    Type.Literal("within_budget"),
+    Type.Literal("over_budget"),
+    Type.Literal("unknown"),
+  ]),
+  source: Type.Union([Type.Literal("openrouter"), Type.Literal("rules")]),
+  model: Type.Union([Type.String(), Type.Null()]),
+  notice: Type.Union([Type.String(), Type.Null()]),
+});
+export type ShoppingAnalysis = Static<typeof ShoppingAnalysisSchema>;
+
 export const RecipeSchema = Type.Object({
   id: IdSchema,
   title: Type.String(),
@@ -263,6 +519,9 @@ export const CookingOutcomeCommandSchema = Type.Object({
   vegetables: Type.Boolean(),
   lowOil: Type.Boolean(),
   mindfulSeasoning: Type.Boolean(),
+  servingsCooked: Type.Optional(Type.Integer({ minimum: 1, maximum: 20 })),
+  servingsEaten: Type.Optional(Type.Integer({ minimum: 0, maximum: 20 })),
+  ingredientRequirements: Type.Optional(Type.Array(IngredientRequirementSchema)),
 });
 export const ShoppingWriteSchema = Type.Object({
   id: Type.Optional(IdSchema),
@@ -288,8 +547,25 @@ export const ContractSchemas = {
   CookingOutcomeCommandSchema,
   ShoppingWriteSchema,
   ShoppingParseSchema,
+  ShoppingAnalysisSchema,
   FridgeProfileSchema,
   CookwareListSchema: Type.Array(CookwareProfileSchema),
+  DietaryRestrictionSchema,
+  OnboardingProfileSchema,
+  MealPlanSchema,
+  PlannedMealSchema,
+  ReceiptSchema,
+  ReceiptItemSchema,
+  ReceiptRecognitionSchema,
+  RecipePackageSchema,
+  RecipeGenerationSchema,
+  TodayDecisionSchema,
+  MealPlanCreateSchema,
+  MealPostponeSchema,
+  CookingSessionSchema,
+  SavingsEventSchema,
+  OfflineOperationSchema,
+  BetaInviteSchema,
 };
 
 export interface AppState {
@@ -306,6 +582,15 @@ export interface AppState {
   shoppingItems: ShoppingItem[];
   fridgeProfile: FridgeProfile;
   cookware: CookwareProfile[];
+  onboardingProfile?: OnboardingProfile;
+  mealPlan?: MealPlan;
+  receipts?: Receipt[];
+  recipePackages?: RecipePackage[];
+  cookingSessions?: CookingSession[];
+  mealServings?: MealServing[];
+  savingsEvents?: SavingsEvent[];
+  offlineOperations?: OfflineOperation[];
+  syncConflicts?: SyncConflict[];
 }
 
 export type GoalDraft = Static<typeof GoalDraftSchema>;
