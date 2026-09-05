@@ -1,0 +1,17 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "bun run --cwd apps/web build",
+  "outputDirectory": "apps/web/dist",
+  "installCommand": "bun install",
+  "framework": "vite",
+  "rewrites": [
+    {
+      "source": "/api/v1/:match*",
+      "destination": "https://coocoo-api-preview.onrender.com/api/v1/:match*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
