@@ -49,9 +49,9 @@ At this handoff, `main` and the integration branch shared commit `ebd8d49` befor
 - OpenRouter shopping analysis receives the user's inventory, restrictions, and budget. It uses deterministic safe rules after provider failure and labels that fallback honestly.
 - Gemini recipe generation produces a full `RecipePackage`; fallback uses reviewed brand recipes and is never labeled as Gemini output.
 - Gemini receipt recognition parses structured OCR fields with per-field confidence and fails closed on invalid JSON, pure QR images, or non-itemized content.
-- Five real frontend routes with separate Today and Shopping CSS, mandatory ten-step onboarding, custom cookware input, auth recovery, card-based shopping UI, recipe package cooking flow, and dream dashboard integration.
+- Five real frontend routes with separate Today and Shopping CSS, mandatory ten-step onboarding with tag-based individual flavor input and custom cookware, auth recovery, card-based shopping UI, recipe package cooking flow, and dream dashboard integration.
 - PWA manifest/service worker, IndexedDB recipe packages, Cache Storage images, wake-lock attempt, voice commands where supported, and an offline operation queue foundation.
-- Local verification on 2026-09-05: `bun run verify` passed 89 tests, lint, Web production build, and API typecheck.
+- Local verification on 2026-09-05: `bun run verify` passed 93 tests across 16 files, lint, Web production build, and API typecheck.
 
 ### Cloud evidence
 
@@ -59,6 +59,7 @@ At this handoff, `main` and the integration branch shared commit `ebd8d49` befor
 - A rollback-only remote transaction verified goal create/update/read, immutable amount events, idempotent weekly plan creation, recipe persistence, and meal rescheduling without retaining test data.
 - Sensitive RPC execution is restricted to database administration and `service_role`.
 - Security Advisor had one warning: leaked-password protection is disabled. Beta currently uses Passwordless/Google; enable it before offering password login.
+- Vercel production deployment is active at `https://coocoo-marketing.vercel.app`, routing `/api/v1/*` to `https://coocoo-1-0-renew.onrender.com/api/v1/:match*` with SPA fallback.
 
 ### Awaiting verification or implementation
 
