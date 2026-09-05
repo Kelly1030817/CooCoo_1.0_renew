@@ -7,7 +7,7 @@
   "rewrites": [
     {
       "source": "/api/v1/:match*",
-      "destination": "https://coocoo-api-preview.onrender.com/api/v1/:match*"
+      "destination": "https://coocoo-1-0-renew.onrender.com/api/v1/:match*"
     },
     {
       "source": "/(.*)",
