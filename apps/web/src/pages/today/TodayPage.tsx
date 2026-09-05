@@ -210,7 +210,13 @@ export function TodayPage() {
           className={energyLow ? "energy-toggle active" : "energy-toggle"}
           onClick={() => setEnergyLow((value) => !value)}
         >
-          <span>{energyLow ? "✨" : "☁"}</span>
+          <span className="energy-icon" aria-hidden="true">
+            {energyLow ? (
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            ) : (
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
+            )}
+          </span>
           {energyLow ? "低體力模式已開" : "今天有點累"}
         </button>
       </section>
@@ -219,7 +225,13 @@ export function TodayPage() {
       {showPreparedCapsule && (
         <div className="cooked-inventory-capsule" role="status">
           <div className="cooked-capsule-info">
-            <span className="cooked-capsule-icon">🍲</span>
+            <span className="cooked-capsule-icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 11h16a1 1 0 0 1 1 1 8 8 0 0 1-18 0 1 1 0 0 1 1-1Z"/>
+                <path d="M6 8V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2"/>
+                <line x1="2" y1="11" x2="22" y2="11"/>
+              </svg>
+            </span>
             <div className="cooked-capsule-text">
               <div className="cooked-capsule-header">
                 <span className="cooked-capsule-label">熟食庫存可用</span>
@@ -270,19 +282,28 @@ export function TodayPage() {
               <div className="diag-header">後端目前讀取的偏好設定：</div>
               <div className="diag-grid">
                 <div className="diag-item">
-                  <span className="diag-label">🍳 可用廚具</span>
+                  <span className="diag-label">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline-icon" aria-hidden="true"><ellipse cx="9" cy="12" rx="7" ry="5"/><path d="M16 12h6"/></svg>
+                    可用廚具
+                  </span>
                   <strong className="diag-val">
                     {(data?.cookware || []).map((c) => c.name || c.type).join("、") || "尚未登記廚具"}
                   </strong>
                 </div>
                 <div className="diag-item">
-                  <span className="diag-label">💰 每日餐飲預算</span>
+                  <span className="diag-label">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline-icon" aria-hidden="true"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                    每日餐飲預算
+                  </span>
                   <strong className="diag-val">
                     NT$ {data?.cookingPlan?.homeCookBudget ?? 300}
                   </strong>
                 </div>
                 <div className="diag-item">
-                  <span className="diag-label">🥗 飲食限制</span>
+                  <span className="diag-label">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline-icon" aria-hidden="true"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
+                    飲食限制
+                  </span>
                   <strong className="diag-val">
                     {data?.onboardingProfile?.restrictions && data.onboardingProfile.restrictions.length > 0
                       ? data.onboardingProfile.restrictions.map((r) => r.label).join("、")
@@ -347,17 +368,26 @@ export function TodayPage() {
             <div className="cook-prep-row">
               <div>
                 <small>廚具需求</small>
-                <strong>🍳 {cookwareLabel}</strong>
+                <strong>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline-icon" aria-hidden="true"><ellipse cx="9" cy="12" rx="7" ry="5"/><path d="M16 12h6"/></svg>
+                  {cookwareLabel}
+                </strong>
               </div>
               <div className="prep-divider" />
               <div>
                 <small>備料負擔</small>
-                <strong>🔪 {prepTimeLabel}</strong>
+                <strong>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline-icon" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  {prepTimeLabel}
+                </strong>
               </div>
               <div className="prep-divider" />
               <div>
                 <small>步驟數量</small>
-                <strong>📝 {stepCountLabel}</strong>
+                <strong>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline-icon" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                  {stepCountLabel}
+                </strong>
               </div>
             </div>
 
@@ -380,7 +410,9 @@ export function TodayPage() {
             </div>
 
             <div className="roi-motivation-banner">
-              <span className="roi-icon">✈️</span>
+              <span className="roi-icon" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+              </span>
               <p>
                 這餐預估為［{goalName}］省下 <strong>NT$ {mealSaving}</strong>
               </p>
@@ -419,12 +451,25 @@ export function TodayPage() {
                   onClick={() => choose(meal)}
                 >
                   <span className="alt-badge">
-                    {meal.totalMinutes <= 15 ? "⚡ 一鍋到底" : "🌿 換個口味"}
+                    {meal.totalMinutes <= 15 ? (
+                      <>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                        一鍋到底
+                      </>
+                    ) : (
+                      <>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
+                        換個口味
+                      </>
+                    )}
                   </span>
                   <strong>{meal.title}</strong>
                   <small>{subtitles[meal.title] || "符合你的廚具與飲食設定"}</small>
                   <footer>
-                    <b>⏱️ {meal.totalMinutes} 分</b>
+                    <b>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline-icon" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                      {meal.totalMinutes} 分
+                    </b>
                     <b>NT$ {meal.estimatedCost}</b>
                   </footer>
                 </button>

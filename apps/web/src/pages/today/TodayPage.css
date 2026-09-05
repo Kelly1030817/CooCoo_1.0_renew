@@ -337,11 +337,20 @@
 
 .today-page .cook-prep-row strong {
   margin-top: 2px;
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
   color: #293c4e;
   font-size: 11px;
   font-weight: 800;
   white-space: nowrap;
+}
+
+.today-page .inline-icon {
+  display: inline-block;
+  vertical-align: -2px;
+  flex-shrink: 0;
 }
 
 .today-page .cook-prep-row .prep-divider {
