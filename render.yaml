@@ -2,6 +2,7 @@ services:
   - type: web
     name: coocoo-api-preview
     runtime: docker
+    plan: free
     dockerfilePath: ./Dockerfile.api
     healthCheckPath: /api/v1/health
     autoDeployTrigger: checksPass
