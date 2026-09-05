@@ -125,12 +125,6 @@ function DietaryStep({ profile, update }: { profile: OnboardingProfile; update: 
             className="field flavor-input-field"
             value={flavorInput}
             onChange={(e) => setFlavorInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                handleAddFlavor();
-              }
-            }}
             placeholder="例如：清爽（輸入後點 ＋）"
           />
           <button
