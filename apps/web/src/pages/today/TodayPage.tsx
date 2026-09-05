@@ -356,7 +356,10 @@ export function TodayPage() {
           <div className="ticket-body">
             <div className="meal-tags">
               <span className="tag-time">
-                <span className="material-symbols-outlined">bolt</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
+                </svg>
                 {recommended.totalMinutes <= 15 ? "15 分快手" : `${recommended.totalMinutes} 分鐘`}
               </span>
               <span className="tag-cost">食材 NT$ {recommended.estimatedCost}</span>
@@ -416,8 +419,10 @@ export function TodayPage() {
 
             <button type="button" className="cook-choice" onClick={start}>
               <span className="cook-choice-label">
-                <span className="material-symbols-outlined">local_fire_department</span>
-                就煮這道（免手持離線料理包）
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>
+                </svg>
+                就煮這道
               </span>
               <span className="cook-choice-arrow">→</span>
             </button>
@@ -444,26 +449,17 @@ export function TodayPage() {
                   onClick={() => choose(meal)}
                 >
                   <span className="alt-badge">
-                    {meal.totalMinutes <= 15 ? (
-                      <>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-                        <span>一鍋到底</span>
-                      </>
-                    ) : (
-                      <>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
-                        <span>換個口味</span>
-                      </>
-                    )}
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
+                      <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 12" />
+                    </svg>
+                    <span>換個口味</span>
                   </span>
                   <strong>{meal.title}</strong>
                   <small>{subtitles[meal.title] || "符合你的廚具與飲食設定"}</small>
                   <footer>
-                    <b>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline-icon" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                      {meal.totalMinutes} 分
-                    </b>
-                    <b>NT$ {meal.estimatedCost}</b>
+                    <span>{meal.totalMinutes} 分</span>
+                    <span>NT$ {meal.estimatedCost}</span>
                   </footer>
                 </button>
               ))}
