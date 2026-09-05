@@ -6,6 +6,7 @@ import { isSupabaseConfigured, readAuthCallbackIssue, requestEmailOtp, startGoog
 import { api, json } from "@/shared/api/client";
 import { stateQueryKey } from "@/entities/app-state/model";
 import { getCustomCookware, KNOWN_COOKWARE_TYPES, setCustomCookwareName } from "./cookware";
+import { addPreferredFlavor, removePreferredFlavor } from "./flavors";
 
 const steps = ["相談室", "料理份量", "廚具", "飲食限制", "食材盤點", "餐費預算", "自煮目標", "圓夢目標", "登入同步", "資料總覽"];
 const restrictionChoices = ["花生", "堅果", "蛋", "牛奶", "甲殼類", "魚", "麩質", "不吃牛", "全素"];
@@ -69,13 +70,99 @@ function StepContent({ profile, update, email, setEmail, codeSent, setCodeSent, 
   if (step === 1) return <><h1>讓我陪你，把「今天吃什麼」變得容易一點。</h1><p>從逛市場到走進小廚房，CooCoo 會記得你的預算、廚具和不能吃的東西，也把每一餐省下來的錢送往你的願望。</p><div className="speech-note">這次設定約 3–5 分鐘，中途關閉也能接著填。</div></>;
   if (step === 2) return <><h1>你通常一次煮幾人份？</h1><p>每道餐仍可個別調整。多煮的餐份會放進熟食庫存，不會先算成已吃的自煮餐。</p><Counter value={profile.householdServings} onChange={(householdServings) => update({ householdServings })} /></>;
   if (step === 3) return <CookwareStep profile={profile} update={update} />;
-  if (step === 4) return <><h1>哪些食材一定不能出現？</h1><p>過敏與禁食會當成硬限制；口味偏好則只影響排序。</p><ChoiceGrid choices={restrictionChoices} selected={profile.restrictions.map((item) => item.label)} onToggle={(label) => update({ restrictions: toggle(profile.restrictions, label, (value): DietaryRestriction => ({ id: `restriction-${value}`, label: value, kind: value.startsWith("不吃") || value === "全素" ? "avoid" : "allergy", ingredientKeys: [value], isHardLimit: true })) })} /><label className="field-label">喜歡的口味<input className="field" value={profile.preferredFlavors.join("、")} onChange={(event) => update({ preferredFlavors: event.target.value.split(/[、,，]/).map((item) => item.trim()).filter(Boolean) })} placeholder="例如：台式、清爽、微辣" /></label></>;
+  if (step === 4) return <DietaryStep profile={profile} update={update} />;
   if (step === 5) return <><h1>先看看家裡已經有什麼。</h1><p>正式完成後可以掃發票或用說的新增；現在也可以明確選擇空冰箱。</p><button className={`inventory-empty ${profile.hasNoInventory ? "selected" : ""}`} onClick={() => update({ inventoryReviewed: true, hasNoInventory: true })}><span>冰箱目前沒有食材</span><small>從第一份採買清單開始</small></button><button className={`inventory-empty ${profile.inventoryReviewed && !profile.hasNoInventory ? "selected" : ""}`} onClick={() => update({ inventoryReviewed: true, hasNoInventory: false })}><span>我有食材，稍後盤點</span><small>設定完成後進入冰箱新增</small></button></>;
   if (step === 6) return <><h1>一天總共想花多少餐費？</h1><p>我們會依你要規劃的餐期提出分配建議，你仍可調整每餐。</p><MoneyInput value={profile.dailyMealBudget} onChange={(dailyMealBudget) => update({ dailyMealBudget })} /><ChoiceGrid choices={mealSlots.map((item) => item.label)} selected={mealSlots.filter((item) => profile.plannedMealSlots.includes(item.id)).map((item) => item.label)} onToggle={(label) => { const id = mealSlots.find((item) => item.label === label)!.id; update({ plannedMealSlots: profile.plannedMealSlots.includes(id) ? profile.plannedMealSlots.filter((item) => item !== id) : [...profile.plannedMealSlots, id] }); }} /><div className="budget-suggestion">系統建議：每餐約 NT$ {Math.floor(profile.dailyMealBudget / Math.max(1, profile.plannedMealSlots.length))}</div><label className="field-label">你通常一餐外食花多少？<MoneyInput value={profile.outsideMealComparisonPrice} onChange={(outsideMealComparisonPrice) => update({ outsideMealComparisonPrice })} /></label></>;
   if (step === 7) return <><h1>這週想從幾餐自煮開始？</h1><p>先讓目標小到真的做得到。臨時不煮也能順延，不會算你失敗。</p><Counter value={profile.weeklyHomeCookTarget} max={21} onChange={(weeklyHomeCookTarget) => update({ weeklyHomeCookTarget })} /><strong className="counter-caption">每週預計自煮 {profile.weeklyHomeCookTarget} 餐</strong></>;
   if (step === 8) return <><h1>每一餐省下來，要送往哪個願望？</h1><label className="field-label">願望名稱<input className="field" value={profile.dreamName} onChange={(event) => update({ dreamName: event.target.value })} placeholder="例如：冬天去北海道" /></label><label className="field-label">目標金額<MoneyInput value={profile.dreamTargetAmount} onChange={(dreamTargetAmount) => update({ dreamTargetAmount })} /></label></>;
   if (step === 9) return <AuthStep email={email} setEmail={setEmail} codeSent={codeSent} setCodeSent={setCodeSent} verified={authVerified} setVerified={setAuthVerified} />;
   return <><h1>你的 CooCoo 通行證準備好了。</h1><p>確認後蓋下第一枚章。之後可以在帳號設定修改這些資料。</p><div className="passport"><span>COOCOO DREAM PASSPORT</span><h2>{profile.dreamName}</h2><dl><div><dt>每週自煮</dt><dd>{profile.weeklyHomeCookTarget} 餐</dd></div><div><dt>每日餐費</dt><dd>NT$ {profile.dailyMealBudget}</dd></div><div><dt>常用份量</dt><dd>{profile.householdServings} 人份</dd></div><div><dt>不能吃</dt><dd>{profile.restrictions.map((item) => item.label).join("、") || "無"}</dd></div></dl><div className="passport-stamp">READY</div></div></>;
+}
+
+function DietaryStep({ profile, update }: { profile: OnboardingProfile; update: (value: Partial<OnboardingProfile>) => void }) {
+  const [flavorInput, setFlavorInput] = useState("");
+
+  const handleAddFlavor = () => {
+    if (!flavorInput.trim()) return;
+    update({ preferredFlavors: addPreferredFlavor(profile.preferredFlavors, flavorInput) });
+    setFlavorInput("");
+  };
+
+  const handleRemoveFlavor = (target: string) => {
+    update({ preferredFlavors: removePreferredFlavor(profile.preferredFlavors, target) });
+  };
+
+  return (
+    <>
+      <h1>哪些食材一定不能出現？</h1>
+      <p>過敏與禁食會當成硬限制；口味偏好則只影響排序。</p>
+      <ChoiceGrid
+        choices={restrictionChoices}
+        selected={profile.restrictions.map((item) => item.label)}
+        onToggle={(label) =>
+          update({
+            restrictions: toggle(
+              profile.restrictions,
+              label,
+              (value): DietaryRestriction => ({
+                id: `restriction-${value}`,
+                label: value,
+                kind: value.startsWith("不吃") || value === "全素" ? "avoid" : "allergy",
+                ingredientKeys: [value],
+                isHardLimit: true,
+              })
+            ),
+          })
+        }
+      />
+      <div className="flavor-group">
+        <label className="field-label" htmlFor="flavor-input">
+          喜歡的口味
+        </label>
+        <div className="flavor-input-row">
+          <input
+            id="flavor-input"
+            className="field flavor-input-field"
+            value={flavorInput}
+            onChange={(e) => setFlavorInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                handleAddFlavor();
+              }
+            }}
+            placeholder="例如：清爽（輸入後點 ＋）"
+          />
+          <button
+            type="button"
+            className="flavor-add-btn"
+            onClick={handleAddFlavor}
+            disabled={!flavorInput.trim()}
+            aria-label="新增口味"
+          >
+            ＋
+          </button>
+        </div>
+        {profile.preferredFlavors.length > 0 && (
+          <div className="flavor-tags">
+            {profile.preferredFlavors.map((flavor) => (
+              <span key={flavor} className="flavor-tag">
+                {flavor}
+                <button
+                  type="button"
+                  className="flavor-tag-remove"
+                  onClick={() => handleRemoveFlavor(flavor)}
+                  aria-label={`移除 ${flavor}`}
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+    </>
+  );
 }
 
 function CookwareStep({ profile, update }: { profile: OnboardingProfile; update: (value: Partial<OnboardingProfile>) => void }) {
