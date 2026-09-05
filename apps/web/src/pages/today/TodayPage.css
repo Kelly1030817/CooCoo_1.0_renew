@@ -487,31 +487,22 @@
 
 .today-page .section-heading {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 12px;
-}
-
-.today-page .section-heading .eyebrow {
-  margin: 0 0 4px;
-  color: #88726d;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  margin-bottom: 10px;
 }
 
 .today-page .section-heading h3 {
   margin: 0;
   color: #293c4e;
   font-family: "Plus Jakarta Sans", "Noto Sans TC", sans-serif;
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 900;
 }
 
 .today-page .alternatives-hint {
-  color: #88726d;
+  color: #8a8075;
   font-size: 11px;
   font-weight: 700;
 }

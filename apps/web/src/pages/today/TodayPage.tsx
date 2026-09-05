@@ -429,10 +429,7 @@ export function TodayPage() {
       {recommended && choices.filter((meal) => meal.id !== recommended.id).length > 0 && (
         <section className="alternatives">
           <div className="section-heading">
-            <div>
-              <p className="eyebrow">還有兩個方向</p>
-              <h3>不用從無限食譜裡挑</h3>
-            </div>
+            <h3>還有兩個方向</h3>
             <span className="alternatives-hint">點選卡片即可置換</span>
           </div>
 
