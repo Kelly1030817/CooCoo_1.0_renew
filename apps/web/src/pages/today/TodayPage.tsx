@@ -15,6 +15,21 @@ const subtitles: Record<string, string> = {
   "蔥油手撕雞肉拌飯": "手撕雞肉＋熱飯＋香蔥油，免洗砧板極速開動",
   "蒜炒鮮蔬里肌": "高纖清爽，下班快速補充蛋白質",
 };
+
+const renderSubtitle = (title: string) => {
+  const text = subtitles[title] || "符合你的廚具與飲食設定";
+  const [first, ...rest] = text.split(/[，,]/);
+  if (rest.length > 0) {
+    return (
+      <>
+        <span className="sub-line">{first}</span>
+        <span className="sub-line">{rest.join("，")}</span>
+      </>
+    );
+  }
+  return <span className="sub-line">{text}</span>;
+};
+
 const taipeiDateParts = (value: Date) =>
   Object.fromEntries(
     new Intl.DateTimeFormat("en-US", {
@@ -458,7 +473,7 @@ export function TodayPage() {
                     <span>換個口味</span>
                   </span>
                   <strong>{meal.title}</strong>
-                  <small>{subtitles[meal.title] || "符合你的廚具與飲食設定"}</small>
+                  <small>{renderSubtitle(meal.title)}</small>
                   <footer>
                     <span>{meal.totalMinutes} 分</span>
                     <span>NT$ {meal.estimatedCost}</span>

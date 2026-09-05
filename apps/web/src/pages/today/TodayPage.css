@@ -520,10 +520,14 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
+  width: 100%;
 }
 
 .today-page .alternative-card {
   display: flex;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
   min-height: unset;
   align-items: flex-start;
   flex-direction: column;
@@ -573,14 +577,23 @@
 }
 
 .today-page .alternative-card > small {
-  margin-top: 0;
+  margin-top: 2px;
   color: #6d6159;
   font-size: 10px;
-  line-height: 1.35;
+  line-height: 1.4;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  min-height: 30px;
+}
+
+.today-page .alternative-card > small .sub-line {
+  display: block;
+  width: 100%;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  width: 100%;
 }
 
 .today-page .alternative-card footer {
@@ -983,13 +996,16 @@
   }
 
   .today-page .alternative-grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
+    width: 100%;
   }
 
   .today-page .alternative-card {
     padding: 12px 10px;
-    min-height: 144px;
+    min-width: 0;
+    width: 100%;
+    min-height: unset;
   }
 }
 
