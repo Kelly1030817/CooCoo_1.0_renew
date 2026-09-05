@@ -36,34 +36,282 @@ export function RecipePackageModal({ recipePackage, ingredientIds, onClose, onCo
   return <Modal label={recipePackage.title} onClose={onClose} wide><ModalHeader title={recipePackage.title} kicker={`${recipePackage.totalMinutes} 分鐘 · ${recipePackage.servings} 人份 · NT$ ${recipePackage.estimatedCost}`} onClose={onClose}/><div className="meal-tags"><span>{recipePackage.totalMinutes<=15?"快手餐":"低體力可選"}</span>{recipePackage.cookwareTypes.map(item=><span key={item}>{item}</span>)}</div><ol className="mt-md space-y-sm">{recipePackage.steps.map(step=><li key={step.id} className="rounded-2xl bg-surface-container-low p-md text-sm text-slate-blue">{step.order}. {step.instruction}</li>)}</ol>{error&&<p className="offline-error">{error}</p>}<button onClick={start} className="primary-btn mt-lg w-full">下載並開始料理</button></Modal>;
 }
 
+function getHeatInfo(instruction: string) {
+  if (instruction.includes("大火") || instruction.includes("滾") || instruction.includes("沸")) {
+    return { label: "大火滾水", style: "heat-high" };
+  }
+  if (instruction.includes("中火") || instruction.includes("炒") || instruction.includes("煎")) {
+    return { label: "中小火烹調", style: "heat-med" };
+  }
+  if (instruction.includes("小火") || instruction.includes("慢煮") || instruction.includes("微火") || instruction.includes("悶") || instruction.includes("燜")) {
+    return { label: "微火慢煮", style: "heat-low" };
+  }
+  if (instruction.includes("關火")) {
+    return { label: "完全關火", style: "heat-off" };
+  }
+  return { label: "料理火候", style: "heat-med" };
+}
+
+function getChefTip(instruction: string, safetyNote: string | null) {
+  if (instruction.includes("烏龍麵")) {
+    return "冷凍烏龍麵直接下滾水煮，先不要急著用筷子用力攪散，讓水自然滲透，麵條最 Q 彈且不易斷裂！";
+  }
+  if (instruction.includes("味噌")) {
+    return "味噌絕對不能持續大滾！滾煮會破壞酵母活菌並反酸，務必關火後再利用湯勺與餘溫慢慢化開。";
+  }
+  if (instruction.includes("蛋") || instruction.includes("雞蛋")) {
+    return "炒蛋滑嫩秘訣：熱鍋溫油下蛋液，底層微凝固立刻轉中小火向內推動，離火利用餘溫熟成最嫩。";
+  }
+  if (instruction.includes("番茄")) {
+    return "番茄紅素是脂溶性營養素，熱油翻炒至出汁起紅油，不僅湯底濃郁香甜，也更能釋放營養。";
+  }
+  if (instruction.includes("肉") || instruction.includes("雞胸")) {
+    return "肉類入鍋後先別急著翻炒，讓底層受熱幾秒形成梅納反應鎖住肉汁，口感最鮮嫩不柴。";
+  }
+  if (safetyNote) {
+    return "留意烹煮細節與火候控制，讓食材維持最爽脆鮮甜的口感！";
+  }
+  return "掌握火候與下鍋順序，能最大程度保留食材鮮甜與爽脆口感！";
+}
+
+function playTimerChime() {
+  try {
+    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15);
+    gain.gain.setValueAtTime(0.25, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.5);
+  } catch {
+    // AudioContext might be unavailable
+  }
+}
+
 function CookingMode({ recipePackage, ingredientIds, onClose, onComplete }: { recipePackage: RecipePackage; ingredientIds: string[]; onClose: () => void; onComplete?: () => void }) {
   const [stepIndex, setStepIndex] = useState(0);
-  const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
+  const step = recipePackage.steps[stepIndex];
+  const [secondsLeft, setSecondsLeft] = useState<number | null>(step?.timerSeconds ?? null);
   const [timerRunning, setTimerRunning] = useState(false);
-  const [status, setStatus] = useState("語音待命");
+  const [timerFinished, setTimerFinished] = useState(false);
   const [finishing, setFinishing] = useState(false);
   const wakeLock = useRef<{ release: () => Promise<void> } | null>(null);
-  const step = recipePackage.steps[stepIndex];
-  const speak = () => { if ("speechSynthesis" in window) { speechSynthesis.cancel(); speechSynthesis.speak(new SpeechSynthesisUtterance(step.voiceText)); } };
+
+  useEffect(() => {
+    const nextStep = recipePackage.steps[stepIndex];
+    setSecondsLeft(nextStep?.timerSeconds ?? null);
+    setTimerRunning(false);
+    setTimerFinished(false);
+  }, [stepIndex, recipePackage.steps]);
+
+  useEffect(() => {
+    const acquire = async () => {
+      try {
+        if ("wakeLock" in navigator) {
+          wakeLock.current = await (navigator as Navigator & { wakeLock: { request: (type: "screen") => Promise<{ release: () => Promise<void> }> } }).wakeLock.request("screen");
+        }
+      } catch {
+        // wakeLock may not be allowed
+      }
+    };
+    void acquire();
+    const resume = () => { if (document.visibilityState === "visible") void acquire(); };
+    document.addEventListener("visibilitychange", resume);
+    return () => {
+      document.removeEventListener("visibilitychange", resume);
+      void wakeLock.current?.release();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!timerRunning || secondsLeft === null || secondsLeft <= 0) return;
+    const timer = window.setInterval(() => {
+      setSecondsLeft((prev) => {
+        if (prev === null) return null;
+        if (prev <= 1) {
+          setTimerRunning(false);
+          setTimerFinished(true);
+          playTimerChime();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [timerRunning, secondsLeft]);
+
+  const toggleTimer = () => {
+    if (secondsLeft === 0) {
+      setSecondsLeft(step.timerSeconds ?? 60);
+      setTimerFinished(false);
+      setTimerRunning(true);
+    } else {
+      setTimerRunning((prev) => !prev);
+    }
+  };
+
+  const resetTimer = () => {
+    setTimerRunning(false);
+    setTimerFinished(false);
+    setSecondsLeft(step.timerSeconds ?? null);
+  };
+
   const next = () => setStepIndex((value) => Math.min(recipePackage.steps.length - 1, value + 1));
   const previous = () => setStepIndex((value) => Math.max(0, value - 1));
-  useEffect(() => {
-    const acquire = async () => { try { if ("wakeLock" in navigator) wakeLock.current = await (navigator as Navigator & { wakeLock: { request: (type: "screen") => Promise<{ release: () => Promise<void> }> } }).wakeLock.request("screen"); } catch { setStatus("螢幕可能會自動變暗，料理仍可繼續"); } };
-    void acquire(); const resume = () => { if (document.visibilityState === "visible") void acquire(); }; document.addEventListener("visibilitychange", resume);
-    return () => { document.removeEventListener("visibilitychange", resume); void wakeLock.current?.release(); };
-  }, []);
-  useEffect(() => { if (!timerRunning || secondsLeft === null) return; const timer = window.setInterval(() => setSecondsLeft((value) => value === null ? null : Math.max(0, value - 1)), 1000); return () => window.clearInterval(timer); }, [timerRunning, secondsLeft]);
-  useEffect(() => { if (secondsLeft === 0) { setTimerRunning(false); setStatus("計時完成"); } }, [secondsLeft]);
-  const commands = { "上一步": previous, "下一步": next, "重複": speak, "開始計時": () => { setSecondsLeft(step.timerSeconds ?? 60); setTimerRunning(true); }, "還剩多久": () => setStatus(secondsLeft === null ? "目前沒有計時" : `還剩 ${secondsLeft} 秒`), "完成料理": () => setFinishing(true) };
-  const listen = () => {
-    const SpeechRecognition = (window as typeof window & { webkitSpeechRecognition?: new () => { lang: string; start: () => void; onresult: (event: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void; onerror: () => void } }).webkitSpeechRecognition;
-    if (!SpeechRecognition) { setStatus("這個瀏覽器不支援語音，請使用下方大按鈕"); return; }
-    const recognition = new SpeechRecognition(); recognition.lang = "zh-TW";
-    recognition.onresult = (event) => { const transcript = event.results[0][0].transcript.replace(/[，。！？\s]/g, ""); const entry = Object.entries(commands).find(([command]) => transcript.includes(command)); if (entry) { entry[1](); setStatus(`已執行：${entry[0]}`); } else setStatus(`沒有聽懂：「${transcript}」`); };
-    recognition.onerror = () => setStatus("語音暫時不可用，請使用下方大按鈕"); recognition.start(); setStatus("正在聽…");
-  };
+
+  const heatInfo = getHeatInfo(step.instruction);
+  const chefTip = getChefTip(step.instruction, step.safetyNote);
+
+  const stepIngredients = recipePackage.ingredients.filter((ing) => {
+    const normInstr = step.instruction.toLowerCase();
+    const normName = ing.name.toLowerCase();
+    const normKey = ing.ingredientKey.toLowerCase();
+    if (normInstr.includes(normName) || normInstr.includes(normKey)) return true;
+    const cleanName = normName.replace(/當季|生鮮|有機|新鮮/g, "");
+    return cleanName.length >= 2 && normInstr.includes(cleanName);
+  });
+
   if (finishing) return <CookingCompleteModal recipePackage={recipePackage} ingredientIds={ingredientIds} onClose={onClose} onComplete={onComplete} />;
-  return <div className="cooking-mode" role="dialog" aria-modal="true" aria-label={`${recipePackage.title}料理模式`}><header><button onClick={onClose} aria-label="離開料理"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button><div><small>{recipePackage.title}</small><strong>步驟 {stepIndex + 1} / {recipePackage.steps.length}</strong></div><button onClick={listen} aria-label="開始語音控制"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg></button></header><div className="cooking-progress"><i style={{ width: `${((stepIndex + 1) / recipePackage.steps.length) * 100}%` }} /></div><main><span>STEP {String(step.order).padStart(2, "0")}</span><h2>{step.instruction}</h2>{step.safetyNote && <p className="safety-note">注意：{step.safetyNote}</p>}<button className="repeat-step" onClick={speak}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg><span>重複唸一次</span></button>{secondsLeft !== null && <div className="timer-display"><strong>{Math.floor(secondsLeft / 60)}:{String(secondsLeft % 60).padStart(2, "0")}</strong><button onClick={() => setTimerRunning((value) => !value)}>{timerRunning ? "暫停" : "繼續"}</button></div>}<p className="voice-status" aria-live="polite">{status}</p></main><footer><button onClick={previous} disabled={stepIndex === 0}>← 上一步</button>{stepIndex < recipePackage.steps.length - 1 ? <button className="next-step" onClick={next}>下一步 →</button> : <button className="next-step" onClick={() => setFinishing(true)}>完成料理</button>}</footer></div>;
+
+  return (
+    <div className="cooking-mode" role="dialog" aria-modal="true" aria-label={`${recipePackage.title}料理模式`}>
+      <header>
+        <button onClick={onClose} className="header-icon-btn" aria-label="離開料理模式" title="離開料理模式">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+        <div className="header-title-wrap">
+          <small className="header-recipe-title">{recipePackage.title}</small>
+          <span className="header-step-counter">步驟 {stepIndex + 1} / {recipePackage.steps.length}</span>
+        </div>
+        <div className="header-spacer" aria-hidden="true" />
+      </header>
+
+      <div className="cooking-progress-segments" aria-hidden="true">
+        {recipePackage.steps.map((_, idx) => (
+          <span key={idx} className={`segment ${idx <= stepIndex ? "active" : ""}`} />
+        ))}
+      </div>
+
+      <main>
+        <div className="step-header-row">
+          <span className="step-order-tag">STEP {String(step.order).padStart(2, "0")}</span>
+          <span className={`heat-badge ${heatInfo.style}`}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>
+            </svg>
+            <span>{heatInfo.label}</span>
+          </span>
+        </div>
+
+        <div className="step-main-card">
+          <h2 className="step-instruction-text">{step.instruction}</h2>
+          {stepIngredients.length > 0 && (
+            <div className="step-ingredients-section">
+              <span className="step-ingredients-label">本步驟投入食材</span>
+              <div className="step-ingredients-pills">
+                {stepIngredients.map((ing) => (
+                  <span key={ing.ingredientKey} className="step-ingredient-pill">
+                    {ing.name} {ing.quantity} {ing.unit}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {secondsLeft !== null && (
+          <div className="step-timer-card">
+            <div className="timer-info-group">
+              <div className="timer-icon-circle">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polyline points="12 6 12 12 16 14"/>
+                </svg>
+              </div>
+              <div className="timer-text-group">
+                <small>{timerFinished ? "計時完畢！" : (timerRunning ? "倒數計時中" : "烹煮計時器")}</small>
+                <div className="timer-digits">
+                  {Math.floor(secondsLeft / 60)}:{String(secondsLeft % 60).padStart(2, "0")}
+                </div>
+              </div>
+            </div>
+            <div className="timer-actions">
+              <button onClick={toggleTimer} className="timer-toggle-btn">
+                {secondsLeft === 0 ? "重計" : (timerRunning ? "暫停" : "開始計時")}
+              </button>
+              <button onClick={resetTimer} className="timer-reset-btn" title="重設計時" aria-label="重設計時">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                  <path d="M3 3v5h5"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className="step-tip-card">
+          <div className="step-tip-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M9 18h6"/>
+              <path d="M10 22h4"/>
+              <path d="M12 2v1"/>
+              <path d="M12 7a5 5 0 0 0-5 5c0 1.9 1 3.2 2 4h6c1-.8 2-2.1 2-4a5 5 0 0 0-5-5z"/>
+            </svg>
+          </div>
+          <div className="step-tip-content">
+            <strong>主廚私房撇步 · 料理科學</strong>
+            <p>{chefTip}</p>
+          </div>
+        </div>
+
+        {step.safetyNote && (
+          <div className="step-safety-card">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            <span>注意：{step.safetyNote}</span>
+          </div>
+        )}
+      </main>
+
+      <footer>
+        <button onClick={previous} disabled={stepIndex === 0} className="elbow-btn-secondary" aria-label="回上一步">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+          <span>上一步</span>
+        </button>
+        {stepIndex < recipePackage.steps.length - 1 ? (
+          <button className="elbow-btn-primary" onClick={next} aria-label="前進下一步">
+            <span>下一步</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </button>
+        ) : (
+          <button className="elbow-btn-primary is-finish" onClick={() => setFinishing(true)} aria-label="完成料理並結算">
+            <span>完成料理</span>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </button>
+        )}
+      </footer>
+      <p className="elbow-hint">
+        手沾滿水或油？可用手腕、手背或手肘輕壓大按鈕前進
+      </p>
+    </div>
+  );
 }
 
 function CookingCompleteModal({ recipePackage, ingredientIds, onClose, onComplete }: { recipePackage: RecipePackage; ingredientIds: string[]; onClose: () => void; onComplete?: () => void }) {
