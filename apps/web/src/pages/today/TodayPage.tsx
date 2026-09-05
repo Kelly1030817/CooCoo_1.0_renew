@@ -54,13 +54,14 @@ export function TodayPage() {
   const [decision, setDecision] = useState<TodayDecision | null>(null);
   const [planResult, setPlanResult] = useState<MealPlanResult | null>(null);
   const [primaryId, setPrimaryId] = useState("");
-  const [error, setError] = useState("");
+  const [decisionError, setDecisionError] = useState("");
+  const [planError, setPlanError] = useState("");
   const [weekExpanded, setWeekExpanded] = useState(false);
   const today = dateOnly();
 
   useEffect(() => {
     let active = true;
-    setError("");
+    setDecisionError("");
     api<TodayDecision>(
       "/meal-decisions/today?date=" + today + "&energy=" + (energyLow ? "low" : "normal"),
     )
@@ -70,7 +71,7 @@ export function TodayPage() {
           setPrimaryId(value.primary?.id || "");
         }
       })
-      .catch((reason) => active && setError(reason instanceof Error ? reason.message : "餐點載入失敗"));
+      .catch((reason) => active && setDecisionError(reason instanceof Error ? reason.message : "餐點載入失敗"));
     return () => {
       active = false;
     };
@@ -79,9 +80,10 @@ export function TodayPage() {
   useEffect(() => {
     let active = true;
     const week = weekStart(today);
+    setPlanError("");
     api<MealPlanResult>("/meal-plans", json("POST", { weekStart: week }))
       .then((value) => active && setPlanResult(value))
-      .catch((reason) => active && setError(reason instanceof Error ? reason.message : "本週餐單載入失敗"));
+      .catch((reason) => active && setPlanError(reason instanceof Error ? reason.message : "本週餐單載入失敗"));
     return () => {
       active = false;
     };
@@ -129,68 +131,64 @@ export function TodayPage() {
       />,
     );
 
-  if (error && !recommended)
+  const loading = !decision && !decisionError;
+  if (loading) {
     return (
-      <section className="today-page no-safe-meal" role="alert">
-        <p className="eyebrow">今天 · 安全與條件匹配</p>
-        <h2>目前沒有符合飲食限制、廚具與預算的餐點</h2>
-        <p className="empty-hint">
-          {error.includes("NO_SAFE_RECIPE_AVAILABLE")
-            ? "CooCoo 嚴格遵循食安與廚具相容規範，未找到適用現有廚具或預算的食譜。請確認廚具已包含電磁爐、瓦斯爐或常用料理加熱設備。"
-            : error}
-        </p>
-        <button
-          type="button"
-          className="cook-choice"
-          style={{ maxWidth: "240px", margin: "16px auto 0", justifyContent: "center" }}
-          onClick={() => location.reload()}
-        >
-          重新檢查推薦
-        </button>
-      </section>
+      <div className="today-page">
+        <section className="today-intro">
+          <div>
+            <p className="eyebrow">
+              <span className="eyebrow-dot" />
+              今天 · 安排中
+            </p>
+            <h2>
+              先別想一整週，
+              <br />
+              決定下一餐就好。
+            </h2>
+          </div>
+        </section>
+        <div className="today-loading-card" role="status">
+          <span className="material-symbols-outlined spinning">sync</span>
+          <p>正在依你的廚具、預算與庫存檢核今日餐點…</p>
+        </div>
+      </div>
     );
+  }
 
-  if (!decision || !planResult)
-    return (
-      <section className="today-page no-safe-meal" role="status">
-        <p className="eyebrow">今天</p>
-        <h2>正在依你的設定安排餐點…</h2>
-      </section>
-    );
-
-  if (!recommended)
-    return (
-      <section className="today-page no-safe-meal" role="status">
-        <p className="eyebrow">今天 · 安全優先</p>
-        <h2>目前沒有同時符合飲食限制、廚具與預算的餐點。</h2>
-        <p>{decision.notice}</p>
-      </section>
-    );
+  const todaySlotText = decision?.slot ? slotName[decision.slot] : "晚餐";
+  const todayPlanned = planResult?.plan?.meals.find(
+    (m) => m.date === today && m.status === "planned",
+  );
+  const plannedDayNumber = todayPlanned && planResult
+    ? planResult.plan.meals.indexOf(todayPlanned) + 1
+    : null;
 
   const preparedServings = (data?.mealServings || []).filter(
     (item) => item.status === "prepared_inventory",
   );
-  const showPreparedCapsule = preparedServings.length > 0 || (Boolean(data) && !data?.mealServings);
-  const preparedCount = preparedServings.length > 0 ? preparedServings.length : 1;
+  const showPreparedCapsule = preparedServings.length > 0;
+  const preparedCount = preparedServings.length;
 
   const cookwareLabel =
-    recommended.cookwareTypes.length > 0
+    recommended && recommended.cookwareTypes.length > 0
       ? recommended.cookwareTypes.join("、")
       : "單平底鍋";
   const prepTimeLabel =
-    recommended.prepMinutes > 0 ? `備料 ${recommended.prepMinutes} 分鐘` : "備料 5 分鐘";
+    recommended && recommended.prepMinutes > 0 ? `備料 ${recommended.prepMinutes} 分鐘` : "備料 5 分鐘";
   const stepCountLabel =
-    recommended.steps.length > 0 ? `${recommended.steps.length} 大步驟` : "4 大步驟";
+    recommended && recommended.steps.length > 0 ? `${recommended.steps.length} 大步驟` : "4 大步驟";
 
   const outsidePrice = data?.cookingPlan?.eatingOutCost || 150;
-  const mealSaving = Math.max(0, outsidePrice - recommended.estimatedCost);
+  const mealSaving = recommended ? Math.max(0, outsidePrice - recommended.estimatedCost) : 0;
   const goalName = data?.activeGoal?.name || "圓夢目標";
+  const generalError = decisionError || planError;
 
   return (
     <div className="today-page">
-      {error && (
+      {generalError && recommended && (
         <p className="today-warning" role="alert">
-          {error}
+          {generalError}
         </p>
       )}
 
@@ -199,7 +197,7 @@ export function TodayPage() {
         <div>
           <p className="eyebrow">
             <span className="eyebrow-dot" />
-            今天 · {slotName[decision.slot]}
+            今天 · {plannedDayNumber ? `第 ${plannedDayNumber} 餐 · ` : ""}{todaySlotText}
           </p>
           <h2>
             先別想一整週，
@@ -240,185 +238,264 @@ export function TodayPage() {
         </div>
       )}
 
-      {/* 3. Hero Ticket: 風格 B（進化雙色剪票口票券） */}
-      <article className="meal-ticket primary-meal">
-        <div className="ticket-notch ticket-notch-top" aria-hidden="true" />
-        <div className="ticket-notch ticket-notch-bottom" aria-hidden="true" />
+      {/* 3. Hero Ticket Card: 風格 B */}
+      {!recommended ? (
+        <article className="meal-ticket ticket-mismatch">
+          <div className="ticket-notch ticket-notch-top" aria-hidden="true" />
+          <div className="ticket-notch ticket-notch-bottom" aria-hidden="true" />
 
-        {/* Ticket Stub (Left) */}
-        <div className="ticket-stub">
-          <span className="stub-vertical-text">TODAY</span>
-          <div className="stub-center">
-            <small>首選</small>
-            <strong>01</strong>
-          </div>
-          <span className="material-symbols-outlined stub-icon">restaurant</span>
-        </div>
-
-        {/* Ticket Body (Right) */}
-        <div className="ticket-body">
-          <div className="meal-tags">
-            <span className="tag-time">
-              <span className="material-symbols-outlined">bolt</span>
-              {recommended.totalMinutes <= 15 ? "15 分快手" : `${recommended.totalMinutes} 分鐘`}
-            </span>
-            <span className="tag-covered">
-              <span className="material-symbols-outlined">inventory_2</span>
-              庫存優先
-            </span>
-            <span className="tag-cost">食材 NT$ {recommended.estimatedCost}</span>
+          <div className="ticket-stub stub-mismatch">
+            <span className="stub-vertical-text">STATUS</span>
+            <div className="stub-center">
+              <small>檢核</small>
+              <strong>!</strong>
+            </div>
+            <span className="material-symbols-outlined stub-icon">tune</span>
           </div>
 
-          <h3>{recommended.title}</h3>
-          <p className="meal-subtitle">{subtitles[recommended.title] || decision.notice}</p>
+          <div className="ticket-body">
+            <div className="meal-tags">
+              <span className="tag-warning">
+                <span className="material-symbols-outlined">info</span>
+                後端食安與廚具檢核
+              </span>
+            </div>
 
-          <div className="cook-prep-row">
-            <div>
-              <small>廚具需求</small>
-              <strong>🍳 {cookwareLabel}</strong>
-            </div>
-            <div className="prep-divider" />
-            <div>
-              <small>備料負擔</small>
-              <strong>🔪 {prepTimeLabel}</strong>
-            </div>
-            <div className="prep-divider" />
-            <div>
-              <small>步驟數量</small>
-              <strong>📝 {stepCountLabel}</strong>
-            </div>
-          </div>
-
-          <div className="ingredient-route-wrapper">
-            <span className="route-title">食材路徑</span>
-            <div className="ingredient-route">
-              {recommended.ingredients
-                .filter((item) => !item.isPantryStaple)
-                .map((item, index, arr) => (
-                  <span
-                    key={item.ingredientKey}
-                    className={`route-chip ${item.coveredByInventory ? "covered" : ""}`}
-                  >
-                    {item.name}
-                    {item.coveredByInventory && <small>（已有）</small>}
-                    {index < arr.length - 1 && <i className="route-plus">＋</i>}
-                  </span>
-                ))}
-            </div>
-          </div>
-
-          <div className="roi-motivation-banner">
-            <span className="roi-icon">✈️</span>
-            <p>
-              這餐預估為［{goalName}］省下 <strong>NT$ {mealSaving}</strong>
+            <h3>目前條件暫無完全匹配的料理</h3>
+            <p className="meal-subtitle">
+              {decision?.notice || decisionError || planError || "後台檢核您的可用廚具、預算與飲食限制，尚未找到同時符合全部條件的食譜。"}
             </p>
-          </div>
 
-          <button type="button" className="cook-choice" onClick={start}>
-            <span className="cook-choice-label">
-              <span className="material-symbols-outlined">local_fire_department</span>
-              就煮這道（免手持離線料理包）
-            </span>
-            <span className="cook-choice-arrow">→</span>
-          </button>
-        </div>
-      </article>
+            <div className="backend-diagnostics-box">
+              <div className="diag-header">後端目前讀取的偏好設定：</div>
+              <div className="diag-grid">
+                <div className="diag-item">
+                  <span className="diag-label">🍳 可用廚具</span>
+                  <strong className="diag-val">
+                    {(data?.cookware || []).map((c) => c.name || c.type).join("、") || "尚未登記廚具"}
+                  </strong>
+                </div>
+                <div className="diag-item">
+                  <span className="diag-label">💰 每日餐飲預算</span>
+                  <strong className="diag-val">
+                    NT$ {data?.cookingPlan?.homeCookBudget ?? 300}
+                  </strong>
+                </div>
+                <div className="diag-item">
+                  <span className="diag-label">🥗 飲食限制</span>
+                  <strong className="diag-val">
+                    {data?.onboardingProfile?.restrictions && data.onboardingProfile.restrictions.length > 0
+                      ? data.onboardingProfile.restrictions.map((r) => r.label).join("、")
+                      : "無特殊飲食限制"}
+                  </strong>
+                </div>
+              </div>
+            </div>
 
-      {/* 4. Alternatives: 2 safe paths */}
-      <section className="alternatives">
-        <div className="section-heading">
-          <div>
-            <p className="eyebrow">還有兩個方向</p>
-            <h3>不用從無限食譜裡挑</h3>
-          </div>
-          <span className="alternatives-hint">點選卡片即可置換</span>
-        </div>
-
-        <div className="alternative-grid">
-          {choices
-            .filter((meal) => meal.id !== recommended.id)
-            .map((meal) => (
+            <div className="ticket-actions-group">
+              <a href="/kitchen" className="diag-action-btn primary">
+                <span className="material-symbols-outlined">skillet</span>
+                前往「廚房」新增或調整廚具
+              </a>
+              <a href="/fridge" className="diag-action-btn secondary">
+                <span className="material-symbols-outlined">kitchen</span>
+                前往「冰箱」選取食材生成料理
+              </a>
               <button
                 type="button"
-                className="alternative-card"
-                key={meal.id}
-                onClick={() => choose(meal)}
+                className="diag-action-btn text"
+                onClick={() => location.reload()}
               >
-                <span className="alt-badge">
-                  {meal.totalMinutes <= 15 ? "⚡ 一鍋到底" : "🌿 換個口味"}
-                </span>
-                <strong>{meal.title}</strong>
-                <small>{subtitles[meal.title] || "符合你的廚具與飲食設定"}</small>
-                <footer>
-                  <b>⏱️ {meal.totalMinutes} 分</b>
-                  <b>NT$ {meal.estimatedCost}</b>
-                </footer>
+                <span className="material-symbols-outlined">refresh</span>
+                重新檢核後端推薦
               </button>
-            ))}
-        </div>
-      </section>
-
-      {/* 5. Weekly rhythm: Collapsible accordion */}
-      <section className="week-strip">
-        <div className="week-summary">
-          <div className="week-summary-header">
-            <div>
-              <p className="eyebrow">
-                這週的 {planResult.plan.meals.filter((meal) => meal.status !== "cancelled").length} 餐
-              </p>
-              <h3>買一次，食材多用幾次</h3>
             </div>
-            <button
-              type="button"
-              className="week-toggle-btn"
-              onClick={() => setWeekExpanded((value) => !value)}
-              aria-expanded={weekExpanded}
-            >
-              <span>{weekExpanded ? "收摺明細" : "展開明細"}</span>
-              <span className="material-symbols-outlined">
-                {weekExpanded ? "expand_less" : "expand_more"}
+          </div>
+        </article>
+      ) : (
+        <article className="meal-ticket primary-meal">
+          <div className="ticket-notch ticket-notch-top" aria-hidden="true" />
+          <div className="ticket-notch ticket-notch-bottom" aria-hidden="true" />
+
+          {/* Ticket Stub (Left) */}
+          <div className="ticket-stub">
+            <span className="stub-vertical-text">TODAY</span>
+            <div className="stub-center">
+              <small>首選</small>
+              <strong>01</strong>
+            </div>
+            <span className="material-symbols-outlined stub-icon">restaurant</span>
+          </div>
+
+          {/* Ticket Body (Right) */}
+          <div className="ticket-body">
+            <div className="meal-tags">
+              <span className="tag-time">
+                <span className="material-symbols-outlined">bolt</span>
+                {recommended.totalMinutes <= 15 ? "15 分快手" : `${recommended.totalMinutes} 分鐘`}
               </span>
+              <span className="tag-covered">
+                <span className="material-symbols-outlined">inventory_2</span>
+                庫存優先
+              </span>
+              <span className="tag-cost">食材 NT$ {recommended.estimatedCost}</span>
+            </div>
+
+            <h3>{recommended.title}</h3>
+            <p className="meal-subtitle">{subtitles[recommended.title] || decision?.notice || "符合你的廚具與飲食設定"}</p>
+
+            <div className="cook-prep-row">
+              <div>
+                <small>廚具需求</small>
+                <strong>🍳 {cookwareLabel}</strong>
+              </div>
+              <div className="prep-divider" />
+              <div>
+                <small>備料負擔</small>
+                <strong>🔪 {prepTimeLabel}</strong>
+              </div>
+              <div className="prep-divider" />
+              <div>
+                <small>步驟數量</small>
+                <strong>📝 {stepCountLabel}</strong>
+              </div>
+            </div>
+
+            <div className="ingredient-route-wrapper">
+              <span className="route-title">食材路徑</span>
+              <div className="ingredient-route">
+                {recommended.ingredients
+                  .filter((item) => !item.isPantryStaple)
+                  .map((item, index, arr) => (
+                    <span
+                      key={item.ingredientKey}
+                      className={`route-chip ${item.coveredByInventory ? "covered" : ""}`}
+                    >
+                      {item.name}
+                      {item.coveredByInventory && <small>（已有）</small>}
+                      {index < arr.length - 1 && <i className="route-plus">＋</i>}
+                    </span>
+                  ))}
+              </div>
+            </div>
+
+            <div className="roi-motivation-banner">
+              <span className="roi-icon">✈️</span>
+              <p>
+                這餐預估為［{goalName}］省下 <strong>NT$ {mealSaving}</strong>
+              </p>
+            </div>
+
+            <button type="button" className="cook-choice" onClick={start}>
+              <span className="cook-choice-label">
+                <span className="material-symbols-outlined">local_fire_department</span>
+                就煮這道（免手持離線料理包）
+              </span>
+              <span className="cook-choice-arrow">→</span>
             </button>
           </div>
+        </article>
+      )}
 
-          <div className="week-rates">
-            <span>
-              <strong>{Math.round(planResult.plan.overlapRate * 100)}%</strong>
-              <small>食材重疊率</small>
-            </span>
-            <span>
-              <strong>{Math.round(planResult.plan.inventoryCoverageRate * 100)}%</strong>
-              <small>庫存覆蓋率</small>
-            </span>
+      {/* 4. Alternatives: 2 safe paths (only when choices exist) */}
+      {recommended && choices.filter((meal) => meal.id !== recommended.id).length > 0 && (
+        <section className="alternatives">
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">還有兩個方向</p>
+              <h3>不用從無限食譜裡挑</h3>
+            </div>
+            <span className="alternatives-hint">點選卡片即可置換</span>
           </div>
 
-          {planResult.expiryWarnings.map((message) => (
-            <small className="expiry-warning" key={message}>
-              <span className="material-symbols-outlined">warning</span>
-              {message}
-            </small>
-          ))}
-        </div>
+          <div className="alternative-grid">
+            {choices
+              .filter((meal) => meal.id !== recommended.id)
+              .map((meal) => (
+                <button
+                  type="button"
+                  className="alternative-card"
+                  key={meal.id}
+                  onClick={() => choose(meal)}
+                >
+                  <span className="alt-badge">
+                    {meal.totalMinutes <= 15 ? "⚡ 一鍋到底" : "🌿 換個口味"}
+                  </span>
+                  <strong>{meal.title}</strong>
+                  <small>{subtitles[meal.title] || "符合你的廚具與飲食設定"}</small>
+                  <footer>
+                    <b>⏱️ {meal.totalMinutes} 分</b>
+                    <b>NT$ {meal.estimatedCost}</b>
+                  </footer>
+                </button>
+              ))}
+          </div>
+        </section>
+      )}
 
-        {weekExpanded && (
-          <ol className="week-meals-list">
-            {planResult.plan.meals.map((meal, index) => (
-              <li key={meal.id}>
-                <i>{index + 1}</i>
-                <span>
-                  {dayLabel(meal.date)} · {slotName[meal.slot]} · {meal.title}
-                  {meal.status === "cancelled" ? "（已取消）" : ""}
+      {/* 5. Weekly rhythm: Collapsible accordion (when planResult is available) */}
+      {planResult && (
+        <section className="week-strip">
+          <div className="week-summary">
+            <div className="week-summary-header">
+              <div>
+                <p className="eyebrow">
+                  這週的 {planResult.plan.meals.filter((meal) => meal.status !== "cancelled").length} 餐
+                </p>
+                <h3>買一次，食材多用幾次</h3>
+              </div>
+              <button
+                type="button"
+                className="week-toggle-btn"
+                onClick={() => setWeekExpanded((value) => !value)}
+                aria-expanded={weekExpanded}
+              >
+                <span>{weekExpanded ? "收摺明細" : "展開明細"}</span>
+                <span className="material-symbols-outlined">
+                  {weekExpanded ? "expand_less" : "expand_more"}
                 </span>
-                {meal.status === "planned" && (
-                  <button type="button" onClick={() => reschedule(meal)}>
-                    順延
-                  </button>
-                )}
-              </li>
+              </button>
+            </div>
+
+            <div className="week-rates">
+              <span>
+                <strong>{Math.round(planResult.plan.overlapRate * 100)}%</strong>
+                <small>食材重疊率</small>
+              </span>
+              <span>
+                <strong>{Math.round(planResult.plan.inventoryCoverageRate * 100)}%</strong>
+                <small>庫存覆蓋率</small>
+              </span>
+            </div>
+
+            {planResult.expiryWarnings.map((message) => (
+              <small className="expiry-warning" key={message}>
+                <span className="material-symbols-outlined">warning</span>
+                {message}
+              </small>
             ))}
-          </ol>
-        )}
-      </section>
+          </div>
+
+          {weekExpanded && (
+            <ol className="week-meals-list">
+              {planResult.plan.meals.map((meal, index) => (
+                <li key={meal.id}>
+                  <i>{index + 1}</i>
+                  <span>
+                    {dayLabel(meal.date)} · {slotName[meal.slot]} · {meal.title}
+                    {meal.status === "cancelled" ? "（已取消）" : ""}
+                  </span>
+                  {meal.status === "planned" && (
+                    <button type="button" onClick={() => reschedule(meal)}>
+                      順延
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ol>
+          )}
+        </section>
+      )}
     </div>
   );
 }

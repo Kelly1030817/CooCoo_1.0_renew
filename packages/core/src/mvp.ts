@@ -65,8 +65,6 @@ export const brandSafeRecipes: RecipePackage[] = [
   },
 ];
 
-const normalize = (value: string) => value.trim().toLocaleLowerCase("zh-TW");
-
 export function rankRecipes(recipes:RecipePackage[],context:RecommendationContext,inventory:Array<{ingredientKey:string;daysLeft:number}>) {
   const available=new Map(inventory.map(item=>[normalize(item.ingredientKey),item.daysLeft]));
   return recipes.map(recipe=>({recipe,eligibility:evaluateRecipe(recipe,context),score:recipe.ingredients.reduce((score,item)=>{
@@ -74,6 +72,8 @@ export function rankRecipes(recipes:RecipePackage[],context:RecommendationContex
     return score+(days===undefined?0:days<=3?100:20);
   },0)-recipe.estimatedCost/10})).filter(item=>item.eligibility.eligible).sort((a,b)=>b.score-a.score);
 }
+
+const normalize = (value: string) => value.trim().toLocaleLowerCase("zh-TW");
 
 export function isCookwareSufficient(required: string, available: Set<string>): boolean {
   const norm = normalize(required);

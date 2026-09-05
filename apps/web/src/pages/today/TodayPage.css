@@ -764,6 +764,170 @@
   font-weight: 700;
 }
 
+/* Loading Card */
+.today-page .today-loading-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 56px 20px;
+  border: 1px dashed #d9cab2;
+  border-radius: 20px;
+  background: #fffdf8;
+  color: #88726d;
+  text-align: center;
+  gap: 12px;
+}
+
+.today-page .today-loading-card .spinning {
+  font-size: 32px;
+  color: #9a442d;
+  animation: today-spin 1.2s linear infinite;
+}
+
+@keyframes today-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.today-page .today-loading-card p {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #293c4e;
+}
+
+/* Mismatch State Ticket */
+.today-page .ticket-mismatch {
+  border-color: #e5cdb8;
+  background: #fffefb;
+}
+
+.today-page .stub-mismatch {
+  background: #fdf6ec !important;
+  border-color: #eedcc9 !important;
+  color: #b86230 !important;
+}
+
+.today-page .stub-mismatch strong {
+  color: #b86230 !important;
+}
+
+.today-page .tag-warning {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 9999px;
+  background: #fdf2ee;
+  color: #9a442d;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.today-page .tag-warning .material-symbols-outlined {
+  font-size: 14px;
+}
+
+/* Backend Diagnostics Box */
+.today-page .backend-diagnostics-box {
+  margin: 16px 0;
+  padding: 14px 16px;
+  border: 1px solid #eedec9;
+  border-radius: 14px;
+  background: #faf4e8;
+}
+
+.today-page .diag-header {
+  margin-bottom: 10px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #88726d;
+  text-transform: uppercase;
+}
+
+.today-page .diag-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.today-page .diag-item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+}
+
+.today-page .diag-label {
+  color: #55423e;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.today-page .diag-val {
+  color: #293c4e;
+  font-weight: 800;
+  text-align: right;
+  word-break: break-all;
+}
+
+/* Diagnostics Action Buttons */
+.today-page .ticket-actions-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.today-page .diag-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 0;
+}
+
+.today-page .diag-action-btn.primary {
+  background: #9a442d;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(154, 68, 45, 0.2);
+}
+
+.today-page .diag-action-btn.primary:hover {
+  background: #853621;
+}
+
+.today-page .diag-action-btn.secondary {
+  background: #fff;
+  color: #293c4e;
+  border: 1px solid #d9cab2;
+}
+
+.today-page .diag-action-btn.secondary:hover {
+  background: #f7f3e8;
+}
+
+.today-page .diag-action-btn.text {
+  background: transparent;
+  color: #88726d;
+  min-height: 36px;
+}
+
+.today-page .diag-action-btn.text:hover {
+  color: #293c4e;
+}
+
 /* Mobile responsive adjustments */
 @media (max-width: 600px) {
   .today-page .today-intro {
