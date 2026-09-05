@@ -438,17 +438,24 @@
   font-weight: 900;
 }
 
-/* Main CTA button */
-.today-page .cook-choice {
+/* Main CTA button: Compact & Right-Aligned */
+.today-page .cook-choice-row {
   display: flex;
-  width: 100%;
-  min-height: 48px;
+  justify-content: flex-end;
+  margin-top: 14px;
+}
+
+.today-page .cook-choice {
+  display: inline-flex;
+  width: auto;
+  min-height: 44px;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
+  gap: 8px;
   border: 0;
   border-radius: 16px;
   background: #9a442d;
-  padding: 0 18px;
+  padding: 0 20px;
   color: #fff;
   font-size: 13px;
   font-weight: 900;
@@ -462,7 +469,7 @@
 }
 
 .today-page .cook-choice:active {
-  transform: scale(0.99);
+  transform: scale(0.98);
 }
 
 .today-page .cook-choice-label {
@@ -471,12 +478,14 @@
   gap: 6px;
 }
 
-.today-page .cook-choice-label .material-symbols-outlined {
-  font-size: 18px;
+.today-page .cook-choice-arrow {
+  font-size: 16px;
+  line-height: 1;
+  transition: transform 0.2s ease;
 }
 
-.today-page .cook-choice-arrow {
-  font-size: 18px;
+.today-page .cook-choice:hover .cook-choice-arrow {
+  transform: translateX(2px);
 }
 
 /* 4. Alternatives section */
