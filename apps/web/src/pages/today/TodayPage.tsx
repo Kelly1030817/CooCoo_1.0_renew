@@ -212,7 +212,11 @@ export function TodayPage() {
         >
           <span className="energy-icon" aria-hidden="true">
             {energyLow ? (
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              <svg width="18" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <rect x="2" y="6" width="16" height="12" rx="2.5" stroke="#ffffff" strokeWidth="2"/>
+                <path d="M21 10v4" stroke="#ffffff" strokeWidth="2" strokeLinecap="round"/>
+                <rect x="4.5" y="8.5" width="7" height="7" rx="1.5" fill="#fbbf24"/>
+              </svg>
             ) : (
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
             )}
@@ -355,10 +359,6 @@ export function TodayPage() {
                 <span className="material-symbols-outlined">bolt</span>
                 {recommended.totalMinutes <= 15 ? "15 分快手" : `${recommended.totalMinutes} 分鐘`}
               </span>
-              <span className="tag-covered">
-                <span className="material-symbols-outlined">inventory_2</span>
-                庫存優先
-              </span>
               <span className="tag-cost">食材 NT$ {recommended.estimatedCost}</span>
             </div>
 
@@ -368,10 +368,7 @@ export function TodayPage() {
             <div className="cook-prep-row">
               <div>
                 <small>廚具需求</small>
-                <strong>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline-icon" aria-hidden="true"><ellipse cx="9" cy="12" rx="7" ry="5"/><path d="M16 12h6"/></svg>
-                  {cookwareLabel}
-                </strong>
+                <strong>{cookwareLabel}</strong>
               </div>
               <div className="prep-divider" />
               <div>
@@ -396,14 +393,13 @@ export function TodayPage() {
               <div className="ingredient-route">
                 {recommended.ingredients
                   .filter((item) => !item.isPantryStaple)
-                  .map((item, index, arr) => (
+                  .map((item) => (
                     <span
                       key={item.ingredientKey}
                       className={`route-chip ${item.coveredByInventory ? "covered" : ""}`}
                     >
                       {item.name}
                       {item.coveredByInventory && <small>（已有）</small>}
-                      {index < arr.length - 1 && <i className="route-plus">＋</i>}
                     </span>
                   ))}
               </div>
@@ -454,12 +450,12 @@ export function TodayPage() {
                     {meal.totalMinutes <= 15 ? (
                       <>
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-                        一鍋到底
+                        <span>一鍋到底</span>
                       </>
                     ) : (
                       <>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
-                        換個口味
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
+                        <span>換個口味</span>
                       </>
                     )}
                   </span>

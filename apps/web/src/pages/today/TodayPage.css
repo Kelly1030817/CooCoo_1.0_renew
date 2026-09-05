@@ -547,13 +547,16 @@
 }
 
 .today-page .alt-badge {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   border-radius: 9999px;
   background: rgba(56, 103, 83, 0.1);
-  padding: 2px 8px;
+  padding: 3px 8px;
   color: #386753;
   font-size: 10px;
   font-weight: 800;
+  white-space: nowrap;
 }
 
 .today-page .alternative-card > strong {
