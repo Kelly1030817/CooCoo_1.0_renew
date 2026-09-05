@@ -7,39 +7,410 @@ import { api, json } from "@/shared/api/client";
 import { Modal, ModalHeader } from "@/shared/ui/Modal";
 import "./TodayPage.css";
 
-const subtitles:Record<string,string>={"番茄滑蛋飯":"先用掉冰箱裡的蛋與番茄","味噌蔬菜烏龍麵":"一鍋到底，收拾也輕鬆","胡麻雞絲拌麵":"同一批青菜，換一個味道"};
-const taipeiDateParts=(value:Date)=>Object.fromEntries(new Intl.DateTimeFormat("en-US",{timeZone:"Asia/Taipei",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(value).filter(part=>part.type!=="literal").map(part=>[part.type,part.value]));
-const dateOnly=()=>{const parts=taipeiDateParts(new Date());return `${parts.year}-${parts.month}-${parts.day}`};
-const weekStart=(date:string)=>{const value=new Date(date+"T12:00:00+08:00");const day=value.getDay()||7;value.setDate(value.getDate()-day+1);const parts=taipeiDateParts(value);return `${parts.year}-${parts.month}-${parts.day}`};
-const slotName:Record<MealSlot,string>={breakfast:"早餐",lunch:"午餐",dinner:"晚餐"};
-const dayLabel=(date:string)=>new Intl.DateTimeFormat("zh-TW",{timeZone:"Asia/Taipei",weekday:"short",month:"numeric",day:"numeric"}).format(new Date(date+"T12:00:00+08:00"));
+const subtitles: Record<string, string> = {
+  "番茄滑蛋飯": "先用掉冰箱裡的蛋與番茄，一鍋到底滑嫩起鍋",
+  "番茄滑蛋牛肉飯": "先用掉冰箱裡的蛋與番茄，一鍋到底滑嫩起鍋",
+  "味噌蔬菜烏龍麵": "剩菜一鍋到底全下，收拾只要洗一個鍋",
+  "胡麻雞絲拌麵": "同批小黃瓜與雞胸肉，爽口開胃免開大火",
+  "蔥油手撕雞肉拌飯": "手撕雞肉＋熱飯＋香蔥油，免洗砧板極速開動",
+  "蒜炒鮮蔬里肌": "高纖清爽，下班快速補充蛋白質",
+};
+const taipeiDateParts = (value: Date) =>
+  Object.fromEntries(
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: "Asia/Taipei",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    })
+      .formatToParts(value)
+      .filter((part) => part.type !== "literal")
+      .map((part) => [part.type, part.value]),
+  );
+const dateOnly = () => {
+  const parts = taipeiDateParts(new Date());
+  return `${parts.year}-${parts.month}-${parts.day}`;
+};
+const weekStart = (date: string) => {
+  const value = new Date(date + "T12:00:00+08:00");
+  const day = value.getDay() || 7;
+  value.setDate(value.getDate() - day + 1);
+  const parts = taipeiDateParts(value);
+  return `${parts.year}-${parts.month}-${parts.day}`;
+};
+const slotName: Record<MealSlot, string> = { breakfast: "早餐", lunch: "午餐", dinner: "晚餐" };
+const dayLabel = (date: string) =>
+  new Intl.DateTimeFormat("zh-TW", {
+    timeZone: "Asia/Taipei",
+    weekday: "short",
+    month: "numeric",
+    day: "numeric",
+  }).format(new Date(date + "T12:00:00+08:00"));
 
 export function TodayPage() {
   const { data } = useAppState();
   const ui = useContext(UiContext);
-  const [energyLow,setEnergyLow]=useState(false);
-  const [decision,setDecision]=useState<TodayDecision|null>(null);
-  const [planResult,setPlanResult]=useState<MealPlanResult|null>(null);
-  const [primaryId,setPrimaryId]=useState("");
-  const [error,setError]=useState("");
-  const today=dateOnly();
-  useEffect(()=>{let active=true;setError("");api<TodayDecision>("/meal-decisions/today?date="+today+"&energy="+(energyLow?"low":"normal")).then(value=>{if(active){setDecision(value);setPrimaryId(value.primary?.id||"")}}).catch(reason=>active&&setError(reason instanceof Error?reason.message:"餐點載入失敗"));return()=>{active=false}},[energyLow,today]);
-  useEffect(()=>{let active=true;const week=weekStart(today);api<MealPlanResult>("/meal-plans",json("POST",{weekStart:week})).then(value=>active&&setPlanResult(value)).catch(reason=>active&&setError(reason instanceof Error?reason.message:"本週餐單載入失敗"));return()=>{active=false}},[today]);
-  const choices=[decision?.primary,...(decision?.alternatives||[])].filter((item):item is RecipePackage=>Boolean(item));
-  const recommended=choices.find(item=>item.id===primaryId)||choices[0];
-  const choose=(meal:RecipePackage)=>{setPrimaryId(meal.id);ui.toast("今天就煮「"+meal.title+"」")};
-  const start=()=>{if(!recommended)return;const ingredientIds=(data?.inventory||[]).filter(item=>recommended.ingredients.some(ingredient=>[ingredient.name,ingredient.ingredientKey].includes(item.name))).map(item=>item.id);ui.open(<RecipePackageModal recipePackage={recommended} ingredientIds={ingredientIds} onClose={ui.close}/>)};
-  const reschedule=(meal:PlannedMeal)=>ui.open(<PostponeModal meal={meal} planWeekStart={planResult!.plan.weekStart} planUpdatedAt={planResult!.plan.updatedAt} onClose={ui.close} onSaved={value=>{setPlanResult(value);ui.close();ui.toast("本週餐單已更新")}}/>);
-  if(error&&!recommended)return <section className="today-page no-safe-meal" role="alert"><p className="eyebrow">今天 · 尚未載入</p><h2>{error}</h2><button className="primary-btn" onClick={()=>location.reload()}>重新整理</button></section>;
-  if(!decision||!planResult)return <section className="today-page no-safe-meal" role="status"><p className="eyebrow">今天</p><h2>正在依你的設定安排餐點…</h2></section>;
-  if(!recommended)return <section className="today-page no-safe-meal" role="status"><p className="eyebrow">今天 · 安全優先</p><h2>目前沒有同時符合飲食限制、廚具與預算的餐點。</h2><p>{decision.notice}</p></section>;
-  return <div className="today-page">
-    {error&&<p className="today-warning" role="alert">{error}</p>}
-    <section className="today-intro"><div><p className="eyebrow">今天 · {slotName[decision.slot]}</p><h2>先別想一整週，<br />決定下一餐就好。</h2></div><button className={energyLow?"energy-toggle active":"energy-toggle"} onClick={()=>setEnergyLow(value=>!value)}><span>☁</span>{energyLow?"低體力模式已開":"今天有點累"}</button></section>
-    <article className="meal-ticket primary-meal"><div className="ticket-stub"><span>首選</span><strong>01</strong></div><div className="ticket-body"><div className="meal-tags"><span>{recommended.totalMinutes<=15?"15 分快手":recommended.totalMinutes+" 分鐘"}</span><span>庫存優先</span><span>NT$ {recommended.estimatedCost}</span></div><h3>{recommended.title}</h3><p>{subtitles[recommended.title]||decision.notice}</p><div className="ingredient-route">{recommended.ingredients.filter(item=>!item.isPantryStaple).map((item,index)=><span key={item.ingredientKey}>{item.name}{item.coveredByInventory?"（已有）":""}{index<recommended.ingredients.filter(value=>!value.isPantryStaple).length-1&&<i>＋</i>}</span>)}</div><button className="cook-choice" onClick={start}>就煮這道 <span>→</span></button></div></article>
-    <section className="alternatives"><div className="section-heading"><div><p className="eyebrow">還有兩個方向</p><h3>不用從無限食譜裡挑</h3></div><button onClick={()=>setEnergyLow(value=>!value)}>重新排序</button></div><div className="alternative-grid">{choices.filter(meal=>meal.id!==recommended.id).map(meal=><button className="alternative-card" key={meal.id} onClick={()=>choose(meal)}><span>{meal.totalMinutes<=15?"更省力":"換口味"}</span><strong>{meal.title}</strong><small>{subtitles[meal.title]||"符合你的廚具與飲食設定"}</small><footer><b>{meal.totalMinutes} 分</b><b>NT$ {meal.estimatedCost}</b></footer></button>)}</div></section>
-    <section className="week-strip"><div className="week-summary"><p className="eyebrow">這週的 {planResult.plan.meals.filter(meal=>meal.status!=="cancelled").length} 餐</p><h3>買一次，食材多用幾次</h3><div><span><strong>{Math.round(planResult.plan.overlapRate*100)}%</strong>食材重疊率</span><span><strong>{Math.round(planResult.plan.inventoryCoverageRate*100)}%</strong>庫存覆蓋率</span></div>{planResult.expiryWarnings.map(message=><small className="expiry-warning" key={message}>{message}</small>)}</div><ol>{planResult.plan.meals.map((meal,index)=><li key={meal.id}><i>{index+1}</i><span>{dayLabel(meal.date)} · {slotName[meal.slot]} · {meal.title}{meal.status==="cancelled"?"（已取消）":""}</span>{meal.status==="planned"&&<button onClick={()=>reschedule(meal)}>順延</button>}</li>)}</ol></section>
-  </div>;
+  const [energyLow, setEnergyLow] = useState(false);
+  const [decision, setDecision] = useState<TodayDecision | null>(null);
+  const [planResult, setPlanResult] = useState<MealPlanResult | null>(null);
+  const [primaryId, setPrimaryId] = useState("");
+  const [error, setError] = useState("");
+  const [weekExpanded, setWeekExpanded] = useState(false);
+  const today = dateOnly();
+
+  useEffect(() => {
+    let active = true;
+    setError("");
+    api<TodayDecision>(
+      "/meal-decisions/today?date=" + today + "&energy=" + (energyLow ? "low" : "normal"),
+    )
+      .then((value) => {
+        if (active) {
+          setDecision(value);
+          setPrimaryId(value.primary?.id || "");
+        }
+      })
+      .catch((reason) => active && setError(reason instanceof Error ? reason.message : "餐點載入失敗"));
+    return () => {
+      active = false;
+    };
+  }, [energyLow, today]);
+
+  useEffect(() => {
+    let active = true;
+    const week = weekStart(today);
+    api<MealPlanResult>("/meal-plans", json("POST", { weekStart: week }))
+      .then((value) => active && setPlanResult(value))
+      .catch((reason) => active && setError(reason instanceof Error ? reason.message : "本週餐單載入失敗"));
+    return () => {
+      active = false;
+    };
+  }, [today]);
+
+  const choices = [decision?.primary, ...(decision?.alternatives || [])].filter(
+    (item): item is RecipePackage => Boolean(item),
+  );
+  const recommended = choices.find((item) => item.id === primaryId) || choices[0];
+  const choose = (meal: RecipePackage) => {
+    setPrimaryId(meal.id);
+    ui.toast("今天就煮「" + meal.title + "」");
+  };
+
+  const start = () => {
+    if (!recommended) return;
+    const ingredientIds = (data?.inventory || [])
+      .filter((item) =>
+        recommended.ingredients.some((ingredient) =>
+          [ingredient.name, ingredient.ingredientKey].includes(item.name),
+        ),
+      )
+      .map((item) => item.id);
+    ui.open(
+      <RecipePackageModal
+        recipePackage={recommended}
+        ingredientIds={ingredientIds}
+        onClose={ui.close}
+      />,
+    );
+  };
+
+  const reschedule = (meal: PlannedMeal) =>
+    ui.open(
+      <PostponeModal
+        meal={meal}
+        planWeekStart={planResult!.plan.weekStart}
+        planUpdatedAt={planResult!.plan.updatedAt}
+        onClose={ui.close}
+        onSaved={(value) => {
+          setPlanResult(value);
+          ui.close();
+          ui.toast("本週餐單已更新");
+        }}
+      />,
+    );
+
+  if (error && !recommended)
+    return (
+      <section className="today-page no-safe-meal" role="alert">
+        <p className="eyebrow">今天 · 尚未載入</p>
+        <h2>{error}</h2>
+        <button className="primary-btn" onClick={() => location.reload()}>
+          重新整理
+        </button>
+      </section>
+    );
+
+  if (!decision || !planResult)
+    return (
+      <section className="today-page no-safe-meal" role="status">
+        <p className="eyebrow">今天</p>
+        <h2>正在依你的設定安排餐點…</h2>
+      </section>
+    );
+
+  if (!recommended)
+    return (
+      <section className="today-page no-safe-meal" role="status">
+        <p className="eyebrow">今天 · 安全優先</p>
+        <h2>目前沒有同時符合飲食限制、廚具與預算的餐點。</h2>
+        <p>{decision.notice}</p>
+      </section>
+    );
+
+  const preparedServings = (data?.mealServings || []).filter(
+    (item) => item.status === "prepared_inventory",
+  );
+  const showPreparedCapsule = preparedServings.length > 0 || (Boolean(data) && !data?.mealServings);
+  const preparedCount = preparedServings.length > 0 ? preparedServings.length : 1;
+
+  const cookwareLabel =
+    recommended.cookwareTypes.length > 0
+      ? recommended.cookwareTypes.join("、")
+      : "單平底鍋";
+  const prepTimeLabel =
+    recommended.prepMinutes > 0 ? `備料 ${recommended.prepMinutes} 分鐘` : "備料 5 分鐘";
+  const stepCountLabel =
+    recommended.steps.length > 0 ? `${recommended.steps.length} 大步驟` : "4 大步驟";
+
+  const outsidePrice = data?.cookingPlan?.eatingOutCost || 150;
+  const mealSaving = Math.max(0, outsidePrice - recommended.estimatedCost);
+  const goalName = data?.activeGoal?.name || "圓夢目標";
+
+  return (
+    <div className="today-page">
+      {error && (
+        <p className="today-warning" role="alert">
+          {error}
+        </p>
+      )}
+
+      {/* 1. Header greeting & energy toggle */}
+      <section className="today-intro">
+        <div>
+          <p className="eyebrow">
+            <span className="eyebrow-dot" />
+            今天 · {slotName[decision.slot]}
+          </p>
+          <h2>
+            先別想一整週，
+            <br />
+            決定下一餐就好。
+          </h2>
+        </div>
+        <button
+          type="button"
+          className={energyLow ? "energy-toggle active" : "energy-toggle"}
+          onClick={() => setEnergyLow((value) => !value)}
+        >
+          <span>{energyLow ? "✨" : "☁"}</span>
+          {energyLow ? "低體力模式已開" : "今天有點累"}
+        </button>
+      </section>
+
+      {/* 2. Notification capsule: 熟食庫存 (溫和綠色提醒) */}
+      {showPreparedCapsule && (
+        <div className="cooked-inventory-capsule" role="status">
+          <div className="cooked-capsule-info">
+            <span className="cooked-capsule-icon">🍲</span>
+            <div className="cooked-capsule-text">
+              <div className="cooked-capsule-header">
+                <span className="cooked-capsule-label">熟食庫存可用</span>
+                <span className="cooked-capsule-count">· 剩 {preparedCount} 份</span>
+              </div>
+              <p className="cooked-capsule-desc">冰箱尚有已備妥的熟食，加熱 5 分鐘即可享用</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            className="cooked-capsule-btn"
+            onClick={() => ui.toast("今天優先食用熟食庫存，省去備料與洗鍋！")}
+          >
+            加熱即食 5m
+          </button>
+        </div>
+      )}
+
+      {/* 3. Hero Ticket: 風格 B（進化雙色剪票口票券） */}
+      <article className="meal-ticket primary-meal">
+        <div className="ticket-notch ticket-notch-top" aria-hidden="true" />
+        <div className="ticket-notch ticket-notch-bottom" aria-hidden="true" />
+
+        {/* Ticket Stub (Left) */}
+        <div className="ticket-stub">
+          <span className="stub-vertical-text">TODAY</span>
+          <div className="stub-center">
+            <small>首選</small>
+            <strong>01</strong>
+          </div>
+          <span className="material-symbols-outlined stub-icon">restaurant</span>
+        </div>
+
+        {/* Ticket Body (Right) */}
+        <div className="ticket-body">
+          <div className="meal-tags">
+            <span className="tag-time">
+              <span className="material-symbols-outlined">bolt</span>
+              {recommended.totalMinutes <= 15 ? "15 分快手" : `${recommended.totalMinutes} 分鐘`}
+            </span>
+            <span className="tag-covered">
+              <span className="material-symbols-outlined">inventory_2</span>
+              庫存優先
+            </span>
+            <span className="tag-cost">食材 NT$ {recommended.estimatedCost}</span>
+          </div>
+
+          <h3>{recommended.title}</h3>
+          <p className="meal-subtitle">{subtitles[recommended.title] || decision.notice}</p>
+
+          <div className="cook-prep-row">
+            <div>
+              <small>廚具需求</small>
+              <strong>🍳 {cookwareLabel}</strong>
+            </div>
+            <div className="prep-divider" />
+            <div>
+              <small>備料負擔</small>
+              <strong>🔪 {prepTimeLabel}</strong>
+            </div>
+            <div className="prep-divider" />
+            <div>
+              <small>步驟數量</small>
+              <strong>📝 {stepCountLabel}</strong>
+            </div>
+          </div>
+
+          <div className="ingredient-route-wrapper">
+            <span className="route-title">食材路徑</span>
+            <div className="ingredient-route">
+              {recommended.ingredients
+                .filter((item) => !item.isPantryStaple)
+                .map((item, index, arr) => (
+                  <span
+                    key={item.ingredientKey}
+                    className={`route-chip ${item.coveredByInventory ? "covered" : ""}`}
+                  >
+                    {item.name}
+                    {item.coveredByInventory && <small>（已有）</small>}
+                    {index < arr.length - 1 && <i className="route-plus">＋</i>}
+                  </span>
+                ))}
+            </div>
+          </div>
+
+          <div className="roi-motivation-banner">
+            <span className="roi-icon">✈️</span>
+            <p>
+              這餐預估為［{goalName}］省下 <strong>NT$ {mealSaving}</strong>
+            </p>
+          </div>
+
+          <button type="button" className="cook-choice" onClick={start}>
+            <span className="cook-choice-label">
+              <span className="material-symbols-outlined">local_fire_department</span>
+              就煮這道（免手持離線料理包）
+            </span>
+            <span className="cook-choice-arrow">→</span>
+          </button>
+        </div>
+      </article>
+
+      {/* 4. Alternatives: 2 safe paths */}
+      <section className="alternatives">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">還有兩個方向</p>
+            <h3>不用從無限食譜裡挑</h3>
+          </div>
+          <span className="alternatives-hint">點選卡片即可置換</span>
+        </div>
+
+        <div className="alternative-grid">
+          {choices
+            .filter((meal) => meal.id !== recommended.id)
+            .map((meal) => (
+              <button
+                type="button"
+                className="alternative-card"
+                key={meal.id}
+                onClick={() => choose(meal)}
+              >
+                <span className="alt-badge">
+                  {meal.totalMinutes <= 15 ? "⚡ 一鍋到底" : "🌿 換個口味"}
+                </span>
+                <strong>{meal.title}</strong>
+                <small>{subtitles[meal.title] || "符合你的廚具與飲食設定"}</small>
+                <footer>
+                  <b>⏱️ {meal.totalMinutes} 分</b>
+                  <b>NT$ {meal.estimatedCost}</b>
+                </footer>
+              </button>
+            ))}
+        </div>
+      </section>
+
+      {/* 5. Weekly rhythm: Collapsible accordion */}
+      <section className="week-strip">
+        <div className="week-summary">
+          <div className="week-summary-header">
+            <div>
+              <p className="eyebrow">
+                這週的 {planResult.plan.meals.filter((meal) => meal.status !== "cancelled").length} 餐
+              </p>
+              <h3>買一次，食材多用幾次</h3>
+            </div>
+            <button
+              type="button"
+              className="week-toggle-btn"
+              onClick={() => setWeekExpanded((value) => !value)}
+              aria-expanded={weekExpanded}
+            >
+              <span>{weekExpanded ? "收摺明細" : "展開明細"}</span>
+              <span className="material-symbols-outlined">
+                {weekExpanded ? "expand_less" : "expand_more"}
+              </span>
+            </button>
+          </div>
+
+          <div className="week-rates">
+            <span>
+              <strong>{Math.round(planResult.plan.overlapRate * 100)}%</strong>
+              <small>食材重疊率</small>
+            </span>
+            <span>
+              <strong>{Math.round(planResult.plan.inventoryCoverageRate * 100)}%</strong>
+              <small>庫存覆蓋率</small>
+            </span>
+          </div>
+
+          {planResult.expiryWarnings.map((message) => (
+            <small className="expiry-warning" key={message}>
+              <span className="material-symbols-outlined">warning</span>
+              {message}
+            </small>
+          ))}
+        </div>
+
+        {weekExpanded && (
+          <ol className="week-meals-list">
+            {planResult.plan.meals.map((meal, index) => (
+              <li key={meal.id}>
+                <i>{index + 1}</i>
+                <span>
+                  {dayLabel(meal.date)} · {slotName[meal.slot]} · {meal.title}
+                  {meal.status === "cancelled" ? "（已取消）" : ""}
+                </span>
+                {meal.status === "planned" && (
+                  <button type="button" onClick={() => reschedule(meal)}>
+                    順延
+                  </button>
+                )}
+              </li>
+            ))}
+          </ol>
+        )}
+      </section>
+    </div>
+  );
 }
 
 function PostponeModal({meal,planWeekStart,planUpdatedAt,onClose,onSaved}:{meal:PlannedMeal;planWeekStart:string;planUpdatedAt:string;onClose:()=>void;onSaved:(value:MealPlanResult)=>void}){
