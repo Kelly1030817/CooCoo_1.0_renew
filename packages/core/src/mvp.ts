@@ -65,6 +65,8 @@ export const brandSafeRecipes: RecipePackage[] = [
   },
 ];
 
+const normalize = (value: string) => value.trim().toLocaleLowerCase("zh-TW");
+
 export function rankRecipes(recipes:RecipePackage[],context:RecommendationContext,inventory:Array<{ingredientKey:string;daysLeft:number}>) {
   const available=new Map(inventory.map(item=>[normalize(item.ingredientKey),item.daysLeft]));
   return recipes.map(recipe=>({recipe,eligibility:evaluateRecipe(recipe,context),score:recipe.ingredients.reduce((score,item)=>{
@@ -73,7 +75,15 @@ export function rankRecipes(recipes:RecipePackage[],context:RecommendationContex
   },0)-recipe.estimatedCost/10})).filter(item=>item.eligibility.eligible).sort((a,b)=>b.score-a.score);
 }
 
-const normalize = (value: string) => value.trim().toLocaleLowerCase("zh-TW");
+export function isCookwareSufficient(required: string, available: Set<string>): boolean {
+  const norm = normalize(required);
+  if (available.has(norm)) return true;
+  if (norm === "電磁爐" || norm === "瓦斯爐") {
+    const directHeaters = ["瓦斯爐", "電磁爐", "ih爐", "卡式爐", "黑晶爐", "快煮鍋", "電子壓力鍋", "電鍋"];
+    return directHeaters.some((h) => available.has(normalize(h)));
+  }
+  return false;
+}
 
 export function evaluateRecipe(
   recipe: RecipePackage,
@@ -85,7 +95,7 @@ export function evaluateRecipe(
     restriction.ingredientKeys.some((key) => ingredientKeys.has(normalize(key))),
   );
   const availableCookware = new Set(context.cookwareTypes.map(normalize));
-  const missingCookware = recipe.cookwareTypes.filter((item) => !availableCookware.has(normalize(item)));
+  const missingCookware = recipe.cookwareTypes.filter((item) => !isCookwareSufficient(item, availableCookware));
   const cost = recipe.estimatedCost;
   const reasons: string[] = [];
   if (blocked.length) reasons.push(`含有禁用食材：${blocked.map((item) => item.label).join("、")}`);

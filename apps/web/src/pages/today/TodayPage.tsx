@@ -132,10 +132,20 @@ export function TodayPage() {
   if (error && !recommended)
     return (
       <section className="today-page no-safe-meal" role="alert">
-        <p className="eyebrow">今天 · 尚未載入</p>
-        <h2>{error}</h2>
-        <button className="primary-btn" onClick={() => location.reload()}>
-          重新整理
+        <p className="eyebrow">今天 · 安全與條件匹配</p>
+        <h2>目前沒有符合飲食限制、廚具與預算的餐點</h2>
+        <p className="empty-hint">
+          {error.includes("NO_SAFE_RECIPE_AVAILABLE")
+            ? "CooCoo 嚴格遵循食安與廚具相容規範，未找到適用現有廚具或預算的食譜。請確認廚具已包含電磁爐、瓦斯爐或常用料理加熱設備。"
+            : error}
+        </p>
+        <button
+          type="button"
+          className="cook-choice"
+          style={{ maxWidth: "240px", margin: "16px auto 0", justifyContent: "center" }}
+          onClick={() => location.reload()}
+        >
+          重新檢查推薦
         </button>
       </section>
     );
