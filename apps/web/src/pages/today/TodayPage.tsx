@@ -1,3 +1,4 @@
+import { RecipeCatalogPanel } from "@/features/recipes/RecipeCatalogPanel";
 import { useContext, useEffect, useState } from "react";
 import type { MealPlanResult, MealPostpone, MealSlot, PlannedMeal, RecipePackage, TodayDecision } from "@coocoo/contracts";
 import { useAppState } from "@/entities/app-state/model";
@@ -135,6 +136,7 @@ export function TodayPage() {
   if (loading) {
     return (
       <div className="today-page">
+      <RecipeCatalogPanel/>
         <section className="today-intro">
           <div>
             <p className="eyebrow">
@@ -220,6 +222,8 @@ export function TodayPage() {
           {energyLow ? "低體力模式已開" : "今天有點累"}
         </button>
       </section>
+
+      <RecipeCatalogPanel />
 
       {/* 2. Notification capsule: 熟食庫存 (溫和綠色提醒) */}
       {showPreparedCapsule && (
@@ -519,6 +523,8 @@ export function TodayPage() {
                 {message}
               </small>
             ))}
+            {planResult.unfilledSlots.length>0&&<div className="expiry-warning" role="status"><span className="material-symbols-outlined">event_busy</span><span>依現有食材先排了 {planResult.plan.meals.filter(meal=>meal.status!=="cancelled").length} 餐，另有 {planResult.unfilledSlots.length} 個餐次保留空白。少量補買候選不會自動加入餐單；請在上方切換後確認。</span></div>}
+            {planResult.purchaseCandidates.length>0&&<small>目前另有 {planResult.purchaseCandidates.length} 道少量補買候選，可由你主動查看；價格待確認者不會標示為符合預算。</small>}
           </div>
 
           {weekExpanded && (

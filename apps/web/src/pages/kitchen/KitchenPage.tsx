@@ -1,3 +1,4 @@
+import { RecipeCatalogPanel } from "@/features/recipes/RecipeCatalogPanel";
 import { useContext, useState } from "react";
 import type { InventoryItem, Recipe } from "@coocoo/contracts";
 import { useAppState } from "@/entities/app-state/model";
@@ -32,6 +33,7 @@ export function KitchenPage() {
     );
   return (
     <div className="space-y-lg pb-32">
+      <RecipeCatalogPanel/>
       <section>
         <h2 className="flex items-center gap-2 text-3xl font-extrabold text-primary">
           <span className="material-symbols-outlined text-4xl">blender</span>
