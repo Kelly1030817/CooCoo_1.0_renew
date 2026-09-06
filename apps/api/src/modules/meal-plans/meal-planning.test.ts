@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { createMealPlan, createTodayDecision } from "./meal-planning";
+import { createMealPlan, createTodayDecision, unfilledMealSlots } from "./meal-planning";
 
 const context={
   weekStart:"2026-09-07",
@@ -27,5 +27,15 @@ describe("meal planning application service",()=>{
     expect(decision.primary?.title).toBe("番茄滑蛋飯");
     expect(decision.alternatives).toHaveLength(2);
     expect([decision.primary,...decision.alternatives].filter(Boolean).every(meal=>meal!.totalMinutes<=30)).toBeTrue();
+  });
+  test("strict catalog leaves explicit gaps instead of repeating or inventing recipes",()=>{
+    const strict={...context,strictCatalog:true,recipes:[]};
+    const plan=createMealPlan(strict);
+    expect(plan.meals).toHaveLength(0);
+    expect(unfilledMealSlots(strict,plan)).toEqual([
+      {date:"2026-09-07",slot:"dinner"},
+      {date:"2026-09-08",slot:"dinner"},
+      {date:"2026-09-09",slot:"dinner"},
+    ]);
   });
 });
