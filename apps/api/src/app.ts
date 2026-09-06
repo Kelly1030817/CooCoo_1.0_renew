@@ -45,6 +45,9 @@ const fail = (error: unknown) => {
     INVALID_DATE: "日期格式不正確。",
     WEEK_START_MUST_BE_MONDAY: "一週餐單必須從星期一開始。",
     WEEKLY_TARGET_EXCEEDS_SLOTS: "預計自煮餐數超過本週可安排的餐期。",
+    SAVINGS_EXCEEDS_CALCULATED_AMOUNT: "圓夢入帳金額不可超過本餐省下金額。",
+    INVALID_SERVING_COUNT: "食用份數不可大於烹煮份數。",
+    duplicate: "這份料理已經記錄過，請勿重複結算。",
   };
   return {
     error: {
