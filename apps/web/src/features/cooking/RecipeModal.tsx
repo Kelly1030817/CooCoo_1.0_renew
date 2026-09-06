@@ -1,7 +1,7 @@
 import { useContext, useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Recipe, RecipeGeneration, RecipePackage } from "@coocoo/contracts";
-import { api, json } from "@/shared/api/client";
+import { api, json, ApiError } from "@/shared/api/client";
 import { Modal, ModalHeader } from "@/shared/ui/Modal";
 import { UiContext } from "@/app/ui-context";
 import { useAppState, stateQueryKey } from "@/entities/app-state/model";
@@ -315,8 +315,258 @@ function CookingMode({ recipePackage, ingredientIds, onClose, onComplete }: { re
 }
 
 function CookingCompleteModal({ recipePackage, ingredientIds, onClose, onComplete }: { recipePackage: RecipePackage; ingredientIds: string[]; onClose: () => void; onComplete?: () => void }) {
-  const { data } = useAppState(); const query = useQueryClient(); const ui = useContext(UiContext); const outsideCost = data?.cookingPlan?.eatingOutCost || 0;
-  const [cost, setCost] = useState(data?.cookingPlan?.homeCookBudget || 80); const [servings, setServings] = useState(recipePackage.servings); const [eaten, setEaten] = useState(1); const calculatedSaving = Math.max(0, outsideCost * eaten - cost); const [deposit, setDeposit] = useState(calculatedSaving); const [vegetables, setVegetables] = useState(recipePackage.ingredients.some((item) => item.isVegetable));
-  const finish = async () => { const operationId=crypto.randomUUID(); const legacyRecipe: Recipe = { id: recipePackage.recipeId, title: recipePackage.title, style: "料理包", prepTime: `${recipePackage.totalMinutes} 分鐘`, estCost: `NT$ ${cost}`, scientificPrinciple: "已下載的離線料理包", ingredients: recipePackage.ingredients.map((item) => item.name), steps: recipePackage.steps.map((item) => item.instruction) }; const payload={ completionKey: operationId, recipe: legacyRecipe, ingredientIds, ingredientRequirements:recipePackage.ingredients, homeCookCost: cost, actualDeposit: deposit, foodSafe: true, vegetables, lowOil: false, mindfulSeasoning: false, servingsCooked: servings, servingsEaten: eaten }; if(!navigator.onLine){await enqueueOperation({id:operationId,kind:"cooking_complete",payload,createdAt:new Date().toISOString()});await markRecipePackageCompleted(recipePackage.id);onComplete?.();onClose();ui.toast(`已離線暫存：1 次料理、${eaten} 餐；連線後只會同步一次`);return} try{await api("/cooking/outcomes", json("POST", payload));await markRecipePackageCompleted(recipePackage.id);await query.invalidateQueries({ queryKey: stateQueryKey });onComplete?.();onClose();ui.toast(`完成 1 次料理、吃了 ${eaten} 餐，圓夢入帳 NT$ ${deposit}`)}catch(error){if(error instanceof TypeError){await enqueueOperation({id:operationId,kind:"cooking_complete",payload,createdAt:new Date().toISOString()});await markRecipePackageCompleted(recipePackage.id);onComplete?.();onClose();ui.toast("網路中斷，料理結果已安全暫存");return}throw error} };
-  return <Modal label="料理完成結算" onClose={onClose}><ModalHeader title={recipePackage.title} kicker="確認後才會扣庫存與圓夢入帳" onClose={onClose} /><div className="serving-grid"><label>這次煮幾份<input className="field" type="number" min="1" value={servings} onChange={(event) => { const value = Math.max(1, Number(event.target.value)); setServings(value); setEaten((current) => Math.min(current, value)); }} /></label><label>現在吃幾份<input className="field" type="number" min="0" max={servings} value={eaten} onChange={(event) => setEaten(Math.min(servings, Math.max(0, Number(event.target.value))))} /></label></div><p className="prepared-note">剩下 {Math.max(0, servings - eaten)} 份會成為熟食庫存；料理次數仍只記 1 次。</p><label className="field-label">本餐實際食材成本<input className="field" type="number" min="0" value={cost} onChange={(event) => setCost(Number(event.target.value))} /></label><div className="saving-confirm"><span>可確認省下</span><strong>NT$ {calculatedSaving}</strong><small>本人外食比較價 NT$ {outsideCost} × {eaten} 份 − 食材成本</small></div><label className="field-label">這次確認圓夢入帳<input className="field" type="number" min="0" max={calculatedSaving} value={deposit} onChange={(event) => setDeposit(Math.min(calculatedSaving, Number(event.target.value)))} /></label><label className="vegetable-check"><input type="checkbox" checked={vegetables} onChange={(event) => setVegetables(event.target.checked)} /> 這餐實際吃到蔬菜</label><div className="mt-lg flex gap-sm"><button onClick={() => setDeposit(0)} className="secondary-btn flex-1">這次不入帳</button><button onClick={finish} className="primary-btn flex-1">確認完成</button></div></Modal>;
+  const { data } = useAppState();
+  const query = useQueryClient();
+  const ui = useContext(UiContext);
+  const outsideCost = data?.cookingPlan?.eatingOutCost || 0;
+
+  // Raw string states to support backspacing to empty without sticky 0
+  const [costInput, setCostInput] = useState(String(data?.cookingPlan?.homeCookBudget ?? 80));
+  const [servingsInput, setServingsInput] = useState(String(recipePackage.servings || 1));
+  const [eatenInput, setEatenInput] = useState("1");
+  const [vegetables, setVegetables] = useState(recipePackage.ingredients.some((item) => item.isVegetable));
+  const [submitting, setSubmitting] = useState(false);
+
+  // Derived numeric values
+  const servings = Math.max(1, parseInt(servingsInput, 10) || 1);
+  const eaten = Math.min(servings, Math.max(0, parseInt(eatenInput, 10) || 0));
+  const cost = costInput === "" ? 0 : Math.max(0, parseInt(costInput, 10) || 0);
+  const calculatedSaving = Math.max(0, outsideCost * eaten - cost);
+
+  const [depositInput, setDepositInput] = useState(String(calculatedSaving));
+  const deposit = depositInput === "" ? 0 : Math.min(calculatedSaving, Math.max(0, parseInt(depositInput, 10) || 0));
+
+  useEffect(() => {
+    setDepositInput((prev) => {
+      const current = parseInt(prev, 10);
+      if (isNaN(current) || current > calculatedSaving) {
+        return String(calculatedSaving);
+      }
+      return prev;
+    });
+  }, [calculatedSaving]);
+
+  const finish = async () => {
+    if (submitting) return;
+    setSubmitting(true);
+    const operationId = crypto.randomUUID();
+    const legacyRecipe: Recipe = {
+      id: recipePackage.recipeId,
+      title: recipePackage.title,
+      style: "料理包",
+      prepTime: `${recipePackage.totalMinutes} 分鐘`,
+      estCost: `NT$ ${cost}`,
+      scientificPrinciple: "已下載的離線料理包",
+      ingredients: recipePackage.ingredients.map((item) => item.name),
+      steps: recipePackage.steps.map((item) => item.instruction),
+    };
+    const payload = {
+      completionKey: operationId,
+      recipe: legacyRecipe,
+      ingredientIds,
+      ingredientRequirements: recipePackage.ingredients,
+      homeCookCost: cost,
+      actualDeposit: deposit,
+      foodSafe: true,
+      vegetables,
+      lowOil: false,
+      mindfulSeasoning: false,
+      servingsCooked: servings,
+      servingsEaten: eaten,
+    };
+
+    if (!navigator.onLine) {
+      try {
+        await enqueueOperation({ id: operationId, kind: "cooking_complete", payload, createdAt: new Date().toISOString() });
+        await markRecipePackageCompleted(recipePackage.id);
+        onComplete?.();
+        onClose();
+        ui.toast(`已離線暫存：1 次料理、${eaten} 餐；連線後只會同步一次`);
+      } catch {
+        ui.toast("暫存料理紀錄時發生問題，請確認瀏覽器儲存空間");
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
+
+    try {
+      await api("/cooking/outcomes", json("POST", payload));
+      await markRecipePackageCompleted(recipePackage.id);
+      await query.invalidateQueries({ queryKey: stateQueryKey });
+      onComplete?.();
+      onClose();
+      ui.toast(`完成 1 次料理、吃了 ${eaten} 餐，圓夢入帳 NT$ ${deposit}`);
+    } catch (error) {
+      if (error instanceof TypeError) {
+        try {
+          await enqueueOperation({ id: operationId, kind: "cooking_complete", payload, createdAt: new Date().toISOString() });
+          await markRecipePackageCompleted(recipePackage.id);
+          onComplete?.();
+          onClose();
+          ui.toast("網路中斷，料理結果已安全暫存");
+          return;
+        } catch {
+          // fallback
+        }
+      }
+      if (error instanceof ApiError) {
+        if (error.body?.error?.code === "AUTH_REQUIRED" || error.status === 401) {
+          try {
+            await enqueueOperation({ id: operationId, kind: "cooking_complete", payload, createdAt: new Date().toISOString() });
+            await markRecipePackageCompleted(recipePackage.id);
+            onComplete?.();
+            onClose();
+            ui.toast(`料理完成！訪客模式已先暫存本地（登入後自動同步），圓夢入帳 NT$ ${deposit}`);
+            return;
+          } catch {
+            // fallback
+          }
+        }
+        ui.toast(error.message || "結算發生錯誤，請稍後再試");
+      } else {
+        ui.toast("結算發生未預期錯誤，請稍後再試");
+      }
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <Modal label="料理完成結算" onClose={onClose}>
+      <ModalHeader title={recipePackage.title} kicker="確認後才會扣庫存與圓夢入帳" onClose={onClose} />
+      <div className="serving-grid">
+        <label>
+          這次煮幾份
+          <input
+            className="field"
+            type="number"
+            min="1"
+            value={servingsInput}
+            onFocus={(e) => e.target.select()}
+            onChange={(event) => {
+              const val = event.target.value;
+              setServingsInput(val);
+              if (val !== "") {
+                const s = Math.max(1, parseInt(val, 10) || 1);
+                if (eaten > s) setEatenInput(String(s));
+              }
+            }}
+            onBlur={() => {
+              if (servingsInput === "" || parseInt(servingsInput, 10) < 1) {
+                setServingsInput("1");
+              } else {
+                setServingsInput(String(servings));
+              }
+            }}
+          />
+        </label>
+        <label>
+          現在吃幾份
+          <input
+            className="field"
+            type="number"
+            min="0"
+            max={servings}
+            value={eatenInput}
+            onFocus={(e) => e.target.select()}
+            onChange={(event) => setEatenInput(event.target.value)}
+            onBlur={() => {
+              if (eatenInput === "" || isNaN(parseInt(eatenInput, 10))) {
+                setEatenInput("0");
+              } else {
+                const clamped = Math.min(servings, Math.max(0, parseInt(eatenInput, 10) || 0));
+                setEatenInput(String(clamped));
+              }
+            }}
+          />
+        </label>
+      </div>
+      <p className="prepared-note">剩下 {Math.max(0, servings - eaten)} 份會成為熟食庫存；料理次數仍只記 1 次。</p>
+      <label className="field-label">
+        本餐實際食材成本
+        <input
+          className="field"
+          type="number"
+          min="0"
+          value={costInput}
+          onFocus={(e) => e.target.select()}
+          onChange={(event) => setCostInput(event.target.value)}
+          onBlur={() => {
+            if (costInput === "" || isNaN(parseInt(costInput, 10))) {
+              setCostInput("0");
+            } else {
+              setCostInput(String(cost));
+            }
+          }}
+        />
+      </label>
+      <div className="saving-confirm">
+        <span>可確認省下</span>
+        <strong>NT$ {calculatedSaving}</strong>
+        <small>本人外食比較價 NT$ {outsideCost} × {eaten} 份 − 食材成本</small>
+      </div>
+      <label className="field-label">
+        這次確認圓夢入帳
+        <input
+          className="field"
+          type="number"
+          min="0"
+          max={calculatedSaving}
+          value={depositInput}
+          onFocus={(e) => e.target.select()}
+          onChange={(event) => setDepositInput(event.target.value)}
+          onBlur={() => {
+            if (depositInput === "" || isNaN(parseInt(depositInput, 10))) {
+              setDepositInput("0");
+            } else {
+              const clamped = Math.min(calculatedSaving, Math.max(0, parseInt(depositInput, 10) || 0));
+              setDepositInput(String(clamped));
+            }
+          }}
+        />
+      </label>
+      <div className="mt-3">
+        <label className="vegetable-check">
+          <input type="checkbox" checked={vegetables} onChange={(event) => setVegetables(event.target.checked)} />
+          <span className="flex-1 flex items-center justify-between">
+            <span>這餐實際吃到蔬菜</span>
+            <span className="text-[10px] font-extrabold text-secondary bg-secondary/10 px-2 py-0.5 rounded-md">
+              每週蔬菜多樣性 +1
+            </span>
+          </span>
+        </label>
+        <p className="text-[11px] text-[#7a7065] mt-1 px-1">
+          💡 CooCoo 記錄每週累積吃到的相異蔬菜種數（反映在成效頁）。若這餐有吃蔬菜請保留勾選。
+        </p>
+      </div>
+      <div className="mt-lg flex gap-sm">
+        <button
+          type="button"
+          disabled={submitting}
+          onClick={() => setDepositInput("0")}
+          className="secondary-btn flex-1"
+        >
+          這次不入帳
+        </button>
+        <button
+          type="button"
+          disabled={submitting}
+          onClick={finish}
+          className="primary-btn flex-1 flex items-center justify-center gap-2"
+        >
+          {submitting ? (
+            <>
+              <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span>結算中…</span>
+            </>
+          ) : (
+            "確認完成"
+          )}
+        </button>
+      </div>
+    </Modal>
+  );
 }
