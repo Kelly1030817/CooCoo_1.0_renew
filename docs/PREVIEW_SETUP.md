@@ -11,6 +11,7 @@
 5. Hosted 專案的 Auth URL Configuration 需將本機 Site URL 與 Redirect URL 設為 `http://localhost:5173`；取得 Vercel Preview 網址後再加入 Preview 網域。API 的 `PORT=3000` 不可作為 Web 登入回呼。
 6. 在 Render 建立 Docker Preview、填入伺服器端密鑰，量測免費服務冷啟動。
 7. 取得實際 Render Preview 網域後，先新增 Vercel `/api/v1/*` rewrite，再將 `/today`、`/shopping`、`/fridge`、`/kitchen`、`/dream` 與其他前端路徑 fallback 至 `index.html`。API 規則必須排在 SPA fallback 前面，避免把無效占位網址提交成部署設定，接著才建立 Vercel Preview。
+8. Render Blueprint 另建每小時執行一次的 `coocoo-recipe-catalog-preview` Cron Job。Cron Job 有獨立最低月費；先填入與 API 相同的 Supabase/Gemini 密鑰，並保持資料庫 `recipe_catalog_control.paused=true`，直到初始食譜、參考價格、Security Advisor 與端到端驗收完成。
 
 ## 必要環境變數
 
