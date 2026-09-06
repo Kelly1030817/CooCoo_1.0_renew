@@ -528,15 +528,15 @@ function CookingCompleteModal({ recipePackage, ingredientIds, onClose, onComplet
       <div className="mt-3">
         <label className="vegetable-check">
           <input type="checkbox" checked={vegetables} onChange={(event) => setVegetables(event.target.checked)} />
-          <span className="flex-1 flex items-center justify-between">
+          <span className="flex-1 flex items-center justify-between gap-1">
             <span>這餐實際吃到蔬菜</span>
-            <span className="text-[10px] font-extrabold text-secondary bg-secondary/10 px-2 py-0.5 rounded-md">
-              每週蔬菜多樣性 +1
+            <span className="text-[10px] font-extrabold text-[#2d6a4f] bg-[#d5ede1] px-2 py-0.5 rounded-full border border-[#b4dfc8]">
+              🌱 圓夢健康指標
             </span>
           </span>
         </label>
-        <p className="text-[11px] text-[#7a7065] mt-1 px-1">
-          💡 CooCoo 記錄每週累積吃到的相異蔬菜種數（反映在成效頁）。若這餐有吃蔬菜請保留勾選。
+        <p className="text-[11px] text-[#5c6d5f] mt-1 px-1 leading-relaxed">
+          不計算卡路里壓力，紀錄將計入「圓夢進度」每週蔬菜攝取種類，建立正向飲食自主感。
         </p>
       </div>
       <div className="mt-lg flex gap-sm">
