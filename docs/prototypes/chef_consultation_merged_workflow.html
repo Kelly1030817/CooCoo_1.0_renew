@@ -326,24 +326,21 @@
 
     <!-- Interactive Experimentation Controls: Transition Motion & Dialogue Presentation -->
     <div class="pt-2.5 border-t border-stone-200 grid grid-cols-1 md:grid-cols-2 gap-3 text-left">
-      <!-- 1. Transition Motion (3 Schemes) -->
+      <!-- 1. Transition Motion (Confirmed Scheme 2: Spark Leap) -->
       <div class="space-y-1.5">
         <div class="flex items-center justify-between">
           <span class="text-[11px] font-black text-stone-800 flex items-center gap-1.5">
             <svg class="w-3.5 h-3.5 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/></svg>
-            <span>1. 轉場動態視角（點選即刻播放）：</span>
+            <span>1. 轉場動態視角（已拍板方案二）：</span>
           </span>
-          <button type="button" onclick="replayTransitionNow()" class="text-[10px] font-black px-2 py-0.5 rounded-md bg-amber-600 hover:bg-amber-700 active:scale-95 text-white shadow-2xs flex items-center gap-1 transition-all">
-            <svg class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-            <span>▶ 立即重播</span>
-          </button>
+          <span id="badge-current-motion" class="text-[9px] font-bold font-mono px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300">方案二 · 火種躍入 (拍板)</span>
         </div>
         <div class="grid grid-cols-3 gap-1 bg-stone-100 p-1 rounded-xl">
-          <button type="button" onclick="replayTransitionNow('pan')" id="btn-motion-pan" class="py-1.5 px-2 rounded-lg text-xs font-black transition-all bg-white text-stone-900 shadow-2xs text-center">
+          <button type="button" onclick="replayTransitionNow('pan')" id="btn-motion-pan" class="py-1.5 px-2 rounded-lg text-xs font-bold transition-all text-stone-500 hover:text-stone-900 text-center">
             方案一：空間平移
           </button>
-          <button type="button" onclick="replayTransitionNow('spark')" id="btn-motion-spark" class="py-1.5 px-2 rounded-lg text-xs font-bold transition-all text-stone-500 hover:text-stone-900 text-center">
-            方案二：火種躍入
+          <button type="button" onclick="replayTransitionNow('spark')" id="btn-motion-spark" class="py-1.5 px-2 rounded-lg text-xs font-black transition-all bg-white text-stone-900 shadow-2xs text-center">
+            方案二：火種躍入 ✓
           </button>
           <button type="button" onclick="replayTransitionNow('collapse')" id="btn-motion-collapse" class="py-1.5 px-2 rounded-lg text-xs font-bold transition-all text-stone-500 hover:text-stone-900 text-center">
             方案三：卷軸收闔
@@ -509,11 +506,11 @@
         <div id="dream-transition-status-pill" class="text-[10px] text-stone-700 font-bold bg-amber-50/90 py-1.5 px-2.5 rounded-xl border border-amber-200/80 flex items-center justify-between">
           <div class="flex items-center gap-1.5">
             <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-            <span>轉場預覽：<strong id="label-motion-preview" class="text-amber-900 font-black">方案一（空間平移）</strong></span>
+            <span>轉場動態：<strong id="label-motion-preview" class="text-amber-900 font-black">方案二（火種躍入）</strong></span>
           </div>
           <div class="flex items-center gap-1">
-            <button type="button" onclick="setTransitionMotion('pan')" id="pill-motion-pan" class="px-1.5 py-0.5 rounded text-[9px] font-black border border-amber-600 bg-amber-600 text-white shadow-2xs transition-all">方案一</button>
-            <button type="button" onclick="setTransitionMotion('spark')" id="pill-motion-spark" class="px-1.5 py-0.5 rounded text-[9px] font-bold border border-amber-200 bg-white text-stone-600 hover:text-stone-900 transition-all">方案二</button>
+            <button type="button" onclick="setTransitionMotion('pan')" id="pill-motion-pan" class="px-1.5 py-0.5 rounded text-[9px] font-bold border border-amber-200 bg-white text-stone-600 hover:text-stone-900 transition-all">方案一</button>
+            <button type="button" onclick="setTransitionMotion('spark')" id="pill-motion-spark" class="px-1.5 py-0.5 rounded text-[9px] font-black border border-amber-600 bg-amber-600 text-white shadow-2xs transition-all">方案二 ✓</button>
             <button type="button" onclick="setTransitionMotion('collapse')" id="pill-motion-collapse" class="px-1.5 py-0.5 rounded text-[9px] font-bold border border-amber-200 bg-white text-stone-600 hover:text-stone-900 transition-all">方案三</button>
           </div>
         </div>
@@ -624,7 +621,7 @@
     let isTicketFlying = false;
     let isInDreamDashboard = false;
     let stampOption = 'B'; // 'B' (現代工坊圓章，已拍板) | 'A' (朱紅金石方印)
-    let transitionMotionOption = 'pan'; // 'pan' (方案一：空間平移) | 'spark' (方案二：火種躍入) | 'collapse' (方案三：卷軸收闔)
+    let transitionMotionOption = 'spark'; // 'spark' (方案二：火種躍入，已拍板) | 'pan' (方案一：空間平移) | 'collapse' (方案三：卷軸收闔)
     let dialoguePresentationStyle = 'bottom-sheet'; // 'bottom-sheet' (形式 B：浮動半屏抽屜，已拍板) | 'inline' (形式 A：整頁自然嵌入)
     let isBottomSheetOpen = false;
 
