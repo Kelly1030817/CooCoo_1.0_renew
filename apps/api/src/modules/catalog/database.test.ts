@@ -19,6 +19,8 @@ test('all migrations apply, preferences are optimistic, and another account cann
 test('privileged implementations are private and browser roles cannot execute public wrappers',async()=>{
  const functions=await db.query<{nspname:string;prosecdef:boolean}>("select n.nspname,p.prosecdef from pg_proc p join pg_namespace n on n.oid=p.pronamespace where p.proname='save_recipe_preferences' order by n.nspname");
  expect(functions.rows).toEqual([{nspname:'private',prosecdef:true},{nspname:'public',prosecdef:false}]);
+ const rpcArgs=await db.query<{name:string;args:string}>("select p.proname name,pg_get_function_arguments(p.oid) args from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname in ('schedule_recipe_jobs','reserve_recipe_usage','publish_catalog_version') order by p.proname");
+ expect(rpcArgs.rows.every(row=>row.args.includes('p_'))).toBe(true);
 });
 test('catalog budget reservation is atomic and stops at the NT$50 operating cap',async()=>{
  await db.query('select public.reserve_recipe_usage($1,$2,$3,$4,49,$5)',[crypto.randomUUID(),job,lease,'test','{}']);

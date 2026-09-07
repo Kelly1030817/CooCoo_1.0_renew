@@ -3,7 +3,7 @@ import { brandSafeRecipes } from '@coocoo/core';
 import type { IngredientPrice } from '@coocoo/contracts';
 import { recommend, evaluatePurchase } from './recommendations';
 import { inspectRecipe } from './quality';
-import { catalogRate,usageCost,jobFailureUpdate } from './worker';
+import { catalogRate,usageCost,jobFailureUpdate,normalizeGeneratedRecipe } from './worker';
 import { reviewedSeedRecipes } from './seed';
 const now=new Date('2026-09-05T12:00:00Z');
 const recipe=()=>({...structuredClone(brandSafeRecipes[0]),ingredients:[{ingredientKey:'蛋',name:'雞蛋',quantity:2,unit:'顆',isPantryStaple:false,isVegetable:false,coveredByInventory:false},{ingredientKey:'油',name:'油',quantity:5,unit:'ml',isPantryStaple:true,isVegetable:false,coveredByInventory:false}]});
@@ -34,6 +34,7 @@ describe('quantity and purchase recommendations',()=>{
  test('three missing kinds cannot enter the pending-confirmation list',()=>{const r=recipe();r.ingredients.push({...r.ingredients[0],ingredientKey:'豆腐',name:'豆腐'});const result=recommend([r],{...context,inventory:[]},{mode:'small_purchase',purchaseBudget:1000},[],[],now);expect(result.eligible.length+result.needsConfirmation.length).toBe(0);});
  test('reviewed seed lists oil and the rule still rejects a recipe that omits it',()=>{expect(inspectRecipe(brandSafeRecipes[0],[]).pass).toBe(true);const incomplete=structuredClone(brandSafeRecipes[0]);incomplete.ingredients=incomplete.ingredients.filter(item=>item.ingredientKey!=='油');expect(inspectRecipe(incomplete,[]).reasons).toContain('UNLISTED_SEASONING:油');});
  test('fee estimate uses the pinned OpenRouter rate and conservative exchange rate',()=>{expect(usageCost(20000,10000,catalogRate())).toBeCloseTo(1.8375);});
+ test('generated catalog structure is normalized before the strict safety gate',()=>{const raw={...structuredClone(brandSafeRecipes[0]),source:'gemini',catalogVersionId:'temporary',estimatedCost:72.4,steps:brandSafeRecipes[0].steps.map((step,index)=>({...step,id:index?'':step.id,order:9,timerSeconds:index?0:step.timerSeconds})),imageUrl:'https://example.com/unreviewed.jpg',downloadedAt:'invalid'};const result=normalizeGeneratedRecipe(raw) as typeof raw;expect(result.source).toBeUndefined();expect(result.catalogVersionId).toBeUndefined();expect(result.estimatedCost).toBe(72);expect(result.steps.map(step=>step.order)).toEqual([1,2,3]);expect(result.steps[1].timerSeconds).toBeNull();expect(result.steps[1].id).not.toBe('');expect(result.imageUrl).toBeNull();expect(result.downloadedAt).toBeNull();});
  test('budget exhaustion defers to next month without consuming an attempt',()=>{expect(jobFailureUpdate('CATALOG_BUDGET_EXHAUSTED',2,new Date('2026-09-06T00:00:00Z'))).toEqual({budgetExhausted:true,update:{status:'deferred',error:'CATALOG_BUDGET_EXHAUSTED',lease_until:null,next_attempt_at:'2026-10-01T00:00:00.000Z',attempts:1}});});
  test('curated seed is complete, unique and passes the deterministic gate',()=>{const seeds=reviewedSeedRecipes();expect(seeds).toHaveLength(3);expect(new Set(seeds.map(seed=>seed.fingerprint)).size).toBe(3);expect(seeds.every(seed=>seed.review.pass&&seed.recipe.source==='catalog')).toBe(true);});
 });

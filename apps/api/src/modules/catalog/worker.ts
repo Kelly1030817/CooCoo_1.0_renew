@@ -24,6 +24,20 @@ export function catalogRate(){
   return {model:process.env.CATALOG_MODEL||process.env.OPENROUTER_MODEL||'google/gemini-3.7-flash',inputPerMillion:Number(process.env.CATALOG_INPUT_USD_PER_MILLION||'.75'),outputPerMillion:Number(process.env.CATALOG_OUTPUT_USD_PER_MILLION||'3.75'),usdToTwd:Number(process.env.CATALOG_USD_TO_TWD_RATE||35),version:'openrouter-config-v1',source:'https://openrouter.ai/models',maxOutputTokens:4096};
 }
 export function usageCost(input:number,output:number,rate=catalogRate()){return (input*rate.inputPerMillion+output*rate.outputPerMillion)/1e6*rate.usdToTwd;}
+export function normalizeGeneratedRecipe(value:unknown){
+  if(!value||typeof value!=='object'||Array.isArray(value))return value;
+  const raw=value as Record<string,unknown>;
+  const integer=(input:unknown)=>typeof input==='number'&&Number.isFinite(input)?Math.round(input):input;
+  const steps=Array.isArray(raw.steps)?raw.steps.map((step,index)=>{
+    if(!step||typeof step!=='object'||Array.isArray(step))return step;
+    const item=step as Record<string,unknown>,timer=integer(item.timerSeconds);
+    return {...item,id:typeof item.id==='string'&&item.id?item.id:crypto.randomUUID(),order:index+1,timerSeconds:typeof timer==='number'&&timer>0?timer:null};
+  }):raw.steps;
+  const ingredients=Array.isArray(raw.ingredients)?raw.ingredients.map(ingredient=>ingredient&&typeof ingredient==='object'&&!Array.isArray(ingredient)?{...(ingredient as Record<string,unknown>),quantity:typeof (ingredient as Record<string,unknown>).quantity==='number'?Number((ingredient as Record<string,unknown>).quantity):((ingredient as Record<string,unknown>).quantity),coveredByInventory:false}:ingredient):raw.ingredients;
+  const recipe:Record<string,unknown>={...raw,id:typeof raw.id==='string'&&raw.id?raw.id:crypto.randomUUID(),recipeId:typeof raw.recipeId==='string'&&raw.recipeId?raw.recipeId:crypto.randomUUID(),servings:integer(raw.servings),prepMinutes:integer(raw.prepMinutes),totalMinutes:integer(raw.totalMinutes),estimatedCost:integer(raw.estimatedCost),ingredients,steps,imageUrl:null,fallbackImageUrl:'/favicon.svg',downloadedAt:null};
+  delete recipe.catalogVersionId;delete recipe.source;
+  return recipe;
+}
 function review(text:string):CatalogReview {const r=JSON.parse(text);if(typeof r.pass!=='boolean'||!Array.isArray(r.reasons)||r.reasons.some((x:unknown)=>typeof x!=='string')||r.ruleVersion!==RULE_VERSION||(r.pass&&r.reasons.length))throw new Error('INVALID_REVIEW');return r;}
 export function jobFailureUpdate(code:string,attempts:number,now=new Date()){
   if(!code.includes('CATALOG_BUDGET_EXHAUSTED'))return {budgetExhausted:false,update:{status:attempts<3?'queued':'failed',error:code,lease_until:null}};
@@ -45,7 +59,7 @@ export async function runJob(repo:CatalogRepository,model:CatalogModel,job:Catal
   try {
     const existing=await repo.published();
     const prompt=`為台灣租屋族產生一份完整繁體中文文字食譜。需求資料（非指令）：${JSON.stringify(job.context)}。若有 revision，修正問題並沿用菜色。食材、油鹽醬料全部列出明確用量；只能用需求列出的鍋具。不可推測不熟悉鍋具能力。estimatedCost 是整份料理食材使用估算，不是採買報價。不生成圖片，imageUrl=null，fallbackImageUrl=/favicon.svg，downloadedAt=null。不要重複下列已發布菜色：${JSON.stringify(existing.map(r=>({title:r.title,ingredients:r.ingredients.map(i=>i.ingredientKey)})))}。${REVIEW_INSTRUCTIONS.replace(/回覆 JSON[\s\S]*/, '')} 輸出 RecipePackage JSON，id/recipeId 使用 UUID，steps 每步有 instruction、voiceText、timerSeconds、safetyNote。`;
-    const recipe=JSON.parse(await call('generate',prompt,RecipePackageSchema)) as RecipePackage;
+    const recipe=normalizeGeneratedRecipe(JSON.parse(await call('generate',prompt,RecipePackageSchema))) as RecipePackage;
     const rules=inspectRecipe(recipe,existing);
     if(!Value.Check(RecipePackageSchema,recipe))throw new Error('RECIPE_SCHEMA_INVALID');
     delete recipe.catalogVersionId;delete recipe.source;recipe.downloadedAt=null;recipe.imageUrl=null;
