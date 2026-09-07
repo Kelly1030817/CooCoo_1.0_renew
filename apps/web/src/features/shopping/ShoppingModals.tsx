@@ -29,7 +29,7 @@ export function ShoppingAssistantModal({ onClose }: { onClose: () => void }) {
     setBusy(true);
     setError("");
     try {
-      setResult(await api<ShoppingAnalysis>("/shopping/analyze", json("POST", {})));
+      setResult(await api<ShoppingAnalysis>("/shopping/analyze", json("POST", {operationId:crypto.randomUUID()})));
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "採買分析暫時無法使用");
     } finally {

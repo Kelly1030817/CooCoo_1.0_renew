@@ -20,8 +20,8 @@ test('privileged implementations are private and browser roles cannot execute pu
  const functions=await db.query<{nspname:string;prosecdef:boolean}>("select n.nspname,p.prosecdef from pg_proc p join pg_namespace n on n.oid=p.pronamespace where p.proname='save_recipe_preferences' order by n.nspname");
  expect(functions.rows).toEqual([{nspname:'private',prosecdef:true},{nspname:'public',prosecdef:false}]);
 });
-test('budget reservation is atomic and cannot exceed NT$300',async()=>{
- await db.query('select public.reserve_recipe_usage($1,$2,$3,$4,299,$5)',[crypto.randomUUID(),job,lease,'test','{}']);
+test('catalog budget reservation is atomic and stops at the NT$50 operating cap',async()=>{
+ await db.query('select public.reserve_recipe_usage($1,$2,$3,$4,49,$5)',[crypto.randomUUID(),job,lease,'test','{}']);
  await expect(db.query('select public.reserve_recipe_usage($1,$2,$3,$4,2,$5)',[crypto.randomUUID(),job,lease,'test','{}'])).rejects.toThrow('CATALOG_BUDGET_EXHAUSTED');
 });
 test('published content requires three passes, remains immutable and safety reports quarantine it',async()=>{

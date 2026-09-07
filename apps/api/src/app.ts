@@ -26,6 +26,15 @@ import { cloudPlanningContext } from "./modules/meal-plans/context";
 import { SupabaseMealPlanRepository } from "./modules/meal-plans/supabase-meal-plan.repository";
 import { MemoryPlanningRepository } from "./modules/meal-plans/memory-planning.repository";
 import { weekOf, taipeiDate } from "./modules/meal-plans/meal-planning";
+import { runCatalogWorker } from "./modules/catalog/worker";
+
+function matchesSecret(value:string|undefined,expected:string|undefined){
+  if(!value||!expected)return false;
+  const left=new TextEncoder().encode(value),right=new TextEncoder().encode(expected);
+  if(left.length!==right.length)return false;
+  let difference=0;for(let index=0;index<left.length;index+=1)difference|=left[index]^right[index];
+  return difference===0;
+}
 
 const requestId = () => crypto.randomUUID();
 const ok = <T>(data: T) => ({ data });
@@ -93,6 +102,11 @@ async function integratedState(authorization?:string){
 }
 
 export const app = new Elysia({ name: "coocoo-api" })
+  .post("/api/v1/internal/catalog/tick",async({headers,set})=>{
+    const bearer=headers.authorization?.replace(/^Bearer\s+/i,'');
+    if(!matchesSecret(bearer,process.env.CATALOG_CRON_SECRET)){set.status=401;return fail(new Error('CRON_AUTH_INVALID'));}
+    return ok(await runCatalogWorker());
+  })
   .onError(({ code, error, set }) => {
     if (code === "VALIDATION") {
       set.status = 422;
@@ -242,11 +256,10 @@ export const app = new Elysia({ name: "coocoo-api" })
     ({ body }) => ok(parseShoppingText(body.text)),
     { body: ContractSchemas.ShoppingParseSchema },
   )
-  .post("/api/v1/shopping/analyze", async ({headers,set}) => {
+  .post("/api/v1/shopping/analyze", async ({headers,body,set}) => {
     try {
       if(cloudDataEnabled){
         const user=await authenticateRequest(headers.authorization);
-        await aiUsageRepository.assertWithinLimit(user.id,"shopping_analysis");
         const [shoppingItems,inventory,onboarding]=await Promise.all([
           shoppingRepository.list(user.id),
           inventoryRepository.list(user.id),
@@ -254,19 +267,25 @@ export const app = new Elysia({ name: "coocoo-api" })
         ]);
         const profile=onboarding.profile as null|{daily_meal_budget:number;planned_meal_slots:string[];weekly_home_cook_target:number};
         const restrictions=(onboarding.restrictions||[]).map((item:{id:string;label:string;kind:"allergy"|"avoid"|"preference";ingredient_keys:string[];is_hard_limit:boolean})=>({id:item.id,label:item.label,kind:item.kind,ingredientKeys:item.ingredient_keys,isHardLimit:item.is_hard_limit}));
-        const inputBytes=new TextEncoder().encode(JSON.stringify({shoppingItems,inventory,restrictions,profile})).byteLength;
         const model=process.env.OPENROUTER_MODEL||"google/gemini-3.7-flash";
-        await aiUsageRepository.record(user.id,"shopping_analysis","started",inputBytes,model);
-        const result=await analyzeShopping({
-          shoppingItems,
-          inventory,
-          restrictions,
-          dailyMealBudget:profile?.daily_meal_budget??null,
-          plannedMealSlots:profile?.planned_meal_slots??[],
-          weeklyHomeCookTarget:profile?.weekly_home_cook_target??null,
-        });
-        await aiUsageRepository.record(user.id,"shopping_analysis",result.source==="openrouter"?"succeeded":"failed",inputBytes,model);
-        return ok(result);
+        const operationId=(body as {operationId:string}).operationId;
+        const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify({shoppingItems,inventory,restrictions,profile})));
+        const inputHash=Array.from(new Uint8Array(digest),byte=>byte.toString(16).padStart(2,'0')).join('');
+        const context={shoppingItems,inventory,restrictions,dailyMealBudget:profile?.daily_meal_budget??null,plannedMealSlots:profile?.planned_meal_slots??[],weeklyHomeCookTarget:profile?.weekly_home_cook_target??null};
+        let cached:unknown;
+        try{cached=await aiUsageRepository.reserveShopping(user.id,operationId,inputHash,model,Number(process.env.SHOPPING_AI_MAX_CALL_TWD||1));}
+        catch(error){
+          const message=error instanceof Error?error.message:String(error);
+          if(message.includes('AI_BUDGET_EXHAUSTED')||message.includes('AI_DAILY_LIMITED'))return ok(await analyzeShopping(context,null));
+          throw error;
+        }
+        if(cached)return ok(cached);
+        const result=await analyzeShopping(context);
+        const costUsd=Number((result as typeof result&{costUsd?:number}).costUsd||0);
+        const publicResult={...result};delete (publicResult as typeof publicResult&{costUsd?:number}).costUsd;
+        const actualTwd=result.source==='openrouter'?costUsd*Number(process.env.CATALOG_USD_TO_TWD_RATE||35):process.env.OPENROUTER_API_KEY?Number(process.env.SHOPPING_AI_MAX_CALL_TWD||1):0;
+        await aiUsageRepository.settleShopping(user.id,operationId,result.source==="openrouter"?'completed':'failed',actualTwd,publicResult);
+        return ok(publicResult);
       }
       const state=service.state();
       return ok(await analyzeShopping({
@@ -281,7 +300,7 @@ export const app = new Elysia({ name: "coocoo-api" })
       set.status=error instanceof Error&&error.message==="AI_RATE_LIMITED"?429:422;
       return fail(error);
     }
-  })
+  },{body:ContractSchemas.ShoppingAnalyzeSchema})
   .get("/api/v1/settings/fridge", async ({headers}) => cloudDataEnabled?ok(await settingsRepository.fridge((await authenticateRequest(headers.authorization)).id)):ok(service.state().fridgeProfile))
   .put(
     "/api/v1/settings/fridge",

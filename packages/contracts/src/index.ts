@@ -547,6 +547,7 @@ export const ShoppingWriteSchema = Type.Object({
 export const ShoppingParseSchema = Type.Object({
   text: Type.String({ minLength: 1 }),
 });
+export const ShoppingAnalyzeSchema = Type.Object({ operationId: IdSchema });
 export const ContractSchemas = {
   LoginRequestSchema,
   GoalDraftSchema,
@@ -558,6 +559,7 @@ export const ContractSchemas = {
   CookingOutcomeCommandSchema,
   ShoppingWriteSchema,
   ShoppingParseSchema,
+  ShoppingAnalyzeSchema,
   ShoppingAnalysisSchema,
   FridgeProfileSchema,
   CookwareListSchema: Type.Array(CookwareProfileSchema),

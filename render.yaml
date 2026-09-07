@@ -27,24 +27,13 @@ services:
         sync: false
       - key: OPENROUTER_APP_NAME
         value: CooCoo
-  - type: cron
-    name: coocoo-recipe-catalog-preview
-    runtime: docker
-    plan: starter
-    schedule: "0 * * * *"
-    dockerfilePath: ./Dockerfile.api
-    dockerCommand: bun run apps/api/src/modules/catalog/worker.ts
-    autoDeployTrigger: checksPass
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: SUPABASE_URL
-        sync: false
-      - key: SUPABASE_SECRET_KEY
-        sync: false
-      - key: GEMINI_API_KEY
-        sync: false
       - key: CATALOG_MODEL
-        value: gemini-3.7-flash
+        value: google/gemini-3.7-flash
       - key: CATALOG_USD_TO_TWD_RATE
         value: "35"
+      - key: CATALOG_INPUT_USD_PER_MILLION
+        value: "0.10"
+      - key: CATALOG_OUTPUT_USD_PER_MILLION
+        value: "0.40"
+      - key: CATALOG_CRON_SECRET
+        sync: false

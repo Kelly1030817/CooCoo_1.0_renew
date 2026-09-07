@@ -1,4 +1,4 @@
-import { useContext } from "react";
+import { useContext, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ShoppingItem } from "@coocoo/contracts";
 import { useAppState, stateQueryKey } from "@/entities/app-state/model";
@@ -9,7 +9,9 @@ import "./ShoppingPage.css";
 
 const categoryLabel:Record<ShoppingItem["category"],string>={produce:"蔬果",protein:"蛋白質",pantry:"常備品",other:"其他"};
 export function ShoppingPage(){
-  const {data}=useAppState();const ui=useContext(UiContext);const query=useQueryClient();if(!data)return null;
+  const {data}=useAppState();const ui=useContext(UiContext);const query=useQueryClient();
+  useEffect(()=>{void api('/health').catch(()=>undefined)},[]);
+  if(!data)return null;
   const refresh=()=>query.invalidateQueries({queryKey:stateQueryKey});
   const save=async(item:ShoppingItem,patch:Partial<ShoppingItem>)=>{await api(`/shopping-items/${item.id}`,json("PATCH",{...item,...patch}));await refresh()};
   const remove=async(id:string)=>{await api(`/shopping-items/${id}`,{method:"DELETE"});await refresh()};

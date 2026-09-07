@@ -12,4 +12,15 @@ export class SupabaseAiUsageRepository {
     const { error } = await getSupabaseAdmin().from("ai_usage_events").insert({ user_id: userId, feature, status, model, input_bytes: inputBytes });
     if (error) throw error;
   }
+  async reserveShopping(userId:string,operationId:string,inputHash:string,model:string,maxTwd:number){
+    const db=getSupabaseAdmin();
+    const existing=await db.from('shopping_ai_operations').select('input_hash,status,result').eq('user_id',userId).eq('operation_id',operationId).maybeSingle();
+    if(existing.error)throw existing.error;
+    if(existing.data){if(existing.data.input_hash!==inputHash)throw new Error('AI_OPERATION_CONFLICT');return existing.data.result;}
+    const reserved=await db.rpc('reserve_shopping_ai',{p_user:userId,p_operation:operationId,p_hash:inputHash,p_model:model,p_max:maxTwd});
+    if(reserved.error)throw reserved.error;return null;
+  }
+  async settleShopping(userId:string,operationId:string,status:'completed'|'failed',actualTwd:number,result:unknown){
+    const settled=await getSupabaseAdmin().rpc('settle_shopping_ai',{p_user:userId,p_operation:operationId,p_status:status,p_actual:actualTwd,p_result:result});if(settled.error)throw settled.error;
+  }
 }
