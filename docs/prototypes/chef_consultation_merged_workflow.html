@@ -269,6 +269,94 @@
     .animate-sheet-up {
       animation: slideUpSheet 0.38s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
+
+    /* Cooking Prep Scheme A: Card Morph Expansion */
+    @keyframes cardMorphExpand {
+      0% {
+        transform: scale(1);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+      45% {
+        transform: scale(1.025) translateY(-6px);
+        box-shadow: 0 20px 35px -5px rgba(245, 158, 11, 0.3);
+      }
+      100% {
+        transform: scale(1.05) translateY(-14px);
+        opacity: 0.25;
+      }
+    }
+    .animate-card-morph-expand {
+      animation: cardMorphExpand 0.42s cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
+    }
+
+    /* Cooking Prep Scheme B: Ignition Spark Burst */
+    @keyframes flameIgnitionPop {
+      0% {
+        transform: translate(-50%, -50%) scale(0.2);
+        opacity: 0;
+        filter: drop-shadow(0 0 0 rgba(245, 158, 11, 0));
+      }
+      35% {
+        transform: translate(-50%, -50%) scale(1.4);
+        opacity: 1;
+        filter: drop-shadow(0 0 24px rgba(245, 158, 11, 1)) drop-shadow(0 0 40px rgba(239, 68, 68, 0.8));
+      }
+      70% {
+        transform: translate(-50%, -70%) scale(1.7);
+        opacity: 0.9;
+      }
+      100% {
+        transform: translate(-50%, -95%) scale(2.2);
+        opacity: 0;
+        filter: blur(4px);
+      }
+    }
+    .animate-ignition-pop {
+      animation: flameIgnitionPop 0.52s cubic-bezier(0.18, 0.9, 0.28, 1) forwards;
+    }
+
+    /* Cooking Studio Slide Up */
+    @keyframes studioSlideUp {
+      0% {
+        transform: translateY(100%);
+        opacity: 0.8;
+      }
+      100% {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+    .animate-studio-slide-up {
+      animation: studioSlideUp 0.38s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    /* Cooking Studio Fade Morph */
+    @keyframes studioFadeMorph {
+      0% {
+        opacity: 0;
+        transform: scale(0.96);
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+    .animate-studio-morph-in {
+      animation: studioFadeMorph 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    /* Scheme C Checklist Drawer Slide Up */
+    @keyframes checklistDrawerUp {
+      0% {
+        transform: translateY(100%);
+      }
+      100% {
+        transform: translateY(0);
+      }
+    }
+    .animate-checklist-up {
+      animation: checklistDrawerUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
   </style>
 </head>
 <body class="bg-stone-100 text-stone-900 min-h-screen p-3 md:p-6 flex flex-col items-center antialiased">
@@ -324,46 +412,74 @@
       </div>
     </div>
 
-    <!-- Interactive Experimentation Controls: Transition Motion & Dialogue Presentation -->
-    <div class="pt-2.5 border-t border-stone-200 grid grid-cols-1 md:grid-cols-2 gap-3 text-left">
-      <!-- 1. Transition Motion (Confirmed Scheme 2: Spark Leap) -->
-      <div class="space-y-1.5">
-        <div class="flex items-center justify-between">
-          <span class="text-[11px] font-black text-stone-800 flex items-center gap-1.5">
-            <svg class="w-3.5 h-3.5 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/></svg>
-            <span>1. 轉場動態視角（已拍板方案二）：</span>
-          </span>
-          <span id="badge-current-motion" class="text-[9px] font-bold font-mono px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300">方案二 · 火種躍入 (拍板)</span>
+    <!-- Interactive Experimentation Controls: Transition Motion & Dialogue Presentation & Cooking Prep Transitions -->
+    <div class="pt-2.5 border-t border-stone-200 space-y-3 text-left">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <!-- 1. Transition Motion (Confirmed Scheme 2: Spark Leap) -->
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-black text-stone-800 flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/></svg>
+              <span>1. 轉場動態視角（已拍板方案二）：</span>
+            </span>
+            <span id="badge-current-motion" class="text-[9px] font-bold font-mono px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300">方案二 · 火種躍入 (拍板)</span>
+          </div>
+          <div class="grid grid-cols-3 gap-1 bg-stone-100 p-1 rounded-xl">
+            <button type="button" onclick="replayTransitionNow('pan')" id="btn-motion-pan" class="py-1.5 px-2 rounded-lg text-xs font-bold transition-all text-stone-500 hover:text-stone-900 text-center">
+              方案一：空間平移
+            </button>
+            <button type="button" onclick="replayTransitionNow('spark')" id="btn-motion-spark" class="py-1.5 px-2 rounded-lg text-xs font-black transition-all bg-white text-stone-900 shadow-2xs text-center">
+              方案二：火種躍入 ✓
+            </button>
+            <button type="button" onclick="replayTransitionNow('collapse')" id="btn-motion-collapse" class="py-1.5 px-2 rounded-lg text-xs font-bold transition-all text-stone-500 hover:text-stone-900 text-center">
+              方案三：卷軸收闔
+            </button>
+          </div>
         </div>
-        <div class="grid grid-cols-3 gap-1 bg-stone-100 p-1 rounded-xl">
-          <button type="button" onclick="replayTransitionNow('pan')" id="btn-motion-pan" class="py-1.5 px-2 rounded-lg text-xs font-bold transition-all text-stone-500 hover:text-stone-900 text-center">
-            方案一：空間平移
-          </button>
-          <button type="button" onclick="replayTransitionNow('spark')" id="btn-motion-spark" class="py-1.5 px-2 rounded-lg text-xs font-black transition-all bg-white text-stone-900 shadow-2xs text-center">
-            方案二：火種躍入 ✓
-          </button>
-          <button type="button" onclick="replayTransitionNow('collapse')" id="btn-motion-collapse" class="py-1.5 px-2 rounded-lg text-xs font-bold transition-all text-stone-500 hover:text-stone-900 text-center">
-            方案三：卷軸收闔
-          </button>
+
+        <!-- 2. Dialogue Style (Confirmed Form B) -->
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-black text-stone-800 flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/></svg>
+              <span>2. 主廚對話呈現（已採納形式 B）：</span>
+            </span>
+            <span id="badge-current-dialogue" class="text-[9px] font-bold font-mono px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-900 border border-emerald-300">形式 B · 浮動半屏抽屜 (拍板)</span>
+          </div>
+          <div class="grid grid-cols-2 gap-1 bg-stone-100 p-1 rounded-xl">
+            <button type="button" onclick="setDialogueStyle('inline')" id="btn-dialogue-inline" class="py-1.5 px-2 rounded-lg text-xs font-bold transition-all text-stone-500 hover:text-stone-900 text-center">
+              形式 A：整頁自然嵌入
+            </button>
+            <button type="button" onclick="setDialogueStyle('bottom-sheet')" id="btn-dialogue-sheet" class="py-1.5 px-2 rounded-lg text-xs font-black transition-all bg-white text-stone-900 shadow-2xs text-center">
+              形式 B：浮動半屏抽屜
+            </button>
+          </div>
         </div>
       </div>
 
-      <!-- 2. Dialogue Style (Confirmed Form B) -->
-      <div class="space-y-1.5">
+      <!-- 3. Cooking Prep Transition Schemes (Schemes A, B, C) -->
+      <div class="space-y-1.5 bg-amber-50/70 border border-amber-200/80 p-2.5 rounded-xl">
         <div class="flex items-center justify-between">
-          <span class="text-[11px] font-black text-stone-800 flex items-center gap-1.5">
-            <svg class="w-3.5 h-3.5 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/></svg>
-            <span>2. 主廚對話呈現（已採納形式 B）：</span>
+          <span class="text-[11px] font-black text-amber-950 flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5 text-amber-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <span>3. 「開始備料」動態連動（三種方案互動對比）：</span>
           </span>
-          <span id="badge-current-dialogue" class="text-[9px] font-bold font-mono px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-900 border border-emerald-300">形式 B · 浮動半屏抽屜 (拍板)</span>
+          <span id="badge-current-prep-motion" class="text-[9px] font-bold font-mono px-1.5 py-0.5 rounded bg-amber-200 text-amber-950 border border-amber-300">方案 B · 火種開火升起 (推薦)</span>
         </div>
-        <div class="grid grid-cols-2 gap-1 bg-stone-100 p-1 rounded-xl">
-          <button type="button" onclick="setDialogueStyle('inline')" id="btn-dialogue-inline" class="py-1.5 px-2 rounded-lg text-xs font-bold transition-all text-stone-500 hover:text-stone-900 text-center">
-            形式 A：整頁自然嵌入
+        <div class="grid grid-cols-3 gap-1.5">
+          <button type="button" onclick="setCookingPrepMotion('A'); startCookingPrepFlow('A')" id="btn-prep-scheme-a" class="py-1.5 px-2 rounded-lg text-xs font-bold transition-all bg-white text-stone-700 border border-stone-200 hover:border-amber-400 hover:text-amber-950 text-center shadow-2xs">
+            方案 A：卡片展開
           </button>
-          <button type="button" onclick="setDialogueStyle('bottom-sheet')" id="btn-dialogue-sheet" class="py-1.5 px-2 rounded-lg text-xs font-black transition-all bg-white text-stone-900 shadow-2xs text-center">
-            形式 B：浮動半屏抽屜
+          <button type="button" onclick="setCookingPrepMotion('B'); startCookingPrepFlow('B')" id="btn-prep-scheme-b" class="py-1.5 px-2 rounded-lg text-xs font-black transition-all bg-amber-600 text-white shadow-2xs text-center border border-amber-600">
+            方案 B：火種開火 ✓
           </button>
+          <button type="button" onclick="setCookingPrepMotion('C'); startCookingPrepFlow('C')" id="btn-prep-scheme-c" class="py-1.5 px-2 rounded-lg text-xs font-bold transition-all bg-white text-stone-700 border border-stone-200 hover:border-amber-400 hover:text-amber-950 text-center shadow-2xs">
+            方案 C：兩段防呆
+          </button>
+        </div>
+        <div class="text-[10px] text-amber-900/90 leading-tight flex items-center gap-1">
+          <svg class="w-3 h-3 text-amber-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <span>點選上方任意按鈕即可「直接演練」對應轉場動態；或點下方手機內的「▷ 開始備料」按鈕操作！</span>
         </div>
       </div>
     </div>
@@ -566,6 +682,27 @@
         <!-- Injected via JS -->
       </div>
 
+      <!-- Scheme B: Cooking Prep Ignition Flame Burst Particle -->
+      <div id="cooking-ignition-flame" class="hidden absolute pointer-events-none z-50 text-amber-500" style="left: 50%; top: 62%; transform: translate(-50%, -50%);">
+        <div class="relative flex items-center justify-center">
+          <div class="w-20 h-20 rounded-full bg-amber-400/40 blur-lg absolute"></div>
+          <svg class="w-16 h-16 animate-pulse text-amber-500 filter drop-shadow-[0_0_16px_rgba(245,158,11,1)]" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2c1.2 3.8 3.8 5.6 4.8 9.2.9 3.2-.2 6.8-2.8 8.6-2.5 1.7-5.9 1.5-8.2-.5-2.2-1.9-2.9-5-1.7-7.7 1.3-2.9 4.2-4.5 4.9-7.6.2-.7.3-1.4.3-2 .8 1.1 1.7 2.2 2.7 3.2z"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Scheme C: Two-Stage Mise en Place Checklist Drawer -->
+      <div id="cooking-checklist-backdrop" onclick="closeCookingChecklist()" class="hidden absolute inset-0 bg-stone-950/40 backdrop-blur-[2px] z-40 transition-opacity duration-300"></div>
+      <div id="cooking-checklist-drawer" class="hidden absolute left-0 right-0 bottom-0 bg-[#fdfcf9] border-t border-amber-900/15 rounded-t-3xl shadow-2xl z-50 p-4 space-y-3 max-h-[86%] overflow-y-auto">
+        <!-- Injected via JS -->
+      </div>
+
+      <!-- Full-Screen Cooking Studio Guidance Workspace (Schemes A, B, C Destination) -->
+      <div id="cooking-studio-container" class="hidden absolute inset-0 bg-[#faf9f6] z-50 flex flex-col overflow-hidden text-left">
+        <!-- Injected via JS -->
+      </div>
+
     </div>
   </div>
 
@@ -608,6 +745,17 @@
         <p class="text-stone-600 text-[11px] leading-relaxed">
           簽名後按鈕轉為「啟程！送入圓夢看板 ➔」，點擊後通行證以 3D 弧線拋物線優雅縮小飛向圓夢分頁，圓夢看板隨之彈入降落！
         </p>
+      </div>
+      <div class="col-span-1 md:col-span-2 lg:col-span-4 bg-amber-50/80 p-3.5 rounded-xl border border-amber-200/90 space-y-1.5">
+        <div class="font-black text-amber-950 flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5 text-amber-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          <span>5. 「開始備料」三種轉場連動動態（方案 A 卡片展開 / 方案 B 火種開火 / 方案 C 兩段防呆）</span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-2 text-stone-600 text-[11px] leading-relaxed pt-1">
+          <div><strong class="text-stone-900">方案 A（卡片破土展開）：</strong>點選備料，卡片本體原位彈性縮放擴展，極致空間連續性，無縫蛻變為全螢幕料理工坊。</div>
+          <div><strong class="text-stone-900">方案 B（火種點燃開火 · 推薦）：</strong>點擊按鈕爆發金黃爐火粒子與清脆點火聲，全屏料理工坊抽屜帶微重力彈起，呼應火種躍入精神！</div>
+          <div><strong class="text-stone-900">方案 C（兩段冷靜防呆）：</strong>點擊先彈出 30 秒 Mise en place 起跑清單（鍋具食材全上桌），打勾確認後起火開煮，最安心防慌。</div>
+        </div>
       </div>
     </div>
   </footer>
@@ -853,6 +1001,7 @@
     }
 
     function switchAppMode(mode) {
+      exitCookingStudio();
       appMode = mode;
       const tabOnboard = document.getElementById('tab-onboarding');
       const tabRevisit = document.getElementById('tab-revisit');
@@ -1568,7 +1717,7 @@
         </div>
 
         <!-- Today Recommended Meal Card -->
-        <div class="bg-white border border-stone-200/90 rounded-2xl p-4 shadow-xs space-y-3">
+        <div id="today-recipe-card" class="bg-white border border-stone-200/90 rounded-2xl p-4 shadow-xs space-y-3 transition-all duration-300">
           <div class="flex items-center justify-between">
             <span class="text-[10px] font-black text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full flex items-center gap-1">
               <svg class="w-3 h-3 text-amber-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 14 14"/></svg>
@@ -1595,9 +1744,25 @@
             </div>
           </div>
 
-          <button onclick="triggerChefReaction('applause')" class="spring-btn w-full bg-stone-900 hover:bg-black active:scale-95 text-amber-300 font-black py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs">
+          <!-- Interactive Prep Motion Switcher inside Card -->
+          <div class="bg-amber-50/70 border border-amber-200/80 rounded-xl p-2 space-y-1.5">
+            <div class="flex items-center justify-between">
+              <span class="text-[9px] font-black text-amber-950 flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                <span>備料連動動態（點選切換）：</span>
+              </span>
+              <span id="label-card-prep-scheme" class="text-[9px] font-mono font-bold text-amber-900 bg-white px-1.5 py-0.2 rounded border border-amber-200">${cookingPrepMotion === 'A' ? '方案 A：卡片展開' : (cookingPrepMotion === 'B' ? '方案 B：火種開火 ✓' : '方案 C：兩段防呆')}</span>
+            </div>
+            <div class="grid grid-cols-3 gap-1">
+              <button type="button" id="card-pill-scheme-a" onclick="setCookingPrepMotion('A', event)" class="py-1 px-1 rounded-md text-[9px] transition-all text-center ${cookingPrepMotion === 'A' ? 'bg-amber-600 text-white shadow-2xs font-black' : 'bg-white text-stone-700 border border-stone-200 hover:bg-amber-100 font-bold'}">方案 A：展開</button>
+              <button type="button" id="card-pill-scheme-b" onclick="setCookingPrepMotion('B', event)" class="py-1 px-1 rounded-md text-[9px] transition-all text-center ${cookingPrepMotion === 'B' ? 'bg-amber-600 text-white shadow-2xs font-black' : 'bg-white text-stone-700 border border-stone-200 hover:bg-amber-100 font-bold'}">方案 B：火種 ✓</button>
+              <button type="button" id="card-pill-scheme-c" onclick="setCookingPrepMotion('C', event)" class="py-1 px-1 rounded-md text-[9px] transition-all text-center ${cookingPrepMotion === 'C' ? 'bg-amber-600 text-white shadow-2xs font-black' : 'bg-white text-stone-700 border border-stone-200 hover:bg-amber-100 font-bold'}">方案 C：防呆</button>
+            </div>
+          </div>
+
+          <button id="btn-start-cooking-prep" onclick="startCookingPrepFlow()" class="spring-btn w-full bg-stone-900 hover:bg-black active:scale-95 text-amber-300 font-black py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs relative overflow-hidden">
             <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-            <span>開始備料（解鎖今日料理引導）</span>
+            <span id="btn-start-cooking-prep-text">開始備料（解鎖今日料理引導）</span>
           </button>
         </div>
       `;
@@ -1640,7 +1805,7 @@
         </div>
 
         <!-- Today Recommended Meal Card -->
-        <div class="bg-white border border-stone-200/90 rounded-2xl p-4 shadow-xs space-y-3">
+        <div id="today-recipe-card" class="bg-white border border-stone-200/90 rounded-2xl p-4 shadow-xs space-y-3 transition-all duration-300">
           <div class="flex items-center justify-between">
             <span class="text-[10px] font-black text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full flex items-center gap-1">
               <svg class="w-3 h-3 text-amber-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 14 14"/></svg>
@@ -1667,9 +1832,25 @@
             </div>
           </div>
 
-          <button onclick="triggerChefReaction('applause')" class="spring-btn w-full bg-stone-900 hover:bg-black active:scale-95 text-amber-300 font-black py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs">
+          <!-- Interactive Prep Motion Switcher inside Card -->
+          <div class="bg-amber-50/70 border border-amber-200/80 rounded-xl p-2 space-y-1.5">
+            <div class="flex items-center justify-between">
+              <span class="text-[9px] font-black text-amber-950 flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                <span>備料連動動態（點選切換）：</span>
+              </span>
+              <span id="label-card-prep-scheme" class="text-[9px] font-mono font-bold text-amber-900 bg-white px-1.5 py-0.2 rounded border border-amber-200">${cookingPrepMotion === 'A' ? '方案 A：卡片展開' : (cookingPrepMotion === 'B' ? '方案 B：火種開火 ✓' : '方案 C：兩段防呆')}</span>
+            </div>
+            <div class="grid grid-cols-3 gap-1">
+              <button type="button" id="card-pill-scheme-a" onclick="setCookingPrepMotion('A', event)" class="py-1 px-1 rounded-md text-[9px] transition-all text-center ${cookingPrepMotion === 'A' ? 'bg-amber-600 text-white shadow-2xs font-black' : 'bg-white text-stone-700 border border-stone-200 hover:bg-amber-100 font-bold'}">方案 A：展開</button>
+              <button type="button" id="card-pill-scheme-b" onclick="setCookingPrepMotion('B', event)" class="py-1 px-1 rounded-md text-[9px] transition-all text-center ${cookingPrepMotion === 'B' ? 'bg-amber-600 text-white shadow-2xs font-black' : 'bg-white text-stone-700 border border-stone-200 hover:bg-amber-100 font-bold'}">方案 B：火種 ✓</button>
+              <button type="button" id="card-pill-scheme-c" onclick="setCookingPrepMotion('C', event)" class="py-1 px-1 rounded-md text-[9px] transition-all text-center ${cookingPrepMotion === 'C' ? 'bg-amber-600 text-white shadow-2xs font-black' : 'bg-white text-stone-700 border border-stone-200 hover:bg-amber-100 font-bold'}">方案 C：防呆</button>
+            </div>
+          </div>
+
+          <button id="btn-start-cooking-prep" onclick="startCookingPrepFlow()" class="spring-btn w-full bg-stone-900 hover:bg-black active:scale-95 text-amber-300 font-black py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs relative overflow-hidden">
             <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-            <span>開始備料（解鎖今日料理引導）</span>
+            <span id="btn-start-cooking-prep-text">開始備料（解鎖今日料理引導）</span>
           </button>
         </div>
       `;
@@ -2552,6 +2733,641 @@
         const container = document.getElementById('scroll-container');
         container.scrollTop = container.scrollHeight;
       }, 350);
+    }
+
+    // =========================================================================
+    // Cooking Prep Transitions & Studio Guidance (Schemes A, B, C)
+    // =========================================================================
+    let cookingPrepMotion = 'B'; // 'A' (卡片展開) | 'B' (火種開火，推薦) | 'C' (兩段防呆)
+    let currentCookingStepIndex = 0;
+    let cookingTimerSeconds = 0;
+    let cookingTimerRunning = false;
+    let cookingTimerInterval = null;
+
+    const cookingSteps = [
+      {
+        order: 1,
+        title: '燒水與滾麵',
+        heatBadge: '大火滾水',
+        heatClass: 'bg-red-100 text-red-700 border-red-200',
+        timerSeconds: 180,
+        cookware: '單平底鍋 / 湯鍋',
+        ingredients: ['冷凍烏龍麵 1 包', '冷水 600ml'],
+        instruction: '取單平底鍋或湯鍋注入 600ml 冷水，開大火煮至大滾沸騰。直接投入冷凍烏龍麵（免解凍），讓麵條自然在沸水中散開。',
+        scienceTip: '冷凍烏龍麵直接下滾水煮，先不要急著用筷子用力攪散，讓水自然化開，麵條最 Q 彈且不易斷裂！'
+      },
+      {
+        order: 2,
+        title: '炒出茄紅素與煎香',
+        heatBadge: '中小火烹調',
+        heatClass: 'bg-amber-100 text-amber-800 border-amber-200',
+        timerSeconds: 120,
+        cookware: '平底鍋',
+        ingredients: ['牛番茄 1 顆（切大塊）', '雞蛋 1 顆（打散）', '食用油 1 茶匙'],
+        instruction: '烏龍麵撈出盛入大碗。鍋中倒入 1 茶匙油轉中小火，放入牛番茄塊翻炒出紅油酸甜香氣，接著淋入蛋液向內推動翻炒至半熟滑嫩。',
+        scienceTip: '番茄紅素是脂溶性營養素，熱油翻炒至出汁起紅油，不僅湯底濃郁香甜，也更能完整釋放營養！'
+      },
+      {
+        order: 3,
+        title: '沖高湯與善終即期青菜',
+        heatBadge: '中火滾煮',
+        heatClass: 'bg-orange-100 text-orange-800 border-orange-200',
+        timerSeconds: 150,
+        cookware: '平底鍋',
+        ingredients: ['即期青江菜 1 把（切段）', '牛肉片 100g', '熱水 500ml', '鹽與白胡椒適量'],
+        instruction: '在鍋中直接沖入 500ml 熱水，轉中火滾沸融合成番茄高湯。先下即期青江菜莖部煮 40 秒，再下葉片與牛肉片涮煮 20 秒至粉嫩變色，加少許鹽調味後熄火。',
+        scienceTip: '即期青江菜先下莖部再下葉片，能確保全株熟度一致、翠綠不軟爛！牛肉涮至粉紅即可離火，肉質最鮮嫩。'
+      },
+      {
+        order: 4,
+        title: '起鍋盛盤與完成入帳',
+        heatBadge: '完全關火 · 料理完成',
+        heatClass: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+        timerSeconds: null,
+        cookware: '免開火',
+        ingredients: ['香油 2 滴', '烏龍麵大碗'],
+        instruction: '將滾燙鮮甜的番茄牛肉蛋花湯淋在烏龍麵上，滴上 2 滴香油。端上餐桌，大口開動！',
+        scienceTip: '恭喜！這餐成功善終冷藏庫即期蔬菜，高纖高蛋白又零浪費，身心與荷包都滿足。'
+      }
+    ];
+
+    let checklistItems = [
+      { text: '單平底鍋 / 湯鍋 1 只（已放上瓦斯爐）', checked: true },
+      { text: '牛番茄 1 顆（已洗淨切塊，免去皮）', checked: true },
+      { text: '即期青江菜 1 把（洗淨切段，分開莖葉）', checked: true },
+      { text: '雞蛋 1 顆（已打入小碗打散）', checked: true },
+      { text: '冷凍烏龍麵 1 包（直接取用免解凍）', checked: true },
+      { text: '牛肉片 1 盒（已備妥於料理檯邊）', checked: true }
+    ];
+
+    function playIgnitionSound() {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const osc1 = ctx.createOscillator();
+        const gain1 = ctx.createGain();
+        osc1.type = 'triangle';
+        osc1.frequency.setValueAtTime(1400, ctx.currentTime);
+        osc1.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + 0.06);
+        gain1.gain.setValueAtTime(0.3, ctx.currentTime);
+        gain1.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.06);
+        osc1.connect(gain1);
+        gain1.connect(ctx.destination);
+        osc1.start();
+        osc1.stop(ctx.currentTime + 0.06);
+
+        const osc2 = ctx.createOscillator();
+        const gain2 = ctx.createGain();
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(260, ctx.currentTime + 0.04);
+        osc2.frequency.exponentialRampToValueAtTime(90, ctx.currentTime + 0.32);
+        gain2.gain.setValueAtTime(0.01, ctx.currentTime);
+        gain2.gain.setValueAtTime(0.35, ctx.currentTime + 0.04);
+        gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
+        osc2.connect(gain2);
+        gain2.connect(ctx.destination);
+        osc2.start(ctx.currentTime + 0.04);
+        osc2.stop(ctx.currentTime + 0.35);
+      } catch (e) {}
+    }
+
+    function playCookingTimerChime() {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.18);
+        gain.gain.setValueAtTime(0.25, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.5);
+      } catch (e) {}
+    }
+
+    function setCookingPrepMotion(motion, e) {
+      if (e) e.stopPropagation();
+      cookingPrepMotion = motion;
+
+      const btnA = document.getElementById('btn-prep-scheme-a');
+      const btnB = document.getElementById('btn-prep-scheme-b');
+      const btnC = document.getElementById('btn-prep-scheme-c');
+      const badge = document.getElementById('badge-current-prep-motion');
+
+      const activeClass = 'py-1.5 px-2 rounded-lg text-xs font-black transition-all bg-amber-600 text-white shadow-2xs text-center border border-amber-600';
+      const inactiveClass = 'py-1.5 px-2 rounded-lg text-xs font-bold transition-all bg-white text-stone-700 border border-stone-200 hover:border-amber-400 hover:text-amber-950 text-center shadow-2xs';
+
+      if (btnA) btnA.className = (motion === 'A') ? activeClass : inactiveClass;
+      if (btnB) btnB.className = (motion === 'B') ? activeClass : inactiveClass;
+      if (btnC) btnC.className = (motion === 'C') ? activeClass : inactiveClass;
+
+      if (badge) {
+        if (motion === 'A') {
+          badge.textContent = '方案 A · 卡片展開';
+          badge.className = 'text-[9px] font-bold font-mono px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300';
+        } else if (motion === 'B') {
+          badge.textContent = '方案 B · 火種開火升起 (推薦)';
+          badge.className = 'text-[9px] font-bold font-mono px-1.5 py-0.5 rounded bg-amber-200 text-amber-950 border border-amber-300';
+        } else {
+          badge.textContent = '方案 C · 兩段防呆盤點';
+          badge.className = 'text-[9px] font-bold font-mono px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300';
+        }
+      }
+
+      const cardLabel = document.getElementById('label-card-prep-scheme');
+      if (cardLabel) {
+        cardLabel.textContent = (motion === 'A') ? '方案 A：卡片展開' : (motion === 'B' ? '方案 B：火種開火 ✓' : '方案 C：兩段防呆');
+      }
+      const cardPillA = document.getElementById('card-pill-scheme-a');
+      const cardPillB = document.getElementById('card-pill-scheme-b');
+      const cardPillC = document.getElementById('card-pill-scheme-c');
+      const pillActive = 'py-1 px-1 rounded-md text-[9px] font-black transition-all text-center bg-amber-600 text-white shadow-2xs';
+      const pillInactive = 'py-1 px-1 rounded-md text-[9px] font-bold transition-all text-center bg-white text-stone-700 border border-stone-200 hover:bg-amber-100';
+      if (cardPillA) cardPillA.className = (motion === 'A') ? pillActive : pillInactive;
+      if (cardPillB) cardPillB.className = (motion === 'B') ? pillActive : pillInactive;
+      if (cardPillC) cardPillC.className = (motion === 'C') ? pillActive : pillInactive;
+    }
+
+    function startCookingPrepFlow(overrideScheme) {
+      const scheme = overrideScheme || cookingPrepMotion;
+      setCookingPrepMotion(scheme);
+
+      if (appMode !== 'revisit') {
+        switchAppMode('revisit');
+      }
+
+      toggleBottomSheet(false);
+
+      if (scheme === 'A') {
+        startSchemeAMorph();
+      } else if (scheme === 'B') {
+        startSchemeBIgnition();
+      } else if (scheme === 'C') {
+        startSchemeCChecklist();
+      }
+    }
+
+    function startSchemeAMorph() {
+      const card = document.getElementById('today-recipe-card');
+      if (card) {
+        card.classList.remove('animate-card-morph-expand');
+        void card.offsetWidth;
+        card.classList.add('animate-card-morph-expand');
+      }
+
+      setTimeout(() => {
+        const studio = document.getElementById('cooking-studio-container');
+        if (studio) {
+          studio.classList.remove('hidden', 'animate-studio-slide-up', 'animate-studio-morph-in');
+          void studio.offsetWidth;
+          studio.classList.add('animate-studio-morph-in');
+        }
+        renderCookingStudioStep(0);
+        if (card) {
+          card.classList.remove('animate-card-morph-expand');
+          card.style.opacity = '1';
+        }
+      }, 340);
+    }
+
+    function startSchemeBIgnition() {
+      const flame = document.getElementById('cooking-ignition-flame');
+      if (flame) {
+        flame.classList.remove('hidden', 'animate-ignition-pop');
+        void flame.offsetWidth;
+        flame.classList.add('animate-ignition-pop');
+      }
+      playIgnitionSound();
+
+      setTimeout(() => {
+        const studio = document.getElementById('cooking-studio-container');
+        if (studio) {
+          studio.classList.remove('hidden', 'animate-studio-slide-up', 'animate-studio-morph-in');
+          void studio.offsetWidth;
+          studio.classList.add('animate-studio-slide-up');
+        }
+        if (flame) flame.classList.add('hidden');
+        renderCookingStudioStep(0);
+      }, 260);
+    }
+
+    function startSchemeCChecklist() {
+      renderCookingChecklist();
+      const backdrop = document.getElementById('cooking-checklist-backdrop');
+      const drawer = document.getElementById('cooking-checklist-drawer');
+      if (backdrop) backdrop.classList.remove('hidden');
+      if (drawer) {
+        drawer.classList.remove('hidden', 'animate-checklist-up');
+        void drawer.offsetWidth;
+        drawer.classList.add('animate-checklist-up');
+      }
+    }
+
+    function closeCookingChecklist() {
+      const backdrop = document.getElementById('cooking-checklist-backdrop');
+      const drawer = document.getElementById('cooking-checklist-drawer');
+      if (backdrop) backdrop.classList.add('hidden');
+      if (drawer) drawer.classList.add('hidden');
+    }
+
+    function confirmChecklistAndIgnite() {
+      closeCookingChecklist();
+      startSchemeBIgnition();
+    }
+
+    function renderCookingChecklist() {
+      const drawer = document.getElementById('cooking-checklist-drawer');
+      if (!drawer) return;
+
+      let itemsHtml = '';
+      checklistItems.forEach((item, idx) => {
+        itemsHtml += `
+          <div onclick="toggleChecklistItem(${idx})" class="p-2.5 rounded-xl border ${item.checked ? 'bg-amber-50/80 border-amber-200 text-stone-900' : 'bg-stone-50 border-stone-200 text-stone-400'} flex items-center justify-between cursor-pointer transition-all active:scale-[0.99]">
+            <div class="flex items-center gap-2.5">
+              <div class="w-5 h-5 rounded-md flex items-center justify-center transition-all ${item.checked ? 'bg-amber-600 text-white shadow-2xs' : 'border border-stone-300 bg-white'}">
+                ${item.checked ? '<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
+              </div>
+              <span class="text-xs font-bold ${item.checked ? 'text-stone-800' : 'text-stone-400 line-through'}">${item.text}</span>
+            </div>
+            <span class="text-[10px] font-mono font-bold ${item.checked ? 'text-amber-800' : 'text-stone-400'}">${item.checked ? '到位' : '待補'}</span>
+          </div>
+        `;
+      });
+
+      drawer.innerHTML = `
+        <!-- Drag Pill -->
+        <div class="w-10 h-1 bg-stone-300 rounded-full mx-auto mb-1"></div>
+
+        <div class="flex items-center justify-between border-b border-stone-100 pb-2">
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-full bg-amber-600 text-white flex items-center justify-center shrink-0 shadow-2xs">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            </div>
+            <div>
+              <div class="text-xs font-black text-stone-900 flex items-center gap-1.5">
+                <span>STEP 00 · 30秒起跑冷靜盤點</span>
+                <span class="text-[9px] font-mono text-amber-800 bg-amber-100 px-1 rounded">防呆防慌</span>
+              </div>
+              <span class="text-[9px] text-stone-400 font-bold">Mise en place · 廚具食材擺定再點火</span>
+            </div>
+          </div>
+          <button onclick="closeCookingChecklist()" class="text-stone-400 hover:text-stone-700 bg-stone-100 hover:bg-stone-200 px-2 py-1 rounded-lg text-[10px] font-bold transition-colors">
+            稍後 ✕
+          </button>
+        </div>
+
+        <div class="bg-amber-50/70 border border-amber-200/70 rounded-xl p-2.5 text-[11px] text-amber-900 space-y-0.5">
+          <p class="leading-relaxed">
+            廚房不慌亂的唯一秘訣：<strong>食材、鍋鏟全就位再開火</strong>！確認以下 6 項已置於料理檯：
+          </p>
+        </div>
+
+        <!-- Checklist List -->
+        <div class="space-y-1.5 max-h-[220px] overflow-y-auto pr-0.5">
+          ${itemsHtml}
+        </div>
+
+        <!-- Confirm CTA -->
+        <div class="pt-2 space-y-1.5">
+          <button onclick="confirmChecklistAndIgnite()" class="spring-btn w-full bg-amber-600 hover:bg-amber-700 active:scale-95 text-white font-black py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-md transition-all">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <span>食材廚具已備齊，點火起鍋開煮！ ➔</span>
+          </button>
+          <div class="text-center text-[10px] text-stone-400">
+            點擊即刻開火，進入 STEP 01 烹飪引導
+          </div>
+        </div>
+      `;
+    }
+
+    function toggleChecklistItem(idx) {
+      if (checklistItems[idx]) {
+        checklistItems[idx].checked = !checklistItems[idx].checked;
+        renderCookingChecklist();
+      }
+    }
+
+    function renderCookingStudioStep(stepIdx) {
+      currentCookingStepIndex = Math.max(0, Math.min(cookingSteps.length - 1, stepIdx));
+      const step = cookingSteps[currentCookingStepIndex];
+      const studio = document.getElementById('cooking-studio-container');
+      if (!studio) return;
+
+      if (step.timerSeconds) {
+        resetCookingTimer(step.timerSeconds);
+      } else {
+        resetCookingTimer(0);
+      }
+
+      let stepPillHtml = '';
+      for (let i = 0; i < cookingSteps.length; i++) {
+        const active = i === currentCookingStepIndex;
+        const passed = i < currentCookingStepIndex;
+        stepPillHtml += `
+          <div class="flex-1 h-1.5 rounded-full transition-all duration-300 ${active ? 'bg-amber-600 shadow-2xs' : (passed ? 'bg-amber-400' : 'bg-stone-200')}"></div>
+        `;
+      }
+
+      let stepBodyHtml = '';
+      if (currentCookingStepIndex < 3) {
+        stepBodyHtml = `
+          <!-- Step Title & Heat Badge -->
+          <div class="bg-white border border-stone-200/90 rounded-2xl p-3.5 shadow-xs space-y-2.5">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-black text-stone-900 flex items-center gap-1.5">
+                <span class="w-6 h-6 rounded-lg bg-stone-900 text-amber-300 flex items-center justify-center font-mono font-black text-xs">0${step.order}</span>
+                <span>${step.title}</span>
+              </span>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border ${step.heatClass}">
+                ${step.heatBadge}
+              </span>
+            </div>
+
+            <!-- Cookware & Ingredients required -->
+            <div class="flex flex-wrap gap-1.5 text-[10px]">
+              <span class="bg-stone-100 text-stone-600 font-bold px-2 py-0.5 rounded-md border border-stone-200">
+                廚具：${step.cookware}
+              </span>
+              ${step.ingredients.map(ing => `<span class="bg-amber-50 text-amber-900 font-bold px-2 py-0.5 rounded-md border border-amber-200/80">${ing}</span>`).join('')}
+            </div>
+
+            <!-- Instruction Text -->
+            <p class="text-xs text-stone-800 font-medium leading-relaxed bg-stone-50/80 p-3 rounded-xl border border-stone-200/60">
+              ${step.instruction}
+            </p>
+
+            <!-- Chef Science Tip -->
+            <div class="bg-amber-50/90 border border-amber-200/90 rounded-xl p-2.5 flex items-start gap-2 shadow-2xs">
+              <div class="w-5 h-5 rounded-full bg-amber-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
+                <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/></svg>
+              </div>
+              <div class="flex-1 space-y-0.5 text-left">
+                <div class="text-[10px] font-black text-amber-950 flex items-center gap-1">
+                  <span>主廚私房撇步 · 料理科學</span>
+                </div>
+                <p class="text-[10px] text-amber-900/90 leading-relaxed font-medium">
+                  ${step.scienceTip}
+                </p>
+              </div>
+            </div>
+
+            <!-- Step Timer Component (if available) -->
+            ${step.timerSeconds ? `
+              <div class="bg-stone-900 text-white rounded-xl p-3 flex items-center justify-between shadow-xs">
+                <div class="flex items-center gap-2">
+                  <div class="w-7 h-7 rounded-lg bg-stone-800 text-amber-400 flex items-center justify-center">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 14 14"/></svg>
+                  </div>
+                  <div>
+                    <span class="text-[9px] text-stone-400 block font-bold">精準計時器</span>
+                    <span id="cooking-timer-display" class="font-mono-num font-black text-lg text-amber-300">03:00</span>
+                  </div>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <button id="btn-toggle-timer" onclick="toggleCookingTimer()" class="text-xs font-black bg-amber-600 hover:bg-amber-700 active:scale-95 text-white px-3 py-1.5 rounded-lg transition-all shadow-xs flex items-center gap-1">
+                    <svg id="timer-play-icon" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    <span id="timer-toggle-label">開始計時</span>
+                  </button>
+                  <button onclick="resetCookingTimer(${step.timerSeconds})" class="text-xs font-bold text-stone-400 hover:text-white bg-stone-800 hover:bg-stone-700 px-2 py-1.5 rounded-lg transition-all">
+                    重設
+                  </button>
+                </div>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      } else {
+        stepBodyHtml = `
+          <div class="bg-white border border-stone-200/90 rounded-2xl p-4 shadow-xs space-y-3 text-center">
+            <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-800 mx-auto flex items-center justify-center shadow-xs">
+              <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div class="space-y-1">
+              <span class="text-[10px] font-black text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                料理大成功 · 完美出餐
+              </span>
+              <h3 class="text-base font-black text-stone-900">番茄牛肉湯烏龍麵</h3>
+              <p class="text-xs text-stone-500">
+                色香味俱全！趁熱享用，為今天的努力好好犒賞自己。
+              </p>
+            </div>
+
+            <!-- Savings Ledger Card -->
+            <div class="bg-amber-50/80 rounded-2xl p-3 border border-amber-200/80 space-y-2 text-left">
+              <div class="flex items-center justify-between text-xs">
+                <span class="text-stone-600 font-bold">外食同等市價：</span>
+                <span class="font-mono-num font-bold text-stone-700">NT$ 210</span>
+              </div>
+              <div class="flex items-center justify-between text-xs">
+                <span class="text-stone-600 font-bold">自煮實際花費：</span>
+                <span class="font-mono-num font-bold text-stone-700">NT$ 100</span>
+              </div>
+              <div class="pt-2 border-t border-amber-200 flex items-center justify-between">
+                <div>
+                  <span class="text-[10px] text-amber-900 font-black block">本餐為【${profile.dreamName}】存入</span>
+                  <span class="text-base font-mono-num font-black text-emerald-700">＋ NT$ 110</span>
+                </div>
+                <div class="text-right text-[10px] font-bold text-amber-800">
+                  <span>累計存入進度</span><br>
+                  <span class="font-mono-num font-black">NT$ 110 / ${profile.dreamTargetAmount.toLocaleString()}</span>
+                </div>
+              </div>
+            </div>
+
+            <button onclick="exitCookingStudio()" class="spring-btn w-full bg-stone-900 hover:bg-black active:scale-95 text-amber-300 font-black py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all shadow-md">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              <span>確認入帳 · 返回今日菜單 ➔</span>
+            </button>
+          </div>
+        `;
+      }
+
+      studio.innerHTML = `
+        <!-- Top Sticky Header in Studio -->
+        <div class="bg-white/95 backdrop-blur-md border-b border-stone-200/80 p-3 sticky top-0 z-30 space-y-2">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="text-[10px] font-black text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1 shadow-2xs">
+                <svg class="w-3 h-3 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                <span>離線包已備妥 · 斷網免驚</span>
+              </span>
+              <span class="text-[10px] font-mono font-bold text-stone-400">25 分鐘單鍋</span>
+            </div>
+            <button onclick="exitCookingStudio()" class="text-stone-400 hover:text-stone-700 bg-stone-100 hover:bg-stone-200 px-2 py-1 rounded-lg text-[10px] font-bold transition-colors flex items-center gap-1">
+              <span>退出料理台 ✕</span>
+            </button>
+          </div>
+
+          <!-- Step Progress Bars -->
+          <div class="flex items-center gap-1">
+            ${stepPillHtml}
+          </div>
+
+          <!-- Top Quick Scheme Replay Switcher inside Studio -->
+          <div class="bg-stone-100/90 p-1.5 rounded-xl flex items-center justify-between text-[9px] font-bold">
+            <span class="text-stone-500 font-black flex items-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+              <span>轉場動態對比試看：</span>
+            </span>
+            <div class="flex items-center gap-1">
+              <button onclick="replayCookingSchemeFromStudio('A')" class="px-2 py-0.5 rounded-md ${cookingPrepMotion === 'A' ? 'bg-amber-600 text-white font-black' : 'bg-white text-stone-700 hover:bg-amber-50'}">方案 A：卡片展開</button>
+              <button onclick="replayCookingSchemeFromStudio('B')" class="px-2 py-0.5 rounded-md ${cookingPrepMotion === 'B' ? 'bg-amber-600 text-white font-black' : 'bg-white text-stone-700 hover:bg-amber-50'}">方案 B：火種開火 ✓</button>
+              <button onclick="replayCookingSchemeFromStudio('C')" class="px-2 py-0.5 rounded-md ${cookingPrepMotion === 'C' ? 'bg-amber-600 text-white font-black' : 'bg-white text-stone-700 hover:bg-amber-50'}">方案 C：兩段防呆</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Scrollable Studio Content -->
+        <div class="flex-1 p-3.5 overflow-y-auto space-y-3 text-xs">
+          ${stepBodyHtml}
+        </div>
+
+        <!-- Bottom Action Bar (Steps 1 to 4) -->
+        <div class="p-3 bg-white/95 border-t border-stone-200/80 sticky bottom-0 z-30 space-y-1.5">
+          <div class="flex items-center justify-between gap-2">
+            <button onclick="prevCookingStep()" ${currentCookingStepIndex === 0 ? 'disabled' : ''} class="text-xs font-bold text-stone-600 bg-stone-100 hover:bg-stone-200 px-3.5 py-2.5 rounded-xl transition-all disabled:opacity-30 disabled:pointer-events-none flex items-center gap-1">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m15 18-6-6 6-6"/></svg>
+              <span>上一步</span>
+            </button>
+
+            ${currentCookingStepIndex < 3 ? `
+              <button onclick="nextCookingStep()" class="spring-btn flex-1 text-xs font-black text-white bg-amber-600 hover:bg-amber-700 active:scale-95 py-2.5 px-4 rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5">
+                <span>${currentCookingStepIndex === 2 ? '完成料理 · 盛盤 ➔' : '下一步（手腕/手肘輕碰）➔'}</span>
+              </button>
+            ` : `
+              <button onclick="exitCookingStudio()" class="spring-btn flex-1 text-xs font-black text-white bg-emerald-700 hover:bg-emerald-800 active:scale-95 py-2.5 px-4 rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5">
+                <span>結束並返回今日菜單 ➔</span>
+              </button>
+            `}
+          </div>
+
+          <div class="text-[9px] text-stone-400 text-center font-medium flex items-center justify-center gap-1">
+            <svg class="w-3 h-3 text-amber-600/70 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+            <span>手沾滿油水？可用手腕或手肘輕壓大按鈕前進</span>
+          </div>
+        </div>
+      `;
+
+      if (step.timerSeconds) {
+        updateCookingTimerDisplay();
+      }
+    }
+
+    function replayCookingSchemeFromStudio(scheme) {
+      exitCookingStudio();
+      setTimeout(() => {
+        setCookingPrepMotion(scheme);
+        startCookingPrepFlow(scheme);
+      }, 80);
+    }
+
+    function prevCookingStep() {
+      if (currentCookingStepIndex > 0) {
+        renderCookingStudioStep(currentCookingStepIndex - 1);
+      }
+    }
+
+    function nextCookingStep() {
+      if (currentCookingStepIndex < cookingSteps.length - 1) {
+        renderCookingStudioStep(currentCookingStepIndex + 1);
+      }
+    }
+
+    function resetCookingTimer(seconds) {
+      if (cookingTimerInterval) {
+        clearInterval(cookingTimerInterval);
+        cookingTimerInterval = null;
+      }
+      cookingTimerRunning = false;
+      cookingTimerSeconds = seconds;
+      updateCookingTimerDisplay();
+    }
+
+    function toggleCookingTimer() {
+      if (cookingTimerSeconds <= 0) {
+        const step = cookingSteps[currentCookingStepIndex];
+        if (step && step.timerSeconds) {
+          cookingTimerSeconds = step.timerSeconds;
+        } else {
+          return;
+        }
+      }
+
+      if (cookingTimerRunning) {
+        clearInterval(cookingTimerInterval);
+        cookingTimerInterval = null;
+        cookingTimerRunning = false;
+        updateCookingTimerDisplay();
+      } else {
+        cookingTimerRunning = true;
+        updateCookingTimerDisplay();
+        cookingTimerInterval = setInterval(() => {
+          cookingTimerSeconds--;
+          if (cookingTimerSeconds <= 0) {
+            clearInterval(cookingTimerInterval);
+            cookingTimerInterval = null;
+            cookingTimerRunning = false;
+            playCookingTimerChime();
+            updateCookingTimerDisplay();
+          } else {
+            updateCookingTimerDisplay();
+          }
+        }, 1000);
+      }
+    }
+
+    function updateCookingTimerDisplay() {
+      const display = document.getElementById('cooking-timer-display');
+      const label = document.getElementById('timer-toggle-label');
+      const icon = document.getElementById('timer-play-icon');
+      if (!display) return;
+
+      const mins = Math.floor(cookingTimerSeconds / 60);
+      const secs = cookingTimerSeconds % 60;
+      display.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+      if (label) {
+        label.textContent = cookingTimerRunning ? '暫停' : (cookingTimerSeconds === 0 ? '完成！' : '開始計時');
+      }
+      if (icon) {
+        if (cookingTimerRunning) {
+          icon.innerHTML = '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
+        } else {
+          icon.innerHTML = '<polygon points="5 3 19 12 5 21 5 3"/>';
+        }
+      }
+    }
+
+    function exitCookingStudio() {
+      if (cookingTimerInterval) {
+        clearInterval(cookingTimerInterval);
+        cookingTimerInterval = null;
+      }
+      cookingTimerRunning = false;
+      const studio = document.getElementById('cooking-studio-container');
+      if (studio) {
+        studio.classList.add('hidden');
+        studio.classList.remove('animate-studio-slide-up', 'animate-studio-morph-in');
+      }
+      const checklist = document.getElementById('cooking-checklist-drawer');
+      if (checklist) checklist.classList.add('hidden');
+      const checklistBackdrop = document.getElementById('cooking-checklist-backdrop');
+      if (checklistBackdrop) checklistBackdrop.classList.add('hidden');
+      const ignition = document.getElementById('cooking-ignition-flame');
+      if (ignition) ignition.classList.add('hidden');
+
+      const card = document.getElementById('today-recipe-card');
+      if (card) {
+        card.classList.remove('animate-card-morph-expand');
+        card.style.opacity = '1';
+        card.style.transform = '';
+      }
     }
 
     renderCurrentStep();
