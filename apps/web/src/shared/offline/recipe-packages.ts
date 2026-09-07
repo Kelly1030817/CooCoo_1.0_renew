@@ -54,7 +54,7 @@ export async function registerServiceWorker() {
   return navigator.serviceWorker.register("/sw.js");
 }
 
-export interface QueuedOperation { id: string; kind: "cooking_complete"; payload: unknown; createdAt: string }
+export interface QueuedOperation { userId?:string; id: string; kind: "cooking_complete"; payload: unknown; createdAt: string }
 export async function enqueueOperation(operation: QueuedOperation) {
   const database = await openDatabase();
   await new Promise<void>((resolve, reject) => { const transaction = database.transaction(OPERATIONS_STORE, "readwrite"); transaction.objectStore(OPERATIONS_STORE).put(operation); transaction.oncomplete = () => resolve(); transaction.onerror = () => reject(transaction.error); });
@@ -66,5 +66,14 @@ export async function pendingOperations(): Promise<QueuedOperation[]> {
 export async function removeOperation(id: string) {
   const database = await openDatabase();
   await new Promise<void>((resolve, reject) => { const transaction = database.transaction(OPERATIONS_STORE, "readwrite"); transaction.objectStore(OPERATIONS_STORE).delete(id); transaction.oncomplete = () => resolve(); transaction.onerror = () => reject(transaction.error); });
+}
+export async function legacyOperations() {
+  return (await pendingOperations()).filter(operation => !operation.userId);
+}
+export async function adoptLegacyOperations(userId:string,ids:string[]) {
+  const selected=new Set(ids);if(!selected.size)return 0;
+  const database=await openDatabase();const operations=await pendingOperations();let adopted=0;
+  await new Promise<void>((resolve,reject)=>{const transaction=database.transaction(OPERATIONS_STORE,"readwrite");const store=transaction.objectStore(OPERATIONS_STORE);for(const operation of operations){if(!operation.userId&&selected.has(operation.id)){store.put({...operation,userId});adopted++;}}transaction.oncomplete=()=>resolve();transaction.onerror=()=>reject(transaction.error);});
+  return adopted;
 }
 export async function markRecipePackageCompleted(id:string){const database=await openDatabase();const records=await new Promise<Array<RecipePackage&{completedAt?:string}>>((resolve,reject)=>{const transaction=database.transaction(STORE,"readonly");const request=transaction.objectStore(STORE).getAll();request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error)});const current=records.find(item=>item.id===id);if(!current)return;current.completedAt=new Date().toISOString();const completed=records.filter(item=>item.id!==id&&item.completedAt).sort((a,b)=>b.completedAt!.localeCompare(a.completedAt!));await new Promise<void>((resolve,reject)=>{const transaction=database.transaction(STORE,"readwrite");transaction.objectStore(STORE).put(current);for(const item of completed.slice(4))transaction.objectStore(STORE).delete(item.id);transaction.oncomplete=()=>resolve();transaction.onerror=()=>reject(transaction.error)})}

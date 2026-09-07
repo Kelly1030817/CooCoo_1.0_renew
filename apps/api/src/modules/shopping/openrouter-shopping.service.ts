@@ -47,13 +47,14 @@ export interface ShoppingAnalysisContext {
 
 export interface ShoppingAnalysisModel {
   readonly model: string;
-  analyze(prompt: string): Promise<ModelShoppingAnalysis>;
+  analyze(prompt: string): Promise<ModelShoppingAnalysis & { costUsd?: number }>;
 }
 
 interface OpenRouterResponse {
   model?: string;
   choices?: Array<{ message?: { content?: string | null } }>;
   error?: { message?: string };
+  usage?: { cost?: number };
 }
 
 export class OpenRouterShoppingModel implements ShoppingAnalysisModel {
@@ -80,6 +81,7 @@ export class OpenRouterShoppingModel implements ShoppingAnalysisModel {
       body: JSON.stringify({
         model: this.model,
         temperature: 0.2,
+        usage: { include: true },
         messages: [
           {
             role: "system",
@@ -107,7 +109,7 @@ export class OpenRouterShoppingModel implements ShoppingAnalysisModel {
     if (!Value.Check(ModelShoppingAnalysisSchema, parsed)) {
       throw new Error("OPENROUTER_SCHEMA_INVALID");
     }
-    return parsed;
+    return { ...parsed, ...(typeof body.usage?.cost === "number" ? { costUsd: body.usage.cost } : {}) };
   }
 }
 
@@ -212,6 +214,7 @@ export async function analyzeShopping(
         source: "openrouter",
         model: model.model,
         notice: null,
+        ...("costUsd" in result && typeof result.costUsd === "number" ? { costUsd: result.costUsd } : {}),
       };
     } catch {
       // One bounded retry handles transient provider and structured-output failures.

@@ -1,5 +1,6 @@
+import { CatalogAdminModal } from "@/features/recipes/CatalogAdminModal";
 import { useContext, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAppState, stateQueryKey } from "@/entities/app-state/model";
 import { api } from "@/shared/api/client";
 import { UiContext } from "@/app/ui-context";
@@ -9,6 +10,7 @@ import { readOnboardingDraft } from "@/shared/model/onboarding-draft";
 
 export function Header({ enabled = true }: { enabled?: boolean }) {
   const { data } = useAppState(enabled);
+  const access=useQuery({queryKey:["catalog-access",data?.session.user?.id],queryFn:()=>api<{owner:boolean}>("/admin/recipes/access"),enabled:Boolean(data?.session.user)});
   const ui = useContext(UiContext);
   const query = useQueryClient();
   const refresh = () => query.invalidateQueries({ queryKey: stateQueryKey });
@@ -56,6 +58,7 @@ export function Header({ enabled = true }: { enabled?: boolean }) {
               restart_alt
             </span>
           </button>}
+          {access.data?.owner && <button className="text-xs" onClick={()=>ui.open(<CatalogAdminModal onClose={ui.close}/>)}>食譜管理</button>}
           <div className="h-8 w-px bg-outline-variant/40" />
           {data?.session.user ? (
             <button

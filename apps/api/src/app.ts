@@ -1,3 +1,7 @@
+import { syncRoutes } from "./modules/sync/routes";
+import { CatalogRepository } from './modules/catalog/repository';
+import { catalogRoutes } from './modules/catalog/routes';
+import { recommend } from './modules/catalog/recommendations';
 import { Elysia } from "elysia";
 import { CooCooService, getRescuePlan, parseShoppingText } from "@coocoo/core";
 import type { GoalDraft, InventoryItem } from "@coocoo/contracts";
@@ -22,6 +26,15 @@ import { cloudPlanningContext } from "./modules/meal-plans/context";
 import { SupabaseMealPlanRepository } from "./modules/meal-plans/supabase-meal-plan.repository";
 import { MemoryPlanningRepository } from "./modules/meal-plans/memory-planning.repository";
 import { weekOf, taipeiDate } from "./modules/meal-plans/meal-planning";
+import { runCatalogWorker } from "./modules/catalog/worker";
+
+function matchesSecret(value:string|undefined,expected:string|undefined){
+  if(!value||!expected)return false;
+  const left=new TextEncoder().encode(value),right=new TextEncoder().encode(expected);
+  if(left.length!==right.length)return false;
+  let difference=0;for(let index=0;index<left.length;index+=1)difference|=left[index]^right[index];
+  return difference===0;
+}
 
 const requestId = () => crypto.randomUUID();
 const ok = <T>(data: T) => ({ data });
@@ -37,6 +50,13 @@ const fail = (error: unknown) => {
     AUTH_INVALID: "登入狀態已失效，請重新登入。",
     INVALID_GOAL_TARGET: "目標金額必須大於 0 元。",
     ONBOARDING_REQUIRED: "請先完成主廚相談室設定。",
+    RECIPE_WITHDRAWN: "這份食譜已暫停提供，請改選其他料理。",
+    PRICE_CONFIRMATION_REQUIRED: "參考價格或庫存尚待確認，暫不能加入這份補買方案。",
+    PRICE_SOURCE_REQUIRED: "參考價格需附 https 網址或 receipt: 開頭的憑證說明。",
+    PRICE_DATE_INVALID: "查價日期不可晚於今天。",
+    RECOMMENDATION_CHANGED: "庫存或食譜已更新，請重新選擇。",
+    SETTINGS_CONFLICT: "設定已在其他裝置更新，請重新載入後確認。",
+    OWNER_ROLE_REQUIRED: "此功能僅限管理者。",
     NO_SAFE_RECIPE_AVAILABLE: "目前沒有符合飲食限制、廚具與預算的餐點。",
     PLANNED_MEAL_NOT_FOUND: "找不到這份預計餐點。",
     MEAL_NOT_EDITABLE: "這份餐點已完成或取消，無法再調整。",
@@ -71,6 +91,8 @@ const accountRepository = new SupabaseAccountRepository();
 const settingsRepository = new SupabaseSettingsRepository();
 const goalRepository = new SupabaseGoalRepository();
 const cloudDataEnabled = Boolean(process.env.SUPABASE_URL && (process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY));
+const catalogRepository=new CatalogRepository();
+const catalogContext:typeof cloudPlanningContext=async(user,week)=>{const [c,recipes,prices,settings,excluded]=await Promise.all([cloudPlanningContext(user,week),catalogRepository.published(),catalogRepository.prices(),catalogRepository.settings(user),catalogRepository.excluded(user)]);const inventoryOnly=recommend(recipes,c,{mode:"inventory_only",purchaseBudget:settings.purchaseBudget},prices,excluded);const withPurchase=recommend(recipes,c,{mode:"small_purchase",purchaseBudget:settings.purchaseBudget},prices,excluded);return {...c,strictCatalog:true,recipes:inventoryOnly.eligible.map(r=>r.recipe),purchaseCandidates:[...withPurchase.eligible,...withPurchase.needsConfirmation].filter(item=>item.missing.length).slice(0,3)}};
 const mealPlanRepository=cloudDataEnabled?new SupabaseMealPlanRepository():new MemoryPlanningRepository();
 const previewPlanningContext=async(_userId:string,weekStart:string)=>{const state=service.state();const profile=state.onboardingProfile;if(!profile)throw new Error("ONBOARDING_REQUIRED");return{weekStart,weeklyTarget:profile.weeklyHomeCookTarget,mealSlots:profile.plannedMealSlots,servings:profile.householdServings,restrictions:profile.restrictions,cookware:profile.cookware.map(item=>({type:item.type,capacity:item.capacity||null,limitations:item.limitations})),cookwareTypes:profile.cookware.map(item=>item.type),perMealBudget:Math.floor(profile.dailyMealBudget/Math.max(1,profile.plannedMealSlots.length)),inventory:state.inventory.map(item=>({ingredientKey:item.name,name:item.name,quantity:item.qty,unit:item.unit,daysLeft:item.daysLeft})),ingredientIds:Object.fromEntries(state.inventory.map(item=>[item.id,item.name]))}};
 
@@ -83,6 +105,11 @@ async function integratedState(authorization?:string){
 }
 
 export const app = new Elysia({ name: "coocoo-api" })
+  .post("/api/v1/internal/catalog/tick",async({headers,set})=>{
+    const bearer=headers.authorization?.replace(/^Bearer\s+/i,'');
+    if(!matchesSecret(bearer,process.env.CATALOG_CRON_SECRET)){set.status=401;return fail(new Error('CRON_AUTH_INVALID'));}
+    return ok(await runCatalogWorker());
+  })
   .onError(({ code, error, set }) => {
     if (code === "VALIDATION") {
       set.status = 422;
@@ -90,11 +117,15 @@ export const app = new Elysia({ name: "coocoo-api" })
     }
     const errorCode = error instanceof Error ? error.message : "UNKNOWN_ERROR";
     if (errorCode === "AUTH_REQUIRED" || errorCode === "AUTH_INVALID") set.status = 401;
+    else if(errorCode === "OWNER_ROLE_REQUIRED")set.status=403;
+    else if(errorCode === "SETTINGS_CONFLICT")set.status=409;
     else if(errorCode === "MEAL_PLAN_CONFLICT" || errorCode === "MEAL_SLOT_OCCUPIED")set.status=409;
     else set.status=422;
     return fail(error);
   })
-  .use(planningRoutes({authenticate:cloudDataEnabled?authenticateRequest:async()=>({id:"preview"}),context:cloudDataEnabled?cloudPlanningContext:previewPlanningContext,repository:mealPlanRepository,beforeGenerate:cloudDataEnabled?async userId=>{await aiUsageRepository.assertWithinLimit(userId,"recipe_generation");if(process.env.GEMINI_API_KEY)await aiUsageRepository.record(userId,"recipe_generation","started",0)}:undefined,afterGenerate:cloudDataEnabled&&process.env.GEMINI_API_KEY?async(userId,source)=>aiUsageRepository.record(userId,"recipe_generation",source==="gemini"?"succeeded":"failed",0):undefined}))
+  .use(planningRoutes({authenticate:cloudDataEnabled?authenticateRequest:async()=>({id:"preview"}),context:cloudDataEnabled?catalogContext:previewPlanningContext,catalog:cloudDataEnabled?catalogRepository:undefined,repository:mealPlanRepository,beforeGenerate:cloudDataEnabled?async userId=>{await aiUsageRepository.assertWithinLimit(userId,"recipe_generation");if(process.env.GEMINI_API_KEY)await aiUsageRepository.record(userId,"recipe_generation","started",0)}:undefined,afterGenerate:cloudDataEnabled&&process.env.GEMINI_API_KEY?async(userId,source)=>aiUsageRepository.record(userId,"recipe_generation",source==="gemini"?"succeeded":"failed",0):undefined}))
+  .use(cloudDataEnabled?syncRoutes():new Elysia())
+  .use(cloudDataEnabled?catalogRoutes(authenticateRequest,cloudPlanningContext,catalogRepository):new Elysia())
   .get("/api/v1/health", () => ok({ status: "ok" }))
   .get("/api/v1/state", async ({headers}) => ok(cloudDataEnabled?await integratedState(headers.authorization):service.state()))
   .get("/api/v1/session", () => ok(service.state().session))
@@ -228,11 +259,10 @@ export const app = new Elysia({ name: "coocoo-api" })
     ({ body }) => ok(parseShoppingText(body.text)),
     { body: ContractSchemas.ShoppingParseSchema },
   )
-  .post("/api/v1/shopping/analyze", async ({headers,set}) => {
+  .post("/api/v1/shopping/analyze", async ({headers,body,set}) => {
     try {
       if(cloudDataEnabled){
         const user=await authenticateRequest(headers.authorization);
-        await aiUsageRepository.assertWithinLimit(user.id,"shopping_analysis");
         const [shoppingItems,inventory,onboarding]=await Promise.all([
           shoppingRepository.list(user.id),
           inventoryRepository.list(user.id),
@@ -240,19 +270,25 @@ export const app = new Elysia({ name: "coocoo-api" })
         ]);
         const profile=onboarding.profile as null|{daily_meal_budget:number;planned_meal_slots:string[];weekly_home_cook_target:number};
         const restrictions=(onboarding.restrictions||[]).map((item:{id:string;label:string;kind:"allergy"|"avoid"|"preference";ingredient_keys:string[];is_hard_limit:boolean})=>({id:item.id,label:item.label,kind:item.kind,ingredientKeys:item.ingredient_keys,isHardLimit:item.is_hard_limit}));
-        const inputBytes=new TextEncoder().encode(JSON.stringify({shoppingItems,inventory,restrictions,profile})).byteLength;
         const model=process.env.OPENROUTER_MODEL||"google/gemini-3.7-flash";
-        await aiUsageRepository.record(user.id,"shopping_analysis","started",inputBytes,model);
-        const result=await analyzeShopping({
-          shoppingItems,
-          inventory,
-          restrictions,
-          dailyMealBudget:profile?.daily_meal_budget??null,
-          plannedMealSlots:profile?.planned_meal_slots??[],
-          weeklyHomeCookTarget:profile?.weekly_home_cook_target??null,
-        });
-        await aiUsageRepository.record(user.id,"shopping_analysis",result.source==="openrouter"?"succeeded":"failed",inputBytes,model);
-        return ok(result);
+        const operationId=(body as {operationId:string}).operationId;
+        const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify({shoppingItems,inventory,restrictions,profile})));
+        const inputHash=Array.from(new Uint8Array(digest),byte=>byte.toString(16).padStart(2,'0')).join('');
+        const context={shoppingItems,inventory,restrictions,dailyMealBudget:profile?.daily_meal_budget??null,plannedMealSlots:profile?.planned_meal_slots??[],weeklyHomeCookTarget:profile?.weekly_home_cook_target??null};
+        let cached:unknown;
+        try{cached=await aiUsageRepository.reserveShopping(user.id,operationId,inputHash,model,Number(process.env.SHOPPING_AI_MAX_CALL_TWD||1));}
+        catch(error){
+          const message=error instanceof Error?error.message:String(error);
+          if(message.includes('AI_BUDGET_EXHAUSTED')||message.includes('AI_DAILY_LIMITED'))return ok(await analyzeShopping(context,null));
+          throw error;
+        }
+        if(cached)return ok(cached);
+        const result=await analyzeShopping(context);
+        const costUsd=Number((result as typeof result&{costUsd?:number}).costUsd||0);
+        const publicResult={...result};delete (publicResult as typeof publicResult&{costUsd?:number}).costUsd;
+        const actualTwd=result.source==='openrouter'?costUsd*Number(process.env.CATALOG_USD_TO_TWD_RATE||35):process.env.OPENROUTER_API_KEY?Number(process.env.SHOPPING_AI_MAX_CALL_TWD||1):0;
+        await aiUsageRepository.settleShopping(user.id,operationId,result.source==="openrouter"?'completed':'failed',actualTwd,publicResult);
+        return ok(publicResult);
       }
       const state=service.state();
       return ok(await analyzeShopping({
@@ -267,7 +303,7 @@ export const app = new Elysia({ name: "coocoo-api" })
       set.status=error instanceof Error&&error.message==="AI_RATE_LIMITED"?429:422;
       return fail(error);
     }
-  })
+  },{body:ContractSchemas.ShoppingAnalyzeSchema})
   .get("/api/v1/settings/fridge", async ({headers}) => cloudDataEnabled?ok(await settingsRepository.fridge((await authenticateRequest(headers.authorization)).id)):ok(service.state().fridgeProfile))
   .put(
     "/api/v1/settings/fridge",

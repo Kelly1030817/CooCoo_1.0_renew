@@ -28,6 +28,7 @@ export const brandSafeRecipes: RecipePackage[] = [
       {ingredientKey:"蛋",name:"雞蛋",quantity:2,unit:"顆",isPantryStaple:false,isVegetable:false,coveredByInventory:false},
       {ingredientKey:"番茄",name:"番茄",quantity:2,unit:"顆",isPantryStaple:false,isVegetable:true,coveredByInventory:false},
       {ingredientKey:"白飯",name:"白飯",quantity:1,unit:"碗",isPantryStaple:false,isVegetable:false,coveredByInventory:false},
+      {ingredientKey:"油",name:"食用油",quantity:5,unit:"毫升",isPantryStaple:true,isVegetable:false,coveredByInventory:false},
     ],
     steps:[
       {id:"te-1",order:1,instruction:"番茄切成小塊，雞蛋打散。",voiceText:"番茄切成小塊，雞蛋打散。",timerSeconds:null,safetyNote:"切菜時讓指尖向內收。"},
@@ -58,7 +59,7 @@ export const brandSafeRecipes: RecipePackage[] = [
       {ingredientKey:"芝麻",name:"胡麻醬",quantity:1,unit:"大匙",isPantryStaple:true,isVegetable:false,coveredByInventory:false},
     ],
     steps:[
-      {id:"sc-1",order:1,instruction:"雞胸肉煮至中心完全熟透後撕成絲。",voiceText:"雞胸肉煮熟後撕成絲。",timerSeconds:600,safetyNote:"雞肉中心不可呈粉紅色。"},
+      {id:"sc-1",order:1,instruction:"雞胸肉煮熟，以食物溫度計確認中心至少 74°C 後撕成絲。",voiceText:"雞胸肉中心至少七十四度後撕成絲。",timerSeconds:600,safetyNote:"使用食物溫度計確認中心至少 74°C，不以顏色作為唯一熟度判斷。"},
       {id:"sc-2",order:2,instruction:"同鍋煮麵與青菜，撈起瀝乾。",voiceText:"同鍋煮麵與青菜，撈起瀝乾。",timerSeconds:300,safetyNote:"撈麵時小心熱水。"},
       {id:"sc-3",order:3,instruction:"拌入雞絲與胡麻醬。",voiceText:"拌入雞絲與胡麻醬。",timerSeconds:null,safetyNote:"芝麻過敏者不可食用。"},
     ],imageUrl:null,fallbackImageUrl:"/favicon.svg",downloadedAt:null,

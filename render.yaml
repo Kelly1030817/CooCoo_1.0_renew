@@ -27,3 +27,13 @@ services:
         sync: false
       - key: OPENROUTER_APP_NAME
         value: CooCoo
+      - key: CATALOG_MODEL
+        value: google/gemini-3.7-flash
+      - key: CATALOG_USD_TO_TWD_RATE
+        value: "35"
+      - key: CATALOG_INPUT_USD_PER_MILLION
+        value: "0.75"
+      - key: CATALOG_OUTPUT_USD_PER_MILLION
+        value: "3.75"
+      - key: CATALOG_CRON_SECRET
+        sync: false

@@ -32,7 +32,7 @@ export function RecipeModal({ ingredientIds, style, onClose, onComplete }: { ing
 export function RecipePackageModal({ recipePackage, ingredientIds, onClose, onComplete }: { recipePackage: RecipePackage; ingredientIds: string[]; onClose: () => void; onComplete?: () => void }) {
   const [savedPackage,setSavedPackage]=useState<RecipePackage|null>(null);const [error,setError]=useState("");
   if(savedPackage)return <CookingMode recipePackage={savedPackage} ingredientIds={ingredientIds} onClose={onClose} onComplete={onComplete}/>;
-  const start=async()=>{setError("");try{setSavedPackage(await saveRecipePackage(recipePackage))}catch{setError("核心食譜未能存到這台裝置，尚未進入離線料理。");}};
+  const start=async()=>{setError("");try{setSavedPackage(await saveRecipePackage(recipePackage.catalogVersionId?await api<RecipePackage>(`/recipes/${recipePackage.catalogVersionId}/start`,json("POST",{})):recipePackage))}catch{setError("核心食譜未能存到這台裝置，尚未進入離線料理。");}};
   return <Modal label={recipePackage.title} onClose={onClose} wide><ModalHeader title={recipePackage.title} kicker={`${recipePackage.totalMinutes} 分鐘 · ${recipePackage.servings} 人份 · NT$ ${recipePackage.estimatedCost}`} onClose={onClose}/><div className="meal-tags"><span>{recipePackage.totalMinutes<=15?"快手餐":"低體力可選"}</span>{recipePackage.cookwareTypes.map(item=><span key={item}>{item}</span>)}</div><ol className="mt-md space-y-sm">{recipePackage.steps.map(step=><li key={step.id} className="rounded-2xl bg-surface-container-low p-md text-sm text-slate-blue">{step.order}. {step.instruction}</li>)}</ol>{error&&<p className="offline-error">{error}</p>}<button onClick={start} className="primary-btn mt-lg w-full">下載並開始料理</button></Modal>;
 }
 
@@ -351,6 +351,8 @@ function CookingCompleteModal({ recipePackage, ingredientIds, onClose, onComplet
     setSubmitting(true);
     const operationId = crypto.randomUUID();
     const legacyRecipe: Recipe = {
+      catalogVersionId: recipePackage.catalogVersionId,
+      source: recipePackage.source ?? (recipePackage.catalogVersionId ? "catalog" : "brand_safe"),
       id: recipePackage.recipeId,
       title: recipePackage.title,
       style: "料理包",
@@ -364,7 +366,10 @@ function CookingCompleteModal({ recipePackage, ingredientIds, onClose, onComplet
       completionKey: operationId,
       recipe: legacyRecipe,
       ingredientIds,
-      ingredientRequirements: recipePackage.ingredients,
+      ingredientRequirements: recipePackage.ingredients.map((i) => ({
+        ...i,
+        quantity: i.quantity / (recipePackage.servings || 1),
+      })),
       homeCookCost: cost,
       actualDeposit: deposit,
       foodSafe: true,
@@ -377,7 +382,13 @@ function CookingCompleteModal({ recipePackage, ingredientIds, onClose, onComplet
 
     if (!navigator.onLine) {
       try {
-        await enqueueOperation({ id: operationId, kind: "cooking_complete", payload, createdAt: new Date().toISOString() });
+        await enqueueOperation({
+          userId: data?.session.user?.id,
+          id: operationId,
+          kind: "cooking_complete",
+          payload,
+          createdAt: new Date().toISOString(),
+        });
         await markRecipePackageCompleted(recipePackage.id);
         onComplete?.();
         onClose();
@@ -400,7 +411,13 @@ function CookingCompleteModal({ recipePackage, ingredientIds, onClose, onComplet
     } catch (error) {
       if (error instanceof TypeError) {
         try {
-          await enqueueOperation({ id: operationId, kind: "cooking_complete", payload, createdAt: new Date().toISOString() });
+          await enqueueOperation({
+            userId: data?.session.user?.id,
+            id: operationId,
+            kind: "cooking_complete",
+            payload,
+            createdAt: new Date().toISOString(),
+          });
           await markRecipePackageCompleted(recipePackage.id);
           onComplete?.();
           onClose();
@@ -413,7 +430,13 @@ function CookingCompleteModal({ recipePackage, ingredientIds, onClose, onComplet
       if (error instanceof ApiError) {
         if (error.body?.error?.code === "AUTH_REQUIRED" || error.status === 401) {
           try {
-            await enqueueOperation({ id: operationId, kind: "cooking_complete", payload, createdAt: new Date().toISOString() });
+            await enqueueOperation({
+              userId: data?.session.user?.id,
+              id: operationId,
+              kind: "cooking_complete",
+              payload,
+              createdAt: new Date().toISOString(),
+            });
             await markRecipePackageCompleted(recipePackage.id);
             onComplete?.();
             onClose();

@@ -1,6 +1,6 @@
 # CooCoo integrated MVP handoff
 
-Last verified: 2026-09-05 (Asia/Taipei)
+Last verified: 2026-09-06 (Asia/Taipei)
 
 This is the canonical cross-model handoff. It summarizes decisions and evidence; it is not a verbatim chat transcript and contains no credentials.
 
@@ -51,11 +51,15 @@ At this handoff, `main` and the integration branch shared commit `ebd8d49` befor
 - Gemini receipt recognition parses structured OCR fields with per-field confidence and fails closed on invalid JSON, pure QR images, or non-itemized content.
 - Five real frontend routes with separate Today and Shopping CSS, mandatory ten-step onboarding with tag-based individual flavor input and custom cookware, auth recovery, card-based shopping UI, recipe package cooking flow, and dream dashboard integration.
 - PWA manifest/service worker, IndexedDB recipe packages, Cache Storage images, wake-lock attempt, voice commands where supported, and an offline operation queue foundation.
-- Local verification on 2026-09-05: `bun run verify` passed 93 tests across 16 files, lint, Web production build, and API typecheck.
+- Published-recipe catalog foundation: inventory-only and opt-in small-purchase recommendations, NT$100 user default, whole-package reference pricing, explicit dream-goal spending reminder, owner controls, quality/safety reports, and text-only scheduled generation with a NT$300 monthly reservation cap.
+- Demand-driven catalog jobs use three gates (deterministic rules, independent quality review, independent food-safety review), no more than 50 candidates per month, and defer budget-blocked work without consuming a retry.
+- Offline cooking replay is bound to the signed-in user and operation ID; unowned legacy operations require a visible preview and confirmation before adoption.
+- Local verification on 2026-09-06: `bun run verify` passed 114 tests across 20 files, lint, Web production build, API typecheck, and all migrations in PGlite.
 
 ### Cloud evidence
 
-- Supabase project `cpyvizycjvburtpljxiu` has three applied migrations: integrated schema, advisor hardening, and persisted goal/meal-plan settings.
+- Supabase project `cpyvizycjvburtpljxiu` has five applied migrations: integrated schema, advisor hardening, persisted goal/meal-plan settings, recipe catalog automation, and catalog advisor indexes.
+- Catalog tables and private transaction implementations are live with browser execution revoked; `recipe_catalog_control.paused` remains enabled until seed, price-reference, and Preview checks finish.
 - A rollback-only remote transaction verified goal create/update/read, immutable amount events, idempotent weekly plan creation, recipe persistence, and meal rescheduling without retaining test data.
 - Sensitive RPC execution is restricted to database administration and `service_role`.
 - Security Advisor had one warning: leaked-password protection is disabled. Beta currently uses Passwordless/Google; enable it before offering password login.
@@ -65,9 +69,10 @@ At this handoff, `main` and the integration branch shared commit `ebd8d49` befor
 
 - Google OAuth configuration exists, and local recovery tests pass, but a fresh end-to-end Google login must be rechecked in the target Preview domain before calling it complete.
 - Receipt upload/OCR/correction/confirmation needs full browser-to-cloud mobile acceptance with a real receipt image.
-- The offline queue does not yet have the complete `/sync` server contract and cross-device conflict review UI.
+- `/sync`, idempotent cooking replay, conflict acknowledgement, and legacy-operation preview are implemented locally; mobile reconnect acceptance remains pending.
 - Flight-mode cooking, timer restoration, missing-image fallback, wake-lock behavior, and one-time reconnect sync still require iPhone Safari and Android Chrome testing.
 - Render API Preview, Vercel Web Preview, cold-start measurement, Preview rewrites, and production deployment are not complete.
+- The Render Blueprint defines an hourly catalog Cron Job, but the service and its secrets are not verified in Render yet. The initial catalog seed runs idempotently from the deployed API/worker; no unsourced price rows are inserted.
 - The brand marketing-site source has not been migrated into this TypeScript workspace; local `marketing-site/.next` and `coocoo-webapp/dist` are generated remnants, not source of truth.
 
 ## Public API inventory
@@ -80,9 +85,11 @@ All endpoints use `/api/v1` and the shared success/error envelopes.
 - Inventory/settings: `/inventory`, `/inventory/:id/rescue`, `/settings/fridge`, `/settings/cookware`
 - Receipts: `/receipts`, `/receipts/:id/recognize`, `/receipts/:id/confirm`
 - Recipes/cooking: `/recipes/generate`, `/recipes/:id/package`, `/cooking/outcomes`
+- Recipe catalog: `/settings/recipes`, `/recipes/recommendations`, `/recipes/:id/start`, `/recipes/:id/purchases`, `/recipes/:id/report`, `/admin/recipes/*`
+- Offline sync: `/sync`, `/sync/conflicts`, `/sync/conflicts/:id/acknowledge`
 - Goals/account/admin: `/goals`, `/goals/:id/amount-events`, `/exports`, `/admin/invites`
 
-`/sync` and a dedicated `/dashboard` endpoint remain unimplemented; the current dashboard state is assembled through `/state`.
+`/sync` and recipe catalog/settings/admin endpoints are implemented. A dedicated `/dashboard` endpoint remains unimplemented; the current dashboard state is assembled through `/state`.
 
 ## Local operation
 
@@ -110,10 +117,10 @@ The Web uses `VITE_USE_REAL_API=true` in an ignored development-local file to pr
 
 ## Recommended next delivery order
 
-1. Implement `/sync`, idempotent offline replay, and conflict review while preserving non-negative inventory.
+1. Deploy the updated API and paused catalog Cron Job, then verify the curated seed and add traceable reference prices.
 2. Run real receipt OCR from mobile upload through confirmed inventory entry and private-image access checks.
-3. Complete flight-mode cooking and reconnect acceptance on both target mobile browsers.
-4. Deploy Render and Vercel Previews, configure exact redirect/rewrite URLs, measure cold start, and rerun OAuth/cloud acceptance.
+3. Complete flight-mode cooking, legacy-operation preview, conflict acknowledgement, and reconnect acceptance on both target mobile browsers.
+4. Verify Render and Vercel Previews, exact redirect/rewrite URLs, cold start, and OAuth/cloud acceptance before enabling catalog generation.
 5. Give 10–30 invited testers the Preview only after the full acceptance checklist in `docs/PREVIEW_SETUP.md` passes.
 
 ## Handoff protocol
