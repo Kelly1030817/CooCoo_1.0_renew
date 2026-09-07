@@ -77,6 +77,21 @@
   font-size: 15px;
 }
 
+/* Pocket Chef CooCoo Consultation Entry */
+.today-page .chef-consultation-capsule {
+  margin: 0 0 16px;
+}
+
+@keyframes chefBlink {
+  0%, 88%, 100% { transform: scaleY(1); }
+  94% { transform: scaleY(0.12); }
+}
+
+.today-page .chef-eyes {
+  animation: chefBlink 4.2s infinite;
+  transform-origin: center;
+}
+
 /* 2. Notification capsule: 熟食庫存 (溫和綠色提醒) */
 .today-page .cooked-inventory-capsule {
   display: flex;

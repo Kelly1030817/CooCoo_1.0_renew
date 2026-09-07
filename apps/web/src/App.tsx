@@ -86,7 +86,15 @@ export default function App() {
   const Page = pages[route];
   if(checkingCloud || (onboardingComplete && authStatus === "loading"))return <main className="onboarding-shell"><p className="eyebrow">CooCoo</p><h1 className="text-2xl font-extrabold text-slate-blue">正在找回你的通行證…</h1></main>;
   if(onboardingComplete && supabase && authStatus === "signed-out")return <AuthRecoveryPanel busy={reauthBusy} error={reauthError} onGoogleSignIn={() => { void restartGoogleAuth(); }} />;
-  if (!onboardingComplete) return <OnboardingPage onComplete={() => setOnboardingComplete(true)} />;
+  if (!onboardingComplete)
+    return (
+      <OnboardingPage
+        onComplete={() => {
+          navigate("dream");
+          setOnboardingComplete(true);
+        }}
+      />
+    );
   return (
     <>
       <Header enabled={stateEnabled} />

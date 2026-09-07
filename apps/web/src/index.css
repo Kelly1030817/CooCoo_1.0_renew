@@ -99,6 +99,26 @@ button {
 .toast-in {
   animation: toast-in 0.2s ease-out;
 }
+@keyframes dreamSpringSettle {
+  0% {
+    opacity: 0;
+    transform: scale(0.92) translateY(24px);
+  }
+  65% {
+    opacity: 1;
+    transform: scale(1.02) translateY(-2px);
+  }
+  85% {
+    transform: scale(0.99) translateY(1px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+.animate-dream-settle {
+  animation: dreamSpringSettle 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
 @keyframes scan {
   0%,
   100% {

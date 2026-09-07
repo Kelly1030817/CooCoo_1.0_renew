@@ -9,10 +9,12 @@ import { useAppState } from "@/entities/app-state/model";
 import { UiContext } from "@/app/ui-context";
 import { GoalSetupModal } from "@/features/goal-setup/GoalSetupModal";
 import { GoalSettingsModal } from "@/features/goal-setup/GoalSettingsModal";
+import { useAppRoute } from "@/app/routing/useAppRoute";
 
 export function RoiPage() {
   const { data } = useAppState();
   const ui = useContext(UiContext);
+  const { navigate } = useAppRoute();
   if (!data) return null;
   const weekKey = getWeekStart(new Date())!;
   const weeklyMeals = data.habitProgress.weeklyCompletions[weekKey] || 0;
@@ -89,7 +91,7 @@ export function RoiPage() {
           調整計畫
         </button>
       </section>
-      <section className="rounded-3xl border border-primary/10 bg-white p-lg shadow-sm">
+      <section className="rounded-3xl border border-primary/10 bg-white p-lg shadow-sm animate-dream-settle">
         <div className="flex flex-col items-center gap-lg sm:flex-row">
           <div
             className="radial-progress flex h-36 w-36 shrink-0 items-center justify-center rounded-full"
@@ -172,6 +174,28 @@ export function RoiPage() {
             {weeklyVegetables} 種
           </strong>
         </div>
+      </div>
+      <div className="pt-2 pb-6">
+        <button
+          type="button"
+          onClick={() => navigate("today")}
+          className="w-full rounded-2xl bg-amber-600 hover:bg-amber-700 active:scale-[0.98] py-3.5 px-4 text-center font-black text-white text-sm shadow-md transition-all flex items-center justify-center gap-2"
+        >
+          <span>確認計畫無誤，開啟今日自煮</span>
+          <svg
+            className="w-4 h-4 text-white"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M5 12h14" />
+            <path d="m12 5 7 7-7 7" />
+          </svg>
+        </button>
       </div>
     </div>
   );

@@ -3,6 +3,7 @@ import type { MealPlanResult, MealPostpone, MealSlot, PlannedMeal, RecipePackage
 import { useAppState } from "@/entities/app-state/model";
 import { UiContext } from "@/app/ui-context";
 import { RecipePackageModal } from "@/features/cooking/RecipeModal";
+import { ChefRevisitModal } from "./ChefRevisitModal";
 import { api, json } from "@/shared/api/client";
 import { Modal, ModalHeader } from "@/shared/ui/Modal";
 import "./TodayPage.css";
@@ -72,6 +73,7 @@ export function TodayPage() {
   const [decisionError, setDecisionError] = useState("");
   const [planError, setPlanError] = useState("");
   const [weekExpanded, setWeekExpanded] = useState(false);
+  const [revisitModalOpen, setRevisitModalOpen] = useState(false);
   const today = dateOnly();
 
   useEffect(() => {
@@ -237,6 +239,60 @@ export function TodayPage() {
             )}
           </span>
           {energyLow ? "低體力模式已開" : "今天有點累"}
+        </button>
+      </section>
+
+      {/* Pocket Chef CooCoo Consultation Entry Capsule */}
+      <section className="chef-consultation-capsule" aria-label="主廚 CooCoo 相談室">
+        <button
+          type="button"
+          onClick={() => setRevisitModalOpen(true)}
+          className="w-full bg-amber-50/90 hover:bg-amber-100/90 border border-amber-200/90 rounded-2xl p-3 flex items-center justify-between shadow-2xs transition-all text-left group"
+        >
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-full bg-amber-600 text-white flex items-center justify-center shadow-xs shrink-0 group-hover:scale-105 transition-transform">
+              <svg
+                className="w-4 h-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z" />
+                <line className="chef-eyes" x1="9" y1="12" x2="9.01" y2="12" />
+                <line className="chef-eyes" x1="15" y1="12" x2="15.01" y2="12" />
+                <line x1="6" y1="17" x2="18" y2="17" />
+              </svg>
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <span className="font-black text-xs text-amber-950">主廚 CooCoo 相談室</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                <span className="text-[9px] font-bold text-amber-900 bg-amber-100 px-1.5 py-0.2 rounded">
+                  隨行速決
+                </span>
+              </div>
+              <p className="text-[11px] text-stone-600 mt-0.5 font-medium">
+                太累想煮快手菜、臨時聚餐要順延？點此向主廚諮詢
+              </p>
+            </div>
+          </div>
+          <span className="text-[11px] font-black text-amber-800 bg-white border border-amber-200/80 px-2.5 py-1 rounded-xl shadow-2xs group-hover:bg-amber-600 group-hover:text-white transition-all flex items-center gap-1 shrink-0 ml-2">
+            <span>諮詢主廚</span>
+            <svg
+              className="w-3 h-3"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              aria-hidden="true"
+            >
+              <path d="m9 18 6-6-6-6" />
+            </svg>
+          </span>
         </button>
       </section>
 
@@ -546,6 +602,23 @@ export function TodayPage() {
             </ol>
           )}
         </section>
+      )}
+
+      {revisitModalOpen && (
+        <ChefRevisitModal
+          onClose={() => setRevisitModalOpen(false)}
+          onSelectLowEnergy={() => {
+            setEnergyLow(true);
+            ui.toast("已為你啟動低體力模式！");
+          }}
+          onStartCooking={recommended ? start : undefined}
+          inventoryNames={(data?.inventory || []).map((item) => item.name)}
+          weeklyTarget={data?.cookingPlan?.weeklyCookingMeals || 3}
+          onAdjustTarget={(newTarget) => {
+            ui.toast(`已將本週目標調整為 ${newTarget} 餐`);
+          }}
+          outsideMealPrice={outsidePrice}
+        />
       )}
     </div>
   );
