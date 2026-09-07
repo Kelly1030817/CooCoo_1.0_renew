@@ -228,6 +228,47 @@
     .golden-beacon-ripple {
       animation: goldenRipple 0.6s cubic-bezier(0.15, 0.85, 0.35, 1) forwards;
     }
+
+    /* Transition Option 2: Spark Leap Parabolic Trajectory from Button to Today Tab */
+    @keyframes sparkArcFlyToToday {
+      0% {
+        transform: translate(0, 0) scale(1);
+        opacity: 1;
+      }
+      30% {
+        transform: translate(-45px, -60px) scale(1.4);
+        opacity: 1;
+      }
+      70% {
+        transform: translate(-110px, -18px) scale(1.1);
+        opacity: 0.95;
+      }
+      100% {
+        transform: translate(-154px, 48px) scale(0.5);
+        opacity: 0;
+      }
+    }
+    .animate-spark-flight {
+      animation: sparkArcFlyToToday 0.58s cubic-bezier(0.18, 0.9, 0.28, 1) forwards;
+    }
+
+    /* Fade & Gentle Scale Lift */
+    @keyframes fadeScaleIn {
+      0% { opacity: 0; transform: scale(0.97); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+    .animate-fade-scale-in {
+      animation: fadeScaleIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    /* Bottom Sheet Slide Up Animation */
+    @keyframes slideUpSheet {
+      0% { transform: translateY(100%); }
+      100% { transform: translateY(0); }
+    }
+    .animate-sheet-up {
+      animation: slideUpSheet 0.38s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
   </style>
 </head>
 <body class="bg-stone-100 text-stone-900 min-h-screen p-3 md:p-6 flex flex-col items-center antialiased">
@@ -278,8 +319,55 @@
           <option value="7">07 自煮目標（目標餐數規劃）</option>
           <option value="8">08 圓夢目標</option>
           <option value="9">09 登入同步</option>
-          <option value="10">10 通行證（Cedarville Cursive 親簽+衝擊波蓋章）</option>
+          <option value="10">10 通行證（Cedarville Cursive 親簽+現代工坊圓章）</option>
         </select>
+      </div>
+    </div>
+
+    <!-- Interactive Experimentation Controls: Transition Motion & Dialogue Presentation -->
+    <div class="pt-2.5 border-t border-stone-200 grid grid-cols-1 md:grid-cols-2 gap-3 text-left">
+      <!-- 1. Transition Motion (3 Schemes) -->
+      <div class="space-y-1.5">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-black text-stone-800 flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/></svg>
+            <span>1. 轉場動態視角（點選即刻播放）：</span>
+          </span>
+          <button type="button" onclick="replayTransitionNow()" class="text-[10px] font-black px-2 py-0.5 rounded-md bg-amber-600 hover:bg-amber-700 active:scale-95 text-white shadow-2xs flex items-center gap-1 transition-all">
+            <svg class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <span>▶ 立即重播</span>
+          </button>
+        </div>
+        <div class="grid grid-cols-3 gap-1 bg-stone-100 p-1 rounded-xl">
+          <button type="button" onclick="replayTransitionNow('pan')" id="btn-motion-pan" class="py-1.5 px-2 rounded-lg text-xs font-black transition-all bg-white text-stone-900 shadow-2xs text-center">
+            方案一：空間平移
+          </button>
+          <button type="button" onclick="replayTransitionNow('spark')" id="btn-motion-spark" class="py-1.5 px-2 rounded-lg text-xs font-bold transition-all text-stone-500 hover:text-stone-900 text-center">
+            方案二：火種躍入
+          </button>
+          <button type="button" onclick="replayTransitionNow('collapse')" id="btn-motion-collapse" class="py-1.5 px-2 rounded-lg text-xs font-bold transition-all text-stone-500 hover:text-stone-900 text-center">
+            方案三：卷軸收闔
+          </button>
+        </div>
+      </div>
+
+      <!-- 2. Dialogue Style (Confirmed Form B) -->
+      <div class="space-y-1.5">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-black text-stone-800 flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/></svg>
+            <span>2. 主廚對話呈現（已採納形式 B）：</span>
+          </span>
+          <span id="badge-current-dialogue" class="text-[9px] font-bold font-mono px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-900 border border-emerald-300">形式 B · 浮動半屏抽屜 (拍板)</span>
+        </div>
+        <div class="grid grid-cols-2 gap-1 bg-stone-100 p-1 rounded-xl">
+          <button type="button" onclick="setDialogueStyle('inline')" id="btn-dialogue-inline" class="py-1.5 px-2 rounded-lg text-xs font-bold transition-all text-stone-500 hover:text-stone-900 text-center">
+            形式 A：整頁自然嵌入
+          </button>
+          <button type="button" onclick="setDialogueStyle('bottom-sheet')" id="btn-dialogue-sheet" class="py-1.5 px-2 rounded-lg text-xs font-black transition-all bg-white text-stone-900 shadow-2xs text-center">
+            形式 B：浮動半屏抽屜
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -418,7 +506,18 @@
 
       <!-- Dream Dashboard Bottom CTA Bar (After Passport Lands) -->
       <div id="dream-bottom-bar" class="hidden p-3 bg-white border-t border-stone-200/80 sticky bottom-0 z-30 space-y-2">
-        <button onclick="confirmDreamAndGoToToday()" class="spring-btn w-full bg-amber-600 hover:bg-amber-700 active:scale-95 text-white font-black py-2.5 rounded-xl text-xs shadow-md flex items-center justify-center gap-1.5 transition-all">
+        <div id="dream-transition-status-pill" class="text-[10px] text-stone-700 font-bold bg-amber-50/90 py-1.5 px-2.5 rounded-xl border border-amber-200/80 flex items-center justify-between">
+          <div class="flex items-center gap-1.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+            <span>轉場預覽：<strong id="label-motion-preview" class="text-amber-900 font-black">方案一（空間平移）</strong></span>
+          </div>
+          <div class="flex items-center gap-1">
+            <button type="button" onclick="setTransitionMotion('pan')" id="pill-motion-pan" class="px-1.5 py-0.5 rounded text-[9px] font-black border border-amber-600 bg-amber-600 text-white shadow-2xs transition-all">方案一</button>
+            <button type="button" onclick="setTransitionMotion('spark')" id="pill-motion-spark" class="px-1.5 py-0.5 rounded text-[9px] font-bold border border-amber-200 bg-white text-stone-600 hover:text-stone-900 transition-all">方案二</button>
+            <button type="button" onclick="setTransitionMotion('collapse')" id="pill-motion-collapse" class="px-1.5 py-0.5 rounded text-[9px] font-bold border border-amber-200 bg-white text-stone-600 hover:text-stone-900 transition-all">方案三</button>
+          </div>
+        </div>
+        <button id="btn-confirm-dream-today" onclick="confirmDreamAndGoToToday()" class="spring-btn w-full bg-amber-600 hover:bg-amber-700 active:scale-95 text-white font-black py-2.5 rounded-xl text-xs shadow-md flex items-center justify-center gap-1.5 transition-all">
           <span>確認計畫無誤，開啟今日自煮 ➔</span>
         </button>
         <button onclick="replayPassportFlow()" class="spring-btn w-full bg-stone-100 hover:bg-stone-200 active:scale-95 text-stone-700 font-bold py-2 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all border border-stone-200">
@@ -450,6 +549,25 @@
           <span class="text-[9px] font-bold">圓夢</span>
         </div>
       </nav>
+
+      <!-- Cooking Spark Particle for Option 2 -->
+      <div id="cooking-spark-particle" class="hidden absolute pointer-events-none z-50 text-amber-500" style="left: calc(50% - 16px); bottom: 85px; filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.95));">
+        <svg class="w-8 h-8 animate-pulse" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2c1.2 3.8 3.8 5.6 4.8 9.2.9 3.2-.2 6.8-2.8 8.6-2.5 1.7-5.9 1.5-8.2-.5-2.2-1.9-2.9-5-1.7-7.7 1.3-2.9 4.2-4.5 4.9-7.6.2-.7.3-1.4.3-2 .8 1.1 1.7 2.2 2.7 3.2z"/>
+        </svg>
+      </div>
+
+      <!-- Floating Button to Summon Bottom Sheet (when dismissed in Form B) -->
+      <button id="btn-summon-sheet" onclick="toggleBottomSheet(true)" class="hidden absolute right-3.5 bottom-16 bg-amber-600 hover:bg-amber-700 active:scale-95 text-white py-2 px-3 rounded-full shadow-lg z-30 transition-all flex items-center gap-1.5 text-[11px] font-black border border-amber-400/40">
+        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+        <span>主廚速決</span>
+      </button>
+
+      <!-- Form B: Bottom Sheet Backdrop & Drawer Modal -->
+      <div id="revisit-sheet-backdrop" onclick="toggleBottomSheet(false)" class="hidden absolute inset-0 bg-stone-950/40 backdrop-blur-[2px] z-40 transition-opacity duration-300"></div>
+      <div id="revisit-bottom-sheet" class="hidden absolute left-0 right-0 bottom-0 bg-[#fdfcf9] border-t border-amber-900/15 rounded-t-3xl shadow-2xl z-50 p-4 space-y-3 max-h-[84%] overflow-y-auto">
+        <!-- Injected via JS -->
+      </div>
 
     </div>
   </div>
@@ -506,6 +624,81 @@
     let isTicketFlying = false;
     let isInDreamDashboard = false;
     let stampOption = 'B'; // 'B' (現代工坊圓章，已拍板) | 'A' (朱紅金石方印)
+    let transitionMotionOption = 'pan'; // 'pan' (方案一：空間平移) | 'spark' (方案二：火種躍入) | 'collapse' (方案三：卷軸收闔)
+    let dialoguePresentationStyle = 'bottom-sheet'; // 'bottom-sheet' (形式 B：浮動半屏抽屜，已拍板) | 'inline' (形式 A：整頁自然嵌入)
+    let isBottomSheetOpen = false;
+
+    function setTransitionMotion(motion) {
+      transitionMotionOption = motion;
+      const btnPan = document.getElementById('btn-motion-pan');
+      const btnSpark = document.getElementById('btn-motion-spark');
+      const btnCollapse = document.getElementById('btn-motion-collapse');
+      const badge = document.getElementById('badge-current-motion');
+      const previewLabel = document.getElementById('label-motion-preview');
+
+      const pillPan = document.getElementById('pill-motion-pan');
+      const pillSpark = document.getElementById('pill-motion-spark');
+      const pillCollapse = document.getElementById('pill-motion-collapse');
+
+      const activeClass = 'py-1.5 px-2 rounded-lg text-xs font-black transition-all bg-white text-stone-900 shadow-2xs text-center';
+      const inactiveClass = 'py-1.5 px-2 rounded-lg text-xs font-bold transition-all text-stone-500 hover:text-stone-900 text-center';
+
+      const pillActive = 'px-1.5 py-0.5 rounded text-[9px] font-black border border-amber-600 bg-amber-600 text-white shadow-2xs transition-all';
+      const pillInactive = 'px-1.5 py-0.5 rounded text-[9px] font-bold border border-amber-200 bg-white text-stone-600 hover:text-stone-900 transition-all';
+
+      if (btnPan) btnPan.className = (motion === 'pan') ? activeClass : inactiveClass;
+      if (btnSpark) btnSpark.className = (motion === 'spark') ? activeClass : inactiveClass;
+      if (btnCollapse) btnCollapse.className = (motion === 'collapse') ? activeClass : inactiveClass;
+
+      if (pillPan) pillPan.className = (motion === 'pan') ? pillActive : pillInactive;
+      if (pillSpark) pillSpark.className = (motion === 'spark') ? pillActive : pillInactive;
+      if (pillCollapse) pillCollapse.className = (motion === 'collapse') ? pillActive : pillInactive;
+
+      let name = '方案一（空間平移）';
+      if (motion === 'spark') name = '方案二（火種躍入）';
+      if (motion === 'collapse') name = '方案三（卷軸收闔）';
+
+      if (badge) badge.innerText = motion === 'pan' ? '方案一' : (motion === 'spark' ? '方案二' : '方案三');
+      if (previewLabel) previewLabel.innerText = name;
+    }
+
+    function replayTransitionNow(motion = null) {
+      if (motion) {
+        setTransitionMotion(motion);
+      }
+      // Clean reset to Dream Dashboard
+      renderDreamDashboardView();
+
+      // Trigger the transition animation seamlessly after brief tick
+      setTimeout(() => {
+        confirmDreamAndGoToToday();
+      }, 120);
+    }
+
+    function setDialogueStyle(style) {
+      dialoguePresentationStyle = style;
+      const btnInline = document.getElementById('btn-dialogue-inline');
+      const btnSheet = document.getElementById('btn-dialogue-sheet');
+      const badge = document.getElementById('badge-current-dialogue');
+      const previewLabel = document.getElementById('label-dialogue-preview');
+
+      const activeClass = 'py-1.5 px-2 rounded-lg text-xs font-black transition-all bg-white text-stone-900 shadow-2xs text-center';
+      const inactiveClass = 'py-1.5 px-2 rounded-lg text-xs font-bold transition-all text-stone-500 hover:text-stone-900 text-center';
+
+      if (btnInline) btnInline.className = (style === 'inline') ? activeClass : inactiveClass;
+      if (btnSheet) btnSheet.className = (style === 'bottom-sheet') ? activeClass : inactiveClass;
+
+      let name = '形式 A（整頁自然嵌入）';
+      if (style === 'bottom-sheet') name = '形式 B（浮動半屏抽屜）';
+
+      if (badge) badge.innerText = style === 'inline' ? '形式 A' : '形式 B · 浮動半屏抽屜 (拍板)';
+      if (previewLabel) previewLabel.innerText = name;
+
+      // If already in revisit mode, re-render immediately
+      if (appMode === 'revisit') {
+        renderTodayView();
+      }
+    }
 
     function getStampHtml(option) {
       if (option === 'A') {
@@ -699,27 +892,50 @@
         stepBadge.classList.remove('hidden');
         if (tabToday) tabToday.className = 'flex flex-col items-center gap-0.5 text-stone-400 cursor-pointer';
         if (tabDream) tabDream.className = 'flex flex-col items-center gap-0.5 text-stone-400 transition-all duration-300 cursor-pointer';
+        toggleBottomSheet(false);
+        const btnSummon = document.getElementById('btn-summon-sheet');
+        if (btnSummon) btnSummon.classList.add('hidden');
         renderCurrentStep();
       } else {
-        tabRevisit.className = 'flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-black transition-all bg-white text-stone-900 shadow-xs';
-        tabOnboard.className = 'flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold transition-all text-stone-500 hover:text-stone-900';
-        stepBox.classList.add('hidden');
-        revisitBox.classList.remove('hidden');
-        if (bottomBar) bottomBar.classList.add('hidden');
-        if (dreamBottomBar) dreamBottomBar.classList.add('hidden');
-        jumpWrapper.classList.add('hidden');
-        progBar.classList.add('hidden');
-        stepBadge.classList.add('hidden');
-        eyebrow.innerText = '日常回訪 · 今日口袋主廚 CooCoo';
-        if (tabToday) tabToday.className = 'flex flex-col items-center gap-0.5 text-amber-600 font-bold';
-        if (tabDream) tabDream.className = 'flex flex-col items-center gap-0.5 text-stone-400 transition-all duration-300 cursor-pointer';
+        renderTodayView();
       }
     }
 
     function jumpToStep(step) {
       isInDreamDashboard = false;
       isTicketFlying = false;
+      appMode = 'onboarding';
       currentStep = step;
+
+      // Close bottom sheet & hide summon button
+      toggleBottomSheet(false);
+      const btnSummon = document.getElementById('btn-summon-sheet');
+      if (btnSummon) btnSummon.classList.add('hidden');
+
+      // Reset and hide revisit box
+      const revisitBox = document.getElementById('revisit-container');
+      if (revisitBox) {
+        revisitBox.classList.add('hidden');
+        revisitBox.style.transform = '';
+        revisitBox.style.opacity = '';
+        revisitBox.style.transition = '';
+      }
+
+      // Reset and reveal step container
+      const stepBox = document.getElementById('step-content-box');
+      if (stepBox) {
+        stepBox.classList.remove('hidden');
+        stepBox.style.transform = '';
+        stepBox.style.opacity = '';
+        stepBox.style.transition = '';
+      }
+
+      // Sync header mode buttons
+      const tabOnboard = document.getElementById('tab-onboarding');
+      const tabRevisit = document.getElementById('tab-revisit');
+      if (tabOnboard) tabOnboard.className = 'flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-black transition-all bg-white text-stone-900 shadow-xs';
+      if (tabRevisit) tabRevisit.className = 'flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold transition-all text-stone-500 hover:text-stone-900';
+
       if (step === 10) {
         profile.isStamped = false;
         isChefSigning = false;
@@ -732,17 +948,23 @@
       const dreamBottomBar = document.getElementById('dream-bottom-bar');
       const bottomBar = document.getElementById('bottom-bar');
       const progBar = document.getElementById('prog-bar');
+      const jumpWrapper = document.getElementById('step-jump-wrapper');
+      const stepBadge = document.getElementById('step-number-indicator');
+
       if (dreamBottomBar) dreamBottomBar.classList.add('hidden');
       if (bottomBar) {
         bottomBar.classList.remove('hidden');
         bottomBar.classList.remove('opacity-40', 'pointer-events-none');
       }
       if (progBar) progBar.classList.remove('hidden');
+      if (jumpWrapper) jumpWrapper.classList.remove('hidden');
+      if (stepBadge) stepBadge.classList.remove('hidden');
 
       const dreamTab = document.getElementById('nav-tab-dream');
-      if (dreamTab) {
-        dreamTab.className = 'flex flex-col items-center gap-0.5 text-stone-400 transition-all duration-300 cursor-pointer';
-      }
+      const todayTab = document.getElementById('nav-tab-today');
+      if (dreamTab) dreamTab.className = 'flex flex-col items-center gap-0.5 text-stone-400 transition-all duration-300 cursor-pointer';
+      if (todayTab) todayTab.className = 'flex flex-col items-center gap-0.5 text-stone-400 cursor-pointer';
+
       renderCurrentStep();
     }
 
@@ -909,7 +1131,10 @@
 
     function renderDreamDashboardView() {
       isInDreamDashboard = true;
+      appMode = 'onboarding';
+
       const container = document.getElementById('step-content-box');
+      const revisitBox = document.getElementById('revisit-container');
       const bottomBar = document.getElementById('bottom-bar');
       const dreamBottomBar = document.getElementById('dream-bottom-bar');
       const eyebrow = document.getElementById('step-eyebrow');
@@ -917,24 +1142,62 @@
       const progBar = document.getElementById('prog-bar');
       const dreamTab = document.getElementById('nav-tab-dream');
       const todayTab = document.getElementById('nav-tab-today');
+      const tabOnboard = document.getElementById('tab-onboarding');
+      const tabRevisit = document.getElementById('tab-revisit');
+      const jumpWrapper = document.getElementById('step-jump-wrapper');
+      const btnSummon = document.getElementById('btn-summon-sheet');
+
+      // Dismiss bottom sheet & backdrop & summon button
+      toggleBottomSheet(false);
+      if (btnSummon) btnSummon.classList.add('hidden');
+
+      // Reset and hide revisit box
+      if (revisitBox) {
+        revisitBox.classList.add('hidden');
+        revisitBox.style.transform = '';
+        revisitBox.style.opacity = '';
+        revisitBox.style.transition = '';
+      }
+
+      // Reset and reveal step / dream container
+      if (container) {
+        container.classList.remove('hidden');
+        container.style.transform = '';
+        container.style.opacity = '';
+        container.style.transition = '';
+      }
+
+      // Sync header mode tabs
+      if (tabOnboard) tabOnboard.className = 'flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-black transition-all bg-white text-stone-900 shadow-xs';
+      if (tabRevisit) tabRevisit.className = 'flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold transition-all text-stone-500 hover:text-stone-900';
 
       // Update Top Nav
-      eyebrow.innerText = '圓夢看板 · 首張通行證入庫';
-      numberInd.innerText = 'DREAM';
-      numberInd.className = 'text-[10px] font-mono font-black text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md';
-      progBar.classList.add('hidden');
+      if (jumpWrapper) jumpWrapper.classList.remove('hidden');
+      if (eyebrow) eyebrow.innerText = '圓夢看板 · 首張通行證入庫';
+      if (numberInd) {
+        numberInd.classList.remove('hidden');
+        numberInd.innerText = 'DREAM';
+        numberInd.className = 'text-[10px] font-mono font-black text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md';
+      }
+      if (progBar) progBar.classList.add('hidden');
 
       // Bottom Bar switch
       if (bottomBar) bottomBar.classList.add('hidden');
-      if (dreamBottomBar) dreamBottomBar.classList.remove('hidden');
+      if (dreamBottomBar) {
+        dreamBottomBar.classList.remove('hidden');
+        dreamBottomBar.style.display = '';
+      }
 
       // Bottom Nav Tab Highlight
       if (dreamTab) {
-        dreamTab.className = 'flex flex-col items-center gap-0.5 text-amber-600 font-bold';
+        dreamTab.className = 'flex flex-col items-center gap-0.5 text-amber-600 font-bold cursor-pointer';
       }
       if (todayTab) {
         todayTab.className = 'flex flex-col items-center gap-0.5 text-stone-400 cursor-pointer';
       }
+
+      // Sync pills & preview label
+      setTransitionMotion(transitionMotionOption);
 
       const slotsCount = Math.max(1, profile.plannedMealSlots.length);
       const perMeal = Math.floor(profile.dailyMealBudget / slotsCount);
@@ -1087,9 +1350,457 @@
 
     function confirmDreamAndGoToToday() {
       if (window.navigator && window.navigator.vibrate) {
-        window.navigator.vibrate(20);
+        window.navigator.vibrate(25);
       }
-      switchAppMode('revisit');
+
+      const stepBox = document.getElementById('step-content-box');
+      const dreamBottomBar = document.getElementById('dream-bottom-bar');
+      const dreamTab = document.getElementById('nav-tab-dream');
+      const todayTab = document.getElementById('nav-tab-today');
+
+      if (dreamBottomBar) dreamBottomBar.classList.add('hidden');
+
+      if (transitionMotionOption === 'pan') {
+        // 方案一：空間平移推進（由右向左滑動）
+        stepBox.style.transition = 'transform 0.42s cubic-bezier(0.2, 0.9, 0.25, 1), opacity 0.35s';
+        stepBox.style.transform = 'translateX(100%)';
+        stepBox.style.opacity = '0';
+
+        setTimeout(() => {
+          if (dreamTab) dreamTab.className = 'flex flex-col items-center gap-0.5 text-stone-400 transition-colors cursor-pointer';
+          if (todayTab) {
+            todayTab.classList.remove('tab-impact-pulse');
+            void todayTab.offsetWidth;
+            todayTab.classList.add('tab-impact-pulse', 'text-amber-600', 'font-black');
+          }
+        }, 120);
+
+        setTimeout(() => {
+          stepBox.style.transform = '';
+          stepBox.style.opacity = '';
+          stepBox.style.transition = '';
+          renderTodayView('pan');
+        }, 420);
+
+      } else if (transitionMotionOption === 'spark') {
+        // 方案二：自煮火種點燃·躍入今日 Tab
+        const sparkEl = document.getElementById('cooking-spark-particle');
+        if (sparkEl) {
+          sparkEl.classList.remove('hidden');
+          sparkEl.classList.remove('animate-spark-flight');
+          void sparkEl.offsetWidth;
+          sparkEl.classList.add('animate-spark-flight');
+        }
+
+        setTimeout(() => {
+          if (sparkEl) {
+            sparkEl.classList.add('hidden');
+            sparkEl.classList.remove('animate-spark-flight');
+          }
+          if (dreamTab) dreamTab.className = 'flex flex-col items-center gap-0.5 text-stone-400 transition-colors cursor-pointer';
+          if (todayTab) {
+            todayTab.classList.remove('tab-impact-pulse');
+            void todayTab.offsetWidth;
+            todayTab.classList.add('tab-impact-pulse', 'text-amber-600', 'font-black');
+          }
+          if (window.navigator && window.navigator.vibrate) {
+            window.navigator.vibrate([15, 30, 20]);
+          }
+          renderTodayView('spark');
+        }, 540);
+
+      } else if (transitionMotionOption === 'collapse') {
+        // 方案三：卷軸向上收闔歸位
+        stepBox.style.transition = 'transform 0.36s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s';
+        stepBox.style.transform = 'scaleY(0.85) translateY(-26px)';
+        stepBox.style.opacity = '0';
+
+        setTimeout(() => {
+          if (dreamTab) dreamTab.className = 'flex flex-col items-center gap-0.5 text-stone-400 transition-colors cursor-pointer';
+          if (todayTab) {
+            todayTab.className = 'flex flex-col items-center gap-0.5 text-amber-600 font-bold';
+          }
+          stepBox.style.transform = '';
+          stepBox.style.opacity = '';
+          stepBox.style.transition = '';
+          renderTodayView('collapse');
+        }, 360);
+      }
+    }
+
+    function renderTodayView(motionSource = null) {
+      appMode = 'revisit';
+      const tabOnboard = document.getElementById('tab-onboarding');
+      const tabRevisit = document.getElementById('tab-revisit');
+      const stepBox = document.getElementById('step-content-box');
+      const revisitBox = document.getElementById('revisit-container');
+      const bottomBar = document.getElementById('bottom-bar');
+      const dreamBottomBar = document.getElementById('dream-bottom-bar');
+      const jumpWrapper = document.getElementById('step-jump-wrapper');
+      const progBar = document.getElementById('prog-bar');
+      const stepBadge = document.getElementById('step-number-indicator');
+      const eyebrow = document.getElementById('step-eyebrow');
+      const tabToday = document.getElementById('nav-tab-today');
+      const tabDream = document.getElementById('nav-tab-dream');
+      const btnSummon = document.getElementById('btn-summon-sheet');
+
+      tabRevisit.className = 'flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-black transition-all bg-white text-stone-900 shadow-xs';
+      tabOnboard.className = 'flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold transition-all text-stone-500 hover:text-stone-900';
+      stepBox.classList.add('hidden');
+      revisitBox.classList.remove('hidden');
+      if (bottomBar) bottomBar.classList.add('hidden');
+      if (dreamBottomBar) dreamBottomBar.classList.add('hidden');
+      jumpWrapper.classList.add('hidden');
+      progBar.classList.add('hidden');
+      stepBadge.classList.add('hidden');
+      eyebrow.innerText = '日常回訪 · 今日口袋主廚 CooCoo';
+      if (tabToday) tabToday.className = 'flex flex-col items-center gap-0.5 text-amber-600 font-bold';
+      if (tabDream) tabDream.className = 'flex flex-col items-center gap-0.5 text-stone-400 transition-all duration-300 cursor-pointer';
+
+      // Transition Motion Source Styling
+      revisitBox.className = 'space-y-3';
+      revisitBox.classList.remove('animate-fade-scale-in');
+      if (motionSource === 'pan') {
+        revisitBox.style.transition = 'none';
+        revisitBox.style.transform = 'translateX(-80px)';
+        revisitBox.style.opacity = '0';
+        void revisitBox.offsetWidth;
+        revisitBox.style.transition = 'transform 0.38s cubic-bezier(0.2, 0.9, 0.25, 1), opacity 0.3s';
+        revisitBox.style.transform = 'translateX(0)';
+        revisitBox.style.opacity = '1';
+      } else if (motionSource === 'spark' || motionSource === 'collapse') {
+        void revisitBox.offsetWidth;
+        revisitBox.classList.add('animate-fade-scale-in');
+      }
+
+      // Render according to selected Dialogue Style
+      if (dialoguePresentationStyle === 'inline') {
+        if (btnSummon) btnSummon.classList.add('hidden');
+        toggleBottomSheet(false);
+        renderInlineTodayContent();
+      } else {
+        renderBottomSheetTodayContent();
+        toggleBottomSheet(true);
+      }
+    }
+
+    function renderInlineTodayContent() {
+      const revisitBox = document.getElementById('revisit-container');
+      const motionName = transitionMotionOption === 'pan' ? '方案一（空間平移）' : (transitionMotionOption === 'spark' ? '方案二（火種躍入）' : '方案三（卷軸收闔）');
+
+      revisitBox.innerHTML = `
+        <!-- Top Switcher & Replay Pill -->
+        <div class="bg-amber-50/90 border border-amber-200/80 rounded-xl p-2.5 flex items-center justify-between shadow-2xs">
+          <div class="flex items-center gap-1.5 text-[10px] text-amber-900 font-bold">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+            <span>${motionName} ＋ 形式 A（整頁嵌入）</span>
+          </div>
+          <button onclick="renderDreamDashboardView()" class="text-[10px] font-black text-amber-800 hover:text-amber-950 bg-white border border-amber-200 px-2 py-0.5 rounded-md transition-colors flex items-center gap-1 shadow-2xs">
+            <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+            <span>⟲ 回圓夢看板重選</span>
+          </button>
+        </div>
+
+        <!-- Embedded Chef Revisit Hero Card (Instant Whole Dialogue Ready) -->
+        <div class="bg-white border border-stone-200/90 rounded-2xl p-3.5 shadow-xs space-y-3">
+          <div class="flex items-start gap-2.5">
+            <div class="w-8 h-8 rounded-full bg-amber-600 text-white flex items-center justify-center shrink-0 shadow-2xs mt-0.5">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/></svg>
+            </div>
+            <div class="flex-1 space-y-1">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-black text-stone-900">哈囉！我是主廚 CooCoo</span>
+                <span class="text-[9px] font-mono text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded font-bold">今日就緒</span>
+              </div>
+              <p class="text-stone-600 text-[11px] leading-relaxed">
+                你的圓夢通行證已鎖定「<strong>${profile.dreamName}</strong>」，每煮一餐自動存入差額！我看了一下冰箱，冷藏庫還有 <strong>半盒雞蛋</strong> 與 <strong>即期青江菜</strong>。今晚需要我給你一些決策建議嗎？
+              </p>
+            </div>
+          </div>
+
+          <!-- Quick Decision Action Buttons -->
+          <div class="pt-1 space-y-1.5">
+            <div class="text-[10px] font-bold text-stone-400 flex items-center gap-1">
+              <svg class="w-3 h-3 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+              <span>主廚隨行速決清單（點擊即刻調整）：</span>
+            </div>
+            <div class="grid grid-cols-1 gap-1.5">
+              <button onclick="handleRevisitAction('tired')" class="spring-btn text-left bg-stone-50/80 hover:bg-amber-50/80 border border-stone-200/80 p-2.5 rounded-xl shadow-2xs flex items-center justify-between group transition-all">
+                <div class="flex items-center gap-2">
+                  <div class="w-6 h-6 rounded-lg bg-orange-100 text-orange-700 flex items-center justify-center shrink-0">
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                  </div>
+                  <div>
+                    <div class="font-bold text-stone-800 text-[11px] group-hover:text-amber-950">腦力透支！要 12 分鐘低體力出餐</div>
+                    <div class="text-[9px] text-stone-400">步驟 ≤ 6 · 單鍋搞定 · 免切繁複備料</div>
+                  </div>
+                </div>
+                <svg class="w-3.5 h-3.5 text-stone-300 group-hover:text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg>
+              </button>
+
+              <button onclick="handleRevisitAction('adjust')" class="spring-btn text-left bg-stone-50/80 hover:bg-amber-50/80 border border-stone-200/80 p-2.5 rounded-xl shadow-2xs flex items-center justify-between group transition-all">
+                <div class="flex items-center gap-2">
+                  <div class="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="m9 16 2 2 4-4"/></svg>
+                  </div>
+                  <div>
+                    <div class="font-bold text-stone-800 text-[11px] group-hover:text-amber-950">這週臨時聚餐多，自煮想少 1 餐</div>
+                    <div class="text-[9px] text-stone-400">生活彈性第一，目標順延不懲罰</div>
+                  </div>
+                </div>
+                <svg class="w-3.5 h-3.5 text-stone-300 group-hover:text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg>
+              </button>
+
+              <button onclick="handleRevisitAction('takeout')" class="spring-btn text-left bg-stone-50/80 hover:bg-amber-50/80 border border-stone-200/80 p-2.5 rounded-xl shadow-2xs flex items-center justify-between group transition-all">
+                <div class="flex items-center gap-2">
+                  <div class="w-6 h-6 rounded-lg bg-stone-200 text-stone-700 flex items-center justify-center shrink-0">
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/></svg>
+                  </div>
+                  <div>
+                    <div class="font-bold text-stone-800 text-[11px] group-hover:text-amber-950">今晚純放鬆！登記一次外食</div>
+                    <div class="text-[9px] text-stone-400">誠實記錄日常，主廚幫你重新分配下半週</div>
+                  </div>
+                </div>
+                <svg class="w-3.5 h-3.5 text-stone-300 group-hover:text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Dialogue Stream -->
+          <div id="revisit-stream" class="space-y-2 pt-1"></div>
+        </div>
+
+        <!-- Today Recommended Meal Card -->
+        <div class="bg-white border border-stone-200/90 rounded-2xl p-4 shadow-xs space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-black text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full flex items-center gap-1">
+              <svg class="w-3 h-3 text-amber-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 14 14"/></svg>
+              <span>今日主廚推薦菜單</span>
+            </span>
+            <span class="text-[10px] font-mono font-bold text-stone-400">25 分鐘 · 單鍋</span>
+          </div>
+
+          <div class="space-y-1">
+            <h3 class="text-sm font-black text-stone-900">番茄牛肉湯烏龍麵</h3>
+            <p class="text-[11px] text-stone-500 leading-relaxed">
+              善用冰箱即期青江菜與雞蛋，搭配牛番茄酸甜清爽開胃，高蛋白低負擔。
+            </p>
+          </div>
+
+          <div class="bg-stone-50 rounded-xl p-2.5 border border-stone-100 flex items-center justify-between text-[11px]">
+            <div class="space-y-0.5">
+              <span class="text-[9px] text-stone-400 font-bold block">本餐省下金額</span>
+              <span class="font-mono-num font-black text-emerald-700 text-sm">NT$ 110</span>
+            </div>
+            <div class="text-right text-[9px] text-stone-400">
+              <span>外食比較價 NT$ 210</span><br>
+              <span>自煮食材 NT$ 100</span>
+            </div>
+          </div>
+
+          <button onclick="triggerChefReaction('applause')" class="spring-btn w-full bg-stone-900 hover:bg-black active:scale-95 text-amber-300 font-black py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <span>開始備料（解鎖今日料理引導）</span>
+          </button>
+        </div>
+      `;
+    }
+
+    function renderBottomSheetTodayContent() {
+      const revisitBox = document.getElementById('revisit-container');
+      const bottomSheet = document.getElementById('revisit-bottom-sheet');
+      const motionName = transitionMotionOption === 'pan' ? '方案一（空間平移）' : (transitionMotionOption === 'spark' ? '方案二（火種躍入）' : '方案三（卷軸收闔）');
+
+      // Background Today Page
+      revisitBox.innerHTML = `
+        <!-- Top Switcher & Replay Pill on Today Page -->
+        <div class="bg-amber-50/90 border border-amber-200/80 rounded-xl p-2.5 flex items-center justify-between shadow-2xs">
+          <div class="flex items-center gap-1.5 text-[10px] text-amber-900 font-bold">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+            <span>形式 B：浮動半屏抽屜 (已拍板)</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button onclick="toggleBottomSheet(true)" class="text-[10px] font-black text-white bg-amber-600 hover:bg-amber-700 px-2 py-0.5 rounded-md transition-colors flex items-center gap-1 shadow-2xs">
+              <span>打開主廚速決</span>
+            </button>
+            <button onclick="renderDreamDashboardView()" class="text-[10px] font-black text-amber-800 hover:text-amber-950 bg-white border border-amber-200 px-2 py-0.5 rounded-md transition-colors flex items-center gap-1 shadow-2xs">
+              <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+              <span>回圓夢看板</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Today Page Date & Goal Progress Bar -->
+        <div class="bg-white border border-stone-200/90 rounded-2xl p-3.5 shadow-xs space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-black text-stone-900">今日晚餐備餐</span>
+            <span class="text-[10px] font-mono text-stone-400">9月7日 星期一</span>
+          </div>
+          <div class="bg-amber-50 rounded-xl p-2 border border-amber-200/60 flex items-center justify-between">
+            <span class="text-[10px] font-bold text-amber-900">圓夢累積：${profile.dreamName}</span>
+            <span class="text-[10px] font-mono-num font-black text-amber-800">已存 NT$ 0 / ${profile.dreamTargetAmount.toLocaleString()}</span>
+          </div>
+        </div>
+
+        <!-- Today Recommended Meal Card -->
+        <div class="bg-white border border-stone-200/90 rounded-2xl p-4 shadow-xs space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-black text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full flex items-center gap-1">
+              <svg class="w-3 h-3 text-amber-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 14 14"/></svg>
+              <span>今日主廚推薦菜單</span>
+            </span>
+            <span class="text-[10px] font-mono font-bold text-stone-400">25 分鐘 · 單鍋</span>
+          </div>
+
+          <div class="space-y-1">
+            <h3 class="text-sm font-black text-stone-900">番茄牛肉湯烏龍麵</h3>
+            <p class="text-[11px] text-stone-500 leading-relaxed">
+              善用冰箱即期青江菜與雞蛋，搭配牛番茄酸甜清爽開胃，高蛋白低負擔。
+            </p>
+          </div>
+
+          <div class="bg-stone-50 rounded-xl p-2.5 border border-stone-100 flex items-center justify-between text-[11px]">
+            <div class="space-y-0.5">
+              <span class="text-[9px] text-stone-400 font-bold block">本餐省下金額</span>
+              <span class="font-mono-num font-black text-emerald-700 text-sm">NT$ 110</span>
+            </div>
+            <div class="text-right text-[9px] text-stone-400">
+              <span>外食比較價 NT$ 210</span><br>
+              <span>自煮食材 NT$ 100</span>
+            </div>
+          </div>
+
+          <button onclick="triggerChefReaction('applause')" class="spring-btn w-full bg-stone-900 hover:bg-black active:scale-95 text-amber-300 font-black py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <span>開始備料（解鎖今日料理引導）</span>
+          </button>
+        </div>
+      `;
+
+      // Foreground Bottom Sheet Drawer Content (Instant whole block ready!)
+      bottomSheet.innerHTML = `
+        <!-- Drag Pill -->
+        <div class="w-10 h-1 bg-stone-300 rounded-full mx-auto mb-1"></div>
+
+        <div class="flex items-center justify-between border-b border-stone-100 pb-2">
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-full bg-amber-600 text-white flex items-center justify-center shrink-0 shadow-2xs">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/></svg>
+            </div>
+            <div>
+              <div class="text-xs font-black text-stone-900 flex items-center gap-1">
+                <span>今日口袋主廚 CooCoo</span>
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              </div>
+              <span class="text-[9px] text-stone-400 font-bold">隨行速決 · 專注聆聽</span>
+            </div>
+          </div>
+          <button onclick="toggleBottomSheet(false)" class="text-stone-400 hover:text-stone-700 bg-stone-100 hover:bg-stone-200 px-2 py-1 rounded-lg text-[10px] font-bold transition-colors flex items-center gap-1">
+            <span>收起看菜單 ✕</span>
+          </button>
+        </div>
+
+        <!-- Interactive Motion Tester Bar inside Sheet -->
+        <div class="bg-amber-50/90 border border-amber-200/90 rounded-2xl p-2.5 space-y-1.5 shadow-2xs">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-black text-amber-950 flex items-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+              <span>轉場動態對比（點選即刻重播試看）：</span>
+            </span>
+            <button onclick="renderDreamDashboardView()" class="text-[9px] font-black text-amber-900 hover:text-amber-950 bg-white border border-amber-300 px-2 py-0.5 rounded-lg transition-colors flex items-center gap-1 shadow-2xs">
+              <svg class="w-2.5 h-2.5 text-amber-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+              <span>回圓夢看板</span>
+            </button>
+          </div>
+          <div class="grid grid-cols-3 gap-1.5">
+            <button onclick="replayTransitionNow('pan')" class="py-1 px-1.5 rounded-lg text-[10px] font-black transition-all flex items-center justify-center gap-1 ${transitionMotionOption === 'pan' ? 'bg-amber-600 text-white shadow-2xs' : 'bg-white text-stone-700 border border-amber-200 hover:bg-amber-100'}">
+              <span>方案一：平移</span>
+            </button>
+            <button onclick="replayTransitionNow('spark')" class="py-1 px-1.5 rounded-lg text-[10px] font-black transition-all flex items-center justify-center gap-1 ${transitionMotionOption === 'spark' ? 'bg-amber-600 text-white shadow-2xs' : 'bg-white text-stone-700 border border-amber-200 hover:bg-amber-100'}">
+              <span>方案二：火種</span>
+            </button>
+            <button onclick="replayTransitionNow('collapse')" class="py-1 px-1.5 rounded-lg text-[10px] font-black transition-all flex items-center justify-center gap-1 ${transitionMotionOption === 'collapse' ? 'bg-amber-600 text-white shadow-2xs' : 'bg-white text-stone-700 border border-amber-200 hover:bg-amber-100'}">
+              <span>方案三：收闔</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Instant Bubble Message -->
+        <div class="bg-amber-50/70 border border-amber-200/70 rounded-xl p-3 text-xs text-stone-800 shadow-2xs space-y-1">
+          <p class="text-stone-700 text-[11px] leading-relaxed">
+            下班辛苦了！通行證已鎖定「<strong>${profile.dreamName}</strong>」，冷藏庫還有 <strong>半盒雞蛋</strong> 與 <strong>即期青江菜</strong>。今晚打算怎麼開煮？點選速決，或點右上角收起看推薦菜單：
+          </p>
+        </div>
+
+        <!-- Quick Action Buttons -->
+        <div class="space-y-1.5 pt-1">
+          <button onclick="handleRevisitAction('tired')" class="spring-btn w-full text-left bg-stone-50 hover:bg-amber-50 border border-stone-200 p-2.5 rounded-xl shadow-2xs flex items-center justify-between group transition-all">
+            <div class="flex items-center gap-2">
+              <div class="w-6 h-6 rounded-lg bg-orange-100 text-orange-700 flex items-center justify-center shrink-0">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              </div>
+              <div>
+                <div class="font-bold text-stone-800 text-[11px] group-hover:text-amber-950">腦力透支！要 12 分鐘低體力出餐</div>
+                <div class="text-[9px] text-stone-400">步驟 ≤ 6 · 單鍋搞定 · 免切繁複備料</div>
+              </div>
+            </div>
+            <svg class="w-3.5 h-3.5 text-stone-300 group-hover:text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+
+          <button onclick="handleRevisitAction('adjust')" class="spring-btn w-full text-left bg-stone-50 hover:bg-amber-50 border border-stone-200 p-2.5 rounded-xl shadow-2xs flex items-center justify-between group transition-all">
+            <div class="flex items-center gap-2">
+              <div class="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="m9 16 2 2 4-4"/></svg>
+              </div>
+              <div>
+                <div class="font-bold text-stone-800 text-[11px] group-hover:text-amber-950">這週臨時聚餐多，自煮想少 1 餐</div>
+                <div class="text-[9px] text-stone-400">生活彈性第一，目標順延不懲罰</div>
+              </div>
+            </div>
+            <svg class="w-3.5 h-3.5 text-stone-300 group-hover:text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+
+          <button onclick="handleRevisitAction('takeout')" class="spring-btn w-full text-left bg-stone-50 hover:bg-amber-50 border border-stone-200 p-2.5 rounded-xl shadow-2xs flex items-center justify-between group transition-all">
+            <div class="flex items-center gap-2">
+              <div class="w-6 h-6 rounded-lg bg-stone-200 text-stone-700 flex items-center justify-center shrink-0">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/></svg>
+              </div>
+              <div>
+                <div class="font-bold text-stone-800 text-[11px] group-hover:text-amber-950">今晚純放鬆！登記一次外食</div>
+                <div class="text-[9px] text-stone-400">誠實記錄日常，主廚幫你重新分配下半週</div>
+              </div>
+            </div>
+            <svg class="w-3.5 h-3.5 text-stone-300 group-hover:text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+        </div>
+
+        <!-- Stream feedback inside Sheet -->
+        <div id="revisit-stream" class="space-y-2 pt-1"></div>
+      `;
+    }
+
+    function toggleBottomSheet(open) {
+      isBottomSheetOpen = open;
+      const backdrop = document.getElementById('revisit-sheet-backdrop');
+      const sheet = document.getElementById('revisit-bottom-sheet');
+      const btnSummon = document.getElementById('btn-summon-sheet');
+
+      if (open) {
+        if (backdrop) backdrop.classList.remove('hidden');
+        if (sheet) {
+          sheet.classList.remove('hidden');
+          sheet.classList.remove('animate-sheet-up');
+          void sheet.offsetWidth;
+          sheet.classList.add('animate-sheet-up');
+        }
+        if (btnSummon) btnSummon.classList.add('hidden');
+      } else {
+        if (backdrop) backdrop.classList.add('hidden');
+        if (sheet) sheet.classList.add('hidden');
+        if (dialoguePresentationStyle === 'bottom-sheet' && appMode === 'revisit') {
+          if (btnSummon) btnSummon.classList.remove('hidden');
+        }
+      }
     }
 
     function updateDailyBudget(val) {
