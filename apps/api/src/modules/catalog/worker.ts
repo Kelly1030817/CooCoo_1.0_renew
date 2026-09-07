@@ -21,7 +21,7 @@ export class OpenRouterCatalogModel implements CatalogModel {
   }
 }
 export function catalogRate(){
-  return {model:process.env.CATALOG_MODEL||process.env.OPENROUTER_MODEL||'google/gemini-3.7-flash',inputPerMillion:Number(process.env.CATALOG_INPUT_USD_PER_MILLION||'.10'),outputPerMillion:Number(process.env.CATALOG_OUTPUT_USD_PER_MILLION||'.40'),usdToTwd:Number(process.env.CATALOG_USD_TO_TWD_RATE||35),version:'openrouter-config-v1',source:'https://openrouter.ai/models',maxOutputTokens:4096};
+  return {model:process.env.CATALOG_MODEL||process.env.OPENROUTER_MODEL||'google/gemini-3.7-flash',inputPerMillion:Number(process.env.CATALOG_INPUT_USD_PER_MILLION||'.75'),outputPerMillion:Number(process.env.CATALOG_OUTPUT_USD_PER_MILLION||'3.75'),usdToTwd:Number(process.env.CATALOG_USD_TO_TWD_RATE||35),version:'openrouter-config-v1',source:'https://openrouter.ai/models',maxOutputTokens:4096};
 }
 export function usageCost(input:number,output:number,rate=catalogRate()){return (input*rate.inputPerMillion+output*rate.outputPerMillion)/1e6*rate.usdToTwd;}
 function review(text:string):CatalogReview {const r=JSON.parse(text);if(typeof r.pass!=='boolean'||!Array.isArray(r.reasons)||r.reasons.some((x:unknown)=>typeof x!=='string')||r.ruleVersion!==RULE_VERSION||(r.pass&&r.reasons.length))throw new Error('INVALID_REVIEW');return r;}

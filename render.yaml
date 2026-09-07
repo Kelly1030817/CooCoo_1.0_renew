@@ -32,8 +32,8 @@ services:
       - key: CATALOG_USD_TO_TWD_RATE
         value: "35"
       - key: CATALOG_INPUT_USD_PER_MILLION
-        value: "0.10"
+        value: "0.75"
       - key: CATALOG_OUTPUT_USD_PER_MILLION
-        value: "0.40"
+        value: "3.75"
       - key: CATALOG_CRON_SECRET
         sync: false
