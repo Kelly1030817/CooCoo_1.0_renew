@@ -136,7 +136,7 @@ export type RecipeStep = Static<typeof RecipeStepSchema>;
 
 export const RecipePackageSchema = Type.Object({
   catalogVersionId: Type.Optional(Type.String()),
-  source: Type.Optional(Type.Union([Type.Literal("gemini"), Type.Literal("brand_safe"), Type.Literal("catalog")])),
+  source: Type.Optional(Type.Union([Type.Literal("gemini"), Type.Literal("openrouter"), Type.Literal("brand_safe"), Type.Literal("catalog")])),
   id: IdSchema,
   recipeId: IdSchema,
   title: Type.String(),
@@ -155,7 +155,7 @@ export type RecipePackage = Static<typeof RecipePackageSchema>;
 
 export const RecipeGenerationSchema = Type.Object({
   recipe: RecipePackageSchema,
-  source: Type.Union([Type.Literal("gemini"), Type.Literal("brand_safe"), Type.Literal("catalog")]),
+  source: Type.Union([Type.Literal("gemini"), Type.Literal("openrouter"), Type.Literal("brand_safe"), Type.Literal("catalog")]),
   notice: Type.Union([Type.String(), Type.Null()]),
 });
 export type RecipeGeneration = Static<typeof RecipeGenerationSchema>;
@@ -442,7 +442,7 @@ export type ShoppingAnalysis = Static<typeof ShoppingAnalysisSchema>;
 
 export const RecipeSchema = Type.Object({
   catalogVersionId: Type.Optional(Type.String()),
-  source: Type.Optional(Type.Union([Type.Literal("gemini"), Type.Literal("brand_safe"), Type.Literal("catalog")])),
+  source: Type.Optional(Type.Union([Type.Literal("gemini"), Type.Literal("openrouter"), Type.Literal("brand_safe"), Type.Literal("catalog")])),
   id: IdSchema,
   title: Type.String(),
   style: Type.String(),
@@ -516,6 +516,7 @@ export const RescueCommandSchema = Type.Object({
   foodSafe: Type.Boolean(),
 });
 export const RecipeGenerateSchema = Type.Object({
+  operationId: Type.Optional(IdSchema),
   ingredientIds: Type.Array(IdSchema, { minItems: 1 }),
   style: Type.Optional(Type.String()),
   excludeTitle: Type.Optional(Type.String()),
@@ -548,6 +549,7 @@ export const ShoppingParseSchema = Type.Object({
   text: Type.String({ minLength: 1 }),
 });
 export const ShoppingAnalyzeSchema = Type.Object({ operationId: IdSchema });
+export const ReceiptRecognizeSchema = Type.Object({ operationId: Type.Optional(IdSchema) });
 export const ContractSchemas = {
   LoginRequestSchema,
   GoalDraftSchema,
@@ -560,6 +562,7 @@ export const ContractSchemas = {
   ShoppingWriteSchema,
   ShoppingParseSchema,
   ShoppingAnalyzeSchema,
+  ReceiptRecognizeSchema,
   ShoppingAnalysisSchema,
   FridgeProfileSchema,
   CookwareListSchema: Type.Array(CookwareProfileSchema),
@@ -662,6 +665,8 @@ export interface CatalogReview { pass: boolean; reasons: string[]; ruleVersion: 
 export interface CatalogAdminState {
   versions: CatalogVersion[]; prices: IngredientPrice[];
   paused: boolean; month: string; spentTwd: number; reservedTwd: number; catalogBudgetTwd: number;
+  interactiveUsage: Array<{ feature:'shopping_analysis'|'recipe_generation'|'receipt_ocr'; spentTwd:number; reservedTwd:number; budgetTwd:number; dailyUserLimit:number }>;
+  globalSpentTwd:number; globalReservedTwd:number; globalBudgetTwd:number;
   candidateCount: number; candidateLimit: number; failedJobCount: number;
   stalePriceCount: number; expiringPriceCount: number;
   lastRunAt: string | null; alerts: string[];

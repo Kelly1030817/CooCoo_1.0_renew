@@ -15,7 +15,7 @@
 
 ## 必要環境變數
 
-公開 Web 只可取得 `VITE_SUPABASE_URL` 與 `VITE_SUPABASE_PUBLISHABLE_KEY`。`SUPABASE_SECRET_KEY`、`OPENROUTER_API_KEY` 與 `GEMINI_API_KEY` 只能存在後端；舊 `SUPABASE_SERVICE_ROLE_KEY` 僅保留相容性。完整名稱見根目錄 `.env.example`。
+公開 Web 只可取得 `VITE_SUPABASE_URL` 與 `VITE_SUPABASE_PUBLISHABLE_KEY`。`SUPABASE_SECRET_KEY` 與 `OPENROUTER_API_KEY` 只能存在後端；舊 `SUPABASE_SERVICE_ROLE_KEY` 僅保留相容性。完整名稱見根目錄 `.env.example`。
 
 ## Preview 驗收順序
 

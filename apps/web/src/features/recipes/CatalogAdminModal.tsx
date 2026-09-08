@@ -44,6 +44,8 @@ export function CatalogAdminModal({ onClose }: { onClose: () => void }) {
         <strong>{q.data.month} 自動更新狀態</strong>
         <p>本月候選 {q.data.candidateCount}/{q.data.candidateLimit}</p>
         <p>實際 NT${q.data.spentTwd.toFixed(2)} · 預留 NT${q.data.reservedTwd.toFixed(2)} · 月額度 NT${q.data.catalogBudgetTwd.toFixed(2)}</p>
+        <p>OpenRouter 共用：實際 NT${q.data.globalSpentTwd.toFixed(2)} · 預留 NT${q.data.globalReservedTwd.toFixed(2)} · 月額度 NT${q.data.globalBudgetTwd.toFixed(2)}</p>
+        {q.data.interactiveUsage.map(item=><p className="text-xs" key={item.feature}>{({shopping_analysis:'採買陪逛',recipe_generation:'即時食譜',receipt_ocr:'收據辨識'})[item.feature]}：NT${item.spentTwd.toFixed(2)} + 預留 NT${item.reservedTwd.toFixed(2)} / NT${item.budgetTwd.toFixed(2)}；每人每日 {item.dailyUserLimit} 次</p>)}
         <p className="text-xs">最近排程回報：{q.data.lastRunAt || '尚未執行'}。無回報不能視為自動更新已啟用。</p>
         <p className="text-xs">失敗工作 {q.data.failedJobCount} · 過期價格 {q.data.stalePriceCount} · 7 天內到期 {q.data.expiringPriceCount}</p>
       </section>

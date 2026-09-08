@@ -47,8 +47,9 @@ At this handoff, `main` and the integration branch shared commit `ebd8d49` befor
 - Elysia `/api/v1` backend with authenticated Supabase repositories for onboarding/profile, goals, inventory, shopping, settings, receipts, cooking completion, account export/deletion, AI usage, and invite administration.
 - Today decision and persisted weekly meal-plan APIs, idempotent weekly creation, quantity-aware inventory coverage, overlap rate, expiry warnings, postpone/specific-date/cancel operations, and optimistic concurrency conflicts.
 - OpenRouter shopping analysis receives the user's inventory, restrictions, and budget. It uses deterministic safe rules after provider failure and labels that fallback honestly.
-- Gemini recipe generation produces a full `RecipePackage`; fallback uses reviewed brand recipes and is never labeled as Gemini output.
-- Gemini receipt recognition parses structured OCR fields with per-field confidence and fails closed on invalid JSON, pure QR images, or non-itemized content.
+- OpenRouter recipe generation produces a full `RecipePackage`; fallback uses reviewed catalog or brand recipes and is never labeled as AI output.
+- OpenRouter receipt recognition parses structured OCR fields with per-field confidence and fails closed on invalid JSON, pure QR images, or non-itemized content.
+- Interactive OpenRouter work uses one idempotent ledger: shopping is capped at NT$40/month and 5 calls/user/day, recipe generation at NT$30/month and 3 calls/user/day, and receipt OCR at NT$30/month and 3 calls/user/day. Catalog remains capped at NT$50/month and all four uses share an NT$150 monthly ceiling.
 - Five real frontend routes with separate Today and Shopping CSS, mandatory ten-step onboarding with tag-based individual flavor input and custom cookware, auth recovery, card-based shopping UI, recipe package cooking flow, and dream dashboard integration.
 - PWA manifest/service worker, IndexedDB recipe packages, Cache Storage images, wake-lock attempt, voice commands where supported, and an offline operation queue foundation.
 - Published-recipe catalog: inventory-only and opt-in small-purchase recommendations, NT$100 user default, whole-package reference pricing, explicit dream-goal spending reminder, owner controls, quality/safety reports, and text-only scheduled generation with a NT$50 monthly operating cap. The Owner view reads the live budget and candidate limit, lists jobs and failures, and warns at 80% cost, after two hours without a heartbeat, and when reference prices approach or pass their 30-day expiry.
@@ -113,7 +114,7 @@ The Web uses `VITE_USE_REAL_API=true` in an ignored development-local file to pr
 ## Credential boundary
 
 - Browser-visible values: `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`.
-- Server-only values: `SUPABASE_SECRET_KEY`, legacy `SUPABASE_SERVICE_ROLE_KEY`, `OPENROUTER_API_KEY`, `GEMINI_API_KEY`.
+- Server-only values: `SUPABASE_SECRET_KEY`, legacy `SUPABASE_SERVICE_ROLE_KEY`, and `OPENROUTER_API_KEY`.
 - Never paste credential values into issues, documents, commits, screenshots, or model prompts. Keep them in ignored local files or deployment secret stores.
 - Google OAuth JSON and all `.env.local` files are intentionally ignored.
 

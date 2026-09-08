@@ -38,9 +38,9 @@ export class SupabaseMealPlanRepository {
     if(error)throw error;
   }
 
-  async savePackage(userId:string,recipe:RecipePackage,source:"gemini"|"brand_safe"|"catalog"){
+  async savePackage(userId:string,recipe:RecipePackage,source:"gemini"|"openrouter"|"brand_safe"|"catalog"){
     const recipeId=crypto.randomUUID();
-    const {error}=await getSupabaseAdmin().from("recipes").insert({id:recipeId,user_id:userId,title:recipe.title,servings:recipe.servings,prep_minutes:recipe.prepMinutes,total_minutes:recipe.totalMinutes,estimated_cost:recipe.estimatedCost,cookware_types:recipe.cookwareTypes,ingredients:recipe.ingredients,steps:recipe.steps,image_path:recipe.imageUrl,fallback_image_url:recipe.fallbackImageUrl,safety_reviewed:source!=="gemini",source,catalog_version_id:recipe.catalogVersionId||null});
+    const {error}=await getSupabaseAdmin().from("recipes").insert({id:recipeId,user_id:userId,title:recipe.title,servings:recipe.servings,prep_minutes:recipe.prepMinutes,total_minutes:recipe.totalMinutes,estimated_cost:recipe.estimatedCost,cookware_types:recipe.cookwareTypes,ingredients:recipe.ingredients,steps:recipe.steps,image_path:recipe.imageUrl,fallback_image_url:recipe.fallbackImageUrl,safety_reviewed:source==="brand_safe"||source==="catalog",source,catalog_version_id:recipe.catalogVersionId||null});
     if(error)throw error;
     return {...recipe,source,id:`package-${recipeId}`,recipeId};
   }
