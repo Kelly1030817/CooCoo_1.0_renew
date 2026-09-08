@@ -5,6 +5,7 @@ import { inspectRecipe, REVIEW_INSTRUCTIONS, RULE_VERSION } from './quality';
 import { recipeFingerprint } from './recommendations';
 import { taipeiDate, weekOf } from '../meal-plans/meal-planning';
 import { ensureSeedCatalog } from './seed';
+import { ensureStarterReferencePrices } from './reference-prices';
 
 export interface CatalogJob { id:string; lease_token:string; attempts:number; context:Record<string,unknown> }
 export interface ModelReply { text:string; inputTokens:number; outputTokens:number; costUsd?:number }
@@ -74,6 +75,7 @@ export async function runJob(repo:CatalogRepository,model:CatalogModel,job:Catal
 }
 export async function runCatalogWorker(repo=new CatalogRepository(),model?:CatalogModel){
   await ensureSeedCatalog(repo);
+  await ensureStarterReferencePrices(repo);
   const heartbeat=await repo.db.from('recipe_catalog_control').update({last_run_at:new Date().toISOString()}).eq('id',true).select('paused').single();if(heartbeat.error)throw heartbeat.error;if(heartbeat.data.paused)return {paused:true,worked:false};
   if(!process.env.OPENROUTER_API_KEY&&!model)throw new Error('OPENROUTER_API_KEY_REQUIRED');
   const demand=await repo.db.from('recipe_catalog_demands').select('context').gte('updated_at',new Date(Date.now()-30*86400000).toISOString()).order('hits',{ascending:false}).limit(10);if(demand.error)throw demand.error;
