@@ -59,14 +59,16 @@ The teacher-provided OpenRouter credit is finite and has no automatic top-up. Da
 - GitHub integration branch: `codex/coocoo-integrated-mvp`.
 - Render runs the protected API/worker; Vercel production rewrites `/api/v1/*` to it.
 - Supabase job `coocoo-recipe-catalog-hourly` is active at `0 * * * *` and the catalog control is unpaused.
-- A real OpenRouter catalog run published `家常洋蔥炒豬肉蓋飯` only after all three reviews passed.
+- A real OpenRouter catalog run published `家常洋蔥炒豬肉蓋飯` only after all three reviews passed. A later demand candidate was rejected because its equipment description conflicted with the tracked-heating-equipment model; it stayed unpublished and queued a revision.
 - A real shopping-analysis run completed through OpenRouter.
-- The initial live-test cost recorded by CooCoo was NT$0.8918175 using a fixed internal USD/TWD rate of 35.
+- The live catalog cost was NT$1.352085 after the additional rejected-candidate test, using a fixed internal USD/TWD rate of 35. There was no unsettled reservation.
 - The reference-price seed contains 25 traceable common ingredients observed on 2026-09-08. It is a starter set, not a live retailer guarantee; each row expires after 30 days unless an owner refreshes it.
+- The three curated recipes now express priced ingredients in compatible units. Their earlier immutable versions are quarantined with an explicit replacement reason; the corrected versions are published.
+- A rollback-only production database transaction verified that replaying the same purchase and cooking operation creates one shopping item, deducts inventory once, creates one cooking session, and records savings once.
 
 ## Remaining acceptance work
 
-- Run the two recommendation modes, NT$100 default/save behavior, reminder, purchase confirmation, cooking completion, and idempotent savings flow end to end on the production mobile UI.
+- The production UI verified the NT$100 initial value, an NT$80 per-run edit that disappeared after reload, a saved NT$120 default that survived reload, and restoration to the approved NT$100 default. Finish the recommendation, reminder, shopping, restock, and cooking path on a real mobile viewport.
 - Verify offline package use, reconnect sync, legacy import preview, conflict acknowledgement, receipt OCR, and fresh OAuth login on iPhone Safari and Android Chrome.
 - The seven-day natural-demand monitor starts on 2026-09-09 at 10:00 Asia/Taipei. It checks the previous 24 hours daily and stays quiet unless worker failures, a stale heartbeat, unexpected AI use, duplicate candidates, or 80% budget use require action. Its seventh run produces the week report.
 - The Owner catalog view uses the live NT$50 catalog budget and 50-candidate limit. It lists failed jobs, actual and reserved cost, reports, quarantine/review actions, and price-expiry warnings from day 23; prices older than 30 days remain ineligible for budget claims.

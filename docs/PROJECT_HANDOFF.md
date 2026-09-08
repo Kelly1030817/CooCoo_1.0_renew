@@ -54,14 +54,15 @@ At this handoff, `main` and the integration branch shared commit `ebd8d49` befor
 - Published-recipe catalog: inventory-only and opt-in small-purchase recommendations, NT$100 user default, whole-package reference pricing, explicit dream-goal spending reminder, owner controls, quality/safety reports, and text-only scheduled generation with a NT$50 monthly operating cap. The Owner view reads the live budget and candidate limit, lists jobs and failures, and warns at 80% cost, after two hours without a heartbeat, and when reference prices approach or pass their 30-day expiry.
 - Demand-driven catalog jobs use three gates (deterministic rules, independent quality review, independent food-safety review), no more than 50 candidates per month, and defer budget-blocked work without consuming a retry.
 - Offline cooking replay is bound to the signed-in user and operation ID; unowned legacy operations require a visible preview and confirmation before adoption.
-- Local verification on 2026-09-08: `bun run verify` passed 121 tests across 22 files, lint, Web production build, API typecheck, and all migrations in PGlite, including the 25-price seed and canonical-key coverage.
+- Local verification on 2026-09-08: `bun run verify` passed 125 tests across 23 files, lint, Web production build, API typecheck, and all migrations in PGlite, including the 25-price seed, canonical-key coverage, compatible priced units, and heating-equipment review instructions.
 
 ### Cloud evidence
 
 - Supabase project `cpyvizycjvburtpljxiu` has the integrated schema, hardening, settings, catalog, OpenRouter budget/Cron, RPC-name repair, cooking-status repair, and completed-job cleanup migrations applied.
 - Catalog tables and private transaction implementations are live with browser execution revoked. The hourly Supabase Cron is active and `recipe_catalog_control.paused=false` after seed, price-reference, advisor, and cloud E2E checks passed.
-- The initial natural-operation baseline on 2026-09-08 had 7/7 successful HTTP responses, no unmet demand, one completed catalog job, four published recipes, no duplicate published titles, and NT$0.80663625 catalog usage with no reservation. A seven-run daily monitor begins on 2026-09-09 and will report the full week after its final run.
+- The initial natural-operation baseline on 2026-09-08 had 7/7 successful HTTP responses, no unmet demand, one completed catalog job, four published recipes, no duplicate published titles, and NT$0.80663625 catalog usage with no reservation. The later production test reached 8/8 successful responses and created two real demand signatures. One new candidate remained queued after the quality reviewer rejected it, while published-title duplicates remained zero; catalog usage was NT$1.352085 with no unsettled reservation. A seven-run daily monitor begins on 2026-09-09 and will report the full week after its final run.
 - A rollback-only remote transaction verified goal create/update/read, immutable amount events, idempotent weekly plan creation, recipe persistence, and meal rescheduling without retaining test data.
+- A second rollback-only production transaction verified purchase, inventory deduction, cooking completion, and savings idempotency without retaining test data.
 - Sensitive RPC execution is restricted to database administration and `service_role`.
 - Security Advisor had one warning: leaked-password protection is disabled. Beta currently uses Passwordless/Google; enable it before offering password login.
 - Vercel production deployment is active at `https://coocoo-marketing.vercel.app`, routing `/api/v1/*` to `https://coocoo-1-0-renew.onrender.com/api/v1/:match*` with SPA fallback.
@@ -73,7 +74,7 @@ At this handoff, `main` and the integration branch shared commit `ebd8d49` befor
 - `/sync`, idempotent cooking replay, conflict acknowledgement, and legacy-operation preview are implemented locally; mobile reconnect acceptance remains pending.
 - Flight-mode cooking, timer restoration, missing-image fallback, wake-lock behavior, and one-time reconnect sync still require iPhone Safari and Android Chrome testing.
 - Render deployment and the Vercel production API rewrite are verified. Cold-start timing and the full mobile acceptance matrix remain pending.
-- Supabase Cron, not Render or Vercel Cron, owns the hourly wake-up. Render executes the protected worker with verified secrets. The catalog has three curated seeds, one reviewed OpenRouter recipe, and a traceable 25-item starter-price dataset.
+- Supabase Cron, not Render or Vercel Cron, owns the hourly wake-up. Render executes the protected worker with verified secrets. The catalog has three corrected curated seeds, one reviewed OpenRouter recipe, and a traceable 25-item starter-price dataset. The three earlier immutable seed versions are quarantined as replaced.
 - The brand marketing-site source has not been migrated into this TypeScript workspace; local `marketing-site/.next` and `coocoo-webapp/dist` are generated remnants, not source of truth.
 
 ## Public API inventory
