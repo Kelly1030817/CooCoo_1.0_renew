@@ -61,20 +61,27 @@ export function ChefRevisitModal({
   });
 
   const [isPending, setIsPending] = useState(false);
+  const [showQuickActions, setShowQuickActions] = useState(true);
   const streamEndRef = useRef<HTMLDivElement | null>(null);
+  const chatContainerRef = useRef<HTMLDivElement | null>(null);
 
   const scrollToBottom = () => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
     streamEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, isPending]);
+  }, [messages, isPending, showQuickActions]);
 
   const handleAction = (type: "tired" | "adjust" | "takeout") => {
     if (typeof window !== "undefined" && window.navigator?.vibrate) {
       window.navigator.vibrate(10);
     }
+
+    setShowQuickActions(false);
 
     let userText = "";
     if (type === "tired") userText = "今天體力透支了，給我最簡單的 12 分鐘低體力餐！";
@@ -246,7 +253,10 @@ export function ChefRevisitModal({
       </div>
 
       {/* Chat Stream Body */}
-      <div className="max-h-[380px] overflow-y-auto space-y-3 pr-1 text-xs">
+      <div
+        ref={chatContainerRef}
+        className="max-h-[380px] overflow-y-auto space-y-3 pr-1 text-xs"
+      >
         {messages.map((msg) => {
           if (msg.sender === "user") {
             return (
@@ -365,141 +375,178 @@ export function ChefRevisitModal({
       </div>
 
       {/* Quick Action Decision List */}
-      <div className="pt-3 border-t border-stone-100 mt-3 space-y-2 text-left">
-        <span className="text-[10px] font-bold text-stone-400 flex items-center gap-1">
-          <svg
-            className="w-3 h-3"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <polyline points="9 18 15 12 9 6" />
-          </svg>
-          主廚 CooCoo 隨行速決清單：
-        </span>
-
-        <div className="flex flex-col gap-1.5">
+      {!showQuickActions ? (
+        <div className="pt-2.5 border-t border-stone-100 mt-2.5 flex items-center justify-between">
+          <span className="text-[10px] text-stone-400 font-medium">需要處理其他狀況？</span>
           <button
             type="button"
-            onClick={() => handleAction("tired")}
-            className="spring-btn text-left bg-white hover:bg-amber-50/70 border border-stone-200 p-2.5 rounded-xl shadow-2xs flex items-center justify-between group"
+            onClick={() => setShowQuickActions(true)}
+            className="spring-btn text-[11px] font-bold text-amber-800 hover:text-amber-950 bg-amber-50 hover:bg-amber-100 px-3 py-1 rounded-xl border border-amber-200/80 transition-all flex items-center gap-1 shadow-2xs"
           >
-            <div className="flex items-center gap-2.5">
-              <div className="w-6 h-6 rounded-lg bg-orange-100 text-orange-700 flex items-center justify-center shrink-0">
-                <svg
-                  className="w-3.5 h-3.5"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  aria-hidden="true"
-                >
-                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-                </svg>
-              </div>
-              <div>
-                <div className="font-bold text-stone-800 text-[11px] group-hover:text-amber-950">
-                  腦力透支！要 12 分鐘低體力出餐
-                </div>
-                <div className="text-[9px] text-stone-400">步驟 ≤ 6 · 單鍋搞定 · 免繁複備料</div>
-              </div>
-            </div>
             <svg
-              className="w-3.5 h-3.5 text-stone-300 group-hover:text-amber-600 shrink-0"
+              className="w-3 h-3 text-amber-700"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
               strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
               aria-hidden="true"
             >
-              <path d="m9 18 6-6-6-6" />
+              <polyline points="1 4 1 10 7 10" />
+              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
             </svg>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleAction("adjust")}
-            className="spring-btn text-left bg-white hover:bg-amber-50/70 border border-stone-200 p-2.5 rounded-xl shadow-2xs flex items-center justify-between group"
-          >
-            <div className="flex items-center gap-2.5">
-              <div className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
-                <svg
-                  className="w-3.5 h-3.5"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  aria-hidden="true"
-                >
-                  <rect width="18" height="18" x="3" y="4" rx="2" />
-                  <line x1="16" y1="2" x2="16" y2="6" />
-                  <line x1="8" y1="2" x2="8" y2="6" />
-                  <line x1="3" y1="10" x2="21" y2="10" />
-                  <path d="m9 16 2 2 4-4" />
-                </svg>
-              </div>
-              <div>
-                <div className="font-bold text-stone-800 text-[11px] group-hover:text-amber-950">
-                  這週臨時聚餐多，自煮想少 1 餐
-                </div>
-                <div className="text-[9px] text-stone-400">生活彈性第一，目標順延不懲罰</div>
-              </div>
-            </div>
-            <svg
-              className="w-3.5 h-3.5 text-stone-300 group-hover:text-amber-600 shrink-0"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              aria-hidden="true"
-            >
-              <path d="m9 18 6-6-6-6" />
-            </svg>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleAction("takeout")}
-            className="spring-btn text-left bg-white hover:bg-amber-50/70 border border-stone-200 p-2.5 rounded-xl shadow-2xs flex items-center justify-between group"
-          >
-            <div className="flex items-center gap-2.5">
-              <div className="w-6 h-6 rounded-lg bg-stone-100 text-stone-700 flex items-center justify-center shrink-0">
-                <svg
-                  className="w-3.5 h-3.5"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  aria-hidden="true"
-                >
-                  <path d="M17 8h1a4 4 0 1 1 0 8h-1" />
-                  <path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z" />
-                </svg>
-              </div>
-              <div>
-                <div className="font-bold text-stone-800 text-[11px] group-hover:text-amber-950">
-                  今晚純放鬆！登記一次外食
-                </div>
-                <div className="text-[9px] text-stone-400">誠實記錄日常，主廚幫你重新分配下半週</div>
-              </div>
-            </div>
-            <svg
-              className="w-3.5 h-3.5 text-stone-300 group-hover:text-amber-600 shrink-0"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              aria-hidden="true"
-            >
-              <path d="m9 18 6-6-6-6" />
-            </svg>
+            <span>展開速決清單</span>
           </button>
         </div>
-      </div>
+      ) : (
+        <div className="pt-3 border-t border-stone-100 mt-3 space-y-2 text-left">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold text-stone-400 flex items-center gap-1">
+              <svg
+                className="w-3 h-3"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+              主廚 CooCoo 隨行速決清單：
+            </span>
+            {messages.length > 1 && (
+              <button
+                type="button"
+                onClick={() => setShowQuickActions(false)}
+                className="text-[10px] text-stone-400 hover:text-stone-600"
+              >
+                收摺
+              </button>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <button
+              type="button"
+              onClick={() => handleAction("tired")}
+              className="spring-btn text-left bg-white hover:bg-amber-50/70 border border-stone-200 p-2.5 rounded-xl shadow-2xs flex items-center justify-between group"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="w-6 h-6 rounded-lg bg-orange-100 text-orange-700 flex items-center justify-center shrink-0">
+                  <svg
+                    className="w-3.5 h-3.5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    aria-hidden="true"
+                  >
+                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                  </svg>
+                </div>
+                <div>
+                  <div className="font-bold text-stone-800 text-[11px] group-hover:text-amber-950">
+                    腦力透支！要 12 分鐘低體力出餐
+                  </div>
+                  <div className="text-[9px] text-stone-400">步驟 ≤ 6 · 單鍋搞定 · 免繁複備料</div>
+                </div>
+              </div>
+              <svg
+                className="w-3.5 h-3.5 text-stone-300 group-hover:text-amber-600 shrink-0"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                aria-hidden="true"
+              >
+                <path d="m9 18 6-6-6-6" />
+              </svg>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleAction("adjust")}
+              className="spring-btn text-left bg-white hover:bg-amber-50/70 border border-stone-200 p-2.5 rounded-xl shadow-2xs flex items-center justify-between group"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                  <svg
+                    className="w-3.5 h-3.5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    aria-hidden="true"
+                  >
+                    <rect width="18" height="18" x="3" y="4" rx="2" />
+                    <line x1="16" y1="2" x2="16" y2="6" />
+                    <line x1="8" y1="2" x2="8" y2="6" />
+                    <line x1="3" y1="10" x2="21" y2="10" />
+                    <path d="m9 16 2 2 4-4" />
+                  </svg>
+                </div>
+                <div>
+                  <div className="font-bold text-stone-800 text-[11px] group-hover:text-amber-950">
+                    這週臨時聚餐多，自煮想少 1 餐
+                  </div>
+                  <div className="text-[9px] text-stone-400">生活彈性第一，目標順延不懲罰</div>
+                </div>
+              </div>
+              <svg
+                className="w-3.5 h-3.5 text-stone-300 group-hover:text-amber-600 shrink-0"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                aria-hidden="true"
+              >
+                <path d="m9 18 6-6-6-6" />
+              </svg>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleAction("takeout")}
+              className="spring-btn text-left bg-white hover:bg-amber-50/70 border border-stone-200 p-2.5 rounded-xl shadow-2xs flex items-center justify-between group"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="w-6 h-6 rounded-lg bg-stone-100 text-stone-700 flex items-center justify-center shrink-0">
+                  <svg
+                    className="w-3.5 h-3.5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    aria-hidden="true"
+                  >
+                    <path d="M17 8h1a4 4 0 1 1 0 8h-1" />
+                    <path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z" />
+                  </svg>
+                </div>
+                <div>
+                  <div className="font-bold text-stone-800 text-[11px] group-hover:text-amber-950">
+                    今晚純放鬆！登記一次外食
+                  </div>
+                  <div className="text-[9px] text-stone-400">誠實記錄日常，主廚幫你重新分配下半週</div>
+                </div>
+              </div>
+              <svg
+                className="w-3.5 h-3.5 text-stone-300 group-hover:text-amber-600 shrink-0"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                aria-hidden="true"
+              >
+                <path d="m9 18 6-6-6-6" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
     </Modal>
   );
 }

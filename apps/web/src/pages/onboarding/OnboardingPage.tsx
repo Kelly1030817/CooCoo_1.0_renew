@@ -35,9 +35,13 @@ const mealSlots: { id: MealSlot; label: string }[] = [
 export function OnboardingPage({
   onComplete,
   initialStep,
+  canExit = false,
+  onExit,
 }: {
   onComplete: (profile: OnboardingProfile) => void;
   initialStep?: number;
+  canExit?: boolean;
+  onExit?: () => void;
 }) {
   const queryClient = useQueryClient();
   const [profile, setProfile] = useState<OnboardingProfile>(() => {
@@ -170,13 +174,38 @@ export function OnboardingPage({
               isNodding={isNodding}
               onClick={() => triggerChefReaction("listen")}
             />
-            <div className="text-xs font-mono font-black text-amber-900 bg-amber-50 border border-amber-200/80 px-2.5 py-1 rounded-lg">
-              {String(step).padStart(2, "0")} / 10
+            <div className="flex items-center gap-2">
+              <div className="text-xs font-mono font-black text-amber-900 bg-amber-50 border border-amber-200/80 px-2.5 py-1 rounded-lg">
+                {String(step).padStart(2, "0")} / 10
+              </div>
+              {canExit && onExit && (
+                <button
+                  type="button"
+                  onClick={onExit}
+                  aria-label="回到主頁"
+                  className="spring-btn text-[11px] font-bold text-stone-500 hover:text-stone-900 bg-stone-100 hover:bg-stone-200 px-2.5 py-1 rounded-lg border border-stone-200 flex items-center gap-1 transition-colors"
+                >
+                  <svg
+                    className="w-3 h-3"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                  <span>回到主頁</span>
+                </button>
+              )}
             </div>
           </div>
 
           <div className="text-[10px] text-stone-500 font-bold mt-1 mb-2">
-            首次設定 · {String(step).padStart(2, "0")} {stepTitles[step - 1]}
+            {canExit ? "主廚相談室十步設定" : "首次設定"} · {String(step).padStart(2, "0")} {stepTitles[step - 1]}
           </div>
 
           <div

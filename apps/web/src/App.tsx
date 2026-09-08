@@ -90,6 +90,8 @@ export default function App() {
     return (
       <OnboardingPage
         initialStep={route === "onboarding" ? 1 : undefined}
+        canExit={onboardingComplete}
+        onExit={() => navigate("today")}
         onComplete={() => {
           navigate("dream");
           setOnboardingComplete(true);
@@ -98,7 +100,7 @@ export default function App() {
     );
   return (
     <>
-      <Header enabled={stateEnabled} />
+      <Header enabled={stateEnabled} onNavigate={navigate} />
       <main className="mx-auto w-full max-w-[1200px] min-w-0 flex-1 px-md py-md transition-all duration-300 md:px-lg md:py-lg">
         {goalSyncError && (
           <div role="alert" className="mb-md rounded-2xl bg-error-container p-md text-sm font-bold text-on-error-container">

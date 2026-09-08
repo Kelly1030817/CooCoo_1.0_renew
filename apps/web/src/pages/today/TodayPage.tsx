@@ -80,8 +80,26 @@ export function TodayPage() {
   const [decisionError, setDecisionError] = useState("");
   const [planError, setPlanError] = useState("");
   const [weekExpanded, setWeekExpanded] = useState(false);
-  const [revisitModalOpen, setRevisitModalOpen] = useState(false);
   const today = dateOnly();
+
+  const openChefConsultation = () => {
+    ui.open(
+      <ChefRevisitModal
+        onClose={ui.close}
+        onSelectLowEnergy={() => {
+          setEnergyLow(true);
+        }}
+        onStartCooking={(customRecipe) => startCooking(customRecipe)}
+        onAddToShopping={handleAddToShopping}
+        inventoryNames={(data?.inventory || []).map((item) => item.name)}
+        weeklyTarget={data?.cookingPlan?.weeklyCookingMeals || 3}
+        onAdjustTarget={(newTarget) => {
+          ui.toast(`已將本週目標調整為 ${newTarget} 餐`);
+        }}
+        outsideMealPrice={outsidePrice}
+      />,
+    );
+  };
 
   useEffect(() => {
     let active = true;
@@ -283,7 +301,7 @@ export function TodayPage() {
       <section className="chef-consultation-capsule" aria-label="主廚 CooCoo 相談室">
         <button
           type="button"
-          onClick={() => setRevisitModalOpen(true)}
+          onClick={openChefConsultation}
           className="w-full bg-amber-50/90 hover:bg-amber-100/90 border border-amber-200/90 rounded-2xl p-3 flex items-center justify-between shadow-2xs transition-all text-left group"
         >
           <div className="flex items-center gap-2.5">
@@ -645,23 +663,6 @@ export function TodayPage() {
         </section>
       )}
 
-      {revisitModalOpen && (
-        <ChefRevisitModal
-          onClose={() => setRevisitModalOpen(false)}
-          onSelectLowEnergy={() => {
-            setEnergyLow(true);
-            ui.toast("已為你啟動低體力模式！");
-          }}
-          onStartCooking={(customRecipe) => startCooking(customRecipe)}
-          onAddToShopping={handleAddToShopping}
-          inventoryNames={(data?.inventory || []).map((item) => item.name)}
-          weeklyTarget={data?.cookingPlan?.weeklyCookingMeals || 3}
-          onAdjustTarget={(newTarget) => {
-            ui.toast(`已將本週目標調整為 ${newTarget} 餐`);
-          }}
-          outsideMealPrice={outsidePrice}
-        />
-      )}
     </div>
   );
 }

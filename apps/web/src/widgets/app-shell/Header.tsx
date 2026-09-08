@@ -8,11 +8,19 @@ import { Modal, ModalHeader } from "@/shared/ui/Modal";
 import { supabase, startGoogleAuth } from "@/shared/auth/supabase";
 import { readOnboardingDraft } from "@/shared/model/onboarding-draft";
 
+import type { AppRoute } from "@/app/routing/routes";
 import { useAppRoute } from "@/app/routing/useAppRoute";
 
-export function Header({ enabled = true }: { enabled?: boolean }) {
+export function Header({
+  enabled = true,
+  onNavigate,
+}: {
+  enabled?: boolean;
+  onNavigate?: (route: AppRoute) => void;
+}) {
   const { data } = useAppState(enabled);
-  const { navigate } = useAppRoute();
+  const { navigate: routeNavigate } = useAppRoute();
+  const navigate = onNavigate || routeNavigate;
   const access = useQuery({
     queryKey: ["catalog-access", data?.session.user?.id],
     queryFn: () => api<{ owner: boolean }>("/admin/recipes/access"),
