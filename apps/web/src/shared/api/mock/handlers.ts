@@ -190,7 +190,7 @@ export const handlers = [
       const decision = createTodayDecision(planningContext(weekOf(today)), { date: today, slot: "dinner" });
       const recipe = [decision.primary, ...decision.alternatives].find((item) => item && item.title !== b.excludeTitle);
       if (!recipe) throw new Error("NO_SAFE_RECIPE_AVAILABLE");
-      return ok({ recipe: await planningRepository.savePackage("preview", recipe), source: "brand_safe", notice: "本機預覽使用人工檢查過的安全食譜；連接真實 API 後才會呼叫 Gemini。" });
+      return ok({ recipe: await planningRepository.savePackage("preview", recipe), source: "brand_safe", notice: "本機預覽使用人工檢查過的安全食譜；連接正式 API 後才會呼叫 AI。" });
     } catch (e) {
       return error(e);
     }

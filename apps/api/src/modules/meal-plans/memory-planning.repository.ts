@@ -1,9 +1,8 @@
 import type { MealPlan, PlannedMeal, RecipePackage } from "@coocoo/contracts";
-import type { PlanningRepository } from "./routes";
 import { packageForMeal } from "./meal-planning";
 
 // Test/explicit local-preview adapter; production uses Supabase.
-export class MemoryPlanningRepository implements PlanningRepository {
+export class MemoryPlanningRepository {
   private plans=new Map<string,{plan:MealPlan;packages:RecipePackage[]}>();
   private recipes=new Map<string,RecipePackage>();
   async current(userId:string,weekStart:string){return structuredClone(this.plans.get(userId+":"+weekStart)||null)}

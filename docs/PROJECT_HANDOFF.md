@@ -1,6 +1,6 @@
 # CooCoo integrated MVP handoff
 
-Last verified: 2026-09-06 (Asia/Taipei)
+Last verified: 2026-09-08 (Asia/Taipei)
 
 This is the canonical cross-model handoff. It summarizes decisions and evidence; it is not a verbatim chat transcript and contains no credentials.
 
@@ -47,20 +47,23 @@ At this handoff, `main` and the integration branch shared commit `ebd8d49` befor
 - Elysia `/api/v1` backend with authenticated Supabase repositories for onboarding/profile, goals, inventory, shopping, settings, receipts, cooking completion, account export/deletion, AI usage, and invite administration.
 - Today decision and persisted weekly meal-plan APIs, idempotent weekly creation, quantity-aware inventory coverage, overlap rate, expiry warnings, postpone/specific-date/cancel operations, and optimistic concurrency conflicts.
 - OpenRouter shopping analysis receives the user's inventory, restrictions, and budget. It uses deterministic safe rules after provider failure and labels that fallback honestly.
-- Gemini recipe generation produces a full `RecipePackage`; fallback uses reviewed brand recipes and is never labeled as Gemini output.
-- Gemini receipt recognition parses structured OCR fields with per-field confidence and fails closed on invalid JSON, pure QR images, or non-itemized content.
+- OpenRouter recipe generation produces a full `RecipePackage`; fallback uses reviewed catalog or brand recipes and is never labeled as AI output.
+- OpenRouter receipt recognition parses structured OCR fields with per-field confidence and fails closed on invalid JSON, pure QR images, or non-itemized content.
+- Interactive OpenRouter work uses one idempotent ledger: shopping is capped at NT$40/month and 5 calls/user/day, recipe generation at NT$30/month and 3 calls/user/day, and receipt OCR at NT$30/month and 3 calls/user/day. Catalog remains capped at NT$50/month and all four uses share an NT$150 monthly ceiling.
 - Five real frontend routes with separate Today and Shopping CSS, mandatory ten-step onboarding with tag-based individual flavor input and custom cookware, auth recovery, card-based shopping UI, recipe package cooking flow, and dream dashboard integration.
 - PWA manifest/service worker, IndexedDB recipe packages, Cache Storage images, wake-lock attempt, voice commands where supported, and an offline operation queue foundation.
-- Published-recipe catalog foundation: inventory-only and opt-in small-purchase recommendations, NT$100 user default, whole-package reference pricing, explicit dream-goal spending reminder, owner controls, quality/safety reports, and text-only scheduled generation with a NT$300 monthly reservation cap.
+- Published-recipe catalog: inventory-only and opt-in small-purchase recommendations, NT$100 user default, whole-package reference pricing, explicit dream-goal spending reminder, owner controls, quality/safety reports, and text-only scheduled generation with a NT$50 monthly operating cap. The Owner view reads the live budget and candidate limit, lists jobs and failures, and warns at 80% cost, after two hours without a heartbeat, and when reference prices approach or pass their 30-day expiry.
 - Demand-driven catalog jobs use three gates (deterministic rules, independent quality review, independent food-safety review), no more than 50 candidates per month, and defer budget-blocked work without consuming a retry.
 - Offline cooking replay is bound to the signed-in user and operation ID; unowned legacy operations require a visible preview and confirmation before adoption.
-- Local verification on 2026-09-06: `bun run verify` passed 114 tests across 20 files, lint, Web production build, API typecheck, and all migrations in PGlite.
+- Local verification on 2026-09-08: `bun run verify` passed 125 tests across 23 files, lint, Web production build, API typecheck, and all migrations in PGlite, including the 25-price seed, canonical-key coverage, compatible priced units, and heating-equipment review instructions.
 
 ### Cloud evidence
 
-- Supabase project `cpyvizycjvburtpljxiu` has five applied migrations: integrated schema, advisor hardening, persisted goal/meal-plan settings, recipe catalog automation, and catalog advisor indexes.
-- Catalog tables and private transaction implementations are live with browser execution revoked; `recipe_catalog_control.paused` remains enabled until seed, price-reference, and Preview checks finish.
+- Supabase project `cpyvizycjvburtpljxiu` has the integrated schema, hardening, settings, catalog, OpenRouter budget/Cron, RPC-name repair, cooking-status repair, and completed-job cleanup migrations applied.
+- Catalog tables and private transaction implementations are live with browser execution revoked. The hourly Supabase Cron is active and `recipe_catalog_control.paused=false` after seed, price-reference, advisor, and cloud E2E checks passed.
+- The initial natural-operation baseline on 2026-09-08 had 7/7 successful HTTP responses, no unmet demand, one completed catalog job, four published recipes, no duplicate published titles, and NT$0.80663625 catalog usage with no reservation. The later production test reached 8/8 successful responses and created two real demand signatures. One new candidate remained queued after the quality reviewer rejected it, while published-title duplicates remained zero; catalog usage was NT$1.352085 with no unsettled reservation. A seven-run daily monitor begins on 2026-09-09 and will report the full week after its final run.
 - A rollback-only remote transaction verified goal create/update/read, immutable amount events, idempotent weekly plan creation, recipe persistence, and meal rescheduling without retaining test data.
+- A second rollback-only production transaction verified purchase, inventory deduction, cooking completion, and savings idempotency without retaining test data.
 - Sensitive RPC execution is restricted to database administration and `service_role`.
 - Security Advisor had one warning: leaked-password protection is disabled. Beta currently uses Passwordless/Google; enable it before offering password login.
 - Vercel production deployment is active at `https://coocoo-marketing.vercel.app`, routing `/api/v1/*` to `https://coocoo-1-0-renew.onrender.com/api/v1/:match*` with SPA fallback.
@@ -71,8 +74,8 @@ At this handoff, `main` and the integration branch shared commit `ebd8d49` befor
 - Receipt upload/OCR/correction/confirmation needs full browser-to-cloud mobile acceptance with a real receipt image.
 - `/sync`, idempotent cooking replay, conflict acknowledgement, and legacy-operation preview are implemented locally; mobile reconnect acceptance remains pending.
 - Flight-mode cooking, timer restoration, missing-image fallback, wake-lock behavior, and one-time reconnect sync still require iPhone Safari and Android Chrome testing.
-- Render API Preview, Vercel Web Preview, cold-start measurement, Preview rewrites, and production deployment are not complete.
-- The Render Blueprint defines an hourly catalog Cron Job, but the service and its secrets are not verified in Render yet. The initial catalog seed runs idempotently from the deployed API/worker; no unsourced price rows are inserted.
+- Render deployment and the Vercel production API rewrite are verified. Cold-start timing and the full mobile acceptance matrix remain pending.
+- Supabase Cron, not Render or Vercel Cron, owns the hourly wake-up. Render executes the protected worker with verified secrets. The catalog has three corrected curated seeds, one reviewed OpenRouter recipe, and a traceable 25-item starter-price dataset. The three earlier immutable seed versions are quarantined as replaced.
 - The brand marketing-site source has not been migrated into this TypeScript workspace; local `marketing-site/.next` and `coocoo-webapp/dist` are generated remnants, not source of truth.
 
 ## Public API inventory
@@ -111,17 +114,17 @@ The Web uses `VITE_USE_REAL_API=true` in an ignored development-local file to pr
 ## Credential boundary
 
 - Browser-visible values: `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`.
-- Server-only values: `SUPABASE_SECRET_KEY`, legacy `SUPABASE_SERVICE_ROLE_KEY`, `OPENROUTER_API_KEY`, `GEMINI_API_KEY`.
+- Server-only values: `SUPABASE_SECRET_KEY`, legacy `SUPABASE_SERVICE_ROLE_KEY`, and `OPENROUTER_API_KEY`.
 - Never paste credential values into issues, documents, commits, screenshots, or model prompts. Keep them in ignored local files or deployment secret stores.
 - Google OAuth JSON and all `.env.local` files are intentionally ignored.
 
 ## Recommended next delivery order
 
-1. Deploy the updated API and paused catalog Cron Job, then verify the curated seed and add traceable reference prices.
-2. Run real receipt OCR from mobile upload through confirmed inventory entry and private-image access checks.
-3. Complete flight-mode cooking, legacy-operation preview, conflict acknowledgement, and reconnect acceptance on both target mobile browsers.
-4. Verify Render and Vercel Previews, exact redirect/rewrite URLs, cold start, and OAuth/cloud acceptance before enabling catalog generation.
-5. Give 10–30 invited testers the Preview only after the full acceptance checklist in `docs/PREVIEW_SETUP.md` passes.
+1. Verify the 25-item starter-price seed in production and refresh or replace any retailer observation that changes.
+2. Run both recommendation modes, NT$100 default/save behavior, the dream-goal reminder, purchase confirmation, cooking completion, and idempotency through the production mobile UI.
+3. Run real receipt OCR from mobile upload through confirmed inventory entry and private-image access checks.
+4. Complete flight-mode cooking, legacy-operation preview, conflict acknowledgement, reconnect, OAuth, and cold-start acceptance on both target mobile browsers.
+5. Monitor the first natural-demand week, then give 10–30 invited testers access after the checklist in `docs/PREVIEW_SETUP.md` passes.
 
 ## Handoff protocol
 

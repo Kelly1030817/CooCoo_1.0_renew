@@ -4,11 +4,11 @@ import { catalogRoutes } from './modules/catalog/routes';
 import { recommend } from './modules/catalog/recommendations';
 import { Elysia } from "elysia";
 import { CooCooService, getRescuePlan, parseShoppingText } from "@coocoo/core";
-import type { GoalDraft, InventoryItem } from "@coocoo/contracts";
+import type { GoalDraft, InventoryItem, RecipeGeneration } from "@coocoo/contracts";
 import { ContractSchemas } from "@coocoo/contracts";
 import { MemoryStateRepository } from "./shared/infrastructure/memory-state.repository";
 import { authenticateRequest, getSupabaseAdmin } from "./shared/infrastructure/supabase";
-import { GeminiReceiptModel, recognizeReceipt } from "./modules/receipts/gemini-receipt-recognizer";
+import { OpenRouterReceiptModel, recognizeReceipt } from "./modules/receipts/openrouter-receipt-recognizer";
 import { SupabaseReceiptRepository } from "./modules/receipts/supabase-receipt.repository";
 import { SupabaseOnboardingRepository } from "./modules/onboarding/supabase-onboarding.repository";
 import type { OnboardingProfile } from "@coocoo/contracts";
@@ -45,7 +45,12 @@ const fail = (error: unknown) => {
     ITEM_NOT_FOUND: "找不到食材",
     UNSAFE_ACTION: "不安全食材只能丟棄",
     INGREDIENT_REQUIRED: "請至少選擇一項食材",
-    AI_RATE_LIMITED: "AI 使用次數已達本小時上限，請稍後再試。",
+    AI_RATE_LIMITED: "AI 使用次數已達上限，請稍後再試。",
+    AI_DAILY_LIMITED: "今天的 AI 使用次數已達上限，仍可使用不需 AI 的功能。",
+    AI_BUDGET_EXHAUSTED: "本月 AI 預算已用完，仍可使用現有食譜與手動輸入。",
+    AI_OPERATION_CONFLICT: "這筆 AI 請求內容已變更，請重新操作。",
+    AI_OPERATION_IN_PROGRESS: "這筆 AI 請求正在處理，請稍候。",
+    AI_OPERATION_FAILED: "這筆 AI 請求未完成，請重新操作。",
     AUTH_REQUIRED: "請先登入再使用這項功能。",
     AUTH_INVALID: "登入狀態已失效，請重新登入。",
     INVALID_GOAL_TARGET: "目標金額必須大於 0 元。",
@@ -123,7 +128,7 @@ export const app = new Elysia({ name: "coocoo-api" })
     else set.status=422;
     return fail(error);
   })
-  .use(planningRoutes({authenticate:cloudDataEnabled?authenticateRequest:async()=>({id:"preview"}),context:cloudDataEnabled?catalogContext:previewPlanningContext,catalog:cloudDataEnabled?catalogRepository:undefined,repository:mealPlanRepository,beforeGenerate:cloudDataEnabled?async userId=>{await aiUsageRepository.assertWithinLimit(userId,"recipe_generation");if(process.env.GEMINI_API_KEY)await aiUsageRepository.record(userId,"recipe_generation","started",0)}:undefined,afterGenerate:cloudDataEnabled&&process.env.GEMINI_API_KEY?async(userId,source)=>aiUsageRepository.record(userId,"recipe_generation",source==="gemini"?"succeeded":"failed",0):undefined}))
+  .use(planningRoutes({authenticate:cloudDataEnabled?authenticateRequest:async()=>({id:"preview"}),context:cloudDataEnabled?catalogContext:previewPlanningContext,catalog:cloudDataEnabled?catalogRepository:undefined,repository:mealPlanRepository,reserveGenerate:cloudDataEnabled?async(userId,operationId,input)=>aiUsageRepository.reserve<RecipeGeneration>(userId,operationId,"recipe_generation",await aiUsageRepository.hash(input),process.env.OPENROUTER_MODEL||"google/gemini-3.7-flash",Number(process.env.RECIPE_AI_MAX_CALL_TWD||2)):undefined,settleGenerate:cloudDataEnabled?async(userId,operationId,status,actual,result)=>aiUsageRepository.settle(userId,operationId,status,actual,result):undefined}))
   .use(cloudDataEnabled?syncRoutes():new Elysia())
   .use(cloudDataEnabled?catalogRoutes(authenticateRequest,cloudPlanningContext,catalogRepository):new Elysia())
   .get("/api/v1/health", () => ok({ status: "ok" }))
@@ -272,11 +277,10 @@ export const app = new Elysia({ name: "coocoo-api" })
         const restrictions=(onboarding.restrictions||[]).map((item:{id:string;label:string;kind:"allergy"|"avoid"|"preference";ingredient_keys:string[];is_hard_limit:boolean})=>({id:item.id,label:item.label,kind:item.kind,ingredientKeys:item.ingredient_keys,isHardLimit:item.is_hard_limit}));
         const model=process.env.OPENROUTER_MODEL||"google/gemini-3.7-flash";
         const operationId=(body as {operationId:string}).operationId;
-        const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify({shoppingItems,inventory,restrictions,profile})));
-        const inputHash=Array.from(new Uint8Array(digest),byte=>byte.toString(16).padStart(2,'0')).join('');
+        const inputHash=await aiUsageRepository.hash({shoppingItems,inventory,restrictions,profile});
         const context={shoppingItems,inventory,restrictions,dailyMealBudget:profile?.daily_meal_budget??null,plannedMealSlots:profile?.planned_meal_slots??[],weeklyHomeCookTarget:profile?.weekly_home_cook_target??null};
         let cached:unknown;
-        try{cached=await aiUsageRepository.reserveShopping(user.id,operationId,inputHash,model,Number(process.env.SHOPPING_AI_MAX_CALL_TWD||1));}
+        try{cached=await aiUsageRepository.reserve(user.id,operationId,"shopping_analysis",inputHash,model,Number(process.env.SHOPPING_AI_MAX_CALL_TWD||1));}
         catch(error){
           const message=error instanceof Error?error.message:String(error);
           if(message.includes('AI_BUDGET_EXHAUSTED')||message.includes('AI_DAILY_LIMITED'))return ok(await analyzeShopping(context,null));
@@ -287,7 +291,7 @@ export const app = new Elysia({ name: "coocoo-api" })
         const costUsd=Number((result as typeof result&{costUsd?:number}).costUsd||0);
         const publicResult={...result};delete (publicResult as typeof publicResult&{costUsd?:number}).costUsd;
         const actualTwd=result.source==='openrouter'?costUsd*Number(process.env.CATALOG_USD_TO_TWD_RATE||35):process.env.OPENROUTER_API_KEY?Number(process.env.SHOPPING_AI_MAX_CALL_TWD||1):0;
-        await aiUsageRepository.settleShopping(user.id,operationId,result.source==="openrouter"?'completed':'failed',actualTwd,publicResult);
+        await aiUsageRepository.settle(user.id,operationId,result.source==="openrouter"?'completed':'failed',actualTwd,publicResult);
         return ok(publicResult);
       }
       const state=service.state();
@@ -341,22 +345,28 @@ export const app = new Elysia({ name: "coocoo-api" })
   .get("/api/v1/profile", async ({headers,set})=>{try{const user=await authenticateRequest(headers.authorization);return ok(await onboardingRepository.read(user.id))}catch(error){set.status=401;return fail(error)}})
   .delete("/api/v1/profile",async({headers,set})=>{try{const user=await authenticateRequest(headers.authorization);return ok(await accountRepository.deleteAccount(user.id))}catch(error){set.status=422;return fail(error)}})
   .get("/api/v1/exports",async({headers,query,set})=>{try{const user=await authenticateRequest(headers.authorization);const exported=await accountRepository.export(user.id);if(query.format==="csv")return new Response(accountRepository.toCsv(exported),{headers:{"content-type":"text/csv; charset=utf-8","content-disposition":"attachment; filename=coocoo-export.csv"}});return ok(exported)}catch(error){set.status=422;return fail(error)}})
-  .post("/api/v1/receipts/:id/recognize", async ({ params, headers, set }) => {
+  .post("/api/v1/receipts/:id/recognize", async ({ params, headers, body, set }) => {
     let user: Awaited<ReturnType<typeof authenticateRequest>> | null = null;
+    let operationId:string|null=null;let reserved=false;const maxTwd=Number(process.env.RECEIPT_AI_MAX_CALL_TWD||2);
     try {
       user = await authenticateRequest(headers.authorization);
       const image = await receiptRepository.image(user.id, params.id);
-      await aiUsageRepository.assertWithinLimit(user.id, "receipt_ocr");
-      await aiUsageRepository.record(user.id, "receipt_ocr", "started", image.bytes.byteLength);
-      const recognition = await recognizeReceipt(new GeminiReceiptModel(), { bytes: image.bytes, mimeType: image.mimeType });
-      await aiUsageRepository.record(user.id, "receipt_ocr", "succeeded", image.bytes.byteLength);
-      return ok(await receiptRepository.saveRecognition(user.id, params.id, recognition));
+      operationId=typeof body==='object'&&body&&'operationId' in body?String(body.operationId):crypto.randomUUID();
+      const inputHash=await aiUsageRepository.hash(image.bytes);
+      const cached=await aiUsageRepository.reserve(user.id,operationId,"receipt_ocr",inputHash,process.env.OPENROUTER_MODEL||"google/gemini-3.7-flash",maxTwd);
+      if(cached)return ok(cached);
+      reserved=true;
+      const result = await recognizeReceipt(new OpenRouterReceiptModel(), { bytes: image.bytes, mimeType: image.mimeType });
+      const saved=await receiptRepository.saveRecognition(user.id, params.id, result.recognition);
+      await aiUsageRepository.settle(user.id,operationId,"completed",result.costUsd===undefined?maxTwd:result.costUsd*Number(process.env.OPENROUTER_USD_TO_TWD_RATE||process.env.CATALOG_USD_TO_TWD_RATE||35),saved);
+      return ok(saved);
     } catch (error) {
-      if (user) { await receiptRepository.markFailed(user.id, params.id, error instanceof Error ? error.message : "OCR_FAILED"); try { await aiUsageRepository.record(user.id, "receipt_ocr", "failed", 0); } catch {} }
+      if(user&&operationId&&reserved)try{await aiUsageRepository.settle(user.id,operationId,"failed",maxTwd,null)}catch{}
+      if (user) await receiptRepository.markFailed(user.id, params.id, error instanceof Error ? error.message : "OCR_FAILED");
       set.status = 422;
       return fail(error);
     }
-  })
+  },{body:ContractSchemas.ReceiptRecognizeSchema})
   .post("/api/v1/receipts/:id/confirm", async ({ params, headers, body, set }) => {
     try {
       const user = await authenticateRequest(headers.authorization);

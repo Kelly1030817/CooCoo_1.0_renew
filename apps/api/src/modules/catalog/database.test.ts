@@ -21,6 +21,32 @@ test('privileged implementations are private and browser roles cannot execute pu
  expect(functions.rows).toEqual([{nspname:'private',prosecdef:true},{nspname:'public',prosecdef:false}]);
  const rpcArgs=await db.query<{name:string;args:string}>("select p.proname name,pg_get_function_arguments(p.oid) args from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname in ('schedule_recipe_jobs','reserve_recipe_usage','publish_catalog_version') order by p.proname");
  expect(rpcArgs.rows.every(row=>row.args.includes('p_'))).toBe(true);
+ await db.exec(`set role authenticated;set request.jwt.claim.sub='${user}';`);
+ try{await expect(db.query('select * from public.ai_operations')).rejects.toThrow();await expect(db.query('select public.reserve_ai_operation($1,$2,$3,$4,$5,1)',[user,crypto.randomUUID(),'shopping_analysis','hash','model'])).rejects.toThrow();}finally{await db.exec('reset role');}
+});
+test('interactive AI operations are idempotent and enforce per-feature daily limits',async()=>{
+ const operation=crypto.randomUUID();
+ expect((await db.query<{value:{status:string}}>('select public.reserve_ai_operation($1,$2,$3,$4,$5,1) value',[user,operation,'shopping_analysis','same-input','model'])).rows[0].value.status).toBe('reserved');
+ await db.query("select public.settle_ai_operation($1,$2,'completed',0.1,$3)",[user,operation,'{"source":"rules"}']);
+ const replay=await db.query<{value:{status:string;result:{source:string}}}>('select public.reserve_ai_operation($1,$2,$3,$4,$5,1) value',[user,operation,'shopping_analysis','same-input','model']);
+ expect(replay.rows[0].value).toEqual({status:'completed',result:{source:'rules'}});
+ await expect(db.query('select public.reserve_ai_operation($1,$2,$3,$4,$5,1)',[user,operation,'shopping_analysis','changed-input','model'])).rejects.toThrow('AI_OPERATION_CONFLICT');
+ await db.exec('update public.recipe_catalog_control set shopping_daily_user_limit=1');
+ await expect(db.query('select public.reserve_ai_operation($1,$2,$3,$4,$5,1)',[user,crypto.randomUUID(),'shopping_analysis','new-input','model'])).rejects.toThrow('AI_DAILY_LIMITED');
+ await db.exec('delete from public.ai_operations;update public.recipe_catalog_control set shopping_daily_user_limit=5');
+});
+test('catalog and interactive calls share one atomic monthly ceiling',async()=>{
+ const operation=crypto.randomUUID();
+ await db.exec('update public.recipe_catalog_control set global_monthly_budget_twd=1');
+ await db.query('select public.reserve_ai_operation($1,$2,$3,$4,$5,.6)',[user,operation,'receipt_ocr','receipt','model']);
+ await db.query("select public.settle_ai_operation($1,$2,'completed',.6,'{}')",[user,operation]);
+ await expect(db.query('select public.reserve_recipe_usage($1,$2,$3,$4,.5,$5)',[crypto.randomUUID(),job,lease,'test','{}'])).rejects.toThrow('AI_BUDGET_EXHAUSTED');
+ await db.exec('delete from public.ai_operations;update public.recipe_catalog_control set global_monthly_budget_twd=150');
+});
+test('generated recipe sources can never be marked as independently safety reviewed',async()=>{
+ const id=crypto.randomUUID();
+ await db.query("insert into public.recipes(id,user_id,title,servings,prep_minutes,total_minutes,cookware_types,ingredients,steps,safety_reviewed,source) values($1,$2,'AI test',1,1,1,'{}','[]','[]',true,'openrouter')",[id,user]);
+ expect((await db.query<{safety_reviewed:boolean}>('select safety_reviewed from public.recipes where id=$1',[id])).rows[0].safety_reviewed).toBe(false);
 });
 test('catalog budget reservation is atomic and stops at the NT$50 operating cap',async()=>{
  await db.query('select public.reserve_recipe_usage($1,$2,$3,$4,49,$5)',[crypto.randomUUID(),job,lease,'test','{}']);
@@ -31,6 +57,7 @@ test('published content requires three passes, remains immutable and safety repo
  await expect(db.query('select public.publish_catalog_version($1,$2,$3)',[id,job,lease])).rejects.toThrow('REVIEW_REQUIRED');
  for(const reviewer of ['rules','quality','safety'])await db.query(`insert into public.recipe_catalog_reviews(version_id,reviewer,result) values($1,$2,'{"pass":true}')`,[id,reviewer]);
  await db.query('select public.publish_catalog_version($1,$2,$3)',[id,job,lease]);
+ expect((await db.query<{status:string;error:string|null}>('select status,error from public.recipe_catalog_jobs where id=$1',[job])).rows[0]).toEqual({status:'completed',error:null});
  await expect(db.query(`update public.recipe_catalog_versions set recipe='{"title":"changed"}' where id=$1`,[id])).rejects.toThrow('CATALOG_VERSION_IMMUTABLE');
  await db.query('select public.report_catalog_recipe($1,$2,true,$3)',[user,id,'safety report']);
  expect((await db.query<{status:string}>('select status from public.recipe_catalog_versions where id=$1',[id])).rows[0].status).toBe('quarantined');

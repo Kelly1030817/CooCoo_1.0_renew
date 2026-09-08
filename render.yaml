@@ -15,10 +15,6 @@ services:
         sync: false
       - key: SUPABASE_SECRET_KEY
         sync: false
-      - key: GEMINI_API_KEY
-        sync: false
-      - key: GEMINI_MODEL
-        value: gemini-3.7-flash
       - key: OPENROUTER_API_KEY
         sync: false
       - key: OPENROUTER_MODEL
@@ -27,6 +23,14 @@ services:
         sync: false
       - key: OPENROUTER_APP_NAME
         value: CooCoo
+      - key: OPENROUTER_USD_TO_TWD_RATE
+        value: "35"
+      - key: SHOPPING_AI_MAX_CALL_TWD
+        value: "1"
+      - key: RECIPE_AI_MAX_CALL_TWD
+        value: "2"
+      - key: RECEIPT_AI_MAX_CALL_TWD
+        value: "2"
       - key: CATALOG_MODEL
         value: google/gemini-3.7-flash
       - key: CATALOG_USD_TO_TWD_RATE

@@ -4,15 +4,20 @@ import { inspectRecipe, RULE_VERSION, SAFETY_SOURCE } from './quality';
 import { recipeFingerprint } from './recommendations';
 import type { CatalogRepository } from './repository';
 
-const seedIds=[
+const retiredSeedIds=[
   'a1111111-1111-4111-8111-111111111111',
   'a2222222-2222-4222-8222-222222222222',
   'a3333333-3333-4333-8333-333333333333',
 ];
+const seedIds=[
+  'a1111111-1111-4111-8111-111111111112',
+  'a2222222-2222-4222-8222-222222222223',
+  'a3333333-3333-4333-8333-333333333334',
+];
 const eventIds=[
-  'b1111111-1111-4111-8111-111111111111',
-  'b2222222-2222-4222-8222-222222222222',
-  'b3333333-3333-4333-8333-333333333333',
+  'b1111111-1111-4111-8111-111111111112',
+  'b2222222-2222-4222-8222-222222222223',
+  'b3333333-3333-4333-8333-333333333334',
 ];
 
 export function reviewedSeedRecipes(){
@@ -34,4 +39,6 @@ export async function ensureSeedCatalog(repo:CatalogRepository){
     const saved=await repo.db.from('recipe_catalog_reviews').upsert(reviews,{onConflict:'version_id,reviewer',ignoreDuplicates:true});if(saved.error)throw saved.error;
     const event=await repo.db.from('recipe_catalog_events').upsert({id:seed.eventId,version_id:seed.id,kind:'curated_seed_published',detail:{ruleVersion:RULE_VERSION}},{onConflict:'id',ignoreDuplicates:true});if(event.error)throw event.error;
   }
+  const retired=await repo.db.from('recipe_catalog_versions').update({status:'quarantined',reasons:['初始食譜用量單位已由可查價版本取代']}).in('id',retiredSeedIds).eq('status','published');
+  if(retired.error)throw retired.error;
 }

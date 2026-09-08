@@ -81,7 +81,9 @@ export class OpenRouterShoppingModel implements ShoppingAnalysisModel {
       body: JSON.stringify({
         model: this.model,
         temperature: 0.2,
+        max_tokens: 1536,
         usage: { include: true },
+        provider: { allow_fallbacks: false, require_parameters: true, data_collection: "deny" },
         messages: [
           {
             role: "system",
