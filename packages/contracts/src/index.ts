@@ -661,8 +661,11 @@ export interface CatalogVersion {
 export interface CatalogReview { pass: boolean; reasons: string[]; ruleVersion: string }
 export interface CatalogAdminState {
   versions: CatalogVersion[]; prices: IngredientPrice[];
-  paused: boolean; month: string; spentTwd: number; reservedTwd: number; candidateCount: number;
+  paused: boolean; month: string; spentTwd: number; reservedTwd: number; catalogBudgetTwd: number;
+  candidateCount: number; candidateLimit: number; failedJobCount: number;
+  stalePriceCount: number; expiringPriceCount: number;
   lastRunAt: string | null; alerts: string[];
+  jobs: Array<{ id:string; status:string; attempts:number; error:string|null; createdAt:string; versionId:string|null }>;
   reports: Array<{ id:string; versionId:string; title:string; safety:boolean; message:string; createdAt:string; processedAt:string|null }>;
 }
 export const SyncRequestSchema = Type.Object({ operations: Type.Array(Type.Object({

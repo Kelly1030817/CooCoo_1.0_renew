@@ -68,5 +68,6 @@ The teacher-provided OpenRouter credit is finite and has no automatic top-up. Da
 
 - Run the two recommendation modes, NT$100 default/save behavior, reminder, purchase confirmation, cooking completion, and idempotent savings flow end to end on the production mobile UI.
 - Verify offline package use, reconnect sync, legacy import preview, conflict acknowledgement, receipt OCR, and fresh OAuth login on iPhone Safari and Android Chrome.
-- Monitor the first natural-demand week and alert on worker failure, stale heartbeat, or 80% budget use.
+- The seven-day natural-demand monitor starts on 2026-09-09 at 10:00 Asia/Taipei. It checks the previous 24 hours daily and stays quiet unless worker failures, a stale heartbeat, unexpected AI use, duplicate candidates, or 80% budget use require action. Its seventh run produces the week report.
+- The Owner catalog view uses the live NT$50 catalog budget and 50-candidate limit. It lists failed jobs, actual and reserved cost, reports, quarantine/review actions, and price-expiry warnings from day 23; prices older than 30 days remain ineligible for budget claims.
 - Enable Supabase leaked-password protection before password login is offered.
