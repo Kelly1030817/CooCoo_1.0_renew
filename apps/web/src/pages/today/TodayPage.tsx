@@ -1,10 +1,15 @@
 import { RecipeCatalogPanel } from "@/features/recipes/RecipeCatalogPanel";
 import { useContext, useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import type { MealPlanResult, MealPostpone, MealSlot, PlannedMeal, RecipePackage, TodayDecision } from "@coocoo/contracts";
-import { useAppState } from "@/entities/app-state/model";
+import { useAppState, stateQueryKey } from "@/entities/app-state/model";
 import { UiContext } from "@/app/ui-context";
 import { RecipePackageModal } from "@/features/cooking/RecipeModal";
 import { ChefRevisitModal } from "./ChefRevisitModal";
+import {
+  LOW_ENERGY_EMERGENCY_RECIPE,
+  type EmergencyMissingItem,
+} from "@/features/cooking/emergencyRecipe";
 import { api, json } from "@/shared/api/client";
 import { Modal, ModalHeader } from "@/shared/ui/Modal";
 import "./TodayPage.css";
@@ -66,6 +71,7 @@ const dayLabel = (date: string) =>
 
 export function TodayPage() {
   const { data } = useAppState();
+  const queryClient = useQueryClient();
   const ui = useContext(UiContext);
   const [energyLow, setEnergyLow] = useState(false);
   const [decision, setDecision] = useState<TodayDecision | null>(null);
@@ -116,22 +122,51 @@ export function TodayPage() {
     ui.toast("今天就煮「" + meal.title + "」");
   };
 
-  const start = () => {
-    if (!recommended) return;
+  const startCooking = (customRecipe?: RecipePackage) => {
+    const targetRecipe = customRecipe || recommended || LOW_ENERGY_EMERGENCY_RECIPE;
+    if (!targetRecipe) return;
     const ingredientIds = (data?.inventory || [])
       .filter((item) =>
-        recommended.ingredients.some((ingredient) =>
-          [ingredient.name, ingredient.ingredientKey].includes(item.name),
+        targetRecipe.ingredients.some((ingredient) =>
+          [ingredient.name, ingredient.ingredientKey].some((name) => item.name.includes(name)) ||
+          (ingredient.ingredientKey === "egg" && item.name.includes("蛋")) ||
+          (ingredient.ingredientKey === "greens" && (item.name.includes("菜") || item.name.includes("蔬"))) ||
+          (ingredient.ingredientKey === "noodles" && (item.name.includes("麵") || item.name.includes("粉")))
         ),
       )
       .map((item) => item.id);
     ui.open(
       <RecipePackageModal
-        recipePackage={recommended}
+        recipePackage={targetRecipe}
         ingredientIds={ingredientIds}
         onClose={ui.close}
       />,
     );
+  };
+
+  const start = () => startCooking();
+
+  const handleAddToShopping = async (missing: EmergencyMissingItem[]) => {
+    try {
+      for (const item of missing) {
+        await api(
+          "/shopping-items",
+          json("POST", {
+            name: item.name,
+            category: item.category,
+            qty: item.qty,
+            unit: item.unit,
+            estCost: item.estCost,
+            checked: false,
+            status: "快手菜缺料",
+          }),
+        );
+      }
+      await queryClient.invalidateQueries({ queryKey: stateQueryKey });
+      ui.toast(`已將缺少的「${missing.map((i) => i.name).join("、")}」加入採買清單！`);
+    } catch {
+      ui.toast("加入採買清單失敗，請稍後重試");
+    }
   };
 
   const reschedule = (meal: PlannedMeal) =>
@@ -493,7 +528,7 @@ export function TodayPage() {
             </div>
 
             <div className="cook-choice-row">
-              <button type="button" className="cook-choice" onClick={start}>
+              <button type="button" className="cook-choice" onClick={() => start()}>
                 <span className="cook-choice-label">
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>
@@ -617,7 +652,8 @@ export function TodayPage() {
             setEnergyLow(true);
             ui.toast("已為你啟動低體力模式！");
           }}
-          onStartCooking={recommended ? start : undefined}
+          onStartCooking={(customRecipe) => startCooking(customRecipe)}
+          onAddToShopping={handleAddToShopping}
           inventoryNames={(data?.inventory || []).map((item) => item.name)}
           weeklyTarget={data?.cookingPlan?.weeklyCookingMeals || 3}
           onAdjustTarget={(newTarget) => {

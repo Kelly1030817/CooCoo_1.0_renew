@@ -1,10 +1,24 @@
 import { useState, useRef, useEffect } from "react";
 import { Modal } from "../../shared/ui/Modal";
+import {
+  LOW_ENERGY_EMERGENCY_RECIPE,
+  checkEmergencyIngredients,
+  type EmergencyMissingItem,
+} from "../../features/cooking/emergencyRecipe";
+import type { RecipePackage } from "@coocoo/contracts";
+
+export interface ActionButtonConfig {
+  label: string;
+  onClick: () => void | Promise<void>;
+  variant?: "primary" | "secondary";
+  icon?: "play" | "cart";
+}
 
 interface ChefRevisitModalProps {
   onClose: () => void;
   onSelectLowEnergy: () => void;
-  onStartCooking?: () => void;
+  onStartCooking?: (customRecipe?: RecipePackage) => void;
+  onAddToShopping?: (items: EmergencyMissingItem[]) => Promise<void> | void;
   inventoryNames?: string[];
   weeklyTarget?: number;
   onAdjustTarget?: (newTarget: number) => void;
@@ -16,10 +30,8 @@ interface MessageItem {
   sender: "chef" | "user";
   text: string;
   actionType?: "tired" | "adjust" | "takeout";
-  actionButton?: {
-    label: string;
-    onClick: () => void;
-  };
+  actionButton?: ActionButtonConfig;
+  actionButtons?: ActionButtonConfig[];
   timestamp?: string;
 }
 
@@ -27,6 +39,7 @@ export function ChefRevisitModal({
   onClose,
   onSelectLowEnergy,
   onStartCooking,
+  onAddToShopping,
   inventoryNames = ["雞蛋", "青江菜"],
   weeklyTarget = 3,
   onAdjustTarget,
@@ -83,22 +96,72 @@ export function ChefRevisitModal({
 
       if (type === "tired") {
         onSelectLowEnergy();
-        chefMsg = {
-          id: `chef-${Date.now()}`,
-          sender: "chef",
-          actionType: "tired",
-          text: "主廚 CooCoo 收到！已為你切換為「低體力模式」：\n步驟 ≤ 6、單鍋到底、免繁複備料。推薦一鍋到底的快手麵或滑蛋飯，善終冰箱食材，收拾只要洗一個鍋！",
-          actionButton: onStartCooking
-            ? {
-                label: "離線料理包已備妥 · 跟著主廚做 ➔",
+        const { isFullyCovered, missing } = checkEmergencyIngredients(inventoryNames);
+
+        if (isFullyCovered) {
+          chefMsg = {
+            id: `chef-${Date.now()}`,
+            sender: "chef",
+            actionType: "tired",
+            text: "主廚 CooCoo 收到！已為你切換為「低體力模式」：\n步驟 ≤ 4、單鍋到底、免繁複備料。\n冰箱冷藏庫剛好有齊全食材，為你調派 11 分鐘保底快手菜「麻油焦香煎蛋湯麵」，善終冰箱食材，收拾只要洗一個鍋！",
+            actionButton: onStartCooking
+              ? {
+                  label: "離線料理包已備妥 · 跟著主廚做 ➔",
+                  variant: "primary",
+                  icon: "play",
+                  onClick: () => {
+                    onClose();
+                    onStartCooking(LOW_ENERGY_EMERGENCY_RECIPE);
+                  },
+                }
+              : undefined,
+            timestamp: "剛剛",
+          };
+        } else {
+          const missingNames = missing.map((m) => m.name).join("、");
+          const fridgeStatus =
+            inventoryNames.length === 0
+              ? "目前冰箱尚無食材"
+              : `目前冰箱缺少「${missingNames}」`;
+
+          chefMsg = {
+            id: `chef-${Date.now()}`,
+            sender: "chef",
+            actionType: "tired",
+            text: `主廚 CooCoo 收到！已為你切換為「低體力模式」：\n為你調派 11 分鐘單鍋「麻油焦香煎蛋湯麵」（步驟 ≤ 4、一鍋到底）。\n\n主廚檢視冰箱，${fridgeStatus}。\n今晚你可以自由選擇：自備現有食材直接跟著做，或先一鍵將缺料加入採買清單！`,
+            actionButtons: [
+              {
+                label: "自備食材 · 直接跟著主廚做 ➔",
+                variant: "primary",
+                icon: "play",
                 onClick: () => {
                   onClose();
-                  onStartCooking();
+                  onStartCooking?.(LOW_ENERGY_EMERGENCY_RECIPE);
                 },
-              }
-            : undefined,
-          timestamp: "剛剛",
-        };
+              },
+              {
+                label: `先將缺料（${missingNames}）加入採買清單 ➔`,
+                variant: "secondary",
+                icon: "cart",
+                onClick: async () => {
+                  if (onAddToShopping) {
+                    await onAddToShopping(missing);
+                  }
+                  setMessages((prev) => [
+                    ...prev,
+                    {
+                      id: `chef-reply-${Date.now()}`,
+                      sender: "chef",
+                      text: `主廚 CooCoo：已將「${missingNames}」加入你的待買清單！如果手邊有其他替代食材想直接開煮，也可以點擊上方的「自備食材 · 直接跟著主廚做」開始烹調喔！`,
+                      timestamp: "剛剛",
+                    },
+                  ]);
+                },
+              },
+            ],
+            timestamp: "剛剛",
+          };
+        }
       } else if (type === "adjust") {
         const nextTarget = Math.max(1, weeklyTarget - 1);
         if (onAdjustTarget) {
@@ -219,7 +282,53 @@ export function ChefRevisitModal({
                 <p className="text-stone-600 text-[11px] leading-relaxed whitespace-pre-line">
                   {msg.text}
                 </p>
-                {msg.actionButton && (
+                {msg.actionButtons && msg.actionButtons.length > 0 ? (
+                  <div className="mt-2 space-y-1.5 w-full">
+                    {msg.actionButtons.map((btn, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={btn.onClick}
+                        className={`spring-btn w-full font-bold py-2.5 px-3 rounded-xl text-[11px] transition-colors flex items-center justify-center gap-1.5 ${
+                          btn.variant === "secondary"
+                            ? "bg-stone-100 hover:bg-stone-200 text-stone-800 border border-stone-200"
+                            : "bg-amber-100 hover:bg-amber-200 text-amber-950 border border-amber-300/80"
+                        }`}
+                      >
+                        {btn.icon === "cart" ? (
+                          <svg
+                            className="w-3.5 h-3.5 text-stone-600 shrink-0"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            aria-hidden="true"
+                          >
+                            <circle cx="8" cy="21" r="1" />
+                            <circle cx="19" cy="21" r="1" />
+                            <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
+                          </svg>
+                        ) : (
+                          <svg
+                            className="w-3.5 h-3.5 text-amber-800 shrink-0"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            aria-hidden="true"
+                          >
+                            <polygon points="5 3 19 12 5 21 5 3" />
+                          </svg>
+                        )}
+                        <span>{btn.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                ) : msg.actionButton ? (
                   <button
                     type="button"
                     onClick={msg.actionButton.onClick}
@@ -239,7 +348,7 @@ export function ChefRevisitModal({
                     </svg>
                     <span>{msg.actionButton.label}</span>
                   </button>
-                )}
+                ) : null}
               </div>
             </div>
           );

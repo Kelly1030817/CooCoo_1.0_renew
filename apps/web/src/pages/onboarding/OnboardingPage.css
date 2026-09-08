@@ -66,6 +66,15 @@
 .animate-stamp-impact {
   animation: heavyStampDrop 0.42s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
+@keyframes heavyStampDropCircle {
+  0% { transform: scale(3.2) rotate(-28deg); opacity: 0; }
+  65% { transform: scale(0.9) rotate(-12deg); opacity: 1; }
+  85% { transform: scale(1.04) rotate(-7deg); }
+  100% { transform: scale(1) rotate(-9deg); opacity: 1; }
+}
+.animate-stamp-impact-circle {
+  animation: heavyStampDropCircle 0.42s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
 @keyframes shockwaveRing {
   0% { transform: scale(0.4); opacity: 0.85; }
   100% { transform: scale(2.6); opacity: 0; }

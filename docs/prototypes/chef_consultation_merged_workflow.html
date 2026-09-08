@@ -366,16 +366,16 @@
     <div class="flex items-center justify-center gap-2 mb-2 flex-wrap">
       <div class="inline-flex items-center gap-2 bg-emerald-50 text-emerald-900 border border-emerald-300/80 px-3.5 py-1 rounded-full text-xs font-bold tracking-wide shadow-2xs">
         <svg class="w-3.5 h-3.5 text-emerald-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
-        <span>已拍板整合：方案三卷軸收闔 ＋ 形式 B 半屏抽屜 ＋ 方案 B 火種開火升起</span>
+        <span>已整合方案二：雙按鈕手動推進起飛（蓋章立約 ➔ 親筆見證 ➔ 啟程起飛 ➔ 圓夢看板落地）</span>
       </div>
       <a href="passport_flight_sandbox.html" class="inline-flex items-center gap-1.5 bg-amber-500 hover:bg-amber-600 text-white px-3.5 py-1 rounded-full text-xs font-black tracking-wide shadow-xs transition-colors">
         <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-        <span>沙盒對比：查看通行證飛行細部參數 ➔</span>
+        <span>沙盒對比：查看方案一 vs 方案二細部參數 ➔</span>
       </a>
     </div>
-    <h1 class="text-xl md:text-2xl font-black text-stone-900 tracking-tight">主廚 CooCoo 相談室（全流程整合終審驗收）</h1>
+    <h1 class="text-xl md:text-2xl font-black text-stone-900 tracking-tight">主廚 CooCoo 相談室（全流程整合驗收）</h1>
     <p class="text-stone-500 text-xs mt-1 max-w-xl mx-auto font-medium">
-      10 步引導 ＋ 現代工坊圓章 ＋ 方案三卷軸收闔轉場 ＋ 形式 B 浮動半屏抽屜 ＋ 方案 B 火種開火升起連動！
+      10 步引導 ＋ 解鎖雷達 ＋ Cedarville Cursive 純墨揮毫 ＋ 方案二通行證拋物線飛行轉場 ＋ 圓夢看板無縫降落！
     </p>
   </header>
 
@@ -415,24 +415,24 @@
     <!-- Interactive Experimentation Controls: Transition Motion & Dialogue Presentation & Cooking Prep Transitions -->
     <div class="pt-2.5 border-t border-stone-200 space-y-3 text-left">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <!-- 1. Transition Motion (Confirmed Scheme 3: Scroll Collapse) -->
+        <!-- 1. Transition Motion (Confirmed Scheme 2: Spark Leap) -->
         <div class="space-y-1.5">
           <div class="flex items-center justify-between">
             <span class="text-[11px] font-black text-stone-800 flex items-center gap-1.5">
               <svg class="w-3.5 h-3.5 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/></svg>
-              <span>1. 轉場動態視角（已拍板方案三）：</span>
+              <span>1. 轉場動態視角（已拍板方案二）：</span>
             </span>
-            <span id="badge-current-motion" class="text-[9px] font-bold font-mono px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300">方案三 · 卷軸收闔 (拍板)</span>
+            <span id="badge-current-motion" class="text-[9px] font-bold font-mono px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300">方案二 · 火種躍入 (拍板)</span>
           </div>
           <div class="grid grid-cols-3 gap-1 bg-stone-100 p-1 rounded-xl">
             <button type="button" onclick="replayTransitionNow('pan')" id="btn-motion-pan" class="py-1.5 px-2 rounded-lg text-xs font-bold transition-all text-stone-500 hover:text-stone-900 text-center">
               方案一：空間平移
             </button>
-            <button type="button" onclick="replayTransitionNow('spark')" id="btn-motion-spark" class="py-1.5 px-2 rounded-lg text-xs font-bold transition-all text-stone-500 hover:text-stone-900 text-center">
-              方案二：火種躍入
+            <button type="button" onclick="replayTransitionNow('spark')" id="btn-motion-spark" class="py-1.5 px-2 rounded-lg text-xs font-black transition-all bg-white text-stone-900 shadow-2xs text-center">
+              方案二：火種躍入 ✓
             </button>
-            <button type="button" onclick="replayTransitionNow('collapse')" id="btn-motion-collapse" class="py-1.5 px-2 rounded-lg text-xs font-black transition-all bg-white text-stone-900 shadow-2xs text-center">
-              方案三：卷軸收闔 ✓
+            <button type="button" onclick="replayTransitionNow('collapse')" id="btn-motion-collapse" class="py-1.5 px-2 rounded-lg text-xs font-bold transition-all text-stone-500 hover:text-stone-900 text-center">
+              方案三：卷軸收闔
             </button>
           </div>
         </div>
@@ -451,7 +451,7 @@
               形式 A：整頁自然嵌入
             </button>
             <button type="button" onclick="setDialogueStyle('bottom-sheet')" id="btn-dialogue-sheet" class="py-1.5 px-2 rounded-lg text-xs font-black transition-all bg-white text-stone-900 shadow-2xs text-center">
-              形式 B：浮動半屏抽屜 ✓
+              形式 B：浮動半屏抽屜
             </button>
           </div>
         </div>
@@ -464,7 +464,7 @@
             <svg class="w-3.5 h-3.5 text-amber-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
             <span>3. 「開始備料」動態連動（三種方案互動對比）：</span>
           </span>
-          <span id="badge-current-prep-motion" class="text-[9px] font-bold font-mono px-1.5 py-0.5 rounded bg-amber-200 text-amber-950 border border-amber-300">方案 B · 火種開火升起 (拍板)</span>
+          <span id="badge-current-prep-motion" class="text-[9px] font-bold font-mono px-1.5 py-0.5 rounded bg-amber-200 text-amber-950 border border-amber-300">方案 B · 火種開火升起 (推薦)</span>
         </div>
         <div class="grid grid-cols-3 gap-1.5">
           <button type="button" onclick="setCookingPrepMotion('A'); startCookingPrepFlow('A')" id="btn-prep-scheme-a" class="py-1.5 px-2 rounded-lg text-xs font-bold transition-all bg-white text-stone-700 border border-stone-200 hover:border-amber-400 hover:text-amber-950 text-center shadow-2xs">
@@ -622,12 +622,12 @@
         <div id="dream-transition-status-pill" class="text-[10px] text-stone-700 font-bold bg-amber-50/90 py-1.5 px-2.5 rounded-xl border border-amber-200/80 flex items-center justify-between">
           <div class="flex items-center gap-1.5">
             <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-            <span>轉場動態：<strong id="label-motion-preview" class="text-amber-900 font-black">方案三（卷軸收闔）</strong></span>
+            <span>轉場動態：<strong id="label-motion-preview" class="text-amber-900 font-black">方案二（火種躍入）</strong></span>
           </div>
           <div class="flex items-center gap-1">
             <button type="button" onclick="setTransitionMotion('pan')" id="pill-motion-pan" class="px-1.5 py-0.5 rounded text-[9px] font-bold border border-amber-200 bg-white text-stone-600 hover:text-stone-900 transition-all">方案一</button>
-            <button type="button" onclick="setTransitionMotion('spark')" id="pill-motion-spark" class="px-1.5 py-0.5 rounded text-[9px] font-bold border border-amber-200 bg-white text-stone-600 hover:text-stone-900 transition-all">方案二</button>
-            <button type="button" onclick="setTransitionMotion('collapse')" id="pill-motion-collapse" class="px-1.5 py-0.5 rounded text-[9px] font-black border border-amber-600 bg-amber-600 text-white shadow-2xs transition-all">方案三 ✓</button>
+            <button type="button" onclick="setTransitionMotion('spark')" id="pill-motion-spark" class="px-1.5 py-0.5 rounded text-[9px] font-black border border-amber-600 bg-amber-600 text-white shadow-2xs transition-all">方案二 ✓</button>
+            <button type="button" onclick="setTransitionMotion('collapse')" id="pill-motion-collapse" class="px-1.5 py-0.5 rounded text-[9px] font-bold border border-amber-200 bg-white text-stone-600 hover:text-stone-900 transition-all">方案三</button>
           </div>
         </div>
         <button id="btn-confirm-dream-today" onclick="confirmDreamAndGoToToday()" class="spring-btn w-full bg-amber-600 hover:bg-amber-700 active:scale-95 text-white font-black py-2.5 rounded-xl text-xs shadow-md flex items-center justify-center gap-1.5 transition-all">
@@ -769,7 +769,7 @@
     let isTicketFlying = false;
     let isInDreamDashboard = false;
     let stampOption = 'B'; // 'B' (現代工坊圓章，已拍板) | 'A' (朱紅金石方印)
-    let transitionMotionOption = 'collapse'; // 'collapse' (方案三：卷軸收闔，已拍板) | 'spark' (方案二：火種躍入) | 'pan' (方案一：空間平移)
+    let transitionMotionOption = 'spark'; // 'spark' (方案二：火種躍入，已拍板) | 'pan' (方案一：空間平移) | 'collapse' (方案三：卷軸收闔)
     let dialoguePresentationStyle = 'bottom-sheet'; // 'bottom-sheet' (形式 B：浮動半屏抽屜，已拍板) | 'inline' (形式 A：整頁自然嵌入)
     let isBottomSheetOpen = false;
 
@@ -803,7 +803,7 @@
       if (motion === 'spark') name = '方案二（火種躍入）';
       if (motion === 'collapse') name = '方案三（卷軸收闔）';
 
-      if (badge) badge.innerText = motion === 'pan' ? '方案一 · 空間平移' : (motion === 'spark' ? '方案二 · 火種躍入' : '方案三 · 卷軸收闔 (拍板)');
+      if (badge) badge.innerText = motion === 'pan' ? '方案一' : (motion === 'spark' ? '方案二' : '方案三');
       if (previewLabel) previewLabel.innerText = name;
     }
 
@@ -1556,25 +1556,21 @@
         }, 540);
 
       } else if (transitionMotionOption === 'collapse') {
-        // 方案三：卷軸向上收闔歸位 (Scroll Collapse)
-        stepBox.style.transformOrigin = 'top center';
-        stepBox.style.transition = 'transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.32s ease';
-        stepBox.style.transform = 'scaleY(0.06) translateY(-28px)';
+        // 方案三：卷軸向上收闔歸位
+        stepBox.style.transition = 'transform 0.36s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s';
+        stepBox.style.transform = 'scaleY(0.85) translateY(-26px)';
         stepBox.style.opacity = '0';
 
         setTimeout(() => {
           if (dreamTab) dreamTab.className = 'flex flex-col items-center gap-0.5 text-stone-400 transition-colors cursor-pointer';
           if (todayTab) {
-            todayTab.classList.remove('tab-impact-pulse');
-            void todayTab.offsetWidth;
-            todayTab.classList.add('tab-impact-pulse', 'text-amber-600', 'font-black');
+            todayTab.className = 'flex flex-col items-center gap-0.5 text-amber-600 font-bold';
           }
           stepBox.style.transform = '';
           stepBox.style.opacity = '';
           stepBox.style.transition = '';
-          stepBox.style.transformOrigin = '';
           renderTodayView('collapse');
-        }, 380);
+        }, 360);
       }
     }
 
@@ -2698,8 +2694,8 @@
               <p class="text-stone-600 leading-relaxed text-[11px]">
                 推薦「<strong>麻油焦香煎蛋湯麵</strong>」！備料與烹煮 11 分鐘，只要 1 個小鍋子，步驟僅 4 步。蛋黃煎香後沖入熱水，青江菜丟進去滾 1 分鐘起鍋，剛好善終冰箱食材！
               </p>
-              <button onclick="startCookingPrepFlow('B', event, 'low-energy')" class="spring-btn mt-2 w-full bg-stone-900 hover:bg-black active:scale-95 text-amber-300 font-black py-2.5 rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 shadow-md relative overflow-hidden">
-                <svg class="w-3.5 h-3.5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              <button class="mt-2 w-full bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold py-2 rounded-xl text-[11px] transition-colors flex items-center justify-center gap-1.5">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                 <span>離線料理包已備妥 · 跟著主廚語音做 ➔</span>
               </button>
             </div>
@@ -2804,64 +2800,6 @@
       { text: '牛肉片 1 盒（已備妥於料理檯邊）', checked: true }
     ];
 
-    let currentActiveRecipeType = 'standard'; // 'standard' | 'low-energy'
-
-    const lowEnergyCookingSteps = [
-      {
-        order: 1,
-        title: '麻油熱鍋煎香荷包蛋',
-        heatBadge: '中小火煎香',
-        heatClass: 'bg-amber-100 text-amber-800 border-amber-200',
-        timerSeconds: 90,
-        cookware: '單平底小鍋 / 湯鍋',
-        ingredients: ['黑麻油 1 茶匙', '雞蛋 1 顆'],
-        instruction: '取小湯鍋或平底鍋倒入 1 茶匙黑麻油，中小火熱鍋。打入雞蛋，將蛋白邊緣煎至微焦黃脆邊，散發濃郁麻油蛋焦香。',
-        scienceTip: '黑麻油不宜過度高溫大火爆炒，以中小火逼出蛋香即可保留營養與醇厚香氣！'
-      },
-      {
-        order: 2,
-        title: '沖熱水激發濃白高湯',
-        heatBadge: '大火滾沸',
-        heatClass: 'bg-red-100 text-red-700 border-red-200',
-        timerSeconds: 60,
-        cookware: '單鍋到底',
-        ingredients: ['熱開水 500ml', '鹽與白胡椒適量'],
-        instruction: '荷包蛋煎至焦香後，直接在鍋中沖入 500ml 滾燙開水！熱水與麻油脂肪瞬間乳化，湯底立即變成乳白濃郁高湯，下少許鹽調味。',
-        scienceTip: '高溫滾水沖入油脂會觸發快速乳化（Emulsification），不用費時熬骨頭高湯，1 分鐘就能創造出白濃順口的天然湯底！'
-      },
-      {
-        order: 3,
-        title: '下麵條與善終即期青菜',
-        heatBadge: '中火滾煮',
-        heatClass: 'bg-orange-100 text-orange-800 border-orange-200',
-        timerSeconds: 120,
-        cookware: '單鍋到底',
-        ingredients: ['關廟麵 / 烏龍麵 1 份', '即期青江菜 1 把'],
-        instruction: '放入麵條與即期青江菜段，中火滾煮 1.5–2 分鐘至麵條熟透、青菜翠綠。一鍋到底免換鍋！',
-        scienceTip: '單鍋到底一氣呵成，青菜吸收麻油湯頭甜味，免切繁複備料，洗碗只要洗一只鍋！'
-      },
-      {
-        order: 4,
-        title: '起鍋盛碗，11 分鐘滿血出餐！',
-        heatBadge: '關火完成',
-        heatClass: 'bg-emerald-100 text-emerald-800 border-emerald-200',
-        timerSeconds: null,
-        cookware: '盛入大碗',
-        ingredients: ['香油 2 滴'],
-        instruction: '將熱騰騰的麻油焦香煎蛋湯麵倒入大碗，滴上香油。大口喝熱湯、吃好麵，疲憊一掃而空！',
-        scienceTip: '恭喜！用最少腦力與極簡鍋具，11 分鐘內善終冰箱即期蔬菜，健康、美味又零壓力。'
-      }
-    ];
-
-    let lowEnergyChecklistItems = [
-      { text: '單小鍋 1 只（已置於瓦斯爐上）', checked: true },
-      { text: '雞蛋 1 顆（料理檯就位）', checked: true },
-      { text: '即期青江菜 1 把（已洗淨切段）', checked: true },
-      { text: '麵條 1 份（直接取用免解凍）', checked: true },
-      { text: '黑麻油與鹽（調味備妥）', checked: true },
-      { text: '熱開水 500ml（熱水瓶/快煮壺就位）', checked: true }
-    ];
-
     function playIgnitionSound() {
       try {
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -2934,7 +2872,7 @@
           badge.textContent = '方案 A · 卡片展開';
           badge.className = 'text-[9px] font-bold font-mono px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300';
         } else if (motion === 'B') {
-          badge.textContent = '方案 B · 火種開火升起 (拍板)';
+          badge.textContent = '方案 B · 火種開火升起 (推薦)';
           badge.className = 'text-[9px] font-bold font-mono px-1.5 py-0.5 rounded bg-amber-200 text-amber-950 border border-amber-300';
         } else {
           badge.textContent = '方案 C · 兩段防呆盤點';
@@ -2956,72 +2894,9 @@
       if (cardPillC) cardPillC.className = (motion === 'C') ? pillActive : pillInactive;
     }
 
-    function applyRecipeToTodayCard(recipeType) {
-      currentActiveRecipeType = recipeType;
-      const card = document.getElementById('today-recipe-card');
-      if (!card) return;
-
-      if (recipeType === 'low-energy') {
-        card.innerHTML = `
-          <div class="flex items-center justify-between">
-            <span class="text-[10px] font-black text-amber-900 bg-amber-200/90 border border-amber-300 px-2 py-0.5 rounded-full flex items-center gap-1">
-              <svg class="w-3 h-3 text-amber-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-              <span>低體力快手菜（主廚已啟動）</span>
-            </span>
-            <span class="text-[10px] font-mono font-bold text-stone-400">11 分鐘 · 單鍋到底</span>
-          </div>
-
-          <div class="space-y-1">
-            <h3 class="text-sm font-black text-stone-900">麻油焦香煎蛋湯麵</h3>
-            <p class="text-[11px] text-stone-500 leading-relaxed">
-              黑麻油中小火煎出焦香脆邊荷包蛋，滾水沖入瞬間乳化濃白高湯，善終青江菜，一鍋搞定。
-            </p>
-          </div>
-
-          <div class="bg-stone-50 rounded-xl p-2.5 border border-stone-100 flex items-center justify-between text-[11px]">
-            <div class="space-y-0.5">
-              <span class="text-[9px] text-stone-400 font-bold block">本餐省下金額</span>
-              <span class="font-mono-num font-black text-emerald-700 text-sm">NT$ 115</span>
-            </div>
-            <div class="text-right text-[9px] text-stone-400">
-              <span>外食比較價 NT$ 160</span><br>
-              <span>自煮食材 NT$ 45</span>
-            </div>
-          </div>
-
-          <!-- Interactive Prep Motion Switcher inside Card -->
-          <div class="bg-amber-50/70 border border-amber-200/80 rounded-xl p-2 space-y-1.5">
-            <div class="flex items-center justify-between">
-              <span class="text-[9px] font-black text-amber-950 flex items-center gap-1">
-                <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-                <span>備料連動動態（點選切換）：</span>
-              </span>
-              <span id="label-card-prep-scheme" class="text-[9px] font-mono font-bold text-amber-900 bg-white px-1.5 py-0.2 rounded border border-amber-200">${cookingPrepMotion === 'A' ? '方案 A：卡片展開' : (cookingPrepMotion === 'B' ? '方案 B：火種開火 ✓' : '方案 C：兩段防呆')}</span>
-            </div>
-            <div class="grid grid-cols-3 gap-1">
-              <button type="button" id="card-pill-scheme-a" onclick="setCookingPrepMotion('A', event)" class="py-1 px-1 rounded-md text-[9px] transition-all text-center ${cookingPrepMotion === 'A' ? 'bg-amber-600 text-white shadow-2xs font-black' : 'bg-white text-stone-700 border border-stone-200 hover:bg-amber-100 font-bold'}">方案 A：展開</button>
-              <button type="button" id="card-pill-scheme-b" onclick="setCookingPrepMotion('B', event)" class="py-1 px-1 rounded-md text-[9px] transition-all text-center ${cookingPrepMotion === 'B' ? 'bg-amber-600 text-white shadow-2xs font-black' : 'bg-white text-stone-700 border border-stone-200 hover:bg-amber-100 font-bold'}">方案 B：火種 ✓</button>
-              <button type="button" id="card-pill-scheme-c" onclick="setCookingPrepMotion('C', event)" class="py-1 px-1 rounded-md text-[9px] transition-all text-center ${cookingPrepMotion === 'C' ? 'bg-amber-600 text-white shadow-2xs font-black' : 'bg-white text-stone-700 border border-stone-200 hover:bg-amber-100 font-bold'}">方案 C：防呆</button>
-            </div>
-          </div>
-
-          <button id="btn-start-cooking-prep" onclick="startCookingPrepFlow('B', event, 'low-energy')" class="spring-btn w-full bg-stone-900 hover:bg-black active:scale-95 text-amber-300 font-black py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs relative overflow-hidden">
-            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-            <span id="btn-start-cooking-prep-text">開始備料（解鎖低體力快手菜）</span>
-          </button>
-        `;
-      }
-    }
-
-    function startCookingPrepFlow(overrideScheme, e, recipeType = null) {
-      if (e && e.stopPropagation) e.stopPropagation();
+    function startCookingPrepFlow(overrideScheme) {
       const scheme = overrideScheme || cookingPrepMotion;
       setCookingPrepMotion(scheme);
-
-      if (recipeType) {
-        currentActiveRecipeType = recipeType;
-        applyRecipeToTodayCard(recipeType);
-      }
 
       if (appMode !== 'revisit') {
         switchAppMode('revisit');
@@ -3110,9 +2985,8 @@
       const drawer = document.getElementById('cooking-checklist-drawer');
       if (!drawer) return;
 
-      const activeChecklist = (currentActiveRecipeType === 'low-energy') ? lowEnergyChecklistItems : checklistItems;
       let itemsHtml = '';
-      activeChecklist.forEach((item, idx) => {
+      checklistItems.forEach((item, idx) => {
         itemsHtml += `
           <div onclick="toggleChecklistItem(${idx})" class="p-2.5 rounded-xl border ${item.checked ? 'bg-amber-50/80 border-amber-200 text-stone-900' : 'bg-stone-50 border-stone-200 text-stone-400'} flex items-center justify-between cursor-pointer transition-all active:scale-[0.99]">
             <div class="flex items-center gap-2.5">
@@ -3173,17 +3047,15 @@
     }
 
     function toggleChecklistItem(idx) {
-      const activeList = (currentActiveRecipeType === 'low-energy') ? lowEnergyChecklistItems : checklistItems;
-      if (activeList[idx]) {
-        activeList[idx].checked = !activeList[idx].checked;
+      if (checklistItems[idx]) {
+        checklistItems[idx].checked = !checklistItems[idx].checked;
         renderCookingChecklist();
       }
     }
 
     function renderCookingStudioStep(stepIdx) {
-      const activeSteps = (currentActiveRecipeType === 'low-energy') ? lowEnergyCookingSteps : cookingSteps;
-      currentCookingStepIndex = Math.max(0, Math.min(activeSteps.length - 1, stepIdx));
-      const step = activeSteps[currentCookingStepIndex];
+      currentCookingStepIndex = Math.max(0, Math.min(cookingSteps.length - 1, stepIdx));
+      const step = cookingSteps[currentCookingStepIndex];
       const studio = document.getElementById('cooking-studio-container');
       if (!studio) return;
 
@@ -3194,7 +3066,7 @@
       }
 
       let stepPillHtml = '';
-      for (let i = 0; i < activeSteps.length; i++) {
+      for (let i = 0; i < cookingSteps.length; i++) {
         const active = i === currentCookingStepIndex;
         const passed = i < currentCookingStepIndex;
         stepPillHtml += `
@@ -3280,9 +3152,9 @@
               <span class="text-[10px] font-black text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
                 料理大成功 · 完美出餐
               </span>
-              <h3 class="text-base font-black text-stone-900">${currentActiveRecipeType === 'low-energy' ? '麻油焦香煎蛋湯麵' : '番茄牛肉湯烏龍麵'}</h3>
+              <h3 class="text-base font-black text-stone-900">番茄牛肉湯烏龍麵</h3>
               <p class="text-xs text-stone-500">
-                ${currentActiveRecipeType === 'low-energy' ? '熱騰騰一鍋搞定！趁熱享用，11 分鐘滿血復活。' : '色香味俱全！趁熱享用，為今天的努力好好犒賞自己。'}
+                色香味俱全！趁熱享用，為今天的努力好好犒賞自己。
               </p>
             </div>
 
@@ -3290,20 +3162,20 @@
             <div class="bg-amber-50/80 rounded-2xl p-3 border border-amber-200/80 space-y-2 text-left">
               <div class="flex items-center justify-between text-xs">
                 <span class="text-stone-600 font-bold">外食同等市價：</span>
-                <span class="font-mono-num font-bold text-stone-700">NT$ ${currentActiveRecipeType === 'low-energy' ? '160' : '210'}</span>
+                <span class="font-mono-num font-bold text-stone-700">NT$ 210</span>
               </div>
               <div class="flex items-center justify-between text-xs">
                 <span class="text-stone-600 font-bold">自煮實際花費：</span>
-                <span class="font-mono-num font-bold text-stone-700">NT$ ${currentActiveRecipeType === 'low-energy' ? '45' : '100'}</span>
+                <span class="font-mono-num font-bold text-stone-700">NT$ 100</span>
               </div>
               <div class="pt-2 border-t border-amber-200 flex items-center justify-between">
                 <div>
                   <span class="text-[10px] text-amber-900 font-black block">本餐為【${profile.dreamName}】存入</span>
-                  <span class="text-base font-mono-num font-black text-emerald-700">＋ NT$ ${currentActiveRecipeType === 'low-energy' ? '115' : '110'}</span>
+                  <span class="text-base font-mono-num font-black text-emerald-700">＋ NT$ 110</span>
                 </div>
                 <div class="text-right text-[10px] font-bold text-amber-800">
                   <span>累計存入進度</span><br>
-                  <span class="font-mono-num font-black">NT$ ${currentActiveRecipeType === 'low-energy' ? '115' : '110'} / ${profile.dreamTargetAmount.toLocaleString()}</span>
+                  <span class="font-mono-num font-black">NT$ 110 / ${profile.dreamTargetAmount.toLocaleString()}</span>
                 </div>
               </div>
             </div>
@@ -3325,7 +3197,7 @@
                 <svg class="w-3 h-3 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                 <span>離線包已備妥 · 斷網免驚</span>
               </span>
-              <span class="text-[10px] font-mono font-bold text-stone-400">${currentActiveRecipeType === 'low-energy' ? '11 分鐘單鍋 · 低體力快手菜' : '25 分鐘單鍋'}</span>
+              <span class="text-[10px] font-mono font-bold text-stone-400">25 分鐘單鍋</span>
             </div>
             <button onclick="exitCookingStudio()" class="text-stone-400 hover:text-stone-700 bg-stone-100 hover:bg-stone-200 px-2 py-1 rounded-lg text-[10px] font-bold transition-colors flex items-center gap-1">
               <span>退出料理台 ✕</span>
@@ -3369,7 +3241,7 @@
                 <span>${currentCookingStepIndex === 2 ? '完成料理 · 盛盤 ➔' : '下一步（手腕/手肘輕碰）➔'}</span>
               </button>
             ` : `
-              <button id="btn-studio-finish" onclick="exitCookingStudio()" class="spring-btn flex-1 text-xs font-black text-white bg-emerald-700 hover:bg-emerald-800 active:scale-95 py-2.5 px-4 rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5">
+              <button onclick="exitCookingStudio()" class="spring-btn flex-1 text-xs font-black text-white bg-emerald-700 hover:bg-emerald-800 active:scale-95 py-2.5 px-4 rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5">
                 <span>結束並返回今日菜單 ➔</span>
               </button>
             `}
@@ -3498,10 +3370,6 @@
       }
     }
 
-    // Initialize Confirmed Final Schemes (Scheme 3 Scroll Collapse, Form B Bottom Sheet, Scheme B Flame Ignition)
-    setTransitionMotion('collapse');
-    setDialogueStyle('bottom-sheet');
-    setCookingPrepMotion('B');
     renderCurrentStep();
   </script>
 </body>

@@ -74,31 +74,34 @@ export function PassportTicket({ profile, isStamped, isFlying = false }: Passpor
         </span>
       </div>
 
-      {/* Shockwave Impact Stamp */}
+      {/* Shockwave Impact Stamp (Scheme B: 現代工坊圓章) */}
       {isStamped && (
         <>
-          <div className="animate-stamp-impact absolute right-3 bottom-3 border-2 border-red-700 text-red-700 bg-white/95 px-3 py-1.5 rounded-md font-black text-xs tracking-widest text-center shadow-md select-none z-10">
-            <div className="flex items-center gap-1 justify-center">
-              <svg
-                className="w-3.5 h-3.5 text-red-700"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-              <span>圓夢契約已立</span>
+          <div
+            className="animate-stamp-impact-circle absolute right-2.5 bottom-2 w-20 h-20 rounded-full border-2 border-red-700 text-red-700 bg-[#fdfaf7]/95 flex flex-col items-center justify-center shadow-md select-none transform rotate-[-9deg] z-20 pointer-events-none"
+            aria-label="MASTER CHEF COOCOO SEALED"
+          >
+            <span className="sr-only">圓夢契約已立 MASTER CHEF COOCOO SEALED</span>
+            <div className="w-[70px] h-[70px] rounded-full border border-dashed border-red-600/70 flex flex-col items-center justify-center relative p-1">
+              <div className="text-[6.5px] font-black tracking-widest uppercase text-red-800 flex items-center gap-0.5">
+                <svg className="w-2 h-2 text-red-700" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                </svg>
+                <span>COOCOO</span>
+                <svg className="w-2 h-2 text-red-700" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                </svg>
+              </div>
+              <div className="my-0.5 px-2 py-0.5 bg-red-700 text-white rounded-xs text-[7.5px] font-black tracking-wider uppercase">
+                SEALED
+              </div>
+              <div className="text-[6.5px] font-mono tracking-tight text-red-700 font-bold">
+                NO. 88209 · 立約
+              </div>
             </div>
-            <span className="text-[7px] font-mono tracking-normal block text-red-600/80">
-              MASTER CHEF COOCOO SEALED
-            </span>
           </div>
           <div
-            className="shockwave-ring absolute right-8 bottom-5 w-20 h-20 rounded-full border-4 border-red-500/60 pointer-events-none"
+            className="shockwave-ring absolute right-4 bottom-3 w-18 h-18 rounded-full border-4 border-red-500/60 pointer-events-none"
             aria-hidden="true"
           />
         </>

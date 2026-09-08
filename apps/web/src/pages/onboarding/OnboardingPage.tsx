@@ -32,9 +32,21 @@ const mealSlots: { id: MealSlot; label: string }[] = [
   { id: "dinner", label: "晚餐" },
 ];
 
-export function OnboardingPage({ onComplete }: { onComplete: (profile: OnboardingProfile) => void }) {
+export function OnboardingPage({
+  onComplete,
+  initialStep,
+}: {
+  onComplete: (profile: OnboardingProfile) => void;
+  initialStep?: number;
+}) {
   const queryClient = useQueryClient();
-  const [profile, setProfile] = useState<OnboardingProfile>(readOnboardingDraft);
+  const [profile, setProfile] = useState<OnboardingProfile>(() => {
+    const draft = readOnboardingDraft();
+    if (initialStep !== undefined) {
+      return { ...draft, currentStep: initialStep, status: "draft" };
+    }
+    return draft;
+  });
   const [email, setEmail] = useState("");
   const [codeSent, setCodeSent] = useState(false);
   const [authVerified, setAuthVerified] = useState(false);

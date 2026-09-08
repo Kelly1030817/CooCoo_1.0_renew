@@ -83,12 +83,13 @@ export default function App() {
       setReauthError(reason instanceof Error ? reason.message : "Google 登入暫時無法開始，請稍後再試。");
     }
   };
-  const Page = pages[route];
+  const Page = route !== "onboarding" ? pages[route] : null;
   if(checkingCloud || (onboardingComplete && authStatus === "loading"))return <main className="onboarding-shell"><p className="eyebrow">CooCoo</p><h1 className="text-2xl font-extrabold text-slate-blue">正在找回你的通行證…</h1></main>;
   if(onboardingComplete && supabase && authStatus === "signed-out")return <AuthRecoveryPanel busy={reauthBusy} error={reauthError} onGoogleSignIn={() => { void restartGoogleAuth(); }} />;
-  if (!onboardingComplete)
+  if (!onboardingComplete || route === "onboarding")
     return (
       <OnboardingPage
+        initialStep={route === "onboarding" ? 1 : undefined}
         onComplete={() => {
           navigate("dream");
           setOnboardingComplete(true);
@@ -123,7 +124,7 @@ export default function App() {
               </div>
             }
           >
-            <Page />
+            {Page && <Page />}
           </Suspense>
         )}
       </main>
