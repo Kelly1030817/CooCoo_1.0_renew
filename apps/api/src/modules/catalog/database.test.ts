@@ -31,6 +31,7 @@ test('published content requires three passes, remains immutable and safety repo
  await expect(db.query('select public.publish_catalog_version($1,$2,$3)',[id,job,lease])).rejects.toThrow('REVIEW_REQUIRED');
  for(const reviewer of ['rules','quality','safety'])await db.query(`insert into public.recipe_catalog_reviews(version_id,reviewer,result) values($1,$2,'{"pass":true}')`,[id,reviewer]);
  await db.query('select public.publish_catalog_version($1,$2,$3)',[id,job,lease]);
+ expect((await db.query<{status:string;error:string|null}>('select status,error from public.recipe_catalog_jobs where id=$1',[job])).rows[0]).toEqual({status:'completed',error:null});
  await expect(db.query(`update public.recipe_catalog_versions set recipe='{"title":"changed"}' where id=$1`,[id])).rejects.toThrow('CATALOG_VERSION_IMMUTABLE');
  await db.query('select public.report_catalog_recipe($1,$2,true,$3)',[user,id,'safety report']);
  expect((await db.query<{status:string}>('select status from public.recipe_catalog_versions where id=$1',[id])).rows[0].status).toBe('quarantined');

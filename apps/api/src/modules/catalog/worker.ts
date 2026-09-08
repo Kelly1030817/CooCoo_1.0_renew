@@ -34,8 +34,8 @@ export function normalizeGeneratedRecipe(value:unknown){
     return {...item,id:typeof item.id==='string'&&item.id?item.id:crypto.randomUUID(),order:index+1,timerSeconds:typeof timer==='number'&&timer>0?timer:null};
   }):raw.steps;
   const ingredients=Array.isArray(raw.ingredients)?raw.ingredients.map(ingredient=>ingredient&&typeof ingredient==='object'&&!Array.isArray(ingredient)?{...(ingredient as Record<string,unknown>),quantity:typeof (ingredient as Record<string,unknown>).quantity==='number'?Number((ingredient as Record<string,unknown>).quantity):((ingredient as Record<string,unknown>).quantity),coveredByInventory:false}:ingredient):raw.ingredients;
-  const recipe:Record<string,unknown>={...raw,id:typeof raw.id==='string'&&raw.id?raw.id:crypto.randomUUID(),recipeId:typeof raw.recipeId==='string'&&raw.recipeId?raw.recipeId:crypto.randomUUID(),servings:integer(raw.servings),prepMinutes:integer(raw.prepMinutes),totalMinutes:integer(raw.totalMinutes),estimatedCost:integer(raw.estimatedCost),ingredients,steps,imageUrl:null,fallbackImageUrl:'/favicon.svg',downloadedAt:null};
-  delete recipe.catalogVersionId;delete recipe.source;
+  const recipe:Record<string,unknown>={...raw,id:typeof raw.id==='string'&&raw.id?raw.id:crypto.randomUUID(),recipeId:typeof raw.recipeId==='string'&&raw.recipeId?raw.recipeId:crypto.randomUUID(),servings:integer(raw.servings),prepMinutes:integer(raw.prepMinutes),totalMinutes:integer(raw.totalMinutes),estimatedCost:integer(raw.estimatedCost),ingredients,steps,imageUrl:null,fallbackImageUrl:'/favicon.svg',downloadedAt:null,source:'catalog'};
+  delete recipe.catalogVersionId;
   return recipe;
 }
 function review(text:string):CatalogReview {const r=JSON.parse(text);if(typeof r.pass!=='boolean'||!Array.isArray(r.reasons)||r.reasons.some((x:unknown)=>typeof x!=='string')||r.ruleVersion!==RULE_VERSION||(r.pass&&r.reasons.length))throw new Error('INVALID_REVIEW');return r;}
@@ -62,7 +62,7 @@ export async function runJob(repo:CatalogRepository,model:CatalogModel,job:Catal
     const recipe=normalizeGeneratedRecipe(JSON.parse(await call('generate',prompt,RecipePackageSchema))) as RecipePackage;
     const rules=inspectRecipe(recipe,existing);
     if(!Value.Check(RecipePackageSchema,recipe))throw new Error('RECIPE_SCHEMA_INVALID');
-    delete recipe.catalogVersionId;delete recipe.source;recipe.downloadedAt=null;recipe.imageUrl=null;
+    delete recipe.catalogVersionId;recipe.source='catalog';recipe.downloadedAt=null;recipe.imageUrl=null;
     const familyId=typeof job.context.familyId==='string'?job.context.familyId:crypto.randomUUID();
     const inserted=await repo.db.from('recipe_catalog_versions').insert({family_id:familyId,recipe,fingerprint:recipeFingerprint(recipe),reasons:rules.reasons}).select('id').single();if(inserted.error)throw inserted.error;const id=inserted.data.id;
     const quality=rules.pass?review(await call('quality',`${REVIEW_INSTRUCTIONS}\n角色：完整性、設備與重複品檢。\n候選：${JSON.stringify(recipe)}\n已發布：${JSON.stringify(existing.map(r=>({title:r.title,ingredients:r.ingredients.map(i=>i.ingredientKey)})))}`)):{pass:false,reasons:['RULES_FAILED'],ruleVersion:RULE_VERSION};
