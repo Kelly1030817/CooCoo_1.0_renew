@@ -1,7 +1,7 @@
 import { describe,expect,test } from 'bun:test';
 import { brandSafeRecipes } from '@coocoo/core';
 import type { IngredientPrice } from '@coocoo/contracts';
-import { recommend, evaluatePurchase } from './recommendations';
+import { recommend, evaluatePurchase, measure } from './recommendations';
 import { inspectRecipe } from './quality';
 import { catalogRate,usageCost,jobFailureUpdate,normalizeGeneratedRecipe } from './worker';
 import { reviewedSeedRecipes } from './seed';
@@ -39,5 +39,6 @@ describe('quantity and purchase recommendations',()=>{
  test('budget exhaustion defers to next month without consuming an attempt',()=>{expect(jobFailureUpdate('CATALOG_BUDGET_EXHAUSTED',2,new Date('2026-09-06T00:00:00Z'))).toEqual({budgetExhausted:true,update:{status:'deferred',error:'CATALOG_BUDGET_EXHAUSTED',lease_until:null,next_attempt_at:'2026-10-01T00:00:00.000Z',attempts:1}});});
  test('curated seed is complete, unique and passes the deterministic gate',()=>{const seeds=reviewedSeedRecipes();expect(seeds).toHaveLength(3);expect(new Set(seeds.map(seed=>seed.fingerprint)).size).toBe(3);expect(seeds.every(seed=>seed.review.pass&&seed.recipe.source==='catalog')).toBe(true);});
  test('starter prices are traceable, unique and cover common package units',()=>{expect(starterReferencePrices).toHaveLength(25);expect(new Set(starterReferencePrices.map(item=>item.id)).size).toBe(25);expect(new Set(starterReferencePrices.map(item=>item.ingredientKey)).size).toBe(25);expect(starterReferencePrices.every(item=>item.source.startsWith('https://online.carrefour.com.tw/')&&item.packageQuantity>0&&item.price>=0)).toBe(true);});
+ test('reviewed seed ingredients use compatible units whenever a reference price exists',()=>{for(const seed of reviewedSeedRecipes())for(const ingredient of seed.recipe.ingredients){const matching=starterReferencePrices.find(item=>item.ingredientKey===ingredient.ingredientKey);if(matching)expect(measure(matching.packageQuantity,matching.unit).unit).toBe(measure(ingredient.quantity,ingredient.unit).unit);}});
  test('generated English keys match canonical Chinese reference prices',()=>{const r=recipe();r.ingredients=[{...r.ingredients[0],ingredientKey:'onion',name:'洋蔥（切絲）',quantity:80,unit:'公克'}];const onion=starterReferencePrices.find(item=>item.ingredientKey==='洋蔥')!;expect(evaluatePurchase(r,[],[onion],new Date('2026-09-09T00:00:00Z'))).toMatchObject({estimatedPurchaseCost:69,budgetStatus:'within_budget'});});
 });
