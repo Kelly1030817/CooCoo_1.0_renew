@@ -2,7 +2,7 @@ import { describe,expect,test } from 'bun:test';
 import { brandSafeRecipes } from '@coocoo/core';
 import type { IngredientPrice } from '@coocoo/contracts';
 import { recommend, evaluatePurchase, measure } from './recommendations';
-import { inspectRecipe } from './quality';
+import { inspectRecipe, REVIEW_INSTRUCTIONS } from './quality';
 import { catalogRate,usageCost,jobFailureUpdate,normalizeGeneratedRecipe } from './worker';
 import { reviewedSeedRecipes } from './seed';
 import { starterReferencePrices } from './reference-prices';
@@ -36,6 +36,7 @@ describe('quantity and purchase recommendations',()=>{
  test('reviewed seed lists oil and the rule still rejects a recipe that omits it',()=>{expect(inspectRecipe(brandSafeRecipes[0],[]).pass).toBe(true);const incomplete=structuredClone(brandSafeRecipes[0]);incomplete.ingredients=incomplete.ingredients.filter(item=>item.ingredientKey!=='油');expect(inspectRecipe(incomplete,[]).reasons).toContain('UNLISTED_SEASONING:油');});
  test('fee estimate uses the pinned OpenRouter rate and conservative exchange rate',()=>{expect(usageCost(20000,10000,catalogRate())).toBeCloseTo(1.8375);});
  test('generated catalog structure is normalized before the strict safety gate',()=>{const raw={...structuredClone(brandSafeRecipes[0]),source:'gemini',catalogVersionId:'temporary',estimatedCost:72.4,steps:brandSafeRecipes[0].steps.map((step,index)=>({...step,id:index?'':step.id,order:9,timerSeconds:index?0:step.timerSeconds})),imageUrl:'https://example.com/unreviewed.jpg',downloadedAt:'invalid'};const result=normalizeGeneratedRecipe(raw) as typeof raw;expect(result.source).toBe('catalog');expect(result.catalogVersionId).toBeUndefined();expect(result.estimatedCost).toBe(72);expect(result.steps.map(step=>step.order)).toEqual([1,2,3]);expect(result.steps[1].timerSeconds).toBeNull();expect(result.steps[1].id).not.toBe('');expect(result.imageUrl).toBeNull();expect(result.downloadedAt).toBeNull();});
+ test('AI review instructions match the tracked heating-equipment domain',()=>{expect(REVIEW_INSTRUCTIONS).toContain('cookwareTypes 只記錄使用者登錄的加熱設備');expect(REVIEW_INSTRUCTIONS).toContain('不可僅因未列一般鍋具而判定缺漏');});
  test('budget exhaustion defers to next month without consuming an attempt',()=>{expect(jobFailureUpdate('CATALOG_BUDGET_EXHAUSTED',2,new Date('2026-09-06T00:00:00Z'))).toEqual({budgetExhausted:true,update:{status:'deferred',error:'CATALOG_BUDGET_EXHAUSTED',lease_until:null,next_attempt_at:'2026-10-01T00:00:00.000Z',attempts:1}});});
  test('curated seed is complete, unique and passes the deterministic gate',()=>{const seeds=reviewedSeedRecipes();expect(seeds).toHaveLength(3);expect(new Set(seeds.map(seed=>seed.fingerprint)).size).toBe(3);expect(seeds.every(seed=>seed.review.pass&&seed.recipe.source==='catalog')).toBe(true);});
  test('starter prices are traceable, unique and cover common package units',()=>{expect(starterReferencePrices).toHaveLength(25);expect(new Set(starterReferencePrices.map(item=>item.id)).size).toBe(25);expect(new Set(starterReferencePrices.map(item=>item.ingredientKey)).size).toBe(25);expect(starterReferencePrices.every(item=>item.source.startsWith('https://online.carrefour.com.tw/')&&item.packageQuantity>0&&item.price>=0)).toBe(true);});
