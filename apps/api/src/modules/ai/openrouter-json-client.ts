@@ -23,6 +23,14 @@ export interface OpenRouterJsonRequest {
   image?: { bytes: Uint8Array; mimeType: "image/jpeg" | "image/png" | "image/webp" };
   maxTokens?: number;
   requireZeroDataRetention?: boolean;
+  allowFallbacks?: boolean;
+}
+
+export class OpenRouterHttpError extends Error {
+  constructor(readonly status: number) {
+    super(`OPENROUTER_${status}`);
+    this.name = "OpenRouterHttpError";
+  }
 }
 
 export class OpenRouterJsonClient {
@@ -58,7 +66,7 @@ export class OpenRouterJsonClient {
         max_tokens: request.maxTokens ?? 4096,
         usage: { include: true },
         provider: {
-          allow_fallbacks: false,
+          allow_fallbacks: request.allowFallbacks ?? false,
           require_parameters: true,
           data_collection: "deny",
           ...(request.requireZeroDataRetention ? { zdr: true } : {}),
@@ -75,7 +83,7 @@ export class OpenRouterJsonClient {
       signal: AbortSignal.timeout(30_000),
     });
     const body = (await response.json()) as OpenRouterResponse;
-    if (!response.ok) throw new Error(`OPENROUTER_${response.status}`);
+    if (!response.ok) throw new OpenRouterHttpError(response.status);
     const content = body.choices?.[0]?.message?.content;
     if (!content) throw new Error("OPENROUTER_EMPTY_RESPONSE");
     return {

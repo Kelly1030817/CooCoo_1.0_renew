@@ -14,6 +14,7 @@ import { SupabaseOnboardingRepository } from "./modules/onboarding/supabase-onbo
 import type { OnboardingProfile } from "@coocoo/contracts";
 import { SupabaseInviteRepository } from "./modules/admin/supabase-invite.repository";
 import { SupabaseAiUsageRepository } from "./modules/ai/supabase-ai-usage.repository";
+import { OpenRouterHttpError } from "./modules/ai/openrouter-json-client";
 import { SupabaseInventoryRepository } from "./modules/inventory/supabase-inventory.repository";
 import { SupabaseShoppingRepository } from "./modules/shopping/supabase-shopping.repository";
 import { SupabaseCookingRepository } from "./modules/cooking/supabase-cooking.repository";
@@ -361,7 +362,7 @@ export const app = new Elysia({ name: "coocoo-api" })
       await aiUsageRepository.settle(user.id,operationId,"completed",result.costUsd===undefined?maxTwd:result.costUsd*Number(process.env.OPENROUTER_USD_TO_TWD_RATE||process.env.CATALOG_USD_TO_TWD_RATE||35),saved);
       return ok(saved);
     } catch (error) {
-      if(user&&operationId&&reserved)try{await aiUsageRepository.settle(user.id,operationId,"failed",maxTwd,null)}catch{}
+      if(user&&operationId&&reserved)try{await aiUsageRepository.settle(user.id,operationId,"failed",error instanceof OpenRouterHttpError?0:maxTwd,null)}catch{}
       if (user) await receiptRepository.markFailed(user.id, params.id, error instanceof Error ? error.message : "OCR_FAILED");
       set.status = 422;
       return fail(error);
