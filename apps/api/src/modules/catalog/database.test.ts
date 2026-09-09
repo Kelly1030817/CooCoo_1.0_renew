@@ -83,3 +83,14 @@ test('pantry quantities are deducted once and repeated completion cannot deposit
  expect((await db.query('select * from public.cooking_sessions')).rows).toHaveLength(1);
  expect((await db.query<{source:string}>('select source from public.recipes where title=\'test\'')).rows[0].source).toBe('catalog');
 });
+test('save_onboarding_profile creates goal on first run and updates existing goal on consultation replay',async()=>{
+ const testUser=crypto.randomUUID();await db.query('insert into auth.users(id) values($1)',[testUser]);
+ const initialProfile=JSON.stringify({householdServings:2,dailyMealBudget:300,outsideMealComparisonPrice:150,weeklyHomeCookTarget:4,status:'complete',currentStep:10,plannedMealSlots:['dinner'],preferredFlavors:['清淡'],cookware:[],restrictions:[],dreamName:'北海道旅行',dreamTargetAmount:30000});
+ await db.query('select public.save_onboarding_profile($1,$2)',[testUser,initialProfile]);
+ let goal=(await db.query<{name:string;target_amount:number;status:string}>("select name,target_amount,status from public.goals where user_id=$1 and status='active'",[testUser])).rows[0];
+ expect(goal.name).toBe('北海道旅行');expect(goal.target_amount).toBe(30000);
+ const replayedProfile=JSON.stringify({householdServings:2,dailyMealBudget:300,outsideMealComparisonPrice:150,weeklyHomeCookTarget:4,status:'complete',currentStep:10,plannedMealSlots:['dinner'],preferredFlavors:['清淡'],cookware:[],restrictions:[],dreamName:'綠島遊',dreamTargetAmount:5000});
+ await db.query('select public.save_onboarding_profile($1,$2)',[testUser,replayedProfile]);
+ goal=(await db.query<{name:string;target_amount:number;status:string}>("select name,target_amount,status from public.goals where user_id=$1 and status='active'",[testUser])).rows[0];
+ expect(goal.name).toBe('綠島遊');expect(goal.target_amount).toBe(5000);
+});

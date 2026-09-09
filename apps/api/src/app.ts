@@ -342,7 +342,13 @@ export const app = new Elysia({ name: "coocoo-api" })
     catch (error) { set.status = 401; return fail(error); }
   })
   .put("/api/v1/onboarding", async ({ headers, body, set }) => {
-    try { const user = await authenticateRequest(headers.authorization); return ok(await onboardingRepository.save(user.id, body as OnboardingProfile)); }
+    try {
+      const user = await authenticateRequest(headers.authorization);
+      if (user.id === "00000000-0000-4000-8000-000000000001") {
+        service.completeOnboarding(body as OnboardingProfile);
+      }
+      return ok(await onboardingRepository.save(user.id, body as OnboardingProfile));
+    }
     catch (error) { set.status = 422; return fail(error); }
   }, { body: ContractSchemas.OnboardingProfileSchema })
   .get("/api/v1/profile", async ({headers,set})=>{try{const user=await authenticateRequest(headers.authorization);return ok(await onboardingRepository.read(user.id))}catch(error){set.status=401;return fail(error)}})

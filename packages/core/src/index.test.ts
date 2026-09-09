@@ -44,7 +44,7 @@ describe('single money goal domain', () => {
 
 describe('onboarding goal connection',()=>{
   test('creates the dream dashboard goal from a completed onboarding profile',()=>{const state=applyOnboardingProfile(createSeedState(),onboardingProfile,{id:'goal-onboarding',now:new Date('2026-08-28T00:00:00.000Z')});expect(state.activeGoal).toMatchObject({id:'goal-onboarding',purpose:'dream',name:'冬天去北海道',targetAmount:30000});expect(state.cookingPlan).toMatchObject({eatingOutCost:150,homeCookBudget:300,weeklyCookingMeals:3});expect(state.onboardingProfile).toEqual(onboardingProfile)})
-  test('is idempotent when an active goal already exists',()=>{const first=applyOnboardingProfile(createSeedState(),onboardingProfile,{id:'goal-first'});const second=applyOnboardingProfile(first,{...onboardingProfile,dreamName:'不應覆蓋既有目標'},{id:'goal-second'});expect(second.activeGoal).toMatchObject({id:'goal-first',name:'冬天去北海道'});expect(second.archivedGoals).toHaveLength(0)})
+  test('updates active goal and cooking plan when onboarding is replayed for an existing goal',()=>{const first=applyOnboardingProfile(createSeedState(),onboardingProfile,{id:'goal-first'});const second=applyOnboardingProfile(first,{...onboardingProfile,dreamName:'綠島遊',dreamTargetAmount:5000,dailyMealBudget:400},{id:'goal-second'});expect(second.activeGoal).toMatchObject({id:'goal-first',name:'綠島遊',targetAmount:5000});expect(second.cookingPlan?.homeCookBudget).toBe(400);expect(second.archivedGoals).toHaveLength(0)})
 })
 
 describe('inventory, cooking and shopping use cases', () => {

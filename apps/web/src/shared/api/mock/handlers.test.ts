@@ -93,6 +93,31 @@ describe("MSW contract adapter", () => {
     expect(body.data.cookingPlan?.weeklyCookingMeals).toBe(3);
   });
 
+  test("updates dream goal and cooking plan when onboarding is replayed with new values", async () => {
+    const replayProfile = {
+      ...completedProfile,
+      dreamName: "綠島遊",
+      dreamTargetAmount: 5000,
+      dailyMealBudget: 350,
+    };
+    const response = await api("/onboarding", {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(replayProfile),
+    });
+    expect(response.status).toBe(200);
+
+    const body = (await (await api("/state")).json()) as {
+      data: {
+        activeGoal: { name: string; targetAmount: number } | null;
+        cookingPlan: { homeCookBudget: number } | null;
+      };
+    };
+    expect(body.data.activeGoal).toEqual(expect.objectContaining({ name: "綠島遊", targetAmount: 5000 }));
+    expect(body.data.cookingPlan?.homeCookBudget).toBe(350);
+  });
+
+
   test("labels preview shopping advice as rules instead of AI", async () => {
     const response = await api("/shopping/analyze", { method: "POST" });
     const body = (await response.json()) as {

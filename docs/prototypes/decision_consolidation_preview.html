@@ -1,0 +1,2132 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CooCoo 今日頁 · 決策機制整併方案預覽 (A / B / C)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Noto+Sans+TC:wght@400;500;700;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+
+  <style>
+    :root {
+      --font-main: "Plus Jakarta Sans", "Noto Sans TC", sans-serif;
+      --color-terracotta: #9a442d;
+      --color-slate-blue: #293c4e;
+      --color-sage: #386753;
+      --color-cream-bg: #f6f3ee;
+    }
+    body {
+      font-family: var(--font-main);
+      background-color: #eee9df;
+      color: #1c1c11;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Device Mockup Container */
+    .mobile-frame {
+      width: 100%;
+      max-width: 412px;
+      min-height: 844px;
+      background-color: #f6f3ee;
+      border-radius: 36px;
+      box-shadow: 0 25px 60px -15px rgba(41, 60, 78, 0.25), 0 0 0 10px #2c2b28;
+      overflow: hidden;
+      position: relative;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .wide-mode .mobile-frame {
+      max-width: 760px;
+      border-radius: 20px;
+      box-shadow: 0 10px 40px -10px rgba(0,0,0,0.15), 0 0 0 1px #dcd5c7;
+      min-height: auto;
+    }
+
+    /* Ticket styling based on TodayPage.css */
+    .meal-ticket {
+      position: relative;
+      display: grid;
+      grid-template-columns: 62px 1fr;
+      overflow: hidden;
+      border: 1px solid #d9cab2;
+      border-radius: 22px;
+      background: #fffdf8;
+      box-shadow: 0 14px 36px -10px rgba(154, 68, 45, 0.12), 0 4px 12px -2px rgba(41, 60, 78, 0.05);
+      transition: all 0.25s ease;
+    }
+    .ticket-notch {
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      background-color: #f6f3ee;
+      border-radius: 50%;
+      z-index: 5;
+    }
+    .ticket-notch-top {
+      top: -9px;
+      left: 53px;
+      border-bottom: 1px solid #d9cab2;
+    }
+    .ticket-notch-bottom {
+      bottom: -9px;
+      left: 53px;
+      border-top: 1px solid #d9cab2;
+    }
+    .ticket-stub {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-direction: column;
+      border-right: 2px dashed #bba98d;
+      background: #34465b;
+      padding: 18px 4px;
+      color: #f4ce8d;
+      user-select: none;
+    }
+    .stub-vertical-text {
+      writing-mode: vertical-rl;
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: 0.25em;
+      color: rgba(244, 206, 141, 0.85);
+    }
+    .stub-center {
+      text-align: center;
+      margin: auto 0;
+    }
+    .stub-center small {
+      display: block;
+      font-size: 8px;
+      font-weight: 900;
+      letter-spacing: 0.15em;
+      color: rgba(244, 206, 141, 0.7);
+      text-transform: uppercase;
+    }
+    .stub-center strong {
+      font-family: "Plus Jakarta Sans", sans-serif;
+      font-size: 22px;
+      font-weight: 900;
+      line-height: 1;
+      color: #fef08a;
+    }
+
+    /* Chef eye blinking animation */
+    @keyframes chefBlink {
+      0%, 88%, 100% { transform: scaleY(1); }
+      94% { transform: scaleY(0.12); }
+    }
+    .chef-eyes {
+      animation: chefBlink 4.2s infinite;
+      transform-origin: center;
+    }
+
+    /* Spring button */
+    .spring-btn:active {
+      transform: scale(0.96);
+    }
+
+    /* Drawer animation */
+    .drawer-overlay {
+      background: rgba(15, 23, 42, 0.45);
+      backdrop-filter: blur(3px);
+      transition: opacity 0.25s ease;
+    }
+    .bottom-drawer {
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* Segmented pill switch for Option A */
+    .segmented-switch {
+      background: #ebe4d6;
+      border: 1px solid #ddd3c0;
+      border-radius: 9999px;
+      padding: 3px;
+      display: inline-flex;
+      position: relative;
+    }
+    .segmented-btn {
+      padding: 5px 12px;
+      font-size: 11px;
+      font-weight: 800;
+      border-radius: 9999px;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      cursor: pointer;
+    }
+    .segmented-btn.active {
+      background: #ffffff;
+      color: #9a442d;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    }
+    .segmented-btn:not(.active) {
+      color: #716e66;
+    }
+
+    /* AUTHENTIC PRODUCTION COOKING MODE STYLES (from apps/web/src/index.css) */
+    .cooking-mode-overlay {
+      position: absolute;
+      z-index: 60;
+      inset: 0;
+      display: flex;
+      min-height: 100%;
+      flex-direction: column;
+      background: #fbf7ee;
+      color: #293c4e;
+      overflow: hidden;
+      border-radius: 36px;
+    }
+    #mockup-frame.cooking-active {
+      height: 844px !important;
+      max-height: 844px !important;
+      min-height: 844px !important;
+      overflow: hidden !important;
+    }
+    .wide-mode #mockup-frame.cooking-active {
+      height: 720px !important;
+      max-height: 720px !important;
+      min-height: 720px !important;
+    }
+    .wide-mode .cooking-mode-overlay {
+      border-radius: 20px;
+    }
+    .cooking-mode-overlay > header {
+      display: grid;
+      grid-template-columns: 44px 1fr 44px;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px 10px;
+      background: rgba(251, 247, 238, 0.95);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid #ebd9c6;
+    }
+    .cooking-mode-overlay > header .header-icon-btn {
+      display: grid;
+      width: 40px;
+      height: 40px;
+      place-items: center;
+      border: 1px solid #e2d5c3;
+      border-radius: 50%;
+      background: #fff;
+      color: #293c4e;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      cursor: pointer;
+    }
+    .cooking-mode-overlay > header .header-icon-btn:active {
+      transform: scale(0.95);
+    }
+    .cooking-mode-overlay > header .header-spacer {
+      width: 40px;
+      height: 40px;
+    }
+    .cooking-mode-overlay > header .header-title-wrap {
+      text-align: center;
+    }
+    .cooking-mode-overlay > header .header-recipe-title {
+      display: block;
+      color: #7a7065;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+    }
+    .cooking-mode-overlay > header .header-step-counter {
+      display: inline-block;
+      margin-top: 2px;
+      border: 1px solid #ded1be;
+      border-radius: 99px;
+      background: #fff;
+      padding: 2px 10px;
+      color: #293c4e;
+      font-size: 11px;
+      font-weight: 900;
+    }
+    .cooking-progress-segments {
+      display: flex;
+      gap: 6px;
+      padding: 8px 16px 6px;
+    }
+    .cooking-progress-segments .segment {
+      height: 4px;
+      flex: 1;
+      border-radius: 99px;
+      background: #e8dbcb;
+      transition: background-color 0.25s ease;
+    }
+    .cooking-progress-segments .segment.active {
+      background: #9a442d;
+    }
+    .cooking-mode-overlay > main {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      max-width: 520px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 10px 16px 20px;
+      gap: 12px;
+    }
+    .step-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .step-order-tag {
+      color: #9a442d;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+    .heat-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 99px;
+      font-size: 11px;
+      font-weight: 800;
+      border: 1px solid transparent;
+    }
+    .heat-badge.heat-high {
+      background: #feece7;
+      color: #9a442d;
+      border-color: #fbd4c8;
+    }
+    .heat-badge.heat-med {
+      background: #fef3c7;
+      color: #92400e;
+      border-color: #fde68a;
+    }
+    .heat-badge.heat-low {
+      background: #f0fdf4;
+      color: #166534;
+      border-color: #bbf7d0;
+    }
+    .heat-badge.heat-off {
+      background: #f1f5f9;
+      color: #475569;
+      border-color: #e2e8f0;
+    }
+    .step-main-card {
+      background: #fff;
+      border: 1px solid #e8dcce;
+      border-radius: 20px;
+      padding: 16px 14px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+    .step-instruction-text {
+      color: #293c4e;
+      font-family: Georgia, "Noto Serif TC", serif;
+      font-size: 18px;
+      font-weight: 900;
+      line-height: 1.45;
+      letter-spacing: -0.02em;
+      margin: 0;
+    }
+    .step-ingredients-section {
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid #f0e6d8;
+    }
+    .step-ingredients-label {
+      display: block;
+      color: #7a7065;
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 6px;
+    }
+    .step-ingredients-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .step-ingredient-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: #fbf7ee;
+      border: 1px solid #ded1be;
+      border-radius: 99px;
+      padding: 3px 9px;
+      font-size: 11px;
+      font-weight: 800;
+      color: #3e362d;
+    }
+    .step-timer-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: #293c4e;
+      color: #fff;
+      border-radius: 20px;
+      padding: 12px 16px;
+      box-shadow: 0 4px 14px rgba(41, 60, 78, 0.16);
+    }
+    .timer-info-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .timer-icon-circle {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+      display: grid;
+      place-items: center;
+      color: #fbbf24;
+      flex-shrink: 0;
+    }
+    .timer-text-group small {
+      display: block;
+      font-size: 9px;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.7);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .timer-digits {
+      font-family: monospace, tabular-nums;
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      color: #fff;
+      line-height: 1.1;
+      margin-top: 2px;
+    }
+    .timer-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .timer-toggle-btn {
+      border: 0;
+      border-radius: 12px;
+      background: #f59e0b;
+      color: #1e293b;
+      padding: 7px 12px;
+      font-size: 11px;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3);
+      transition: transform 0.1s ease;
+    }
+    .timer-toggle-btn:active {
+      transform: scale(0.96);
+    }
+    .timer-reset-btn {
+      display: grid;
+      place-items: center;
+      width: 32px;
+      height: 32px;
+      border: 0;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+      cursor: pointer;
+      transition: transform 0.1s ease;
+    }
+    .timer-reset-btn:active {
+      transform: scale(0.96);
+    }
+    .step-tip-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      background: #faf3e6;
+      border: 1px solid #ebd9c6;
+      border-radius: 18px;
+      padding: 10px 12px;
+    }
+    .step-tip-icon {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: rgba(180, 83, 9, 0.15);
+      color: #b45309;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .step-tip-content strong {
+      display: block;
+      color: #78350f;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .step-tip-content p {
+      margin: 2px 0 0;
+      color: #574337;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.45;
+    }
+    .cooking-mode-overlay > footer {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 8px;
+      padding: 10px 16px 4px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid #e8dcce;
+    }
+    .elbow-btn-secondary {
+      min-height: 52px;
+      border: 1px solid #d9cbb4;
+      border-radius: 16px;
+      background: #faf7ef;
+      color: #34465b;
+      font-size: 13px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      cursor: pointer;
+      transition: transform 0.12s ease;
+    }
+    .elbow-btn-secondary:active {
+      transform: scale(0.97);
+    }
+    .elbow-btn-secondary:disabled {
+      opacity: 0.35;
+      pointer-events: none;
+    }
+    .elbow-btn-primary {
+      min-height: 52px;
+      border: 0;
+      border-radius: 16px;
+      background: #9a442d;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(154, 68, 45, 0.25);
+      transition: transform 0.12s ease;
+    }
+    .elbow-btn-primary:active {
+      transform: scale(0.97);
+    }
+    .elbow-btn-primary.is-finish {
+      background: #2d6a4f;
+      box-shadow: 0 4px 14px rgba(45, 106, 79, 0.25);
+    }
+    .elbow-hint {
+      margin: 2px 0 6px;
+      text-align: center;
+      font-size: 10px;
+      font-weight: 700;
+      color: #8a8276;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 0 16px 4px;
+    }
+
+    /* Production RecipeModal & Settlement Styles */
+    .field {
+      width: 100%;
+      margin-top: 4px;
+      border: 1px solid #dbc1ba;
+      border-radius: 12px;
+      background: #fff;
+      padding: 10px 12px;
+      font-size: 13px;
+      color: #3d405b;
+      outline: none;
+      box-sizing: border-box;
+    }
+    .field:focus {
+      border-color: #9a442d;
+      box-shadow: 0 0 0 4px rgb(154 68 45 / 0.12);
+    }
+    .primary-btn {
+      border: 0;
+      border-radius: 9999px;
+      background: #9a442d;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 800;
+      padding: 11px 20px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.15s ease, transform 0.1s ease;
+    }
+    .primary-btn:active {
+      transform: scale(0.97);
+    }
+    .secondary-btn {
+      border: 1px solid rgb(154 68 45 / 0.25);
+      border-radius: 9999px;
+      background: #fff;
+      color: #9a442d;
+      font-size: 13px;
+      font-weight: 800;
+      padding: 10px 18px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.15s ease, transform 0.1s ease;
+    }
+    .secondary-btn:active {
+      transform: scale(0.97);
+    }
+    .field-label {
+      display: block;
+      margin-top: 12px;
+      color: #5e5a50;
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .serving-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .serving-grid label {
+      border-radius: 14px;
+      background: #f4efe4;
+      padding: 10px 12px;
+      color: #625d53;
+      font-size: 11px;
+      font-weight: 800;
+      display: flex;
+      flex-direction: column;
+    }
+    .prepared-note {
+      margin: 8px 0 0;
+      color: #756e63;
+      font-size: 11px;
+      line-height: 1.4;
+    }
+    .saving-confirm {
+      display: flex;
+      align-items: flex-start;
+      flex-direction: column;
+      margin-top: 14px;
+      border-radius: 18px;
+      background: #e5eee5;
+      padding: 14px 16px;
+      color: #435b48;
+    }
+    .saving-confirm span {
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .saving-confirm strong {
+      margin: 3px 0;
+      color: #376343;
+      font-family: Georgia, serif;
+      font-size: 28px;
+      font-weight: 900;
+    }
+    .saving-confirm small {
+      font-size: 10px;
+      color: #58715c;
+    }
+    .vegetable-check {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+      color: #52604f;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .cooking-mode-overlay.hidden,
+    .cooking-mode-overlay > footer.hidden,
+    #cooking-elbow-hint.hidden {
+      display: none !important;
+    }
+
+    /* Toast */
+    #toast-msg {
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      transform: translateY(100px);
+      opacity: 0;
+    }
+    #toast-msg.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  </style>
+</head>
+<body class="p-4 md:p-8 flex flex-col items-center min-h-screen">
+
+  <!-- TOP CONTROL HEADER -->
+  <header class="w-full max-w-4xl mb-6 bg-white/95 backdrop-blur-md rounded-2xl p-4 shadow-sm border border-stone-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2">
+        <span class="inline-block w-2.5 h-2.5 rounded-full bg-amber-600"></span>
+        <h1 class="text-base md:text-lg font-black text-stone-900 tracking-tight">CooCoo 今日決策雙軌架構整合預覽</h1>
+      </div>
+      <p class="text-xs text-stone-500 mt-0.5">
+        目標：收斂首頁為<strong>「最多兩套決策機制」</strong>，消除主廚相談室與搜尋卡片的功能撞車
+      </p>
+    </div>
+
+    <!-- Mode Selector Tabs -->
+    <div class="flex items-center gap-1.5 bg-stone-100 p-1.5 rounded-xl self-start md:self-auto overflow-x-auto max-w-full">
+      <button onclick="switchScheme('A')" id="tab-A" class="px-3 py-1.5 text-xs font-black rounded-lg transition-all bg-amber-600 text-white shadow-xs">
+        方案 A：智能餐券（推薦）
+      </button>
+      <button onclick="switchScheme('B')" id="tab-B" class="px-3 py-1.5 text-xs font-bold rounded-lg transition-all text-stone-600 hover:text-stone-900">
+        方案 B：抽屜收納
+      </button>
+      <button onclick="switchScheme('C')" id="tab-C" class="px-3 py-1.5 text-xs font-bold rounded-lg transition-all text-stone-600 hover:text-stone-900">
+        方案 C：全對話管家
+      </button>
+      <button onclick="switchScheme('ORIGINAL')" id="tab-ORIGINAL" class="px-3 py-1.5 text-xs font-bold rounded-lg transition-all text-stone-400 hover:text-stone-700">
+        現況對比（3套堆疊）
+      </button>
+    </div>
+
+    <!-- Viewport width toggle -->
+    <div class="hidden md:flex items-center gap-1 border-l border-stone-200 pl-4">
+      <button onclick="toggleWide(false)" id="btn-mobile" class="p-1.5 rounded-lg bg-stone-200 text-stone-800" title="手機比例">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect width="14" height="20" x="5" y="2" rx="2"/><path d="M12 18h.01"/></svg>
+      </button>
+      <button onclick="toggleWide(true)" id="btn-wide" class="p-1.5 rounded-lg text-stone-400 hover:bg-stone-100" title="寬螢幕比例">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- SCHEME EXPLANATION BANNER -->
+  <div id="scheme-desc-banner" class="w-full max-w-4xl mb-6 p-4 rounded-2xl bg-amber-50/80 border border-amber-200/90 text-xs text-stone-800 flex items-start gap-3 shadow-2xs">
+    <span class="w-5 h-5 rounded-full bg-amber-600 text-white flex items-center justify-center font-black text-[11px] shrink-0 mt-0.5">A</span>
+    <div>
+      <h3 class="font-black text-amber-950 text-sm mb-1">方案 A 設計邏輯：將「少量補買」內嵌為餐券的雙軌切換鈕（極力推薦）</h3>
+      <p class="leading-relaxed text-stone-700">
+        • <strong>決策機制一（主幹）</strong>：今日推薦餐券。頂部直接提供 <code class="bg-white/80 px-1 py-0.5 rounded border border-amber-200">[ 冰箱現有 (0元) ]</code> 與 <code class="bg-white/80 px-1 py-0.5 rounded border border-amber-200">[ 少量補買 (+NT$32) ]</code> 點選即切換，無需填表搜尋。<br>
+        • <strong>決策機制二（例外）</strong>：上方「主廚 CooCoo 相談室」膠囊（加班累了派快手菜、聚餐少煮1餐順延、吃外食純記錄）。<br>
+        • <strong>消除雜訊</strong>：徹底移除「今天想怎麼煮」獨立大白卡片，同步移除右上角重複的「今天有點累」按鈕。
+      </p>
+    </div>
+  </div>
+
+  <!-- INTERACTIVE DEVICE MOCKUP CONTAINER -->
+  <div id="mockup-frame" class="mobile-frame p-5 md:p-6 mb-12">
+
+    <!-- Status Bar / Mobile Notch Sim (Only in mobile mode) -->
+    <div class="flex items-center justify-between text-[11px] font-bold text-stone-500 mb-4 px-1">
+      <span>18:30</span>
+      <div class="flex items-center gap-1.5">
+        <span class="text-[10px]">5G</span>
+        <span class="w-4 h-2.5 border border-stone-500 rounded-xs inline-block relative after:content-[''] after:absolute after:inset-0.5 after:bg-stone-500 after:rounded-2xs"></span>
+      </div>
+    </div>
+
+    <!-- 1. Header Greeting & Slot (Consistent across CooCoo) -->
+    <div class="flex items-end justify-between gap-4 mb-4">
+      <div>
+        <p class="flex items-center gap-1.5 text-[11px] font-black text-[#9a442d] tracking-wider uppercase mb-1">
+          <span class="w-1.5 h-1.5 rounded-full bg-[#9a442d]"></span>
+          今天 · 晚餐
+        </p>
+        <h2 class="text-2xl md:text-3xl font-black text-[#293c4e] leading-tight tracking-tight">
+          先別想一整週，<br>決定下一餐就好。
+        </h2>
+      </div>
+
+      <!-- Energy toggle: shown only in Original to show contrast -->
+      <button id="top-energy-btn" onclick="toggleEnergyLow()" class="hidden border border-stone-300 rounded-full px-3 py-2 bg-white text-xs font-bold text-stone-700 shadow-2xs flex items-center gap-1.5 shrink-0">
+        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
+        <span>今天有點累</span>
+      </button>
+    </div>
+
+    <!-- 2. Pocket Chef Consultation Capsule (Mechanism 2: Exception & Resilience) -->
+    <section class="mb-4">
+      <button onclick="openChefModal()" class="w-full bg-amber-50/90 hover:bg-amber-100/90 border border-amber-200/90 rounded-2xl p-3 flex items-center justify-between shadow-2xs transition-all text-left group spring-btn">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div class="w-8 h-8 rounded-full bg-amber-600 text-white flex items-center justify-center shadow-xs shrink-0 group-hover:scale-105 transition-transform">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z" />
+              <line class="chef-eyes" x1="9" y1="12" x2="9.01" y2="12" />
+              <line class="chef-eyes" x1="15" y1="12" x2="15.01" y2="12" />
+              <line x1="6" y1="17" x2="18" y2="17" />
+            </svg>
+          </div>
+          <div class="truncate">
+            <div class="flex items-center gap-1.5">
+              <span class="font-black text-xs text-amber-950">主廚 CooCoo 相談室</span>
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              <span class="text-[9px] font-bold text-amber-900 bg-amber-100 px-1.5 py-0.2 rounded">隨行速決</span>
+            </div>
+            <p id="chef-capsule-desc" class="text-[11px] text-stone-600 mt-0.5 font-medium truncate">
+              太累想煮快手菜、臨時聚餐要順延？點此向主廚諮詢
+            </p>
+          </div>
+        </div>
+        <span class="text-[11px] font-black text-amber-800 bg-white border border-amber-200/80 px-2.5 py-1 rounded-xl shadow-2xs group-hover:bg-amber-600 group-hover:text-white transition-all flex items-center gap-1 shrink-0 ml-2">
+          <span>諮詢主廚</span>
+          <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="m9 18 6-6-6-6"/></svg>
+        </span>
+      </button>
+    </section>
+
+    <!-- [ORIGINAL ONLY] The big Recipe Catalog Search Panel -->
+    <div id="original-catalog-panel" class="hidden mb-4 p-4 rounded-3xl border border-stone-300/80 bg-white shadow-xs space-y-3">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-extrabold text-[#293c4e]">今天想怎麼煮？（現況獨立卡片）</h3>
+        <span class="text-[10px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-bold">待整併移除</span>
+      </div>
+      <div class="flex gap-2">
+        <button class="px-3 py-1.5 rounded-xl bg-[#9a442d] text-white text-xs font-bold">只用現有食材</button>
+        <button class="px-3 py-1.5 rounded-xl bg-stone-100 text-stone-700 text-xs font-bold">少量補買</button>
+      </div>
+      <p class="text-[11px] text-stone-500">調味料也依庫存判斷；少量補買最多 2 種，參考價格不代表商店即時售價。</p>
+      <label class="flex items-center gap-2 text-xs text-stone-600">
+        <input type="checkbox" class="rounded"> 也接受最近 7 天吃過或已安排的菜色
+      </label>
+      <button onclick="triggerToast('搜尋食譜庫中...')" class="w-full py-2 bg-[#9a442d] text-white text-xs font-bold rounded-xl shadow-xs">
+        找符合條件的食譜
+      </button>
+      <div class="p-2.5 bg-amber-50/80 border border-amber-200 rounded-xl text-[10px] text-amber-900 leading-relaxed">
+        <strong>跨裝置同步待確認</strong>：料理已保留，但另一裝置庫存不足；請確認實際用量。<br>
+        <button class="mt-1 px-2 py-0.5 bg-white border border-amber-300 rounded text-amber-900 font-bold">我已確認</button>
+      </div>
+    </div>
+
+    <!-- Cooked Food Capsule (Notification) -->
+    <div class="flex items-center justify-between gap-3 p-3 mb-4 rounded-2xl bg-[#f0f7f3] border border-[#b8ebd1] shadow-2xs">
+      <div class="flex items-center gap-2.5 min-w-0">
+        <div class="w-7 h-7 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 11h16a1 1 0 0 1 1 1 8 8 0 0 1-18 0 1 1 0 0 1 1-1Z"/><path d="M6 8V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2"/><line x1="2" y1="11" x2="22" y2="11"/></svg>
+        </div>
+        <div class="truncate">
+          <div class="flex items-center gap-1.5 text-[10px] font-black text-emerald-900">
+            <span>熟食庫存可用</span>
+            <span>· 剩 1 份</span>
+          </div>
+          <p class="text-[11px] font-bold text-[#293c4e] truncate">冷藏庫有備好的燉牛肉，熱 5m 即可享用</p>
+        </div>
+      </div>
+      <button onclick="triggerToast('已切換為優先食用熟食庫存！')" class="px-2.5 py-1 bg-[#386753] hover:bg-[#2f5746] text-white text-[11px] font-bold rounded-full shrink-0 shadow-xs spring-btn">
+        加熱即食 5m
+      </button>
+    </div>
+
+    <!-- 3. HERO TICKET CARD (Mechanism 1: Primary Recommendation) -->
+    <article class="meal-ticket mb-4">
+      <div class="ticket-notch ticket-notch-top"></div>
+      <div class="ticket-notch ticket-notch-bottom"></div>
+
+      <!-- Ticket Stub -->
+      <div class="ticket-stub">
+        <span class="stub-vertical-text">TODAY</span>
+        <div class="stub-center">
+          <small>首選</small>
+          <strong>01</strong>
+        </div>
+        <span class="material-symbols-outlined text-amber-200 text-sm">restaurant</span>
+      </div>
+
+      <!-- Ticket Body -->
+      <div class="p-4 flex flex-col justify-between">
+
+        <!-- [SCHEME A SPECIFIC] Segmented Mode Switcher right inside the ticket! -->
+        <div id="scheme-a-switch" class="flex items-center justify-between mb-2.5 pb-2.5 border-b border-stone-200/80">
+          <span class="text-[10px] font-black text-stone-400 tracking-wider">今日推薦模式</span>
+          <div class="segmented-switch">
+            <button onclick="setSchemeAMode('fridge')" id="btn-mode-fridge" class="segmented-btn active">
+              🥬 冰箱現有 (0元)
+            </button>
+            <button onclick="setSchemeAMode('purchase')" id="btn-mode-purchase" class="segmented-btn">
+              🛒 少量補買 (+32元)
+            </button>
+          </div>
+        </div>
+
+        <!-- Tags Row -->
+        <div class="flex items-center justify-between gap-2 mb-1.5">
+          <div class="flex items-center gap-1.5">
+            <span id="meal-time-tag" class="inline-flex items-center gap-1 text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-stone-100 text-stone-700">
+              <svg class="w-3 h-3 text-stone-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              12 分快手
+            </span>
+            <span id="meal-cost-tag" class="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-amber-50 text-amber-900 border border-amber-200">
+              食材 NT$ 38
+            </span>
+          </div>
+          <span id="meal-coverage-tag" class="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded">
+            庫存覆蓋 100%
+          </span>
+        </div>
+
+        <!-- Dish Title & Subtitle -->
+        <h3 id="meal-title" class="text-lg md:text-xl font-black text-stone-900 leading-snug">
+          蒜香番茄蛋花湯麵
+        </h3>
+        <p id="meal-subtitle" class="text-xs text-stone-500 mt-0.5 mb-3 font-medium">
+          單鍋搞定 · 善終即期番茄與冷藏常備蛋
+        </p>
+
+        <!-- Spec metrics row -->
+        <div class="grid grid-cols-3 gap-2 py-2 px-2.5 rounded-xl bg-stone-100/70 text-[11px] mb-3">
+          <div>
+            <span class="text-[9px] text-stone-400 font-bold block">廚具需求</span>
+            <strong class="font-extrabold text-stone-800">單平底鍋</strong>
+          </div>
+          <div>
+            <span class="text-[9px] text-stone-400 font-bold block">備料負擔</span>
+            <strong class="font-extrabold text-stone-800">備料 4 分鐘</strong>
+          </div>
+          <div>
+            <span class="text-[9px] text-stone-400 font-bold block">步驟數量</span>
+            <strong class="font-extrabold text-stone-800">3 大步驟</strong>
+          </div>
+        </div>
+
+        <!-- Ingredient Route -->
+        <div class="mb-3">
+          <div class="flex items-center justify-between text-[10px] font-bold text-stone-400 mb-1">
+            <span>食材路徑</span>
+            <span id="route-hint" class="text-emerald-700">冰箱完全備妥</span>
+          </div>
+          <div id="ingredient-chips" class="flex flex-wrap gap-1.5">
+            <span class="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200">
+              雞蛋 <small class="text-emerald-600">(已有)</small>
+            </span>
+            <span class="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200">
+              牛番茄 <small class="text-emerald-600">(已有)</small>
+            </span>
+            <span class="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200">
+              關廟麵 <small class="text-emerald-600">(已有)</small>
+            </span>
+          </div>
+        </div>
+
+        <!-- [SCHEME A PURCHASE NOTICE BANNER] -->
+        <div id="purchase-tip-banner" class="hidden mb-3 p-2 rounded-xl bg-amber-50 border border-amber-200/80 text-[11px] text-amber-950 flex items-center justify-between">
+          <div class="flex items-center gap-1.5 truncate">
+            <span class="material-symbols-outlined text-amber-700 text-sm">shopping_bag</span>
+            <span class="truncate">需補買 <strong>洋蔥 1 顆 (約 NT$ 32)</strong></span>
+          </div>
+          <button onclick="openBudgetModal()" class="text-[10px] text-amber-800 underline font-bold shrink-0 ml-2">
+            改補買預算
+          </button>
+        </div>
+
+        <!-- ROI Savings Banner -->
+        <div class="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs font-bold text-amber-950 flex items-center justify-between mb-3">
+          <div class="flex items-center gap-1.5">
+            <span class="w-4 h-4 rounded-full bg-amber-600 text-white flex items-center justify-center text-[10px] font-black">金</span>
+            <span>外食比對價 NT$ 150</span>
+          </div>
+          <span id="meal-saving-text" class="font-black text-[#9a442d]">
+            本餐為［北海道初雪］省下 NT$ 112
+          </span>
+        </div>
+
+        <!-- Primary Action Button -->
+        <div class="flex gap-2">
+          <button onclick="startCooking()" class="flex-1 py-3 px-4 bg-[#9a442d] hover:bg-[#853621] text-white text-xs md:text-sm font-black rounded-xl shadow-sm flex items-center justify-center gap-1.5 transition-all spring-btn">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+            <span>就煮這道</span>
+            <span class="font-mono">→</span>
+          </button>
+
+          <!-- Extra button for Purchase Mode in Scheme A -->
+          <button id="btn-add-shopping-quick" onclick="triggerToast('已將洋蔥（1顆 NT$32）加入採買清單！')" class="hidden py-3 px-3.5 bg-white border border-amber-300 text-amber-900 text-xs font-black rounded-xl shadow-2xs hover:bg-amber-50 flex items-center gap-1 spring-btn">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+            <span>加待買</span>
+          </button>
+        </div>
+
+      </div>
+    </article>
+
+    <!-- 4. ALTERNATIVES / DRAWER TRIGGER SECTION -->
+    <section class="mt-4">
+      <div class="flex items-center justify-between mb-2">
+        <h4 class="text-xs font-black text-stone-700">還有兩個安全方向</h4>
+        <span class="text-[10px] text-stone-400">點選直接置換主餐券</span>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2 mb-3">
+        <button onclick="replaceMainMeal('麻油煎蛋湯麵', 30, 11)" class="p-2.5 rounded-xl bg-white border border-stone-200/90 text-left hover:border-amber-400 transition-all shadow-2xs spring-btn">
+          <strong class="text-xs font-extrabold text-stone-800 block truncate">麻油煎蛋湯麵</strong>
+          <span class="text-[10px] text-stone-500">11 分鐘 · 全庫存</span>
+        </button>
+        <button onclick="replaceMainMeal('家常洋蔥炒肉', 58, 15)" class="p-2.5 rounded-xl bg-white border border-stone-200/90 text-left hover:border-amber-400 transition-all shadow-2xs spring-btn">
+          <strong class="text-xs font-extrabold text-stone-800 block truncate">家常洋蔥炒肉</strong>
+          <span class="text-[10px] text-stone-500">15 分鐘 · 補買 NT$ 32</span>
+        </button>
+      </div>
+
+      <!-- [SCHEME B SPECIFIC] Secondary Drawer Trigger Button -->
+      <div id="scheme-b-trigger" class="hidden">
+        <button onclick="openDrawer()" class="w-full py-2.5 px-3 bg-stone-100 hover:bg-stone-200/80 border border-stone-300/80 rounded-xl text-xs font-extrabold text-stone-700 flex items-center justify-center gap-1.5 shadow-2xs spring-btn">
+          <span class="material-symbols-outlined text-stone-500 text-sm">tune</span>
+          <span>手動自選條件 / 調整補買預算 ➔</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Bottom Navigation Bar (Visual Placeholder) -->
+    <nav class="mt-8 pt-3 border-t border-stone-200 flex justify-around text-[10px] font-black text-stone-400">
+      <div class="flex flex-col items-center text-[#9a442d]">
+        <span class="material-symbols-outlined text-lg">calendar_today</span>
+        <span>今日</span>
+      </div>
+      <div class="flex flex-col items-center">
+        <span class="material-symbols-outlined text-lg">shopping_cart</span>
+        <span>採買</span>
+      </div>
+      <div class="flex flex-col items-center">
+        <span class="material-symbols-outlined text-lg">kitchen</span>
+        <span>冰箱</span>
+      </div>
+      <div class="flex flex-col items-center">
+        <span class="material-symbols-outlined text-lg">skillet</span>
+        <span>廚房</span>
+      </div>
+      <div class="flex flex-col items-center">
+        <span class="material-symbols-outlined text-lg">savings</span>
+        <span>圓夢</span>
+      </div>
+    </nav>
+
+    <!-- UNIFIED PRODUCTION COOKING MODE OVERLAY (100% faithful to CookingMode in RecipeModal.tsx) -->
+    <div id="cooking-mode-screen" class="cooking-mode-overlay hidden" role="dialog" aria-modal="true" aria-label="離線料理模式">
+      <header>
+        <button onclick="closeCookingMode()" class="header-icon-btn" aria-label="離開料理模式" title="離開料理模式">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+        <div class="header-title-wrap">
+          <small id="cooking-recipe-title" class="header-recipe-title">麻油焦香煎蛋湯麵</small>
+          <span id="cooking-step-counter" class="header-step-counter">步驟 1 / 4</span>
+        </div>
+        <div class="header-spacer"></div>
+      </header>
+
+      <div id="cooking-progress-segments" class="cooking-progress-segments" aria-hidden="true">
+        <!-- Segments injected via JS -->
+      </div>
+
+      <main id="cooking-main-view">
+        <div class="step-header-row">
+          <span id="cooking-step-order" class="step-order-tag">STEP 01</span>
+          <span id="cooking-heat-badge" class="heat-badge heat-med">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>
+            </svg>
+            <span id="cooking-heat-label">中小火烹調</span>
+          </span>
+        </div>
+
+        <div class="step-main-card">
+          <h2 id="cooking-instruction-text" class="step-instruction-text">
+            單鍋熱鍋下麻油，打入雞蛋中火煎至邊緣微焦香酥脆（約 2 分鐘）。
+          </h2>
+          <div id="cooking-ingredients-section" class="step-ingredients-section">
+            <span class="step-ingredients-label">本步驟投入食材</span>
+            <div id="cooking-ingredients-pills" class="step-ingredients-pills">
+              <!-- Ingredient pills -->
+            </div>
+          </div>
+        </div>
+
+        <div id="cooking-timer-card" class="step-timer-card">
+          <div class="timer-info-group">
+            <div class="timer-icon-circle">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+            </div>
+            <div class="timer-text-group">
+              <small id="cooking-timer-label">烹煮計時器</small>
+              <div id="cooking-timer-digits" class="timer-digits">02:00</div>
+            </div>
+          </div>
+          <div class="timer-actions">
+            <button onclick="toggleCookingTimer()" id="btn-timer-toggle" class="timer-toggle-btn">開始計時</button>
+            <button onclick="resetCookingTimer()" class="timer-reset-btn" title="重設計時">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                <path d="M3 3v5h5"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="step-tip-card">
+          <div class="step-tip-icon">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2v1"/><path d="M12 7a5 5 0 0 0-5 5c0 1.9 1 3.2 2 4h6c1-.8 2-2.1 2-4a5 5 0 0 0-5-5z"/>
+            </svg>
+          </div>
+          <div class="step-tip-content">
+            <strong>主廚私房撇步 · 料理科學</strong>
+            <p id="cooking-chef-tip">炒蛋滑嫩秘訣：熱鍋溫油下蛋液，底層微凝固立刻轉中小火向內推動，離火利用餘溫熟成最嫩。</p>
+          </div>
+        </div>
+      </main>
+
+      <footer id="cooking-footer-controls">
+        <button onclick="cookingPrevStep()" id="btn-cooking-prev" disabled class="elbow-btn-secondary" aria-label="回上一步">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+          <span>上一步</span>
+        </button>
+        <button onclick="cookingNextStep()" id="btn-cooking-next" class="elbow-btn-primary" aria-label="前進下一步">
+          <span id="cooking-next-label">下一步</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </button>
+      </footer>
+      <p id="cooking-elbow-hint" class="elbow-hint">
+        手沾滿水或油？可用手腕、手背或手肘輕壓大按鈕前進
+      </p>
+    </div>
+  </div>
+
+  <!-- COMPARISON TABLE & DECISION MATRIX -->
+  <footer class="w-full max-w-4xl bg-white rounded-2xl p-5 border border-stone-200 text-xs shadow-sm space-y-4">
+    <h3 class="text-sm font-black text-stone-900 flex items-center gap-1.5">
+      <span class="material-symbols-outlined text-amber-600 text-base">analytics</span>
+      三套整併方案深度對比矩陣
+    </h3>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="border-b border-stone-200 text-stone-400 font-extrabold text-[11px]">
+            <th class="py-2 pr-3">指標 / 方案</th>
+            <th class="py-2 px-3 text-amber-900 bg-amber-50/60 rounded-t-lg">方案 A：智能雙軌餐券（推薦）</th>
+            <th class="py-2 px-3">方案 B：次級抽屜收納</th>
+            <th class="py-2 pl-3">方案 C：全對話主廚管家</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-stone-100 text-stone-700">
+          <tr>
+            <td class="py-2.5 pr-3 font-bold text-stone-900">決策機制數量</td>
+            <td class="py-2.5 px-3 bg-amber-50/30 font-black text-emerald-700">嚴格 2 套（餐券 ＋ 相談室）</td>
+            <td class="py-2.5 px-3">2 套（主頁）＋ 1 個次級抽屜</td>
+            <td class="py-2.5 pl-3">嚴格 2 套（餐券 ＋ 相談室）</td>
+          </tr>
+          <tr>
+            <td class="py-2.5 pr-3 font-bold text-stone-900">「少量補買」去向</td>
+            <td class="py-2.5 px-3 bg-amber-50/30 font-bold text-stone-800">餐券內的 Segmented 切換鈕</td>
+            <td class="py-2.5 px-3">收進「換一道菜」底部抽屜</td>
+            <td class="py-2.5 pl-3">整併為相談室的第 4 個對話按鈕</td>
+          </tr>
+          <tr>
+            <td class="py-2.5 pr-3 font-bold text-stone-900">操作步數</td>
+            <td class="py-2.5 px-3 bg-amber-50/30 font-bold text-emerald-700">最少（1 次點擊即切換）</td>
+            <td class="py-2.5 px-3">次之（需點擊展開抽屜並套用）</td>
+            <td class="py-2.5 pl-3">較多（需進入對話進行 2~3 輪互動）</td>
+          </tr>
+          <tr>
+            <td class="py-2.5 pr-3 font-bold text-stone-900">首頁視覺清爽度</td>
+            <td class="py-2.5 px-3 bg-amber-50/30 font-bold text-stone-800">★★★★★（無多餘卡片）</td>
+            <td class="py-2.5 px-3">★★★★★（首頁極簡）</td>
+            <td class="py-2.5 pl-3">★★★★★（首頁極簡）</td>
+          </tr>
+          <tr>
+            <td class="py-2.5 pr-3 font-bold text-stone-900">適合的使用者心智</td>
+            <td class="py-2.5 px-3 bg-amber-50/30 font-bold text-stone-800">「今天很趕，但想看有沒有更好選擇」</td>
+            <td class="py-2.5 px-3">「今天時間充裕，想自己慢慢挑食譜」</td>
+            <td class="py-2.5 pl-3">「重度需要主廚情感撫慰、完全不想動腦」</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </footer>
+
+  <!-- ==================== MODALS & DRAWERS ==================== -->
+
+  <!-- 1. CHEF CONSULTATION MODAL (Revisit Stream) -->
+  <div id="chef-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/50 backdrop-blur-xs hidden">
+    <div class="bg-white w-full max-w-sm rounded-3xl p-5 shadow-2xl border border-stone-200 space-y-4">
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between border-b border-stone-100 pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-full bg-amber-600 text-white flex items-center justify-center">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/></svg>
+          </div>
+          <div>
+            <h3 class="text-sm font-black text-stone-900">主廚 CooCoo 相談室</h3>
+            <p class="text-[10px] text-stone-400 font-medium">隨時為你的下班決策分憂</p>
+          </div>
+        </div>
+        <button onclick="closeChefModal()" class="w-7 h-7 rounded-full flex items-center justify-center text-stone-400 hover:bg-stone-100">✕</button>
+      </div>
+
+      <!-- Chat Bubble -->
+      <div id="chef-chat-messages" class="space-y-2.5 max-h-60 overflow-y-auto pr-1">
+        <div class="bg-amber-50 border border-amber-200/70 rounded-2xl p-3 text-xs text-stone-800 leading-relaxed">
+          哈囉！我看了一下你的冰箱，冷藏庫還有「雞蛋與番茄」，建議優先使用。今晚想以什麼節奏來準備晚餐呢？
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div id="chef-actions-list" class="space-y-2 pt-2 border-t border-stone-100">
+        <button onclick="chefRespond('tired')" class="w-full text-left p-2.5 rounded-xl border border-stone-200 hover:border-amber-400 hover:bg-amber-50/50 transition-all text-xs font-bold text-stone-800 flex items-center justify-between">
+          <span>🥱 今天體力透支了，給我最省力快手菜</span>
+          <span class="text-stone-400 text-[10px]">11m 保底</span>
+        </button>
+        <button onclick="chefRespond('delay')" class="w-full text-left p-2.5 rounded-xl border border-stone-200 hover:border-amber-400 hover:bg-amber-50/50 transition-all text-xs font-bold text-stone-800 flex items-center justify-between">
+          <span>🍻 這週臨時聚餐多，自煮目標順延 -1 餐</span>
+          <span class="text-stone-400 text-[10px]">無痛順延</span>
+        </button>
+        <button onclick="chefRespond('takeout')" class="w-full text-left p-2.5 rounded-xl border border-stone-200 hover:border-amber-400 hover:bg-amber-50/50 transition-all text-xs font-bold text-stone-800 flex items-center justify-between">
+          <span>🛵 今晚純放鬆！誠實登記外食價</span>
+          <span class="text-stone-400 text-[10px]">差額透明</span>
+        </button>
+
+        <!-- [SCHEME C ONLY] 4th button: Buy a little more with budget -->
+        <button id="chef-btn-purchase-c" onclick="chefRespond('purchase_c')" class="hidden w-full text-left p-2.5 rounded-xl border border-amber-300 bg-amber-50/80 hover:bg-amber-100 transition-all text-xs font-bold text-amber-950 flex items-center justify-between">
+          <span>🛒 想花點小錢補買（NT$ 100 預算），幫我換菜</span>
+          <span class="text-amber-800 text-[10px] font-extrabold">方案C專屬</span>
+        </button>
+      </div>
+
+      <button onclick="closeChefModal()" class="w-full py-2 bg-stone-100 text-stone-600 rounded-xl text-xs font-bold">
+        關閉相談室
+      </button>
+    </div>
+  </div>
+
+  <!-- 2. SCHEME B BOTTOM SHEET DRAWER -->
+  <div id="scheme-b-drawer" class="fixed inset-0 z-50 flex flex-col justify-end drawer-overlay hidden" onclick="if(event.target===this) closeDrawer()">
+    <div class="bg-white w-full max-w-lg mx-auto rounded-t-3xl p-5 shadow-2xl bottom-drawer transform translate-y-0 space-y-4">
+      <div class="w-12 h-1.5 bg-stone-300 rounded-full mx-auto mb-1"></div>
+      <div class="flex items-center justify-between border-b border-stone-100 pb-2">
+        <div>
+          <h3 class="text-sm font-black text-stone-900">料理庫條件篩選（方案 B 抽屜）</h3>
+          <p class="text-[10px] text-stone-500">不干擾首頁，想自選時隨時叫出</p>
+        </div>
+        <button onclick="closeDrawer()" class="text-stone-400 text-sm font-bold">✕</button>
+      </div>
+
+      <!-- Mode selection in drawer -->
+      <div class="space-y-1.5">
+        <label class="text-xs font-extrabold text-stone-700">料理模式</label>
+        <div class="grid grid-cols-2 gap-2">
+          <button class="py-2 rounded-xl bg-amber-600 text-white text-xs font-bold">只用現有食材</button>
+          <button class="py-2 rounded-xl bg-stone-100 text-stone-700 text-xs font-bold">允許少量補買</button>
+        </div>
+      </div>
+
+      <!-- Budget input in drawer -->
+      <div class="space-y-1">
+        <div class="flex justify-between text-xs font-extrabold text-stone-700">
+          <span>本次補買預算上限</span>
+          <span class="text-amber-800 font-mono">NT$ 100</span>
+        </div>
+        <input type="range" min="30" max="300" value="100" class="w-full accent-amber-600">
+        <p class="text-[10px] text-stone-400">最多補買 2 種食材，參考價格採超市整包零售價</p>
+      </div>
+
+      <!-- Repeat checkbox -->
+      <label class="flex items-center gap-2 text-xs text-stone-600">
+        <input type="checkbox" class="rounded"> 也接受最近 7 天吃過或已安排的菜色
+      </label>
+
+      <button onclick="applyDrawerSettings()" class="w-full py-3 bg-[#9a442d] text-white text-xs font-black rounded-xl shadow-md">
+        套用條件並更新今日餐券
+      </button>
+    </div>
+  </div>
+
+  <!-- 3. STAGE 1: RECIPE PACKAGE PREVIEW MODAL (100% matches RecipePackageModal in RecipeModal.tsx) -->
+  <div id="recipe-preview-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-xs hidden" role="dialog" aria-modal="true" aria-label="食譜料理包預覽">
+    <div class="bg-white w-full max-w-lg rounded-3xl p-5 md:p-6 shadow-2xl border border-stone-200 max-h-[90vh] overflow-y-auto space-y-4">
+      <!-- Modal Header -->
+      <div class="flex items-start justify-between gap-3 border-b border-stone-100 pb-3">
+        <div>
+          <p id="preview-kicker" class="text-[10px] font-extrabold text-amber-700 tracking-wide">11 分鐘 · 1 人份 · NT$ 30</p>
+          <h2 id="preview-title" class="text-lg md:text-xl font-black text-[#293c4e] mt-0.5">麻油焦香煎蛋湯麵</h2>
+        </div>
+        <button onclick="closeRecipePreviewModal()" aria-label="關閉" class="w-8 h-8 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <!-- Meal Tags -->
+      <div id="preview-tags" class="flex flex-wrap gap-1.5">
+        <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-900 border border-amber-200">快手餐</span>
+        <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-stone-100 text-stone-700 border border-stone-200">單鍋</span>
+        <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-stone-100 text-stone-700 border border-stone-200">免油煙</span>
+      </div>
+
+      <!-- Step List Preview -->
+      <div class="space-y-1.5">
+        <span class="text-[10px] font-bold text-stone-400 uppercase tracking-wider block">步驟清單預覽</span>
+        <ol id="preview-steps-list" class="space-y-2">
+          <!-- Injected via JS -->
+        </ol>
+      </div>
+
+      <!-- Offline Status Assurance -->
+      <div class="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200/80 text-[11px] text-emerald-900 flex items-center gap-2">
+        <svg class="w-4 h-4 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        <span>核心食譜已就緒，下載後可在無網路廚房完全離線操作。</span>
+      </div>
+
+      <!-- Action Button -->
+      <button onclick="startActualCooking()" class="w-full py-3.5 bg-[#9a442d] hover:bg-[#853621] text-white font-black text-sm rounded-full shadow-md transition-all spring-btn flex items-center justify-center gap-2">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span>下載並開始料理</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- 4. STAGE 3: COOKING COMPLETE MODAL (100% matches CookingCompleteModal in RecipeModal.tsx) -->
+  <div id="cooking-complete-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-xs hidden" role="dialog" aria-modal="true" aria-label="料理完成結算">
+    <div class="bg-white w-full max-w-md rounded-3xl p-5 md:p-6 shadow-2xl border border-stone-200 max-h-[90vh] overflow-y-auto space-y-3">
+      <!-- Modal Header -->
+      <div class="flex items-start justify-between gap-3 border-b border-stone-100 pb-3">
+        <div>
+          <p class="text-[10px] font-extrabold text-amber-700 tracking-wide">確認後才會扣庫存與圓夢入帳</p>
+          <h2 id="complete-modal-title" class="text-lg md:text-xl font-black text-[#293c4e] mt-0.5">麻油焦香煎蛋湯麵</h2>
+        </div>
+        <button onclick="closeCompleteModal()" aria-label="關閉" class="w-8 h-8 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <!-- Servings Grid -->
+      <div class="serving-grid">
+        <label>
+          這次煮幾份
+          <input
+            id="complete-servings-cooked"
+            class="field"
+            type="number"
+            min="1"
+            value="1"
+            oninput="recalculateSettlement()"
+          />
+        </label>
+        <label>
+          現在吃幾份
+          <input
+            id="complete-servings-eaten"
+            class="field"
+            type="number"
+            min="0"
+            max="1"
+            value="1"
+            oninput="recalculateSettlement()"
+          />
+        </label>
+      </div>
+      <p id="complete-prepared-note" class="prepared-note">
+        剩下 0 份會成為熟食庫存；料理次數仍只記 1 次。
+      </p>
+
+      <!-- Cost Input -->
+      <label class="field-label">
+        本餐實際食材成本
+        <input
+          id="complete-meal-cost"
+          class="field"
+          type="number"
+          min="0"
+          value="30"
+          oninput="recalculateSettlement()"
+        />
+      </label>
+
+      <!-- Saving Confirm Card (Green Card) -->
+      <div class="saving-confirm">
+        <span>可確認省下</span>
+        <strong id="complete-calc-saving">NT$ 120</strong>
+        <small id="complete-calc-formula">本人外食比較價 NT$ 150 × 1 份 − 食材成本</small>
+      </div>
+
+      <!-- Deposit Input -->
+      <label class="field-label">
+        這次確認圓夢入帳
+        <input
+          id="complete-deposit-input"
+          class="field"
+          type="number"
+          min="0"
+          value="120"
+        />
+      </label>
+
+      <!-- Vegetable Checkbox -->
+      <div class="mt-3">
+        <label class="vegetable-check">
+          <input id="complete-veg-check" type="checkbox" checked class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500" />
+          <span class="flex-1 flex items-center justify-between gap-1">
+            <span>這餐實際吃到蔬菜</span>
+            <span class="text-[10px] font-extrabold text-[#2d6a4f] bg-[#d5ede1] px-2 py-0.5 rounded-full border border-[#b4dfc8]">
+              🌱 圓夢健康指標
+            </span>
+          </span>
+        </label>
+        <p class="text-[11px] text-[#5c6d5f] mt-1 px-1 leading-relaxed">
+          不計算卡路里壓力，紀錄將計入「圓夢進度」每週蔬菜攝取種類，建立正向飲食自主感。
+        </p>
+      </div>
+
+      <!-- Actions: 這次不入帳 vs 確認完成 -->
+      <div class="pt-3 flex gap-2">
+        <button
+          type="button"
+          onclick="setZeroDeposit()"
+          class="secondary-btn flex-1"
+        >
+          這次不入帳
+        </button>
+        <button
+          type="button"
+          onclick="confirmCompleteDeposit()"
+          class="primary-btn flex-1 flex items-center justify-center gap-1.5"
+        >
+          <span>確認完成</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="toast-msg" class="fixed bottom-6 z-50 bg-stone-900/90 backdrop-blur-sm text-white text-xs font-bold px-4 py-2.5 rounded-full shadow-lg pointer-events-none">
+    提示訊息
+  </div>
+
+  <script>
+    let currentScheme = 'A';
+    let schemeAMode = 'fridge'; // 'fridge' | 'purchase'
+
+    function triggerToast(text) {
+      const el = document.getElementById('toast-msg');
+      el.innerText = text;
+      el.classList.add('show');
+      setTimeout(() => el.classList.remove('show'), 2600);
+    }
+
+    function toggleWide(isWide) {
+      const frame = document.getElementById('mockup-frame');
+      const btnMobile = document.getElementById('btn-mobile');
+      const btnWide = document.getElementById('btn-wide');
+      if (isWide) {
+        document.body.classList.add('wide-mode');
+        btnWide.classList.add('bg-stone-200', 'text-stone-800');
+        btnWide.classList.remove('text-stone-400');
+        btnMobile.classList.remove('bg-stone-200', 'text-stone-800');
+        btnMobile.classList.add('text-stone-400');
+      } else {
+        document.body.classList.remove('wide-mode');
+        btnMobile.classList.add('bg-stone-200', 'text-stone-800');
+        btnMobile.classList.remove('text-stone-400');
+        btnWide.classList.remove('bg-stone-200', 'text-stone-800');
+        btnWide.classList.add('text-stone-400');
+      }
+    }
+
+    function switchScheme(scheme) {
+      currentScheme = scheme;
+
+      // Update Top Tabs
+      ['A', 'B', 'C', 'ORIGINAL'].forEach(s => {
+        const btn = document.getElementById(`tab-${s}`);
+        if (s === scheme) {
+          btn.className = "px-3 py-1.5 text-xs font-black rounded-lg transition-all bg-amber-600 text-white shadow-xs";
+        } else {
+          btn.className = "px-3 py-1.5 text-xs font-bold rounded-lg transition-all text-stone-600 hover:text-stone-900";
+        }
+      });
+
+      const descBanner = document.getElementById('scheme-desc-banner');
+      const schemeASwitch = document.getElementById('scheme-a-switch');
+      const schemeBTrigger = document.getElementById('scheme-b-trigger');
+      const originalCatalogPanel = document.getElementById('original-catalog-panel');
+      const topEnergyBtn = document.getElementById('top-energy-btn');
+      const chefBtnPurchaseC = document.getElementById('chef-btn-purchase-c');
+
+      // Reset specific elements
+      schemeASwitch.classList.add('hidden');
+      schemeBTrigger.classList.add('hidden');
+      originalCatalogPanel.classList.add('hidden');
+      topEnergyBtn.classList.add('hidden');
+      chefBtnPurchaseC.classList.add('hidden');
+
+      if (scheme === 'A') {
+        descBanner.innerHTML = `
+          <span class="w-5 h-5 rounded-full bg-amber-600 text-white flex items-center justify-center font-black text-[11px] shrink-0 mt-0.5">A</span>
+          <div>
+            <h3 class="font-black text-amber-950 text-sm mb-1">方案 A 設計邏輯：將「少量補買」內嵌為餐券的雙軌切換鈕（極力推薦）</h3>
+            <p class="leading-relaxed text-stone-700">
+              • <strong>決策機制一（主幹）</strong>：今日推薦餐券。頂部直接提供微型切換鈕，點擊即時在「冰箱現有」與「少量補買」間無縫切換。<br>
+              • <strong>決策機制二（例外）</strong>：上方主廚相談室，專司累癱快手菜、聚餐順延與外食。<br>
+              • <strong>徹底移除</strong>：獨立的「今天想怎麼煮」大白卡片與右上角重複的「今天有點累」。
+            </p>
+          </div>
+        `;
+        schemeASwitch.classList.remove('hidden');
+        setSchemeAMode(schemeAMode);
+      } else if (scheme === 'B') {
+        descBanner.innerHTML = `
+          <span class="w-5 h-5 rounded-full bg-stone-700 text-white flex items-center justify-center font-black text-[11px] shrink-0 mt-0.5">B</span>
+          <div>
+            <h3 class="font-black text-stone-950 text-sm mb-1">方案 B 設計邏輯：極簡首頁 ＋ 底部抽屜二級篩選（保持極致單純）</h3>
+            <p class="leading-relaxed text-stone-700">
+              • <strong>決策機制一（主幹）</strong>：純粹以冰箱為主的今日推薦餐券。<br>
+              • <strong>決策機制二（例外）</strong>：主廚相談室。<br>
+              • <strong>二級收納</strong>：餐券下方附帶「自選條件 / 補買預算 ➔」按鈕，點擊平滑滑出底部抽屜，不污染首頁第一視覺。
+            </p>
+          </div>
+        `;
+        schemeBTrigger.classList.remove('hidden');
+        setSchemeAMode('fridge');
+      } else if (scheme === 'C') {
+        descBanner.innerHTML = `
+          <span class="w-5 h-5 rounded-full bg-stone-700 text-white flex items-center justify-center font-black text-[11px] shrink-0 mt-0.5">C</span>
+          <div>
+            <h3 class="font-black text-stone-950 text-sm mb-1">方案 C 設計邏輯：擬人化管家 ＋ 補買需求全交給主廚對話</h3>
+            <p class="leading-relaxed text-stone-700">
+              • <strong>決策機制一（主幹）</strong>：被動呈現今日首選餐券。<br>
+              • <strong>決策機制二（互動唯一入口）</strong>：主廚相談室。包含「想花點小錢補買（NT$ 100 預算）」選項，由主廚在對話中直接幫你選菜與加待買清單。<br>
+              • <strong>特點</strong>：對話感最強，首頁零表單。
+            </p>
+          </div>
+        `;
+        chefBtnPurchaseC.classList.remove('hidden');
+        setSchemeAMode('fridge');
+      } else {
+        // ORIGINAL
+        descBanner.innerHTML = `
+          <span class="w-5 h-5 rounded-full bg-red-600 text-white flex items-center justify-center font-black text-[11px] shrink-0 mt-0.5">!</span>
+          <div>
+            <h3 class="font-black text-red-950 text-sm mb-1">現況重現：三套決策機制同時爭搶第一注意力（認知負擔重）</h3>
+            <p class="leading-relaxed text-stone-700">
+              右上角有「今天有點累」，中間有「主廚相談室」，緊接著「今天想怎麼煮」大白卡片，再接著「今日首選餐券」。使用者無法一眼得知要在哪裡決定晚餐。
+            </p>
+          </div>
+        `;
+        originalCatalogPanel.classList.remove('hidden');
+        topEnergyBtn.classList.remove('hidden');
+        setSchemeAMode('fridge');
+      }
+    }
+
+    function setSchemeAMode(mode) {
+      schemeAMode = mode;
+      const btnFridge = document.getElementById('btn-mode-fridge');
+      const btnPurchase = document.getElementById('btn-mode-purchase');
+      const mealTitle = document.getElementById('meal-title');
+      const mealSubtitle = document.getElementById('meal-subtitle');
+      const mealCostTag = document.getElementById('meal-cost-tag');
+      const mealCoverageTag = document.getElementById('meal-coverage-tag');
+      const chipsContainer = document.getElementById('ingredient-chips');
+      const routeHint = document.getElementById('route-hint');
+      const purchaseTipBanner = document.getElementById('purchase-tip-banner');
+      const btnAddShoppingQuick = document.getElementById('btn-add-shopping-quick');
+      const mealSavingText = document.getElementById('meal-saving-text');
+
+      if (mode === 'fridge') {
+        btnFridge?.classList.add('active');
+        btnPurchase?.classList.remove('active');
+
+        mealTitle.innerText = "蒜香番茄蛋花湯麵";
+        mealSubtitle.innerText = "單鍋搞定 · 善終即期番茄與冷藏常備蛋";
+        mealCostTag.innerText = "食材 NT$ 38";
+        mealCostTag.className = "text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-amber-50 text-amber-900 border border-amber-200";
+        mealCoverageTag.innerText = "庫存覆蓋 100%";
+        mealCoverageTag.className = "text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded";
+        routeHint.innerText = "冰箱完全備妥";
+        routeHint.className = "text-emerald-700";
+
+        chipsContainer.innerHTML = `
+          <span class="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200">
+            雞蛋 <small class="text-emerald-600">(已有)</small>
+          </span>
+          <span class="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200">
+            牛番茄 <small class="text-emerald-600">(已有)</small>
+          </span>
+          <span class="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200">
+            關廟麵 <small class="text-emerald-600">(已有)</small>
+          </span>
+        `;
+        purchaseTipBanner.classList.add('hidden');
+        btnAddShoppingQuick.classList.add('hidden');
+        mealSavingText.innerText = "本餐為［北海道初雪］省下 NT$ 112";
+      } else {
+        btnPurchase?.classList.add('active');
+        btnFridge?.classList.remove('active');
+
+        mealTitle.innerText = "洋蔥醬燒豬肉蓋飯";
+        mealSubtitle.innerText = "甜鹹下飯 · 僅需補買 1 顆洋蔥即可開煮";
+        mealCostTag.innerText = "食材 NT$ 62";
+        mealCostTag.className = "text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-amber-100 text-amber-950 border border-amber-300";
+        mealCoverageTag.innerText = "補買 1 種 (NT$32)";
+        mealCoverageTag.className = "text-[10px] font-bold text-amber-900 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded";
+        routeHint.innerText = "缺 1 味，微額補買即可";
+        routeHint.className = "text-amber-800";
+
+        chipsContainer.innerHTML = `
+          <span class="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200">
+            梅花豬肉片 <small class="text-emerald-600">(已有)</small>
+          </span>
+          <span class="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200">
+            白米飯 <small class="text-emerald-600">(已有)</small>
+          </span>
+          <span class="text-[11px] font-black px-2 py-0.5 rounded-lg bg-amber-100 text-amber-900 border border-amber-300">
+            洋蔥 <small class="text-amber-700 font-bold">(補買 1 顆 ~NT$32)</small>
+          </span>
+        `;
+        purchaseTipBanner.classList.remove('hidden');
+        btnAddShoppingQuick.classList.remove('hidden');
+        mealSavingText.innerText = "本餐為［北海道初雪］省下 NT$ 88";
+      }
+    }
+
+    function replaceMainMeal(name, cost, mins) {
+      document.getElementById('meal-title').innerText = name;
+      document.getElementById('meal-cost-tag').innerText = `食材 NT$ ${cost}`;
+      document.getElementById('meal-time-tag').innerText = `${mins} 分鐘`;
+      triggerToast(`已置換為「${name}」！`);
+    }
+
+    function startCooking() {
+      triggerToast("已進入離線料理工坊！開始第 1 步驟。");
+    }
+
+    function toggleEnergyLow() {
+      triggerToast("已手動切換低體力模式！");
+    }
+
+    // Modal logic
+    function openChefModal() {
+      document.getElementById('chef-modal').classList.remove('hidden');
+    }
+    function closeChefModal() {
+      document.getElementById('chef-modal').classList.add('hidden');
+    }
+
+    function chefRespond(type) {
+      const container = document.getElementById('chef-chat-messages');
+      const actionsList = document.getElementById('chef-actions-list');
+      actionsList.classList.add('hidden'); // Hide quick actions like in production
+
+      let userText = "";
+      let chefInnerHtml = "";
+
+      if (type === 'tired') {
+        userText = "今天體力透支了，給我最簡單快手菜！";
+        chefInnerHtml = `
+          <div class="space-y-2">
+            <div class="font-black text-amber-950 text-xs">主廚 CooCoo 收到！已為你切換為「低體力模式」：</div>
+            <p class="text-stone-600 leading-relaxed text-[11px]">
+              步驟 ≤ 4、單鍋到底、免繁複備料。<br>
+              冰箱冷藏庫剛好有齊全食材，為你調派 11 分鐘保底快手菜「<strong>麻油焦香煎蛋湯麵</strong>」，善終冰箱食材，收拾只要洗一個鍋！
+            </p>
+            <div class="mt-2.5 space-y-1.5 w-full">
+              <!-- PRIMARY ACTION: 離線烹煮按鈕 -->
+              <button onclick="launchOfflineCookingFromChef('麻油焦香煎蛋湯麵')" class="spring-btn w-full bg-amber-600 hover:bg-amber-700 text-white font-black py-2.5 px-3 rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 shadow-sm">
+                <svg class="w-3.5 h-3.5 fill-current shrink-0" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                <span>離線料理包已備妥 · 跟著主廚做 ➔</span>
+              </button>
+              <!-- SECONDARY ACTION: 缺料備案 -->
+              <button onclick="triggerToast('模擬情況 B：已將缺料（青江菜、烏龍麵）加入採買清單！')" class="w-full bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold py-1.5 px-2 rounded-lg text-[10px] transition-colors flex items-center justify-center gap-1">
+                <span>若冰箱缺料：點此將缺料加入採買清單</span>
+              </button>
+            </div>
+            <button onclick="resetChefQuickActions()" class="text-[10px] text-amber-800 underline font-bold mt-1.5 block">
+              ↺ 重新選擇其他情境
+            </button>
+          </div>
+        `;
+      } else if (type === 'delay') {
+        userText = "這週聚餐多，自煮想少煮 1 餐，目標順延。";
+        chefInnerHtml = `
+          <div class="space-y-1.5">
+            <div class="font-black text-emerald-950 text-xs">主廚 CooCoo：完全沒問題！生活彈性第一。</div>
+            <p class="text-stone-600 leading-relaxed text-[11px]">
+              已將本週自煮目標調整為 <strong>2 餐</strong>。未煮餐次自動順延，圓夢計畫無痛推進，絕無任何挫折或懲罰！
+            </p>
+            <button onclick="resetChefQuickActions()" class="text-[10px] text-amber-800 underline font-bold mt-1 block">
+              ↺ 重新選擇其他情境
+            </button>
+          </div>
+        `;
+      } else if (type === 'takeout') {
+        userText = "今晚純放鬆！登記一次外食。";
+        chefInnerHtml = `
+          <div class="space-y-1.5">
+            <div class="font-black text-stone-900 text-xs">主廚 CooCoo：好好享受外食的美味時光！</div>
+            <p class="text-stone-600 leading-relaxed text-[11px]">
+              外食也是生活平衡的重要調劑。已為你記錄外食比較價（NT$ 150），下半週我們再挑合適的一天輕鬆煮一餐就好。
+            </p>
+            <button onclick="resetChefQuickActions()" class="text-[10px] text-amber-800 underline font-bold mt-1 block">
+              ↺ 重新選擇其他情境
+            </button>
+          </div>
+        `;
+      } else if (type === 'purchase_c') {
+        userText = "想花點小錢補買（NT$ 100 預算），幫我換菜！";
+        chefInnerHtml = `
+          <div class="space-y-2">
+            <div class="font-black text-amber-950 text-xs">主廚收到！小額補買槓桿美味：</div>
+            <p class="text-stone-600 leading-relaxed text-[11px]">
+              已用 NT$ 100 預算為你配出「<strong>洋蔥醬燒豬肉蓋飯</strong>」，只缺 1 顆洋蔥（約 NT$ 32）。已為你更新今日餐券！
+            </p>
+            <button onclick="launchOfflineCookingFromChef('洋蔥醬燒豬肉蓋飯')" class="spring-btn w-full bg-amber-600 hover:bg-amber-700 text-white font-black py-2.5 px-3 rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 shadow-sm">
+              <svg class="w-3.5 h-3.5 fill-current shrink-0" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              <span>離線料理包已備妥 · 跟著主廚做 ➔</span>
+            </button>
+          </div>
+        `;
+        setSchemeAMode('purchase');
+      }
+
+      container.innerHTML += `
+        <div class="bg-stone-100 rounded-2xl p-2.5 text-xs text-stone-700 text-right font-medium">
+          ${userText}
+        </div>
+        <div class="bg-amber-50 border border-amber-200/70 rounded-2xl p-3 text-xs text-stone-800 leading-relaxed shadow-2xs">
+          ${chefInnerHtml}
+        </div>
+      `;
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function resetChefQuickActions() {
+      document.getElementById('chef-actions-list').classList.remove('hidden');
+    }
+
+    function launchOfflineCookingFromChef(recipeTitle) {
+      closeChefModal();
+      // Update background Today Page Ticket to this low energy meal
+      document.getElementById('meal-title').innerText = recipeTitle;
+      document.getElementById('meal-subtitle').innerText = "低體力保底快手菜 · 步驟 ≤ 4 · 只要洗一個鍋";
+      document.getElementById('meal-cost-tag').innerText = "食材 NT$ 30";
+      document.getElementById('meal-time-tag').innerText = "11 分快手";
+      document.getElementById('meal-coverage-tag').innerText = "低體力 · 庫存 100%";
+      document.getElementById('meal-saving-text').innerText = "本餐為［北海道初雪］省下 NT$ 120";
+
+      // Open Stage 1: Recipe Package Preview Modal (Same unified component as Today Ticket)
+      openRecipePackagePreview(recipeTitle);
+      triggerToast("已啟動標準離線料理包！請確認步驟後下載開煮");
+    }
+
+    function startCooking() {
+      const currentTitle = document.getElementById('meal-title').innerText;
+      openRecipePackagePreview(currentTitle);
+    }
+
+    // ========================================================
+    // UNIFIED RECIPES DATA & PRODUCTION COOKING MODE ENGINE
+    // ========================================================
+    const RECIPES_DB = {
+      "麻油焦香煎蛋湯麵": {
+        title: "麻油焦香煎蛋湯麵",
+        saving: 120,
+        cost: 30,
+        totalMinutes: 11,
+        servings: 1,
+        cookwareTypes: ["單鍋", "免油煙"],
+        tags: ["快手餐", "低體力可選"],
+        vegetable: true,
+        steps: [
+          {
+            order: 1,
+            instruction: "單鍋熱鍋下麻油，打入雞蛋中火煎至邊緣微焦香酥脆（約 2 分鐘）。",
+            timerSeconds: 120,
+            heat: { label: "中小火烹調", style: "heat-med" },
+            ingredients: [{ name: "雞蛋", qty: "1 顆" }, { name: "黑麻油", qty: "1 大匙" }],
+            chefTip: "炒蛋滑嫩秘訣：熱鍋溫油下蛋液，底層微凝固立刻轉中小火向內推動，離火利用餘溫熟成最嫩。"
+          },
+          {
+            order: 2,
+            instruction: "免換鍋！直接沖入 400ml 熱開水，大火滾煮 1 分鐘激發濃郁白湯底。",
+            timerSeconds: 60,
+            heat: { label: "大火滾水", style: "heat-high" },
+            ingredients: [{ name: "熱開水", qty: "400 ml" }],
+            chefTip: "滾水大火沖下煎蛋，油脂與水乳化會形成濃白香醇湯底，鮮甜且免用高湯塊！"
+          },
+          {
+            order: 3,
+            instruction: "放入烏龍麵與青菜，中火燜煮 3 分鐘，起鍋前加少許鹽巴與白胡椒調味。",
+            timerSeconds: 180,
+            heat: { label: "中小火烹調", style: "heat-med" },
+            ingredients: [{ name: "烏龍麵", qty: "1 包" }, { name: "青江菜", qty: "1 株" }, { name: "鹽巴與白胡椒", qty: "少許" }],
+            chefTip: "冷凍烏龍麵直接下滾水煮，先不要急著用筷子用力攪散，讓水自然滲透，麵條最 Q 彈且不易斷裂！"
+          },
+          {
+            order: 4,
+            instruction: "整鍋端起即可享用！全程僅用 1 個鍋子，美味暖胃又免洗多餘碗盤。",
+            timerSeconds: null,
+            heat: { label: "完全關火", style: "heat-off" },
+            ingredients: [{ name: "熱騰騰湯麵", qty: "整鍋 1 人份" }],
+            chefTip: "掌握火候與一鍋到底下鍋順序，洗碗只洗一個鍋，最適合疲憊的下班夜！"
+          }
+        ]
+      },
+      "蒜香番茄蛋花湯麵": {
+        title: "蒜香番茄蛋花湯麵",
+        saving: 112,
+        cost: 38,
+        totalMinutes: 15,
+        servings: 1,
+        cookwareTypes: ["單鍋", "高纖快手"],
+        tags: ["快手餐", "低體力可選"],
+        vegetable: true,
+        steps: [
+          {
+            order: 1,
+            instruction: "熱鍋倒少許油，下蒜末與牛番茄丁大火翻炒 2 分鐘至出紅油軟爛。",
+            timerSeconds: 120,
+            heat: { label: "大火翻炒", style: "heat-high" },
+            ingredients: [{ name: "牛番茄", qty: "1 顆" }, { name: "大蒜", qty: "2 瓣" }],
+            chefTip: "番茄紅素是脂溶性營養素，熱油翻炒至出汁起紅油，不僅湯底濃郁香甜，也更能釋放營養。"
+          },
+          {
+            order: 2,
+            instruction: "倒入 400ml 水煮滾，下關廟麵條中火煮 4 分鐘至熟透軟糯。",
+            timerSeconds: 240,
+            heat: { label: "中小火烹調", style: "heat-med" },
+            ingredients: [{ name: "關廟麵", qty: "1 束" }, { name: "開水", qty: "400 ml" }],
+            chefTip: "煮乾麵條時稍微淋一點點油，可以防止麵湯起沫溢鍋。"
+          },
+          {
+            order: 3,
+            instruction: "轉微火，淋入打散蛋液推勻成漂亮蛋花，撒鹽出鍋！",
+            timerSeconds: 30,
+            heat: { label: "微火慢煮", style: "heat-low" },
+            ingredients: [{ name: "雞蛋", qty: "1 顆" }, { name: "食鹽", qty: "少許" }],
+            chefTip: "淋蛋液前先將湯攪拌出漩渦，順著漩渦邊緣細流淋入，蛋花最均勻如絲絨。"
+          }
+        ]
+      },
+      "洋蔥醬燒豬肉蓋飯": {
+        title: "洋蔥醬燒豬肉蓋飯",
+        saving: 88,
+        cost: 62,
+        totalMinutes: 15,
+        servings: 1,
+        cookwareTypes: ["單平底鍋", "少油煙"],
+        tags: ["少量補買", "甜鹹下飯"],
+        vegetable: true,
+        steps: [
+          {
+            order: 1,
+            instruction: "洋蔥切絲，熱鍋倒油，中火翻炒 3 分鐘至透明軟化、微焦糖化散發香氣。",
+            timerSeconds: 180,
+            heat: { label: "中小火烹調", style: "heat-med" },
+            ingredients: [{ name: "洋蔥", qty: "1 顆 (補買)" }],
+            chefTip: "洋蔥切逆紋能破壞細胞壁，炒的時候更容易受熱焦糖化釋放甜味。"
+          },
+          {
+            order: 2,
+            instruction: "下梅花豬肉片翻炒至八分熟，淋入醬油、味醂與 50ml 水燜煮 2 分鐘入味。",
+            timerSeconds: 120,
+            heat: { label: "中小火烹調", style: "heat-med" },
+            ingredients: [{ name: "梅花豬肉片", qty: "120 克" }, { name: "醬油與味醂", qty: "各 1 大匙" }],
+            chefTip: "肉類入鍋後先別急著翻炒，讓底層受熱幾秒形成梅納反應鎖住肉汁，口感最鮮嫩不柴。"
+          },
+          {
+            order: 3,
+            instruction: "將熱騰騰醬汁與豬肉片完整鋪在白飯上，撒少許蔥花即可開動！",
+            timerSeconds: null,
+            heat: { label: "完全關火", style: "heat-off" },
+            ingredients: [{ name: "白米飯", qty: "1 大碗" }],
+            chefTip: "微甜日式醬汁與洋蔥甜味完美滲入米飯，每一口都是滿滿成就感！"
+          }
+        ]
+      }
+    };
+
+    let activeRecipe = null;
+    let currentStepIdx = 0;
+    let timerInterval = null;
+    let timerSecondsLeft = 0;
+    let isTimerRunning = false;
+
+    // ========================================================
+    // STAGE 1: RECIPE PACKAGE PREVIEW MODAL (RecipePackageModal)
+    // ========================================================
+    function openRecipePackagePreview(recipeName) {
+      activeRecipe = RECIPES_DB[recipeName] || RECIPES_DB["麻油焦香煎蛋湯麵"];
+      
+      document.getElementById('preview-title').innerText = activeRecipe.title;
+      document.getElementById('preview-kicker').innerText = 
+        `${activeRecipe.totalMinutes} 分鐘 · ${activeRecipe.servings} 人份 · NT$ ${activeRecipe.cost}`;
+
+      // Render tags
+      const tagsContainer = document.getElementById('preview-tags');
+      tagsContainer.innerHTML = 
+        activeRecipe.tags.map(tag => 
+          `<span class="text-[10px] font-bold px-2 py-0.5 rounded-md ${tag.includes('快手') || tag.includes('低體力') ? 'bg-amber-50 text-amber-900 border border-amber-200' : 'bg-stone-100 text-stone-700 border border-stone-200'}">${tag}</span>`
+        ).join('') + 
+        activeRecipe.cookwareTypes.map(c => 
+          `<span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-stone-100 text-stone-700 border border-stone-200">${c}</span>`
+        ).join('');
+
+      // Render Step List Preview
+      const stepsList = document.getElementById('preview-steps-list');
+      stepsList.innerHTML = activeRecipe.steps.map(step => 
+        `<li class="flex gap-2.5 rounded-2xl bg-stone-50 border border-stone-200/70 p-3 text-xs text-stone-700 leading-relaxed">
+          <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#9a442d] text-[10px] font-black text-white">${step.order}</span>
+          <p class="m-0">${step.instruction}</p>
+        </li>`
+      ).join('');
+
+      document.getElementById('recipe-preview-modal').classList.remove('hidden');
+    }
+
+    function closeRecipePreviewModal() {
+      document.getElementById('recipe-preview-modal').classList.add('hidden');
+    }
+
+    function startActualCooking() {
+      closeRecipePreviewModal();
+      openUnifiedCookingMode(activeRecipe.title);
+      triggerToast("已下載離線料理包！開始步驟 1");
+    }
+
+    // ========================================================
+    // STAGE 2: STEP-BY-STEP COOKING MODE (CookingMode)
+    // ========================================================
+    function openUnifiedCookingMode(recipeName) {
+      activeRecipe = RECIPES_DB[recipeName] || RECIPES_DB["麻油焦香煎蛋湯麵"];
+      currentStepIdx = 0;
+
+      // Snap mockup-frame to authentic mobile height (844px)
+      document.getElementById('mockup-frame').classList.add('cooking-active');
+
+      // Update Header
+      document.getElementById('cooking-recipe-title').innerText = activeRecipe.title;
+
+      // Render Progress Segments
+      const segmentsContainer = document.getElementById('cooking-progress-segments');
+      segmentsContainer.innerHTML = activeRecipe.steps.map((_, i) =>
+        `<span class="segment ${i === 0 ? 'active' : ''}" id="cook-segment-${i}"></span>`
+      ).join('');
+
+      renderActiveStep();
+      document.getElementById('cooking-mode-screen').classList.remove('hidden');
+    }
+
+    function closeCookingMode() {
+      clearInterval(timerInterval);
+      isTimerRunning = false;
+      document.getElementById('cooking-mode-screen').classList.add('hidden');
+      document.getElementById('mockup-frame').classList.remove('cooking-active');
+    }
+
+    function renderActiveStep() {
+      const step = activeRecipe.steps[currentStepIdx];
+      const totalSteps = activeRecipe.steps.length;
+
+      // Step counter
+      document.getElementById('cooking-step-counter').innerText = `步驟 ${currentStepIdx + 1} / ${totalSteps}`;
+      document.getElementById('cooking-step-order').innerText = `STEP ${String(step.order).padStart(2, '0')}`;
+
+      // Progress bar
+      activeRecipe.steps.forEach((_, i) => {
+        const seg = document.getElementById(`cook-segment-${i}`);
+        if (seg) {
+          if (i <= currentStepIdx) seg.classList.add('active');
+          else seg.classList.remove('active');
+        }
+      });
+
+      // Heat badge
+      const badge = document.getElementById('cooking-heat-badge');
+      badge.className = `heat-badge ${step.heat.style}`;
+      document.getElementById('cooking-heat-label').innerText = step.heat.label;
+
+      // Instruction
+      document.getElementById('cooking-instruction-text').innerText = step.instruction;
+
+      // Ingredients pills
+      const pillsContainer = document.getElementById('cooking-ingredients-pills');
+      pillsContainer.innerHTML = step.ingredients.map(ing =>
+        `<span class="step-ingredient-pill">${ing.name} ${ing.qty}</span>`
+      ).join('');
+
+      // Chef tip
+      document.getElementById('cooking-chef-tip').innerText = step.chefTip;
+
+      // Timer
+      clearInterval(timerInterval);
+      isTimerRunning = false;
+      const timerCard = document.getElementById('cooking-timer-card');
+      if (step.timerSeconds) {
+        timerCard.classList.remove('hidden');
+        timerSecondsLeft = step.timerSeconds;
+        updateTimerDisplay();
+        document.getElementById('btn-timer-toggle').innerText = "開始計時";
+      } else {
+        timerCard.classList.add('hidden');
+      }
+
+      // Elbow Footer Buttons
+      document.getElementById('btn-cooking-prev').disabled = (currentStepIdx === 0);
+      const nextBtn = document.getElementById('btn-cooking-next');
+      const nextLabel = document.getElementById('cooking-next-label');
+      if (currentStepIdx === totalSteps - 1) {
+        nextBtn.classList.add('is-finish');
+        nextLabel.innerText = "完成料理";
+      } else {
+        nextBtn.classList.remove('is-finish');
+        nextLabel.innerText = "下一步";
+      }
+    }
+
+    function cookingNextStep() {
+      if (!activeRecipe) return;
+      if (currentStepIdx < activeRecipe.steps.length - 1) {
+        currentStepIdx++;
+        renderActiveStep();
+      } else {
+        // Finishing - transition to Stage 3 settlement modal
+        finishCookingAndOpenSettlement();
+      }
+    }
+
+    function cookingPrevStep() {
+      if (currentStepIdx > 0) {
+        currentStepIdx--;
+        renderActiveStep();
+      }
+    }
+
+    function updateTimerDisplay() {
+      const m = Math.floor(timerSecondsLeft / 60);
+      const s = String(timerSecondsLeft % 60).padStart(2, '0');
+      document.getElementById('cooking-timer-digits').innerText = `${m}:${s}`;
+    }
+
+    function toggleCookingTimer() {
+      if (isTimerRunning) {
+        clearInterval(timerInterval);
+        isTimerRunning = false;
+        document.getElementById('btn-timer-toggle').innerText = "繼續計時";
+      } else {
+        isTimerRunning = true;
+        document.getElementById('btn-timer-toggle').innerText = "暫停";
+        timerInterval = setInterval(() => {
+          if (timerSecondsLeft > 0) {
+            timerSecondsLeft--;
+            updateTimerDisplay();
+          } else {
+            clearInterval(timerInterval);
+            isTimerRunning = false;
+            document.getElementById('btn-timer-toggle').innerText = "重新計時";
+            triggerToast("叮！計時時間到，進行下一步！");
+          }
+        }, 1000);
+      }
+    }
+
+    function resetCookingTimer() {
+      clearInterval(timerInterval);
+      isTimerRunning = false;
+      const step = activeRecipe.steps[currentStepIdx];
+      timerSecondsLeft = step.timerSeconds || 0;
+      updateTimerDisplay();
+      document.getElementById('btn-timer-toggle').innerText = "開始計時";
+    }
+
+    // ========================================================
+    // STAGE 3: COOKING COMPLETE SETTLEMENT (CookingCompleteModal)
+    // ========================================================
+    function finishCookingAndOpenSettlement() {
+      closeCookingMode(); // Hides Stage 2 screen, completely removing step footer & elbow hint
+
+      // Populate Stage 3 modal with active recipe parameters
+      document.getElementById('complete-modal-title').innerText = activeRecipe.title;
+      document.getElementById('complete-servings-cooked').value = activeRecipe.servings || 1;
+      document.getElementById('complete-servings-eaten').value = 1;
+      document.getElementById('complete-meal-cost').value = activeRecipe.cost;
+      document.getElementById('complete-veg-check').checked = Boolean(activeRecipe.vegetable);
+
+      recalculateSettlement();
+      document.getElementById('cooking-complete-modal').classList.remove('hidden');
+    }
+
+    function recalculateSettlement() {
+      const cookedInput = document.getElementById('complete-servings-cooked');
+      const eatenInput = document.getElementById('complete-servings-eaten');
+      const costInput = document.getElementById('complete-meal-cost');
+      const depositInput = document.getElementById('complete-deposit-input');
+
+      let cooked = Math.max(1, parseInt(cookedInput.value, 10) || 1);
+      let eaten = Math.min(cooked, Math.max(0, parseInt(eatenInput.value, 10) || 0));
+      let cost = costInput.value === "" ? 0 : Math.max(0, parseInt(costInput.value, 10) || 0);
+
+      eatenInput.max = cooked;
+      const left = Math.max(0, cooked - eaten);
+      document.getElementById('complete-prepared-note').innerText = 
+        `剩下 ${left} 份會成為熟食庫存；料理次數仍只記 1 次。`;
+
+      const outsideCost = 150; // User profile outside dining reference price
+      const calculatedSaving = Math.max(0, outsideCost * eaten - cost);
+
+      document.getElementById('complete-calc-saving').innerText = `NT$ ${calculatedSaving}`;
+      document.getElementById('complete-calc-formula').innerText = 
+        `本人外食比較價 NT$ ${outsideCost} × ${eaten} 份 − 食材成本`;
+
+      const currentDeposit = parseInt(depositInput.value, 10);
+      if (isNaN(currentDeposit) || currentDeposit > calculatedSaving) {
+        depositInput.value = calculatedSaving;
+      }
+      depositInput.max = calculatedSaving;
+    }
+
+    function setZeroDeposit() {
+      document.getElementById('complete-deposit-input').value = 0;
+      triggerToast("這次選擇不入帳圓夢金 (NT$ 0)");
+    }
+
+    function closeCompleteModal() {
+      document.getElementById('cooking-complete-modal').classList.add('hidden');
+    }
+
+    function confirmCompleteDeposit() {
+      const deposit = parseInt(document.getElementById('complete-deposit-input').value, 10) || 0;
+      const eaten = parseInt(document.getElementById('complete-servings-eaten').value, 10) || 1;
+      closeCompleteModal();
+      triggerToast(`料理完成！吃了 ${eaten} 餐，圓夢入帳 NT$ ${deposit} 🎉`);
+    }
+
+    // Drawer logic for Scheme B
+    function openDrawer() {
+      document.getElementById('scheme-b-drawer').classList.remove('hidden');
+    }
+    function closeDrawer() {
+      document.getElementById('scheme-b-drawer').classList.add('hidden');
+    }
+    function applyDrawerSettings() {
+      closeDrawer();
+      setSchemeAMode('purchase');
+      triggerToast('已套用補買預算 NT$ 100，今日餐券已更新！');
+    }
+
+    function openBudgetModal() {
+      triggerToast('當前補買預算為 NT$ 100，可點選直接調整為 NT$ 50 ~ NT$ 200');
+    }
+  </script>
+</body>
+</html>

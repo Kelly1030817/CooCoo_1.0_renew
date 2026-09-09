@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useContext, useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { stateQueryKey, useAppState } from "@/entities/app-state/model";
 import { useAppRoute } from "@/app/routing/useAppRoute";
@@ -9,6 +9,7 @@ import { hasSavedOnboardingDraft, readOnboardingDraft, saveOnboardingDraft } fro
 import { startGoogleAuth, supabase } from "@/shared/auth/supabase";
 import { AuthRecoveryPanel } from "@/shared/auth/AuthRecoveryPanel";
 import { api, json } from "@/shared/api/client";
+import { UiContext } from "@/app/ui-context";
 import type { OnboardingProfile } from "@coocoo/contracts";
 
 const pages = {
@@ -31,6 +32,7 @@ const pages = {
 export default function App() {
   const { route, navigate } = useAppRoute();
   const queryClient = useQueryClient();
+  const ui = useContext(UiContext);
   const goalRepairAttempted = useRef(false);
   const [onboardingComplete, setOnboardingComplete] = useState(() => readOnboardingDraft().status === "complete");
   const [authStatus, setAuthStatus] = useState<"loading" | "signed-in" | "signed-out">(() => supabase ? "loading" : "signed-out");
@@ -164,7 +166,10 @@ export default function App() {
         key={route === "onboarding" ? `onboarding-${isReplaying ? "replay-1" : localDraft.currentStep}` : "onboarding-initial"}
         initialStep={isReplaying ? 1 : undefined}
         canExit={onboardingComplete}
-        onExit={() => navigate("today")}
+        onExit={() => {
+          navigate("today");
+          ui.toast("相談室草稿已安全暫存；完成第 10 步立約才會正式更新圓夢看板喔！");
+        }}
         onComplete={() => {
           navigate("dream");
           setOnboardingComplete(true);

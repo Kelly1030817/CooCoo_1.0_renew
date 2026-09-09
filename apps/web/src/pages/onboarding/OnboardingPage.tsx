@@ -286,7 +286,7 @@ export function OnboardingPage({
           </button>
 
           <span className="text-[10px] text-stone-400 font-medium hidden sm:inline">
-            草稿本機安全暫存中
+            草稿暫存中 · 需至第 10 步立約生效
           </span>
 
           <button
