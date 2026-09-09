@@ -262,10 +262,25 @@ export function applyOnboardingProfile(
   const next = structuredClone(state);
   next.onboardingProfile = structuredClone(profile);
 
-  if (next.activeGoal) return next;
-
   const result = createGoalFromDraft(goalDraftFromOnboarding(profile), options);
   if (!result.valid) throw new Error("INVALID_ONBOARDING_GOAL");
+
+  if (next.activeGoal) {
+    next.activeGoal.name = result.goal.name;
+    next.activeGoal.targetAmount = result.goal.targetAmount;
+    next.activeGoal.milestones = result.goal.milestones;
+    const currentSaved = calculateCurrentSaved(
+      next.amountEvents.filter((e) => e.goalId === next.activeGoal!.id),
+    );
+    next.activeGoal.status =
+      currentSaved >= result.goal.targetAmount ? "completed" : "active";
+    next.activeGoal.completedAt =
+      currentSaved >= result.goal.targetAmount
+        ? (options.now ?? new Date()).toISOString()
+        : null;
+    next.cookingPlan = result.cookingPlan;
+    return next;
+  }
 
   next.activeGoal = result.goal;
   next.cookingPlan = result.cookingPlan;

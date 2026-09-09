@@ -9,17 +9,20 @@ import { useAppState } from "@/entities/app-state/model";
 import { UiContext } from "@/app/ui-context";
 import { GoalSetupModal } from "@/features/goal-setup/GoalSetupModal";
 import { GoalSettingsModal } from "@/features/goal-setup/GoalSettingsModal";
+import { useAppRoute } from "@/app/routing/useAppRoute";
+import "./RoiPage.css";
 
 export function RoiPage() {
   const { data } = useAppState();
   const ui = useContext(UiContext);
+  const { navigate } = useAppRoute();
   if (!data) return null;
   const weekKey = getWeekStart(new Date())!;
   const weeklyMeals = data.habitProgress.weeklyCompletions[weekKey] || 0;
   const weeklyVegetables = new Set((data.mealServings || []).filter((serving) => serving.status === "eaten" && Boolean(serving.eatenAt && serving.eatenAt.slice(0, 10) >= weekKey)).flatMap((serving) => serving.vegetableKeys)).size;
   if (!data.activeGoal)
     return (
-      <div className="mx-auto max-w-[760px] space-y-md">
+      <div className="roi-page mx-auto max-w-[760px] space-y-md">
         <section className="overflow-hidden rounded-3xl border border-primary/15 bg-white shadow-sm">
           <div className="h-2 bg-gradient-to-r from-primary via-terracotta to-ochre-gold" />
           <div className="p-lg text-center md:p-xl">
@@ -68,7 +71,7 @@ export function RoiPage() {
     targetDate: goal.targetDate,
   });
   return (
-    <div className="mx-auto max-w-[820px] space-y-lg">
+    <div className="roi-page mx-auto max-w-[820px] space-y-lg">
       <section className="flex flex-col justify-between gap-md sm:flex-row sm:items-start">
         <div>
           <p className="text-[10px] font-extrabold tracking-[.16em] text-secondary">
@@ -89,7 +92,7 @@ export function RoiPage() {
           調整計畫
         </button>
       </section>
-      <section className="rounded-3xl border border-primary/10 bg-white p-lg shadow-sm">
+      <section className="rounded-3xl border border-primary/10 bg-white p-lg shadow-sm animate-dream-settle">
         <div className="flex flex-col items-center gap-lg sm:flex-row">
           <div
             className="radial-progress flex h-36 w-36 shrink-0 items-center justify-center rounded-full"
@@ -172,6 +175,28 @@ export function RoiPage() {
             {weeklyVegetables} 種
           </strong>
         </div>
+      </div>
+      <div className="pt-2 pb-6">
+        <button
+          type="button"
+          onClick={() => navigate("today")}
+          className="w-full rounded-2xl bg-amber-600 hover:bg-amber-700 active:scale-[0.98] py-3.5 px-4 text-center font-black text-white text-sm shadow-md transition-all flex items-center justify-center gap-2"
+        >
+          <span>確認計畫無誤，開啟今日自煮</span>
+          <svg
+            className="w-4 h-4 text-white"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M5 12h14" />
+            <path d="m12 5 7 7-7 7" />
+          </svg>
+        </button>
       </div>
     </div>
   );

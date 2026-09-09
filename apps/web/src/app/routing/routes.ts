@@ -4,6 +4,7 @@ export const appRoutePaths = {
   fridge: "/fridge",
   kitchen: "/kitchen",
   dream: "/dream",
+  onboarding: "/onboarding",
 } as const;
 
 export type AppRoute = keyof typeof appRoutePaths;

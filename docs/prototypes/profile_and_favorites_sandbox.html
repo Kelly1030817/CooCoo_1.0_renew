@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CooCoo · 個人中心雙分頁抽屜（立約設定 ＆ 我的最愛）沙盒預覽</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&family=Noto+Sans+TC:wght@400;500;700;900&family=Cedarville+Cursive&family=JetBrains+Mono:wght@600;800&display=swap">
+  <style>
+    @font-face {
+      font-family: 'Cedarville Cursive';
+      font-style: normal;
+      font-weight: 400;
+      src: local('Cedarville Cursive'), local('Cedarville-Cursive'), cursive;
+    }
+    :root {
+      --primary: #2d6a4f;
+      --primary-dark: #1b4332;
+      --primary-light: #d8f3dc;
+      --ochre: #d97706;
+      --amber-bg: #fffbeb;
+      --surface: #fbfbf9;
+      --slate-blue: #1e293b;
+    }
+    body {
+      font-family: 'Plus Jakarta Sans', 'Noto Sans TC', sans-serif;
+      background-color: #0f172a;
+      color: #1e293b;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .font-cursive {
+      font-family: 'Cedarville Cursive', cursive;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    /* Mobile Device Frame */
+    .mobile-screen {
+      width: 100%;
+      max-width: 412px;
+      min-height: 860px;
+      background: #f8fafc;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.6), 0 0 0 12px #1e293b, 0 0 0 14px #334155;
+      border-radius: 44px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    /* Smooth Drawer Transitions */
+    .drawer-backdrop {
+      background: rgba(15, 23, 42, 0.55);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .drawer-panel {
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+      will-change: transform;
+    }
+    .drawer-panel.closed {
+      transform: translateY(105%);
+      pointer-events: none;
+    }
+    .drawer-panel.open {
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+    /* Ignition Pop Keyframes */
+    @keyframes ignitionBurst {
+      0% { transform: scale(0.6); opacity: 0; }
+      45% { transform: scale(1.35); opacity: 1; filter: drop-shadow(0 0 16px rgba(245, 158, 11, 0.95)); }
+      100% { transform: scale(1.8) translateY(-28px); opacity: 0; filter: blur(4px); }
+    }
+    .animate-ignition-pop {
+      animation: ignitionBurst 0.65s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
+    }
+    /* Toast Animation */
+    @keyframes toastFade {
+      0% { transform: translate(-50%, 20px); opacity: 0; }
+      15% { transform: translate(-50%, 0); opacity: 1; }
+      85% { transform: translate(-50%, 0); opacity: 1; }
+      100% { transform: translate(-50%, -15px); opacity: 0; }
+    }
+    .toast-active {
+      animation: toastFade 2.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    /* Custom Scrollbar */
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-2 sm:p-6 bg-slate-950">
+
+  <!-- Main Phone Container -->
+  <div class="mobile-screen border border-slate-700">
+
+    <!-- Top Status Bar Mockup -->
+    <div class="pt-3 px-6 flex justify-between items-center text-xs font-bold text-slate-500 bg-white/90 shrink-0 z-30 select-none">
+      <span>09:41</span>
+      <div class="w-20 h-4 bg-slate-900 rounded-full mx-auto"></div>
+      <div class="flex items-center gap-1.5">
+        <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L4.35 18.25c-.39.39-.39 1.02 0 1.41.39.39 1.02.39 1.41 0l.74-.74C8.03 19.92 9.94 20.6 12 20.6c4.97 0 9-4.03 9-9s-4.03-8.6-9-8.6zm0 15.6c-3.86 0-7-3.14-7-7s3.14-7 7-7 7 3.14 7 7-3.14 7-7 7z"/></svg>
+        <span class="text-[10px]">5G</span>
+        <div class="w-5 h-2.5 border border-slate-400 rounded-xs p-0.5 flex items-center">
+          <div class="w-full h-full bg-emerald-500 rounded-2xs"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- App Header -->
+    <header class="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-slate-100 px-4 py-3 flex items-center justify-between shadow-2xs">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-xl bg-emerald-700 text-white flex items-center justify-center font-black shadow-xs">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/><line x1="9" y1="12" x2="9.01" y2="12"/><line x1="15" y1="12" x2="15.01" y2="12"/></svg>
+        </div>
+        <div>
+          <h1 class="text-sm font-black text-slate-900 leading-tight">CooCoo 煮煮</h1>
+          <p class="text-[10px] font-bold text-emerald-800">沙盒預覽 · 方案 A</p>
+        </div>
+      </div>
+
+      <!-- Right Header Actions -->
+      <div class="flex items-center gap-2">
+        <!-- Cookware quick button -->
+        <button onclick="showToast('🍳 廚房目前設備：瓦斯爐、電鍋、氣炸鍋')" class="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-full transition-colors" title="廚房鍋具">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><ellipse cx="12" cy="14" rx="8" ry="4"/><path d="M4 14v2a8 4 0 0 0 16 0v-2"/><path d="m19 12 3-3"/></svg>
+        </button>
+
+        <!-- User Avatar Button (Click to trigger Drawer) -->
+        <button
+          id="user-avatar-btn"
+          onclick="openProfileDrawer('preferences')"
+          class="flex items-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/90 text-emerald-900 pl-1.5 pr-2.5 py-1 rounded-full text-xs font-black shadow-xs transition-all transform active:scale-95 group"
+        >
+          <div class="w-6 h-6 rounded-full bg-emerald-700 text-white flex items-center justify-center text-[11px] font-extrabold shadow-2xs group-hover:rotate-6 transition-transform">
+            K
+          </div>
+          <span class="text-[11px]" id="header-user-label">Kelly · 已立約</span>
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content Simulation (Today Home Screen) -->
+    <main class="flex-1 overflow-y-auto px-4 py-4 space-y-4 no-scrollbar pb-24">
+
+      <!-- Guidance Callout -->
+      <div class="bg-gradient-to-r from-emerald-800 to-teal-900 rounded-3xl p-4 text-white shadow-md relative overflow-hidden">
+        <div class="absolute -right-4 -bottom-6 opacity-15">
+          <svg class="w-32 h-32" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+        </div>
+        <div class="flex items-center justify-between mb-1">
+          <span class="text-[10px] font-extrabold uppercase tracking-wider bg-emerald-700/80 px-2 py-0.5 rounded-full text-emerald-200">
+            方案 A 實機預覽
+          </span>
+          <span class="text-[11px] text-emerald-200">後端契約 100% 對齊</span>
+        </div>
+        <h2 class="text-base font-black tracking-tight">個人中心雙分頁抽屜</h2>
+        <p class="text-[11px] text-emerald-100/90 mt-1 leading-relaxed">
+          點選右上角頭像 <b>「Kelly · 已立約」</b>，隨時動態修改立約鍋具、禁忌、願望，或挑選最愛私房菜！
+        </p>
+        <div class="mt-3 flex gap-2">
+          <button onclick="openProfileDrawer('preferences')" class="bg-white text-emerald-900 font-extrabold text-xs px-3.5 py-2 rounded-xl shadow-xs hover:bg-emerald-50 active:scale-95 transition-all flex items-center gap-1.5">
+            <span>📜 調整立約偏好</span>
+          </button>
+          <button onclick="openProfileDrawer('favorites')" class="bg-emerald-700 hover:bg-emerald-600 text-white font-extrabold text-xs px-3.5 py-2 rounded-xl shadow-xs active:scale-95 transition-all flex items-center gap-1.5">
+            <span>❤️ 查看我的最愛 (<span id="btn-fav-count">4</span>)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Today Meal Recommendation Mock -->
+      <div class="bg-white rounded-3xl p-4 border border-slate-200 shadow-xs space-y-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span class="text-xs font-black text-slate-800">今日晚餐主廚提案</span>
+          </div>
+          <span class="text-[10px] font-bold text-amber-900 bg-amber-100 px-2 py-0.5 rounded-full">
+            覆蓋率 100%
+          </span>
+        </div>
+
+        <!-- Recipe Card with Favorite Heart Button -->
+        <div class="relative bg-amber-50/70 border border-amber-200/80 rounded-2xl p-3.5 transition-all">
+          <div class="flex justify-between items-start">
+            <div>
+              <div class="flex items-center gap-1.5 mb-1">
+                <span class="text-sm font-black text-slate-900">麻油焦香煎蛋湯麵</span>
+                <span class="text-[10px] font-extrabold text-emerald-800 bg-emerald-100 px-1.5 py-0.2 rounded">快手 15m</span>
+              </div>
+              <p class="text-[11px] text-slate-600">依現有麵條、土雞蛋、黑麻油精準配比，免出門補買。</p>
+            </div>
+
+            <!-- Favorite Heart Toggle -->
+            <button
+              onclick="toggleRecipeFavorite('r_sesame_noodles', '麻油焦香煎蛋湯麵', this)"
+              class="w-8 h-8 rounded-full bg-white border border-rose-200 flex items-center justify-center text-rose-500 hover:bg-rose-50 shadow-2xs active:scale-90 transition-transform"
+              title="加入或移出我的最愛"
+            >
+              <svg id="heart-r_sesame_noodles" class="w-4 h-4 fill-rose-500 transition-colors" viewBox="0 0 24 24">
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="mt-3 pt-2.5 border-t border-amber-200/60 flex items-center justify-between text-xs">
+            <div class="text-[11px] text-slate-600">
+              食材成本 <strong class="text-slate-900">NT$ 38</strong> · 預估省下 <strong class="text-emerald-700">NT$ 112</strong>
+            </div>
+            <button
+              onclick="startDirectCooking('麻油焦香煎蛋湯麵', 38, 15)"
+              class="relative bg-amber-600 hover:bg-amber-700 text-white text-xs font-black px-3.5 py-1.5 rounded-xl shadow-xs active:scale-95 transition-all flex items-center gap-1.5 overflow-hidden"
+            >
+              <span>▷ 開始備料</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pocket Chef Revisit Capsule Mock -->
+      <div class="bg-white rounded-3xl p-3.5 border border-slate-200 flex items-center justify-between shadow-2xs">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-full bg-amber-600 text-white flex items-center justify-center font-bold text-xs shrink-0">
+            👨‍🍳
+          </div>
+          <div>
+            <div class="text-xs font-black text-slate-900">主廚 CooCoo 相談室</div>
+            <p class="text-[11px] text-slate-500">太累想煮快手菜？或想換菜單？</p>
+          </div>
+        </div>
+        <button onclick="showToast('主廚相談室：可在此調用最愛私房菜或順延餐點')" class="text-[11px] font-black text-amber-800 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-xl hover:bg-amber-100">
+          諮詢主廚
+        </button>
+      </div>
+
+      <!-- Quick Tips -->
+      <div class="bg-slate-100/80 rounded-2xl p-3 text-[11px] text-slate-600 space-y-1">
+        <div class="font-black text-slate-800 flex items-center gap-1">
+          <span>💡 後端架構匹配特點</span>
+        </div>
+        <p>• <b>立約修改</b>：完全映射後端 <code class="bg-slate-200 px-1 rounded">save_onboarding_profile</code> RPC，原子更新四張資料表。</p>
+        <p>• <b>我的最愛</b>：採獨立規格快照，離線支援點擊一鍵備料點火。</p>
+      </div>
+
+    </main>
+
+    <!-- Bottom Navigation Bar (Fixed 5 pages preserved) -->
+    <nav class="absolute bottom-0 left-0 right-0 h-16 bg-white/95 backdrop-blur-md border-t border-slate-200 px-4 flex items-center justify-around z-20">
+      <button class="flex flex-col items-center gap-0.5 text-emerald-800 font-extrabold text-[10px]">
+        <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+        <span>今日</span>
+      </button>
+      <button onclick="showToast('採買分頁：查看食材採買清單')" class="flex flex-col items-center gap-0.5 text-slate-400 font-bold text-[10px] hover:text-slate-700">
+        <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/></svg>
+        <span>採買</span>
+      </button>
+      <button onclick="showToast('冰箱分頁：庫存沙漏與效期')" class="flex flex-col items-center gap-0.5 text-slate-400 font-bold text-[10px] hover:text-slate-700">
+        <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M6 2h12a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm0 2v7h12V4H6zm0 9v7h12v-7H6z"/></svg>
+        <span>冰箱</span>
+      </button>
+      <button onclick="showToast('廚房分頁：食譜目錄與推薦')" class="flex flex-col items-center gap-0.5 text-slate-400 font-bold text-[10px] hover:text-slate-700">
+        <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 2c1.1 0 2 .9 2 2v2h2a2 2 0 0 1 2 2v1a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8a2 2 0 0 1 2-2h2V4c0-1.1.9-2 2-2z"/></svg>
+        <span>廚房</span>
+      </button>
+      <button onclick="showToast('圓夢分頁：累積省下金額與健康指標')" class="flex flex-col items-center gap-0.5 text-slate-400 font-bold text-[10px] hover:text-slate-700">
+        <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+        <span>圓夢</span>
+      </button>
+    </nav>
+
+    <!-- ================================================================= -->
+    <!-- SCHEME A: PROFILE & MY SPACE DUAL-TAB DRAWER (方案 A 抽屜主體) -->
+    <!-- ================================================================= -->
+    <div id="drawer-backdrop" onclick="closeProfileDrawer()" class="drawer-backdrop absolute inset-0 z-40 opacity-0 pointer-events-none"></div>
+
+    <div
+      id="drawer-panel"
+      class="drawer-panel closed absolute bottom-0 left-0 right-0 h-[88%] bg-white rounded-t-[36px] shadow-2xl z-50 flex flex-col overflow-hidden border-t border-slate-200"
+    >
+      <!-- Top Drag Bar & Header -->
+      <div class="px-5 pt-3 pb-2.5 shrink-0 bg-slate-50 border-b border-slate-100 flex flex-col items-center">
+        <div class="w-10 h-1.5 bg-slate-300 rounded-full mb-3 cursor-pointer" onclick="closeProfileDrawer()"></div>
+        <div class="w-full flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-full bg-emerald-700 text-white flex items-center justify-center font-extrabold text-xs shadow-2xs">
+              K
+            </div>
+            <div>
+              <h3 class="text-sm font-black text-slate-900">個人專區 · 我的自煮中心</h3>
+              <p class="text-[10px] text-slate-500">自煮契約規範 & 收藏私房菜單</p>
+            </div>
+          </div>
+          <button onclick="closeProfileDrawer()" class="w-7 h-7 rounded-full bg-slate-200 text-slate-600 hover:bg-slate-300 flex items-center justify-center font-black text-xs transition-colors">
+            ✕
+          </button>
+        </div>
+
+        <!-- Dual Tabs Navigation -->
+        <div class="w-full grid grid-cols-2 bg-slate-200/80 p-1 rounded-2xl mt-3 font-extrabold text-xs">
+          <button
+            id="tab-btn-preferences"
+            onclick="switchDrawerTab('preferences')"
+            class="py-2 rounded-xl transition-all flex items-center justify-center gap-1.5 bg-white text-slate-900 shadow-xs font-black"
+          >
+            <span>📜 通行證與立約設定</span>
+          </button>
+          <button
+            id="tab-btn-favorites"
+            onclick="switchDrawerTab('favorites')"
+            class="py-2 rounded-xl transition-all flex items-center justify-center gap-1.5 text-slate-600 hover:text-slate-900 font-extrabold"
+          >
+            <span>❤️ 我的最愛私房菜</span>
+            <span id="tab-fav-badge" class="bg-rose-500 text-white text-[10px] px-1.5 py-0.2 rounded-full">4</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Drawer Scrollable Body -->
+      <div class="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar">
+
+        <!-- ============================================== -->
+        <!-- TAB 1 CONTENT: 通行證與立約設定 (PREFERENCES) -->
+        <!-- ============================================== -->
+        <div id="tab-content-preferences" class="space-y-4">
+
+          <!-- Sealed Passport Card Display -->
+          <div class="relative bg-gradient-to-br from-amber-50 to-orange-50/60 border-2 border-amber-300 rounded-3xl p-4 shadow-sm overflow-hidden">
+            <!-- Stamp Badge -->
+            <div class="absolute right-3 top-3 w-16 h-16 border-2 border-dashed border-rose-600/80 rounded-full flex flex-col items-center justify-center text-rose-700 font-black rotate-[-12deg] pointer-events-none opacity-85">
+              <span class="text-[8px] uppercase tracking-wider">CooCoo</span>
+              <span class="text-[11px] leading-none">立約見證</span>
+              <span class="text-[7px]">VERIFIED</span>
+            </div>
+
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-xs font-black text-amber-950 uppercase tracking-wide">CooCoo 圓夢通行證</span>
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+              <span class="text-[9px] font-bold text-amber-800 bg-amber-200/70 px-1.5 py-0.2 rounded">正式有效</span>
+            </div>
+
+            <!-- Dream Info -->
+            <div class="space-y-1 mb-3">
+              <div class="text-[11px] text-slate-500">圓夢心願與目標金額：</div>
+              <div class="flex items-baseline gap-2">
+                <h4 id="passport-dream-name" class="text-base font-black text-slate-900">東京跨年自由行</h4>
+                <span class="text-xs font-extrabold text-emerald-800">
+                  NT$ <span id="passport-dream-amount" class="font-mono text-sm">30,000</span>
+                </span>
+              </div>
+            </div>
+
+            <!-- Signature Display -->
+            <div class="pt-2 border-t border-amber-200/80 flex items-center justify-between text-xs">
+              <div>
+                <span class="text-[10px] text-slate-400 block">持證立約人</span>
+                <span id="passport-signature" class="font-cursive text-2xl text-emerald-800 leading-none">Kelly Lin</span>
+              </div>
+              <div class="text-right">
+                <span class="text-[10px] text-slate-400 block">外食比較基準</span>
+                <span class="text-xs font-black text-slate-800">NT$ <span id="passport-outside-price">150</span> / 餐</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dynamic Preferences Adjustment Form -->
+          <div class="bg-white rounded-3xl p-4 border border-slate-200 shadow-xs space-y-4">
+            <div class="flex items-center justify-between">
+              <h4 class="text-xs font-black text-slate-900 flex items-center gap-1.5">
+                <span>⚙️ 即時調整立約參數</span>
+              </h4>
+              <span class="text-[10px] text-slate-400 font-bold">PUT /onboarding</span>
+            </div>
+
+            <!-- 1. Household Servings & Meal Slots -->
+            <div class="space-y-1.5">
+              <label class="text-[11px] font-extrabold text-slate-700 block">
+                用餐人數 (每次自煮份數)：<span id="label-servings" class="text-emerald-700 font-black">1 人份</span>
+              </label>
+              <div class="flex gap-2">
+                <button type="button" onclick="setServingsPref(1)" id="btn-serv-1" class="flex-1 py-1.5 rounded-xl border border-emerald-600 bg-emerald-50 text-emerald-800 font-extrabold text-xs">1 人</button>
+                <button type="button" onclick="setServingsPref(2)" id="btn-serv-2" class="flex-1 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 font-bold text-xs">2 人</button>
+                <button type="button" onclick="setServingsPref(3)" id="btn-serv-3" class="flex-1 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 font-bold text-xs">3+ 人</button>
+              </div>
+            </div>
+
+            <!-- 2. Cookware Chips -->
+            <div class="space-y-1.5">
+              <label class="text-[11px] font-extrabold text-slate-700 block">
+                目前可用鍋具設備 (食譜推薦硬約束)：
+              </label>
+              <div class="flex flex-wrap gap-1.5" id="cookware-chips-container">
+                <!-- Chips rendered by JS -->
+              </div>
+            </div>
+
+            <!-- 3. Dietary Restrictions (Hard Limits) -->
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between">
+                <label class="text-[11px] font-extrabold text-slate-700 block">
+                  過敏與硬性禁忌 (嚴格排除)：
+                </label>
+                <span class="text-[9px] font-extrabold text-rose-700 bg-rose-50 px-1.5 py-0.2 rounded border border-rose-200">硬限制</span>
+              </div>
+              <div class="flex flex-wrap gap-1.5" id="restrictions-chips-container">
+                <!-- Restrictions rendered by JS -->
+              </div>
+            </div>
+
+            <!-- 4. Outside Meal Comparison & Budget -->
+            <div class="grid grid-cols-2 gap-3 pt-1 border-t border-slate-100">
+              <div class="space-y-1">
+                <label class="text-[11px] font-extrabold text-slate-700 block">本人外食價 (NT$)</label>
+                <input
+                  id="input-outside-price"
+                  type="number"
+                  value="150"
+                  class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-black text-slate-900 focus:bg-white focus:border-emerald-600 focus:outline-none"
+                />
+              </div>
+              <div class="space-y-1">
+                <label class="text-[11px] font-extrabold text-slate-700 block">每日伙食預算 (NT$)</label>
+                <input
+                  id="input-daily-budget"
+                  type="number"
+                  value="300"
+                  class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-black text-slate-900 focus:bg-white focus:border-emerald-600 focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <!-- 5. Dream Target & Target Amount -->
+            <div class="grid grid-cols-2 gap-3">
+              <div class="space-y-1">
+                <label class="text-[11px] font-extrabold text-slate-700 block">願望名稱</label>
+                <input
+                  id="input-dream-name"
+                  type="text"
+                  value="東京跨年自由行"
+                  class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-black text-slate-900 focus:bg-white focus:border-emerald-600 focus:outline-none"
+                />
+              </div>
+              <div class="space-y-1">
+                <label class="text-[11px] font-extrabold text-slate-700 block">願望金額 (NT$)</label>
+                <input
+                  id="input-dream-amount"
+                  type="number"
+                  value="30000"
+                  class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-black text-slate-900 focus:bg-white focus:border-emerald-600 focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <!-- Save Action Button -->
+            <button
+              id="save-preferences-btn"
+              onclick="savePreferencesToServer()"
+              class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-black text-xs py-2.5 rounded-xl shadow-xs active:scale-98 transition-all flex items-center justify-center gap-2 mt-2"
+            >
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              <span>儲存立約設定（同步雲端資料庫）</span>
+            </button>
+          </div>
+
+          <!-- Architecture Contract Inspector -->
+          <div class="bg-slate-900 rounded-2xl p-3.5 text-emerald-300 font-mono text-[10px] space-y-2">
+            <div class="flex items-center justify-between text-slate-400">
+              <span class="font-bold">RPC 契約檢驗：save_onboarding_profile</span>
+              <span class="text-[9px] bg-slate-800 px-1.5 py-0.5 rounded text-emerald-400">PostgreSQL Verified</span>
+            </div>
+            <p class="text-slate-300 font-sans text-[11px]">
+              點擊儲存將以原子交易更新 <code>profiles</code>、<code>cookware</code>、<code>dietary_restrictions</code> 與 <code>goals</code>，確保不產生孤立資料。
+            </p>
+          </div>
+
+        </div>
+
+
+        <!-- ============================================== -->
+        <!-- TAB 2 CONTENT: 我的最愛私房菜 (FAVORITES) -->
+        <!-- ============================================== -->
+        <div id="tab-content-favorites" class="space-y-3.5 hidden">
+
+          <!-- Search & Filter Bar -->
+          <div class="flex items-center justify-between gap-2">
+            <div class="flex gap-1.5 overflow-x-auto no-scrollbar py-0.5" id="favorite-category-pills">
+              <button onclick="filterFavorites('all')" class="fav-cat-btn active px-3 py-1 rounded-full text-xs font-extrabold bg-slate-900 text-white shadow-2xs">全部</button>
+              <button onclick="filterFavorites('quick')" class="fav-cat-btn px-3 py-1 rounded-full text-xs font-extrabold bg-slate-100 text-slate-600 hover:bg-slate-200">⚡ 快手 15m</button>
+              <button onclick="filterFavorites('low_energy')" class="fav-cat-btn px-3 py-1 rounded-full text-xs font-extrabold bg-slate-100 text-slate-600 hover:bg-slate-200">🌱 低體力</button>
+              <button onclick="filterFavorites('high_saving')" class="fav-cat-btn px-3 py-1 rounded-full text-xs font-extrabold bg-slate-100 text-slate-600 hover:bg-slate-200">💰 高省錢</button>
+            </div>
+          </div>
+
+          <!-- Favorites List Container -->
+          <div id="favorites-list-container" class="space-y-3">
+            <!-- Rendered by JS -->
+          </div>
+
+          <!-- Empty State (Hidden if favorites exist) -->
+          <div id="favorites-empty-state" class="hidden bg-slate-50 border border-dashed border-slate-300 rounded-3xl p-6 text-center space-y-2">
+            <span class="text-3xl">🍳</span>
+            <h4 class="text-sm font-black text-slate-800">尚無私房最愛食譜</h4>
+            <p class="text-xs text-slate-500">
+              在今日推薦或小廚房食譜卡片上點擊 ❤️，即可將符合口味的好菜收納在此！
+            </p>
+          </div>
+
+          <!-- Data schema specification info -->
+          <div class="bg-amber-50/80 border border-amber-200 rounded-2xl p-3 text-[11px] text-amber-950 space-y-1">
+            <div class="font-extrabold flex items-center gap-1">
+              <span>📋 「我的最愛」後端架構規劃規格</span>
+            </div>
+            <p>• 資料表：<code>public.favorite_recipes (user_id, recipe_id, recipe_snapshot)</code></p>
+            <p>• 特色：完整保存離線料理包快照，無網路下仍可直接開火點燃備料！</p>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- COOKING WORKSHOP FULL-SCREEN DRAWER (火種點火料理工坊展示) -->
+    <!-- ================================================================= -->
+    <div
+      id="cooking-studio-drawer"
+      class="drawer-panel closed absolute inset-0 bg-white z-50 flex flex-col overflow-hidden"
+    >
+      <!-- Studio Header -->
+      <div class="bg-amber-600 text-white px-5 py-4 flex items-center justify-between shadow-md shrink-0">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">🔥</span>
+          <div>
+            <span class="text-[10px] uppercase font-extrabold tracking-wider text-amber-200 block">離線料理工坊</span>
+            <h3 id="cooking-recipe-title" class="text-sm font-black leading-tight">麻油焦香煎蛋湯麵</h3>
+          </div>
+        </div>
+        <button onclick="closeCookingStudio()" class="w-8 h-8 rounded-full bg-amber-700 hover:bg-amber-800 text-white flex items-center justify-center font-bold text-xs transition-colors">
+          ✕
+        </button>
+      </div>
+
+      <!-- Studio Body (Steps simulation) -->
+      <div class="flex-1 overflow-y-auto p-5 space-y-5">
+        <div class="bg-amber-50 border border-amber-200 rounded-2xl p-3.5 flex items-center justify-between text-xs text-amber-950">
+          <span>⏰ 預估總時間：<strong id="cooking-total-time">15</strong> 分鐘</span>
+          <span>🍳 適用設備：瓦斯爐</span>
+          <span class="text-emerald-800 font-extrabold">離線包已備妥</span>
+        </div>
+
+        <div class="space-y-3">
+          <h4 class="text-xs font-black text-slate-800 uppercase tracking-wide">料理四大步驟</h4>
+
+          <div class="p-3.5 rounded-2xl border border-slate-200 bg-slate-50 space-y-1">
+            <span class="text-[10px] font-black text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">步驟 1 / 4 · 備料</span>
+            <p class="text-xs font-bold text-slate-800">準備黑麻油 15ml、老薑片 3 片、土雞蛋 2 顆與手工麵條 1 份。</p>
+          </div>
+
+          <div class="p-3.5 rounded-2xl border border-amber-200 bg-amber-50/50 space-y-1">
+            <span class="text-[10px] font-black text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">步驟 2 / 4 · 爆香煎蛋</span>
+            <p class="text-xs font-bold text-slate-800">冷鍋下麻油與薑片，小火煸至薑片微捲散發香氣，打入雞蛋半煎炸至邊緣金黃酥焦。</p>
+          </div>
+
+          <div class="p-3.5 rounded-2xl border border-slate-200 bg-slate-50 space-y-1">
+            <span class="text-[10px] font-black text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">步驟 3 / 4 · 煮沸成濃湯</span>
+            <p class="text-xs font-bold text-slate-800">直接往鍋中沖入熱水 450ml，大火滾煮 1 分鐘，蛋黃油脂乳化成醇厚奶白高湯。</p>
+          </div>
+
+          <div class="p-3.5 rounded-2xl border border-slate-200 bg-slate-50 space-y-1">
+            <span class="text-[10px] font-black text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">步驟 4 / 4 · 煨麵起鍋</span>
+            <p class="text-xs font-bold text-slate-800">下麵條煨煮 2 分鐘，加入枸杞與少許鹽調味，淋上少許米酒增香即可開動。</p>
+          </div>
+        </div>
+
+        <button onclick="finishCookingSimulation()" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-black text-xs py-3 rounded-2xl shadow-md active:scale-98 transition-all flex items-center justify-center gap-2">
+          <span>結算料理成果 · 圓夢入帳</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- FLAME IGNITION POP PARTICLE LAYER (方案 B 開火特效) -->
+    <div id="flame-particle-box" class="absolute inset-0 pointer-events-none flex items-center justify-center z-50 hidden">
+      <div class="animate-ignition-pop flex flex-col items-center">
+        <span class="text-6xl filter drop-shadow-lg">🔥</span>
+        <span class="text-amber-400 font-black text-xs tracking-widest uppercase mt-1">IGNITION!</span>
+      </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toast" class="fixed top-14 left-1/2 -translate-x-1/2 bg-slate-900/95 text-white text-xs font-extrabold px-4 py-2.5 rounded-2xl shadow-xl z-50 pointer-events-none opacity-0 transition-opacity border border-slate-700">
+      已成功儲存立約設定
+    </div>
+
+  </div>
+
+  <!-- SCRIPT LOGIC -->
+  <script>
+    // Audio synthesis for flame ignition
+    const audioCtx = typeof AudioContext !== 'undefined' ? new (window.AudioContext || window.webkitAudioContext)() : null;
+    function playIgnitionSound() {
+      if (!audioCtx) return;
+      try {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(140, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(540, audioCtx.currentTime + 0.12);
+        osc.frequency.exponentialRampToValueAtTime(80, audioCtx.currentTime + 0.35);
+        gain.gain.setValueAtTime(0.35, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.35);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.36);
+      } catch (e) {
+        console.log('Audio autoplay prevented');
+      }
+    }
+
+    // STATE STORE
+    let userProfile = {
+      name: 'Kelly Lin',
+      servings: 1,
+      cookware: ['瓦斯爐', '電鍋', '氣炸鍋'],
+      allCookwareOptions: ['瓦斯爐', '電鍋', '氣炸鍋', '微波爐', '烤箱', '卡式爐'],
+      restrictions: [
+        { label: '甲殼類過敏', isHardLimit: true },
+        { label: '不吃牛肉', isHardLimit: true },
+        { label: '不吃極辣', isHardLimit: false }
+      ],
+      allRestrictionOptions: [
+        { label: '甲殼類過敏', isHardLimit: true },
+        { label: '不吃牛肉', isHardLimit: true },
+        { label: '不吃極辣', isHardLimit: false },
+        { label: '花生過敏', isHardLimit: true },
+        { label: '全素 / 蛋奶素', isHardLimit: true }
+      ],
+      outsidePrice: 150,
+      dailyBudget: 300,
+      dreamName: '東京跨年自由行',
+      dreamAmount: 30000
+    };
+
+    // FAVORITES RECIPES SEED (遵循後端 RecipePackage 契約)
+    let favoriteRecipes = [
+      {
+        id: 'r_sesame_noodles',
+        title: '麻油焦香煎蛋湯麵',
+        prepMinutes: 5,
+        totalMinutes: 15,
+        cost: 38,
+        outsidePrice: 150,
+        saving: 112,
+        cookware: '瓦斯爐',
+        tags: ['quick', 'low_energy'],
+        tagLabels: ['⚡ 15m 快手', '🌱 低體力'],
+        desc: '老薑麻油慢火煸香，熱水直沖乳化奶白蛋湯，醇濃暖胃。',
+        coverage: '現有庫存 100% 覆蓋'
+      },
+      {
+        id: 'r_steamed_chicken',
+        title: '蔥香手撕鹽焗雞',
+        prepMinutes: 10,
+        totalMinutes: 20,
+        cost: 65,
+        outsidePrice: 160,
+        saving: 95,
+        cookware: '電鍋',
+        tags: ['low_energy', 'high_saving'],
+        tagLabels: ['🌱 低體力', '💰 高省錢'],
+        desc: '電鍋一鍵無水焗熟，搭配即期青蔥爆香蔥油，肉汁飽滿。',
+        coverage: '缺 1 項青蔥（可替代）'
+      },
+      {
+        id: 'r_shredded_pork',
+        title: '蒜香時蔬炒肉絲',
+        prepMinutes: 6,
+        totalMinutes: 12,
+        cost: 55,
+        outsidePrice: 140,
+        saving: 85,
+        cookware: '瓦斯爐',
+        tags: ['quick'],
+        tagLabels: ['⚡ 12m 快手', '🌱 圓夢蔬菜指標'],
+        desc: '大火快炒鎖住脆度，滿足一週蔬菜多樣性自主攝取。',
+        coverage: '現有庫存 100% 覆蓋'
+      },
+      {
+        id: 'r_tofu_salad',
+        title: '和風胡麻豆腐溫沙拉',
+        prepMinutes: 8,
+        totalMinutes: 10,
+        cost: 42,
+        outsidePrice: 150,
+        saving: 108,
+        cookware: '免開火',
+        tags: ['quick', 'low_energy', 'high_saving'],
+        tagLabels: ['⚡ 10m 快手', '💰 高省錢'],
+        desc: '微波溫熱嫩豆腐，淋上自調胡麻醬，低卡高蛋白零負擔。',
+        coverage: '現有庫存 100% 覆蓋'
+      }
+    ];
+
+    let activeFilter = 'all';
+
+    // RENDER FUNCTIONS
+    function renderCookwareChips() {
+      const container = document.getElementById('cookware-chips-container');
+      container.innerHTML = '';
+      userProfile.allCookwareOptions.forEach(item => {
+        const isSelected = userProfile.cookware.includes(item);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.onclick = () => toggleCookware(item);
+        btn.className = `px-2.5 py-1 rounded-xl text-xs font-extrabold transition-all border ${
+          isSelected
+            ? 'bg-emerald-100 border-emerald-600 text-emerald-900 shadow-2xs'
+            : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'
+        }`;
+        btn.innerHTML = `${isSelected ? '✓ ' : '+ '}${item}`;
+        container.appendChild(btn);
+      });
+    }
+
+    function renderRestrictionChips() {
+      const container = document.getElementById('restrictions-chips-container');
+      container.innerHTML = '';
+      userProfile.allRestrictionOptions.forEach(item => {
+        const isSelected = userProfile.restrictions.some(r => r.label === item.label);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.onclick = () => toggleRestriction(item);
+        btn.className = `px-2.5 py-1 rounded-xl text-xs font-extrabold transition-all border ${
+          isSelected
+            ? 'bg-rose-100 border-rose-600 text-rose-900 shadow-2xs'
+            : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'
+        }`;
+        btn.innerHTML = `${isSelected ? '⛔ ' : '+ '}${item.label}`;
+        container.appendChild(btn);
+      });
+    }
+
+    function renderFavoritesList() {
+      const container = document.getElementById('favorites-list-container');
+      const emptyState = document.getElementById('favorites-empty-state');
+      const filtered = activeFilter === 'all'
+        ? favoriteRecipes
+        : favoriteRecipes.filter(r => r.tags.includes(activeFilter));
+
+      // Update badges
+      const count = favoriteRecipes.length;
+      document.getElementById('tab-fav-badge').innerText = count;
+      document.getElementById('btn-fav-count').innerText = count;
+
+      if (filtered.length === 0) {
+        container.innerHTML = '';
+        emptyState.classList.remove('hidden');
+        return;
+      }
+      emptyState.classList.add('hidden');
+      container.innerHTML = '';
+
+      filtered.forEach(recipe => {
+        const card = document.createElement('div');
+        card.className = 'bg-white border border-slate-200 rounded-2xl p-3.5 shadow-2xs hover:shadow-xs transition-all space-y-2.5';
+        card.innerHTML = `
+          <div class="flex items-start justify-between">
+            <div>
+              <div class="flex items-center gap-1.5 flex-wrap mb-1">
+                <span class="text-sm font-black text-slate-900">${recipe.title}</span>
+                ${recipe.tagLabels.map(tl => `<span class="text-[9px] font-extrabold text-amber-900 bg-amber-100 px-1.5 py-0.2 rounded">${tl}</span>`).join('')}
+              </div>
+              <p class="text-[11px] text-slate-600 leading-snug">${recipe.desc}</p>
+            </div>
+            <button
+              onclick="toggleRecipeFavorite('${recipe.id}', '${recipe.title}', this)"
+              class="w-7 h-7 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center shrink-0 hover:bg-rose-100 active:scale-90 transition-transform"
+              title="移出最愛"
+            >
+              <svg class="w-4 h-4 fill-rose-500" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+            </button>
+          </div>
+
+          <div class="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-100">
+            <span>🍳 ${recipe.cookware} · ⏱ ${recipe.totalMinutes}m · 庫存 100%</span>
+            <span class="font-extrabold text-emerald-700">省 NT$ ${recipe.saving}</span>
+          </div>
+
+          <div class="pt-1 flex gap-2">
+            <button
+              onclick="startDirectCooking('${recipe.title}', ${recipe.cost}, ${recipe.totalMinutes})"
+              class="w-full bg-amber-600 hover:bg-amber-700 text-white font-black text-xs py-2 rounded-xl shadow-xs active:scale-95 transition-all flex items-center justify-center gap-1.5"
+            >
+              <span>🔥 一鍵備料開火</span>
+            </button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // TOGGLES & ACTIONS
+    function setServingsPref(num) {
+      userProfile.servings = num;
+      document.getElementById('label-servings').innerText = `${num} 人份`;
+      [1, 2, 3].forEach(n => {
+        const btn = document.getElementById(`btn-serv-${n}`);
+        if (n === num) {
+          btn.className = 'flex-1 py-1.5 rounded-xl border border-emerald-600 bg-emerald-50 text-emerald-800 font-extrabold text-xs';
+        } else {
+          btn.className = 'flex-1 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 font-bold text-xs';
+        }
+      });
+    }
+
+    function toggleCookware(name) {
+      if (userProfile.cookware.includes(name)) {
+        if (userProfile.cookware.length === 1) {
+          showToast('至少需保留 1 種廚房鍋具設備！');
+          return;
+        }
+        userProfile.cookware = userProfile.cookware.filter(c => c !== name);
+      } else {
+        userProfile.cookware.push(name);
+      }
+      renderCookwareChips();
+    }
+
+    function toggleRestriction(item) {
+      const idx = userProfile.restrictions.findIndex(r => r.label === item.label);
+      if (idx >= 0) {
+        userProfile.restrictions.splice(idx, 1);
+      } else {
+        userProfile.restrictions.push(item);
+      }
+      renderRestrictionChips();
+    }
+
+    function toggleRecipeFavorite(recipeId, recipeTitle, btnElem) {
+      const idx = favoriteRecipes.findIndex(r => r.id === recipeId);
+      if (idx >= 0) {
+        // Remove
+        favoriteRecipes.splice(idx, 1);
+        showToast(`已將「${recipeTitle}」移出我的最愛`);
+        const heart = document.getElementById(`heart-${recipeId}`);
+        if (heart) heart.classList.replace('fill-rose-500', 'fill-slate-300');
+      } else {
+        // Add back
+        favoriteRecipes.unshift({
+          id: recipeId,
+          title: recipeTitle,
+          prepMinutes: 5,
+          totalMinutes: 15,
+          cost: 38,
+          outsidePrice: 150,
+          saving: 112,
+          cookware: '瓦斯爐',
+          tags: ['quick', 'low_energy'],
+          tagLabels: ['⚡ 15m 快手', '🌱 低體力'],
+          desc: '私房推薦招牌菜色，已即時收納於個人清單。',
+          coverage: '現有庫存 100% 覆蓋'
+        });
+        showToast(`已將「${recipeTitle}」加入我的最愛 ❤️`);
+        const heart = document.getElementById(`heart-${recipeId}`);
+        if (heart) heart.classList.replace('fill-slate-300', 'fill-rose-500');
+      }
+      renderFavoritesList();
+    }
+
+    function filterFavorites(tag) {
+      activeFilter = tag;
+      document.querySelectorAll('.fav-cat-btn').forEach(btn => {
+        btn.className = 'fav-cat-btn px-3 py-1 rounded-full text-xs font-extrabold bg-slate-100 text-slate-600 hover:bg-slate-200';
+      });
+      event.target.className = 'fav-cat-btn active px-3 py-1 rounded-full text-xs font-extrabold bg-slate-900 text-white shadow-2xs';
+      renderFavoritesList();
+    }
+
+    // DRAWER CONTROLS
+    function openProfileDrawer(tab) {
+      const backdrop = document.getElementById('drawer-backdrop');
+      const panel = document.getElementById('drawer-panel');
+      backdrop.classList.remove('opacity-0', 'pointer-events-none');
+      panel.classList.remove('closed');
+      panel.classList.add('open');
+      switchDrawerTab(tab || 'preferences');
+    }
+
+    function closeProfileDrawer() {
+      const backdrop = document.getElementById('drawer-backdrop');
+      const panel = document.getElementById('drawer-panel');
+      backdrop.classList.add('opacity-0', 'pointer-events-none');
+      panel.classList.remove('open');
+      panel.classList.add('closed');
+    }
+
+    function switchDrawerTab(tabName) {
+      const prefBtn = document.getElementById('tab-btn-preferences');
+      const favBtn = document.getElementById('tab-btn-favorites');
+      const prefContent = document.getElementById('tab-content-preferences');
+      const favContent = document.getElementById('tab-content-favorites');
+
+      if (tabName === 'preferences') {
+        prefBtn.className = 'py-2 rounded-xl transition-all flex items-center justify-center gap-1.5 bg-white text-slate-900 shadow-xs font-black';
+        favBtn.className = 'py-2 rounded-xl transition-all flex items-center justify-center gap-1.5 text-slate-600 hover:text-slate-900 font-extrabold';
+        prefContent.classList.remove('hidden');
+        favContent.classList.add('hidden');
+      } else {
+        favBtn.className = 'py-2 rounded-xl transition-all flex items-center justify-center gap-1.5 bg-white text-slate-900 shadow-xs font-black';
+        prefBtn.className = 'py-2 rounded-xl transition-all flex items-center justify-center gap-1.5 text-slate-600 hover:text-slate-900 font-extrabold';
+        favContent.classList.remove('hidden');
+        prefContent.classList.add('hidden');
+        renderFavoritesList();
+      }
+    }
+
+    // SERVER SAVE SIMULATION (PUT /onboarding)
+    function savePreferencesToServer() {
+      const btn = document.getElementById('save-preferences-btn');
+      btn.disabled = true;
+      btn.innerHTML = `
+        <svg class="animate-spin w-4 h-4 text-white" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+        <span>同步後端資料庫中…</span>
+      `;
+
+      // Read values from inputs
+      userProfile.outsidePrice = parseInt(document.getElementById('input-outside-price').value, 10) || 150;
+      userProfile.dailyBudget = parseInt(document.getElementById('input-daily-budget').value, 10) || 300;
+      userProfile.dreamName = document.getElementById('input-dream-name').value.trim() || '東京跨年自由行';
+      userProfile.dreamAmount = parseInt(document.getElementById('input-dream-amount').value, 10) || 30000;
+
+      setTimeout(() => {
+        // Update Passport UI display
+        document.getElementById('passport-dream-name').innerText = userProfile.dreamName;
+        document.getElementById('passport-dream-amount').innerText = userProfile.dreamAmount.toLocaleString();
+        document.getElementById('passport-outside-price').innerText = userProfile.outsidePrice;
+
+        btn.disabled = false;
+        btn.innerHTML = `
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          <span>儲存立約設定（同步雲端資料庫）</span>
+        `;
+        showToast('✓ 已成功同步雲端 profiles / cookware / goals');
+      }, 700);
+    }
+
+    // IGNITION POP & START COOKING (方案 B 火種開火動態)
+    function startDirectCooking(title, cost, minutes) {
+      closeProfileDrawer();
+      playIgnitionSound();
+
+      // Show particle explosion
+      const particleBox = document.getElementById('flame-particle-box');
+      particleBox.classList.remove('hidden');
+
+      setTimeout(() => {
+        particleBox.classList.add('hidden');
+        // Open Cooking Studio
+        document.getElementById('cooking-recipe-title').innerText = title;
+        document.getElementById('cooking-total-time').innerText = minutes;
+        const studio = document.getElementById('cooking-studio-drawer');
+        studio.classList.remove('closed');
+        studio.classList.add('open');
+      }, 650);
+    }
+
+    function closeCookingStudio() {
+      const studio = document.getElementById('cooking-studio-drawer');
+      studio.classList.remove('open');
+      studio.classList.add('closed');
+    }
+
+    function finishCookingSimulation() {
+      closeCookingStudio();
+      showToast('🎉 料理完成！自煮次數 +1，圓夢入帳 NT$ 112');
+    }
+
+    // TOAST HELPER
+    let toastTimer = null;
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.innerText = msg;
+      toast.classList.remove('opacity-0', 'toast-active');
+      void toast.offsetWidth; // trigger reflow
+      toast.classList.add('toast-active');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.classList.remove('toast-active');
+        toast.classList.add('opacity-0');
+      }, 2600);
+    }
+
+    // INITIALIZATION
+    window.addEventListener('DOMContentLoaded', () => {
+      renderCookwareChips();
+      renderRestrictionChips();
+      renderFavoritesList();
+    });
+  </script>
+</body>
+</html>

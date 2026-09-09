@@ -2,11 +2,40 @@ import { http, HttpResponse } from "msw";
 import { FormatRegistry } from "@sinclair/typebox";
 import { Value } from "@sinclair/typebox/value";
 import type { TSchema, Static } from "@sinclair/typebox";
-import { CooCooService, getRescuePlan, parseShoppingText } from "@coocoo/core";
-import { ContractSchemas, type MealPostpone, type MealSlot } from "@coocoo/contracts";
+import { brandSafeRecipes, CooCooService, getRescuePlan, parseShoppingText } from "@coocoo/core";
+import { ContractSchemas, type IngredientPrice, type MealPostpone, type MealSlot } from "@coocoo/contracts";
 import { createMealPlan, createTodayDecision, refreshAvailability, rescheduleMeal, weekOf, type MealPlanningContext } from "../../../../../api/src/modules/meal-plans/meal-planning";
 import { MemoryPlanningRepository } from "../../../../../api/src/modules/meal-plans/memory-planning.repository";
+import { recommend } from "../../../../../api/src/modules/catalog/recommendations";
 import { BrowserStateRepository } from "./repository";
+
+const mockStarterPrices: IngredientPrice[] = [
+  { id: "c1", ingredientKey: "雞肉", name: "冷藏雞胸肉 300g", packageQuantity: 300, unit: "克", price: 90, source: "mock", observedAt: "2026-09-08T09:35:00+08:00" },
+  { id: "c2", ingredientKey: "烏龍麵", name: "讚岐冷凍烏龍麵 600g", packageQuantity: 1, unit: "包", price: 99, source: "mock", observedAt: "2026-09-08T09:35:00+08:00" },
+  { id: "c3", ingredientKey: "蛋", name: "新鮮蛋 10入", packageQuantity: 10, unit: "顆", price: 119, source: "mock", observedAt: "2026-09-08T09:35:00+08:00" },
+  { id: "c4", ingredientKey: "豆腐", name: "傳統料理豆腐 300g", packageQuantity: 300, unit: "克", price: 21, source: "mock", observedAt: "2026-09-08T09:35:00+08:00" },
+  { id: "c5", ingredientKey: "豬肉", name: "台灣豬肉絲 250g", packageQuantity: 250, unit: "克", price: 120, source: "mock", observedAt: "2026-09-08T09:35:00+08:00" },
+  { id: "c6", ingredientKey: "洋蔥", name: "洋蔥 1kg", packageQuantity: 1, unit: "公斤", price: 69, source: "mock", observedAt: "2026-09-08T09:35:00+08:00" },
+  { id: "c7", ingredientKey: "番茄", name: "牛番茄 500g", packageQuantity: 500, unit: "克", price: 125, source: "mock", observedAt: "2026-09-08T09:35:00+08:00" },
+  { id: "c8", ingredientKey: "白米", name: "壽豐七星米 3kg", packageQuantity: 3, unit: "公斤", price: 199, source: "mock", observedAt: "2026-09-08T09:35:00+08:00" },
+  { id: "c9", ingredientKey: "麵條", name: "家常麵條 300g", packageQuantity: 300, unit: "克", price: 24, source: "mock", observedAt: "2026-09-08T09:35:00+08:00" },
+  { id: "c10", ingredientKey: "油", name: "沙拉油 760ml", packageQuantity: 760, unit: "毫升", price: 79, source: "mock", observedAt: "2026-09-08T09:35:00+08:00" },
+  { id: "c11", ingredientKey: "醬油", name: "醬油 500cc", packageQuantity: 500, unit: "毫升", price: 59, source: "mock", observedAt: "2026-09-08T09:35:00+08:00" },
+  { id: "c12", ingredientKey: "味噌", name: "味噌 500g", packageQuantity: 500, unit: "克", price: 57, source: "mock", observedAt: "2026-09-08T09:35:00+08:00" },
+  { id: "c13", ingredientKey: "胡麻醬", name: "胡麻醬 200ml", packageQuantity: 200, unit: "毫升", price: 95, source: "mock", observedAt: "2026-09-08T09:35:00+08:00" },
+  { id: "c14", ingredientKey: "紅蘿蔔", name: "胡蘿蔔 500g", packageQuantity: 500, unit: "克", price: 50, source: "mock", observedAt: "2026-09-08T09:35:00+08:00" },
+  { id: "c15", ingredientKey: "金針菇", name: "金針菇 200g", packageQuantity: 200, unit: "克", price: 15, source: "mock", observedAt: "2026-09-08T09:35:00+08:00" },
+  { id: "c16", ingredientKey: "青蔥", name: "青蔥 150g", packageQuantity: 150, unit: "克", price: 39, source: "mock", observedAt: "2026-09-08T09:35:00+08:00" },
+  { id: "c17", ingredientKey: "馬鈴薯", name: "馬鈴薯 200g", packageQuantity: 200, unit: "克", price: 60, source: "mock", observedAt: "2026-09-08T09:35:00+08:00" },
+  { id: "c18", ingredientKey: "地瓜", name: "地瓜 500g", packageQuantity: 500, unit: "克", price: 129, source: "mock", observedAt: "2026-09-08T09:35:00+08:00" },
+  { id: "c19", ingredientKey: "鮪魚", name: "水煮鮪魚罐頭", packageQuantity: 540, unit: "克", price: 109, source: "mock", observedAt: "2026-09-08T09:35:00+08:00" },
+  { id: "c20", ingredientKey: "牛奶", name: "牛乳 750ml", packageQuantity: 750, unit: "毫升", price: 75, source: "mock", observedAt: "2026-09-08T09:35:00+08:00" },
+  { id: "c21", ingredientKey: "雞腿肉", name: "去骨雞腿 190g", packageQuantity: 190, unit: "克", price: 88, source: "mock", observedAt: "2026-09-08T09:35:00+08:00" },
+  { id: "c22", ingredientKey: "牛肉", name: "牛肉火鍋片 250g", packageQuantity: 250, unit: "克", price: 259, source: "mock", observedAt: "2026-09-08T09:35:00+08:00" },
+  { id: "c23", ingredientKey: "青花菜", name: "青花菜 1kg", packageQuantity: 1, unit: "公斤", price: 109, source: "mock", observedAt: "2026-09-08T09:35:00+08:00" },
+  { id: "c24", ingredientKey: "玉米粒", name: "玉米粒罐頭", packageQuantity: 555, unit: "克", price: 83, source: "mock", observedAt: "2026-09-08T09:35:00+08:00" },
+  { id: "c25", ingredientKey: "蒜頭", name: "鮮蒜仁 120g", packageQuantity: 120, unit: "克", price: 99, source: "mock", observedAt: "2026-09-08T09:35:00+08:00" },
+];
 
 if (!FormatRegistry.Has("date-time")) {
   FormatRegistry.Set("date-time", (value) => !Number.isNaN(Date.parse(value)));
@@ -17,6 +46,7 @@ if (!FormatRegistry.Has("email")) {
 
 const service = new CooCooService(new BrowserStateRepository());
 let planningRepository = new MemoryPlanningRepository();
+let mockRecipeSettings = { purchaseBudget: 100, confirmed: true, version: 1 };
 const planningContext = (weekStart: string, energyLevel: "low" | "normal" = "normal"): MealPlanningContext => {
   const state = service.state();
   const profile = state.onboardingProfile;
@@ -190,7 +220,7 @@ export const handlers = [
       const decision = createTodayDecision(planningContext(weekOf(today)), { date: today, slot: "dinner" });
       const recipe = [decision.primary, ...decision.alternatives].find((item) => item && item.title !== b.excludeTitle);
       if (!recipe) throw new Error("NO_SAFE_RECIPE_AVAILABLE");
-      return ok({ recipe: await planningRepository.savePackage("preview", recipe), source: "brand_safe", notice: "本機預覽使用人工檢查過的安全食譜；連接真實 API 後才會呼叫 Gemini。" });
+      return ok({ recipe: await planningRepository.savePackage("preview", recipe), source: "brand_safe", notice: "本機預覽使用人工檢查過的安全食譜；連接正式 API 後才會呼叫 AI。" });
     } catch (e) {
       return error(e);
     }
@@ -341,8 +371,30 @@ export const handlers = [
       return error(e);
     }
   }),
+  http.get("/api/v1/settings/recipes", () => ok(mockRecipeSettings)),
+  http.put("/api/v1/settings/recipes", async ({ request }) => {
+    try {
+      const b = (await request.json()) as { purchaseBudget: number; expectedVersion: number };
+      mockRecipeSettings = { purchaseBudget: b.purchaseBudget, confirmed: true, version: (mockRecipeSettings.version || 1) + 1 };
+      return ok(mockRecipeSettings);
+    } catch (e) {
+      return error(e);
+    }
+  }),
+  http.post("/api/v1/recipes/recommendations", async ({ request }) => {
+    try {
+      const body = (await request.json()) as { mode: "inventory_only" | "small_purchase"; purchaseBudget: number; allowRepeat?: boolean; energy?: "low" | "normal" };
+      const date = new Date(Date.now() + 8 * 3_600_000).toISOString().slice(0, 10);
+      const context = planningContext(weekOf(date), body.energy || "normal");
+      const result = recommend(brandSafeRecipes, context, { mode: body.mode, purchaseBudget: body.purchaseBudget ?? 100, allowRepeat: body.allowRepeat ?? false, energy: body.energy }, mockStarterPrices, []);
+      return ok(result);
+    } catch (e) {
+      return error(e);
+    }
+  }),
   http.post("/api/v1/__mock/reset", () => {
     planningRepository = new MemoryPlanningRepository();
+    mockRecipeSettings = { purchaseBudget: 100, confirmed: true, version: 1 };
     return ok(service.reset());
   }),
 ];

@@ -48,11 +48,11 @@ export function readAuthCallbackIssue(hash: string) {
   };
 }
 
-export async function requestEmailOtp(email: string) {
+export async function requestEmailOtp(email: string, redirectTo: string = window.location.origin) {
   if (!supabase) throw new Error("尚未設定 Supabase Auth");
   const { error } = await supabase.auth.signInWithOtp({
     email,
-    options: buildEmailOtpOptions(window.location.origin),
+    options: buildEmailOtpOptions(redirectTo),
   });
   if (error) throw error;
 }
@@ -63,8 +63,8 @@ export async function verifyEmailOtp(email: string, token: string) {
   if (error) throw error;
 }
 
-export async function startGoogleAuth() {
+export async function startGoogleAuth(redirectTo: string = window.location.origin) {
   if (!supabase) throw new Error("尚未設定 Supabase Auth");
-  const { error } = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin } });
+  const { error } = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo } });
   if (error) throw error;
 }

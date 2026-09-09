@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>CooCoo 通行證飛向圓夢 · 動態方案對比沙盒</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cedarville+Cursive&family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      background-color: #f6f3ee;
+      color: #292524;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+    .font-mono-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-feature-settings: "tnum" 1, "zero" 1;
+    }
+    .cursive-font {
+      font-family: 'Cedarville Cursive', cursive;
+    }
+
+    /* Spring micro-interactions */
+    .spring-btn {
+      transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .spring-btn:active {
+      transform: scale(0.96);
+    }
+
+    /* Impact Stamp Keyframes */
+    @keyframes heavyStampDrop {
+      0% {
+        transform: scale(2.4) rotate(-16deg);
+        opacity: 0;
+      }
+      65% {
+        transform: scale(0.92) rotate(4deg);
+        opacity: 1;
+      }
+      82% {
+        transform: scale(1.06) rotate(-2deg);
+      }
+      100% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+      }
+    }
+    .animate-stamp-impact {
+      animation: heavyStampDrop 0.42s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes shockwaveRing {
+      0% {
+        transform: scale(0.4);
+        opacity: 0.85;
+      }
+      100% {
+        transform: scale(2.6);
+        opacity: 0;
+      }
+    }
+    .shockwave-ring {
+      animation: shockwaveRing 0.52s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+    }
+
+    /* Handwriting Stroke Mask Animation */
+    @keyframes drawStrokeMask {
+      to {
+        stroke-dashoffset: 0;
+      }
+    }
+    .sig-mask-anim {
+      stroke-dasharray: 620;
+      stroke-dashoffset: 620;
+      animation: drawStrokeMask var(--sig-duration, 1.35s) cubic-bezier(0.3, 0.05, 0.25, 1) forwards;
+    }
+
+    /* Orange Underline Sweep */
+    @keyframes drawUnderlineSweep {
+      0% {
+        stroke-dashoffset: 180;
+      }
+      100% {
+        stroke-dashoffset: 0;
+      }
+    }
+    .sig-underline-sweep {
+      stroke-dasharray: 180;
+      stroke-dashoffset: 180;
+      animation: drawUnderlineSweep 0.38s cubic-bezier(0.2, 0.1, 0.25, 1) var(--sig-delay, 1.3s) forwards;
+    }
+
+    /* 3D Perspective Stage for Flight */
+    .flight-viewport {
+      perspective: 1000px;
+      perspective-origin: 50% 40%;
+    }
+
+    /* Parabolic 3D Flight Path Keyframes */
+    @keyframes parabolicFlightCurve {
+      0% {
+        transform: translate3d(0, 0, 0) scale(1) rotateZ(0deg) rotateX(0deg);
+        opacity: 1;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+      }
+      18% {
+        /* Anticipation float upwards */
+        transform: translate3d(0, -16px, 30px) scale(1.02) rotateZ(-2.5deg) rotateX(6deg);
+        box-shadow: 0 25px 35px -5px rgba(217, 119, 6, 0.25), 0 12px 15px -6px rgba(0, 0, 0, 0.15);
+      }
+      55% {
+        /* Parabolic Apex towards right-top */
+        transform: translate3d(55px, -180px, 60px) scale(0.68) rotateZ(7deg) rotateX(16deg);
+        opacity: 0.96;
+        box-shadow: 0 20px 40px -5px rgba(217, 119, 6, 0.35);
+      }
+      82% {
+        /* Diving towards target navigation / dream card position */
+        transform: translate3d(85px, 60px, 20px) scale(0.38) rotateZ(13deg) rotateX(12deg);
+        opacity: 0.85;
+      }
+      100% {
+        /* Landing warp dissolution */
+        transform: translate3d(95px, 240px, -40px) scale(0.15) rotateZ(18deg) rotateX(5deg);
+        opacity: 0;
+        filter: blur(2.5px);
+      }
+    }
+    .ticket-flying-active {
+      animation: parabolicFlightCurve var(--flight-duration, 0.72s) cubic-bezier(0.25, 0.9, 0.35, 1) forwards;
+      pointer-events: none;
+      z-index: 50;
+    }
+
+    /* Flight Aura Trail */
+    .flight-aura {
+      position: absolute;
+      inset: -4px;
+      border-radius: 20px;
+      background: radial-gradient(circle, rgba(245, 158, 11, 0.3) 0%, transparent 70%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+    }
+    .ticket-flying-active .flight-aura {
+      opacity: 1;
+    }
+
+    /* Dream Dashboard Spring Landing Reveal */
+    @keyframes dreamSpringSettle {
+      0% {
+        opacity: 0;
+        transform: scale(0.88) translateY(30px);
+      }
+      65% {
+        opacity: 1;
+        transform: scale(1.025) translateY(-3px);
+      }
+      85% {
+        transform: scale(0.99) translateY(1px);
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+    .animate-dream-settle {
+      animation: dreamSpringSettle 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    /* Destination Tab Golden Pulse */
+    @keyframes tabLandingPulse {
+      0% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(245, 158, 11, 0)); }
+      50% { transform: scale(1.22); filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.8)); color: #b45309; }
+      100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(245, 158, 11, 0)); }
+    }
+    .tab-impact-pulse {
+      animation: tabLandingPulse 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    /* Golden Beacon Ripple on landing */
+    @keyframes goldenRipple {
+      0% {
+        transform: scale(0.3);
+        opacity: 0.9;
+      }
+      100% {
+        transform: scale(2.8);
+        opacity: 0;
+      }
+    }
+    .golden-beacon-ripple {
+      animation: goldenRipple 0.6s cubic-bezier(0.15, 0.85, 0.35, 1) forwards;
+    }
+  </style>
+</head>
+<body class="p-3 sm:p-6 min-h-screen flex flex-col items-center justify-start">
+
+  <!-- Top Controller / Comparison Toolbar -->
+  <header class="w-full max-w-[440px] mb-4 bg-white rounded-2xl p-3 border border-stone-200/90 shadow-sm space-y-2.5">
+    <div class="flex items-center justify-between border-b border-stone-100 pb-2">
+      <div class="flex items-center gap-1.5">
+        <span class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
+        <h1 class="text-xs font-black text-stone-900 tracking-wide">通行證飛向圓夢 · 方案體驗沙盒</h1>
+      </div>
+      <a href="chef_consultation_merged_workflow.html" class="text-[10px] font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-2 py-0.5 rounded-md flex items-center gap-1">
+        <span>返回 10 步原型 ➔</span>
+      </a>
+    </div>
+
+    <!-- Mode Selector Tabs -->
+    <div class="grid grid-cols-2 gap-1.5 p-1 bg-stone-100 rounded-xl">
+      <button id="btn-mode-auto" onclick="switchMode('auto')" class="py-1.5 px-2 rounded-lg text-xs font-black transition-all flex flex-col items-center justify-center gap-0.5 bg-white text-stone-900 shadow-xs">
+        <div class="flex items-center gap-1">
+          <svg class="w-3 h-3 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          <span>方案一：全自動起飛</span>
+        </div>
+        <span class="text-[9px] text-stone-400 font-medium scale-90">簽名後停頓 0.25s 自動飛出</span>
+      </button>
+
+      <button id="btn-mode-manual" onclick="switchMode('manual')" class="py-1.5 px-2 rounded-lg text-xs font-bold transition-all flex flex-col items-center justify-center gap-0.5 text-stone-500 hover:text-stone-800">
+        <div class="flex items-center gap-1">
+          <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>
+          <span>方案二：雙按鈕手動</span>
+        </div>
+        <span class="text-[9px] text-stone-400 font-medium scale-90">簽名後換按鈕「點擊起飛」</span>
+      </button>
+    </div>
+
+    <!-- Playback Controls & Speed Dial -->
+    <div class="flex items-center justify-between text-[11px] pt-1">
+      <div class="flex items-center gap-2">
+        <span class="text-stone-400 font-bold">動態速度：</span>
+        <button onclick="setSpeed(1.0)" id="speed-1x" class="px-2 py-0.5 rounded font-black text-amber-900 bg-amber-100/70 border border-amber-300">1.0x (標準)</button>
+        <button onclick="setSpeed(0.5)" id="speed-05x" class="px-2 py-0.5 rounded font-bold text-stone-500 hover:text-stone-900 bg-stone-50">0.5x (慢速品鑑)</button>
+      </div>
+      <button onclick="resetScene()" class="spring-btn font-bold text-stone-600 hover:text-stone-900 bg-stone-100 hover:bg-stone-200 px-2.5 py-1 rounded-lg flex items-center gap-1">
+        <svg class="w-3 h-3 text-stone-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+        <span>重置狀態</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Mobile Device Shell Simulator -->
+  <main class="w-full max-w-[430px] bg-white rounded-[32px] border-2 border-stone-300 shadow-2xl overflow-hidden flex flex-col min-h-[640px] relative">
+
+    <!-- Top Nav Header in Phone Shell -->
+    <div class="px-4 pt-3.5 pb-2.5 border-b border-stone-100 bg-white/95 backdrop-blur-md flex items-center justify-between z-20">
+      <div class="flex items-center gap-2">
+        <!-- Living Chef Avatar -->
+        <div class="relative w-8 h-8 rounded-full bg-amber-100 border border-amber-300 flex items-center justify-center shrink-0">
+          <svg width="24" height="24" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="46" fill="#fef3c7" stroke="#d97706" stroke-width="3"/>
+            <path d="M 32 38 C 32 20, 68 20, 68 38 Z" fill="#ffffff" stroke="#78350f" stroke-width="2.5"/>
+            <circle id="avatar-eye-left" cx="40" cy="52" r="3.5" fill="#451a03"/>
+            <circle id="avatar-eye-right" cx="60" cy="52" r="3.5" fill="#451a03"/>
+            <path d="M 44 63 Q 50 68 56 63" fill="none" stroke="#451a03" stroke-width="2.5" stroke-linecap="round"/>
+            <ellipse cx="33" cy="58" rx="4" ry="2.5" fill="#fca5a5" opacity="0.6"/>
+            <ellipse cx="67" cy="58" rx="4" ry="2.5" fill="#fca5a5" opacity="0.6"/>
+          </svg>
+        </div>
+        <div>
+          <span id="shell-title" class="text-xs font-black text-stone-900 block">首次設定 · 10 通行證立約</span>
+          <span id="shell-subtitle" class="text-[9px] text-stone-400 font-bold block">立約完成後飛入圓夢看板</span>
+        </div>
+      </div>
+      <div id="step-badge" class="text-[10px] font-mono-num font-black text-amber-900 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">
+        10 / 10
+      </div>
+    </div>
+
+    <!-- Main Viewport Area (Flight Stage Container) -->
+    <div class="flex-1 p-4 relative overflow-hidden flex flex-col justify-start flight-viewport" id="viewport-stage">
+
+      <!-- SCENE A: Onboarding Step 10 (Passport Signing Stage) -->
+      <section id="scene-onboarding" class="space-y-3.5 transition-all duration-300">
+        <div class="space-y-1">
+          <h2 class="text-sm font-black text-stone-900">你的 CooCoo 通行證準備好了。</h2>
+          <p class="text-stone-500 text-[11px]">確認後蓋下第一枚章。立約見證後即刻飛向你的圓夢看板。</p>
+        </div>
+
+        <!-- The Flying Ticket Passport Card -->
+        <div id="passport-ticket-card" class="bg-white rounded-2xl border-2 border-stone-800 p-4 shadow-md space-y-3 relative overflow-visible transform-gpu transition-all duration-200">
+
+          <div class="flight-aura"></div>
+
+          <div class="flex items-center justify-between border-b border-stone-200 pb-2">
+            <span class="font-black text-stone-900 text-[11px] tracking-wider uppercase">COOCOO DREAM PASSPORT</span>
+            <span class="text-[9px] font-mono text-stone-400">NO. 88209</span>
+          </div>
+
+          <div>
+            <span class="text-[10px] text-stone-400 font-bold block">圓夢計畫</span>
+            <h3 class="text-base font-black text-stone-900">冬天去北海道看初雪</h3>
+            <span class="text-xs font-mono-num font-black text-amber-900">NT$ 30,000</span>
+          </div>
+
+          <dl class="grid grid-cols-2 gap-2 text-[11px] pt-1 border-t border-stone-100">
+            <div>
+              <dt class="text-stone-400 text-[9px] font-bold">每週自煮</dt>
+              <dd class="font-bold text-stone-800">3 餐 / 週</dd>
+            </div>
+            <div>
+              <dt class="text-stone-400 text-[9px] font-bold">每日餐費</dt>
+              <dd class="font-bold text-stone-800">NT$ 240</dd>
+            </div>
+            <div>
+              <dt class="text-stone-400 text-[9px] font-bold">常用份量</dt>
+              <dd class="font-bold text-stone-800">1 人份</dd>
+            </div>
+            <div>
+              <dt class="text-stone-400 text-[9px] font-bold">烹飪裝備</dt>
+              <dd class="font-bold text-stone-800 truncate">瓦斯爐、氣炸鍋</dd>
+            </div>
+          </dl>
+
+          <!-- Signature Section (Fountain Pen Reveal) -->
+          <div class="pt-2 border-t border-dashed border-stone-200 flex justify-between items-end">
+            <div class="space-y-0.5">
+              <span class="text-[9px] text-stone-400 font-bold block">主廚 CooCoo 親筆見證</span>
+
+              <div class="relative inline-block mt-1 select-none overflow-visible">
+                <svg width="190" height="90" viewBox="0 0 200 95" style="overflow: visible; display: block;">
+                  <defs>
+                    <mask id="sandbox-sig-mask" maskUnits="userSpaceOnUse" maskContentUnits="userSpaceOnUse" x="0" y="0" width="300" height="150">
+                      <path id="sig-mask-path"
+                        d="M 28 32 C 30 20, 36 15, 36 15 C 30 18, 22 36, 22 48 C 22 62, 28 72, 36 71 C 42 70, 46 60, 48 55 C 52 48, 58 46, 62 50 C 66 54, 66 66, 58 70 C 50 72, 48 64, 52 56 C 56 50, 62 50, 68 53 C 72 48, 78 46, 82 50 C 86 54, 86 66, 78 70 C 70 72, 68 64, 72 56 C 76 50, 82 50, 90 53 C 96 35, 102 15, 104 15 C 98 18, 90 36, 90 48 C 90 62, 96 72, 104 71 C 110 70, 114 60, 116 55 C 120 48, 126 46, 130 50 C 134 54, 134 66, 126 70 C 118 72, 116 64, 120 56 C 124 50, 130 50, 136 53 C 140 48, 146 46, 150 50 C 154 54, 154 66, 146 70 C 138 72, 136 64, 140 56 C 144 50, 152 50, 166 56 C 172 58, 178 56, 184 52"
+                        fill="none" stroke="white" stroke-width="32" stroke-linecap="round" stroke-linejoin="round"
+                        style="stroke-dasharray: 620; stroke-dashoffset: 620;" />
+                    </mask>
+
+                    <linearGradient id="orangeInkGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stop-color="#ea580c" />
+                      <stop offset="35%" stop-color="#f97316" />
+                      <stop offset="85%" stop-color="#fb923c" />
+                      <stop offset="100%" stop-color="#ea580c" />
+                    </linearGradient>
+
+                    <filter id="inkSpread" x="-10%" y="-10%" width="120%" height="120%">
+                      <feDropShadow dx="0" dy="0.5" stdDeviation="0.4" flood-color="#c2410c" flood-opacity="0.3" />
+                    </filter>
+                  </defs>
+
+                  <text x="20" y="70" font-family="'Cedarville Cursive', cursive" font-size="44" fill="#1c1917" mask="url(#sandbox-sig-mask)">CooCoo</text>
+                  <path id="sig-underline-path" d="M 18 86 Q 95 93, 168 83 Q 174 81, 178 78" fill="none" stroke="url(#orangeInkGrad)" stroke-width="3.2" stroke-linecap="round" filter="url(#inkSpread)" style="stroke-dasharray: 180; stroke-dashoffset: 180;" />
+                </svg>
+              </div>
+            </div>
+
+            <span class="text-[9px] font-mono text-emerald-800 font-bold bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded">VERIFIED</span>
+          </div>
+
+          <!-- Impact Stamp Target Area -->
+          <div id="stamp-layer" class="hidden">
+            <div class="animate-stamp-impact absolute right-3 bottom-3 border-2 border-red-700 text-red-700 bg-white/95 px-2.5 py-1 rounded-md font-black text-[11px] tracking-widest text-center shadow-md select-none z-10">
+              <div class="flex items-center gap-1 justify-center">
+                <svg class="w-3.5 h-3.5 text-red-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                <span>圓夢契約已立</span>
+              </div>
+              <span class="text-[7px] font-mono tracking-normal block text-red-600/80">MASTER CHEF COOCOO SEALED</span>
+            </div>
+            <div class="shockwave-ring absolute right-10 bottom-6 w-16 h-16 rounded-full border-4 border-red-500/60 pointer-events-none"></div>
+          </div>
+        </div>
+
+        <!-- Callout Banner -->
+        <div id="callout-box" class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-[11px] text-amber-950 flex items-center gap-2">
+          <svg class="w-4 h-4 text-amber-700 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+          <span id="callout-text">核對檔案無誤後，點擊下方按鈕立約，通行證將啟程飛入圓夢看板！</span>
+        </div>
+      </section>
+
+
+      <!-- SCENE B: Dream Dashboard (RoiPage / Dream Main View) -->
+      <section id="scene-dream" class="space-y-3.5 hidden opacity-0 transition-all duration-300">
+
+        <!-- Header in RoiPage -->
+        <div class="flex items-center justify-between">
+          <div>
+            <span class="text-[9px] font-bold tracking-widest text-amber-800 uppercase block">DREAM ROADMAP</span>
+            <h2 class="text-base font-black text-stone-900">圓夢看板</h2>
+          </div>
+          <button class="text-[11px] font-bold text-stone-600 bg-stone-100 hover:bg-stone-200 px-2.5 py-1 rounded-lg border border-stone-200 flex items-center gap-1">
+            <svg class="w-3 h-3 text-stone-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <span>調整計畫</span>
+          </button>
+        </div>
+
+        <!-- Landing Target: Dream Primary Goal Card with Spring Settle -->
+        <div id="dream-landing-card" class="bg-gradient-to-br from-amber-500/10 via-white to-amber-100/30 rounded-2xl border-2 border-amber-500/50 p-4 shadow-lg space-y-3 relative overflow-hidden">
+
+          <div id="landing-ripple" class="golden-beacon-ripple absolute top-4 right-4 w-12 h-12 rounded-full border-2 border-amber-500/70 pointer-events-none"></div>
+
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-black text-amber-900 bg-amber-100 px-2 py-0.5 rounded-full flex items-center gap-1">
+              <svg class="w-3 h-3 text-amber-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              <span>通行證已成功著陸入庫</span>
+            </span>
+            <span class="text-[10px] font-mono-num font-bold text-stone-400">#PASSPORT-88209</span>
+          </div>
+
+          <div class="space-y-1">
+            <span class="text-[10px] text-stone-400 font-bold block">主要目標</span>
+            <h3 class="text-lg font-black text-stone-900">冬天去北海道看初雪</h3>
+            <div class="flex items-baseline gap-2">
+              <span class="text-xl font-mono-num font-black text-amber-950" id="counter-amount">NT$ 30,000</span>
+              <span class="text-[10px] font-bold text-stone-500">（目前已存 NT$ 0）</span>
+            </div>
+          </div>
+
+          <!-- Progress Ring & Projection -->
+          <div class="bg-white/80 backdrop-blur-xs rounded-xl p-3 border border-amber-200/60 grid grid-cols-2 gap-2 text-center">
+            <div class="border-r border-stone-100 pr-2">
+              <span class="text-[9px] font-bold text-stone-400 block">每週估計儲蓄</span>
+              <strong class="text-sm font-mono-num font-black text-emerald-800">+ NT$ 540</strong>
+            </div>
+            <div>
+              <span class="text-[9px] font-bold text-stone-400 block">預計圓夢週期</span>
+              <strong class="text-sm font-mono-num font-black text-amber-900">約 52 週</strong>
+            </div>
+          </div>
+
+          <p class="text-[11px] text-stone-600 leading-relaxed">
+            每一次自煮差額，都會即時自動送入此目標。你可隨時在上方點擊「調整計畫」修改金額或餐數。
+          </p>
+        </div>
+
+        <!-- Milestones list -->
+        <div class="bg-white rounded-2xl p-3.5 border border-stone-200/80 shadow-xs space-y-2">
+          <span class="text-[10px] font-black text-stone-800 tracking-wide block">三段圓夢里程碑</span>
+          <div class="space-y-1.5 text-xs">
+            <div class="p-2 rounded-xl bg-amber-50/70 border border-amber-200 flex items-center justify-between font-bold text-amber-950">
+              <div class="flex items-center gap-2">
+                <span class="w-4 h-4 rounded-full bg-amber-600 text-white flex items-center justify-center text-[9px] font-black">1</span>
+                <span>初雪啟程機票包</span>
+              </div>
+              <span class="font-mono-num font-black text-[11px]">NT$ 10,000</span>
+            </div>
+            <div class="p-2 rounded-xl bg-stone-50 border border-stone-100 flex items-center justify-between text-stone-400">
+              <div class="flex items-center gap-2">
+                <span class="w-4 h-4 rounded-full bg-stone-200 text-stone-600 flex items-center justify-center text-[9px] font-bold">2</span>
+                <span>溫泉飯店極致體驗</span>
+              </div>
+              <span class="font-mono-num text-[11px]">NT$ 20,000</span>
+            </div>
+            <div class="p-2 rounded-xl bg-stone-50 border border-stone-100 flex items-center justify-between text-stone-400">
+              <div class="flex items-center gap-2">
+                <span class="w-4 h-4 rounded-full bg-stone-200 text-stone-600 flex items-center justify-center text-[9px] font-bold">3</span>
+                <span>全額達成！初雪見證</span>
+              </div>
+              <span class="font-mono-num text-[11px]">NT$ 30,000</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Completion Callout for Cooking -->
+        <div class="p-3 bg-stone-100/80 rounded-2xl border border-stone-200 text-[11px] text-stone-600 flex items-center justify-between">
+          <span>檢查目標無誤？點選下方按鈕正式開啟今日自煮！</span>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- Bottom Action Button Area -->
+    <div class="p-3 bg-white border-t border-stone-200/80 z-20">
+
+      <!-- Button for Step 10: Stamping & Taking Off -->
+      <div id="btn-group-onboarding" class="space-y-1.5">
+        <button id="main-act-btn" onclick="handleMainAction()" class="spring-btn w-full bg-amber-600 hover:bg-amber-700 active:scale-95 text-white font-black py-3 rounded-2xl text-xs shadow-md flex items-center justify-center gap-1.5 transition-all">
+          <svg id="btn-icon" class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+          <span id="btn-label">蓋章，立約圓夢</span>
+        </button>
+        <p id="action-hint" class="text-[10px] text-stone-400 text-center font-bold">
+          立約後主廚揮毫親筆落款
+        </p>
+      </div>
+
+      <!-- Button for Dream Page: Start Cooking Flow -->
+      <div id="btn-group-dream" class="hidden">
+        <button onclick="simulateGoToToday()" class="spring-btn w-full bg-amber-600 hover:bg-amber-700 active:scale-95 text-white font-black py-3 rounded-2xl text-xs shadow-md flex items-center justify-center gap-1.5">
+          <span>確認計畫無誤，開啟今日自煮 ➔</span>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Bottom 5-Tab Navigation Bar (Mobile Reality) -->
+    <nav class="border-t border-stone-200/90 bg-white grid grid-cols-5 py-2 px-1 text-center select-none z-20">
+      <div class="flex flex-col items-center gap-0.5 text-stone-400">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+        <span class="text-[9px] font-bold">今日</span>
+      </div>
+      <div class="flex flex-col items-center gap-0.5 text-stone-400">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        <span class="text-[9px] font-bold">採買</span>
+      </div>
+      <div class="flex flex-col items-center gap-0.5 text-stone-400">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 2h14a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z"/><path d="M3 10h18"/></svg>
+        <span class="text-[9px] font-bold">冰箱</span>
+      </div>
+      <div class="flex flex-col items-center gap-0.5 text-stone-400">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        <span class="text-[9px] font-bold">廚房</span>
+      </div>
+      <div id="tab-dream" class="flex flex-col items-center gap-0.5 text-stone-400 transition-all duration-300">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-2h2v-4h-2c0-1-.5-1.5-1-2V5z"/></svg>
+        <span class="text-[9px] font-bold">圓夢</span>
+      </div>
+    </nav>
+  </main>
+
+  <script>
+    // State machine
+    let currentMode = 'auto'; // 'auto' | 'manual'
+    let state = 'initial'; // 'initial' | 'stamped_and_signed' | 'flying' | 'dream_landed'
+    let animSpeed = 1.0;
+
+    function setSpeed(speed) {
+      animSpeed = speed;
+      document.documentElement.style.setProperty('--sig-duration', `${1.35 / speed}s`);
+      document.documentElement.style.setProperty('--sig-delay', `${1.3 / speed}s`);
+      document.documentElement.style.setProperty('--flight-duration', `${0.72 / speed}s`);
+
+      const b1 = document.getElementById('speed-1x');
+      const b2 = document.getElementById('speed-05x');
+      if (speed === 1.0) {
+        b1.className = 'px-2 py-0.5 rounded font-black text-amber-900 bg-amber-100/70 border border-amber-300';
+        b2.className = 'px-2 py-0.5 rounded font-bold text-stone-500 hover:text-stone-900 bg-stone-50';
+      } else {
+        b2.className = 'px-2 py-0.5 rounded font-black text-amber-900 bg-amber-100/70 border border-amber-300';
+        b1.className = 'px-2 py-0.5 rounded font-bold text-stone-500 hover:text-stone-900 bg-stone-50';
+      }
+    }
+
+    function switchMode(mode) {
+      currentMode = mode;
+      const bAuto = document.getElementById('btn-mode-auto');
+      const bManual = document.getElementById('btn-mode-manual');
+
+      if (mode === 'auto') {
+        bAuto.className = 'py-1.5 px-2 rounded-lg text-xs font-black transition-all flex flex-col items-center justify-center gap-0.5 bg-white text-stone-900 shadow-xs';
+        bManual.className = 'py-1.5 px-2 rounded-lg text-xs font-bold transition-all flex flex-col items-center justify-center gap-0.5 text-stone-500 hover:text-stone-800';
+      } else {
+        bManual.className = 'py-1.5 px-2 rounded-lg text-xs font-black transition-all flex flex-col items-center justify-center gap-0.5 bg-white text-stone-900 shadow-xs';
+        bAuto.className = 'py-1.5 px-2 rounded-lg text-xs font-bold transition-all flex flex-col items-center justify-center gap-0.5 text-stone-500 hover:text-stone-800';
+      }
+      resetScene();
+    }
+
+    function handleMainAction() {
+      if (state === 'initial') {
+        triggerStampAndSignature();
+      } else if (state === 'stamped_and_signed') {
+        // Only in manual mode
+        triggerParabolicFlight();
+      }
+    }
+
+    function triggerStampAndSignature() {
+      state = 'signing';
+      const btn = document.getElementById('main-act-btn');
+      const label = document.getElementById('btn-label');
+      const hint = document.getElementById('action-hint');
+      const stamp = document.getElementById('stamp-layer');
+      const maskPath = document.getElementById('sig-mask-path');
+      const underlinePath = document.getElementById('sig-underline-path');
+
+      // 1. Drop Stamp
+      stamp.classList.remove('hidden');
+      if (window.navigator && window.navigator.vibrate) {
+        window.navigator.vibrate([20, 35, 25]);
+      }
+
+      // 2. Play handwriting cursive animation
+      maskPath.classList.add('sig-mask-anim');
+      underlinePath.classList.add('sig-underline-sweep');
+
+      btn.disabled = true;
+      btn.classList.add('opacity-70', 'pointer-events-none');
+      label.innerText = '主廚 CooCoo 親筆見證中…';
+      hint.innerText = '純墨筆順浮現與漸層底線揮毫';
+
+      const totalSigTime = (1350 + 380) / animSpeed;
+
+      setTimeout(() => {
+        state = 'stamped_and_signed';
+        btn.disabled = false;
+        btn.classList.remove('opacity-70', 'pointer-events-none');
+
+        if (currentMode === 'auto') {
+          // OPTION 1: Automatic pause then take off
+          label.innerText = '圓夢立約完成！即將啟程…';
+          hint.innerText = '稍息 0.25 秒，通行證自動蓄力起飛 ➔';
+
+          setTimeout(() => {
+            triggerParabolicFlight();
+          }, 320 / animSpeed);
+
+        } else {
+          // OPTION 2: Button changes to manual take off trigger
+          label.innerText = '啟程！送入圓夢看板 ➔';
+          hint.innerText = '點擊上方按鈕，將通行證飛送至圓夢頁面';
+          btn.classList.remove('bg-amber-600', 'hover:bg-amber-700');
+          btn.classList.add('bg-stone-900', 'hover:bg-black', 'text-amber-300');
+        }
+      }, totalSigTime);
+    }
+
+    function triggerParabolicFlight() {
+      state = 'flying';
+      const card = document.getElementById('passport-ticket-card');
+      const btnGroup = document.getElementById('btn-group-onboarding');
+      const dreamTab = document.getElementById('tab-dream');
+
+      // Add 3D parabolic flight class
+      card.classList.add('ticket-flying-active');
+      btnGroup.classList.add('opacity-40', 'pointer-events-none');
+
+      const flightDuration = 720 / animSpeed;
+
+      // When ticket is mid-air near landing:
+      setTimeout(() => {
+        // Tab impact pulse
+        dreamTab.classList.add('tab-impact-pulse', 'text-amber-600', 'font-black');
+      }, flightDuration * 0.7);
+
+      // When flight finishes:
+      setTimeout(() => {
+        transitionToDreamDashboard();
+      }, flightDuration);
+    }
+
+    function transitionToDreamDashboard() {
+      state = 'dream_landed';
+      const sceneOnboarding = document.getElementById('scene-onboarding');
+      const sceneDream = document.getElementById('scene-dream');
+      const btnOnboarding = document.getElementById('btn-group-onboarding');
+      const btnDream = document.getElementById('btn-group-dream');
+      const dreamLandingCard = document.getElementById('dream-landing-card');
+      const shellTitle = document.getElementById('shell-title');
+      const shellSubtitle = document.getElementById('shell-subtitle');
+      const stepBadge = document.getElementById('step-badge');
+      const dreamTab = document.getElementById('tab-dream');
+
+      // Update Header
+      shellTitle.innerText = '圓夢看板 · 首張通行證入庫';
+      shellSubtitle.innerText = '確認計畫無誤後，即可開啟自煮';
+      stepBadge.innerText = 'DREAM';
+      stepBadge.className = 'text-[10px] font-mono-num font-black text-emerald-900 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md';
+
+      // Switch scenes
+      sceneOnboarding.classList.add('hidden');
+      sceneDream.classList.remove('hidden');
+      setTimeout(() => {
+        sceneDream.classList.remove('opacity-0');
+        dreamLandingCard.classList.add('animate-dream-settle');
+      }, 30);
+
+      // Switch buttons
+      btnOnboarding.classList.add('hidden');
+      btnDream.classList.remove('hidden');
+
+      // Highlight Dream Tab in bottom navigation
+      dreamTab.className = 'flex flex-col items-center gap-0.5 text-amber-600 font-bold';
+
+      if (window.navigator && window.navigator.vibrate) {
+        window.navigator.vibrate(30);
+      }
+    }
+
+    function simulateGoToToday() {
+      alert('已確認圓夢計畫！即刻切換至「今日（Today）」決策首頁，開啟你的專屬自煮食譜！');
+      resetScene();
+    }
+
+    function resetScene() {
+      state = 'initial';
+      const card = document.getElementById('passport-ticket-card');
+      const stamp = document.getElementById('stamp-layer');
+      const maskPath = document.getElementById('sig-mask-path');
+      const underlinePath = document.getElementById('sig-underline-path');
+      const sceneOnboarding = document.getElementById('scene-onboarding');
+      const sceneDream = document.getElementById('scene-dream');
+      const btnOnboarding = document.getElementById('btn-group-onboarding');
+      const btnDream = document.getElementById('btn-group-dream');
+      const mainBtn = document.getElementById('main-act-btn');
+      const label = document.getElementById('btn-label');
+      const hint = document.getElementById('action-hint');
+      const dreamLandingCard = document.getElementById('dream-landing-card');
+      const shellTitle = document.getElementById('shell-title');
+      const shellSubtitle = document.getElementById('shell-subtitle');
+      const stepBadge = document.getElementById('step-badge');
+      const dreamTab = document.getElementById('tab-dream');
+
+      // Reset Ticket Card
+      card.className = 'bg-white rounded-2xl border-2 border-stone-800 p-4 shadow-md space-y-3 relative overflow-visible transform-gpu transition-all duration-200';
+      stamp.classList.add('hidden');
+      maskPath.classList.remove('sig-mask-anim');
+      maskPath.style.strokeDashoffset = '620';
+      underlinePath.classList.remove('sig-underline-sweep');
+      underlinePath.style.strokeDashoffset = '180';
+
+      // Reset Views
+      sceneOnboarding.classList.remove('hidden');
+      sceneDream.classList.add('hidden', 'opacity-0');
+      dreamLandingCard.classList.remove('animate-dream-settle');
+
+      // Reset Buttons
+      btnOnboarding.classList.remove('hidden', 'opacity-40', 'pointer-events-none');
+      btnDream.classList.add('hidden');
+      mainBtn.disabled = false;
+      mainBtn.className = 'spring-btn w-full bg-amber-600 hover:bg-amber-700 active:scale-95 text-white font-black py-3 rounded-2xl text-xs shadow-md flex items-center justify-center gap-1.5 transition-all';
+      label.innerText = '蓋章，立約圓夢';
+      hint.innerText = currentMode === 'auto' ? '立約後主廚落款，隨後自動蓄力起飛' : '立約後主廚落款，按鈕轉為啟程手動起飛';
+
+      // Reset Navigation Tab
+      dreamTab.className = 'flex flex-col items-center gap-0.5 text-stone-400';
+      dreamTab.classList.remove('tab-impact-pulse');
+
+      // Reset Shell Header
+      shellTitle.innerText = '首次設定 · 10 通行證立約';
+      shellSubtitle.innerText = '立約完成後飛入圓夢看板';
+      stepBadge.innerText = '10 / 10';
+      stepBadge.className = 'text-[10px] font-mono-num font-black text-amber-900 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md';
+    }
+  </script>
+</body>
+</html>

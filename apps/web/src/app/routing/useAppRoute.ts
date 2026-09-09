@@ -34,6 +34,7 @@ export function useAppRoute() {
     const nextPath = pathForRoute(nextRoute);
     if (window.location.pathname !== nextPath) {
       window.history.pushState(null, "", nextPath);
+      window.dispatchEvent(new PopStateEvent("popstate"));
     }
     setRoute(nextRoute);
     window.scrollTo({ top: 0, behavior: "smooth" });

@@ -26,11 +26,12 @@ export const brandSafeRecipes: RecipePackage[] = [
     id:"brand-tomato-egg-v1",recipeId:"11111111-1111-4111-8111-111111111111",title:"番茄滑蛋飯",servings:1,prepMinutes:7,totalMinutes:20,estimatedCost:72,cookwareTypes:["電磁爐"],
     ingredients:[
       {ingredientKey:"蛋",name:"雞蛋",quantity:2,unit:"顆",isPantryStaple:false,isVegetable:false,coveredByInventory:false},
-      {ingredientKey:"番茄",name:"番茄",quantity:2,unit:"顆",isPantryStaple:false,isVegetable:true,coveredByInventory:false},
+      {ingredientKey:"番茄",name:"番茄",quantity:250,unit:"克",isPantryStaple:false,isVegetable:true,coveredByInventory:false},
       {ingredientKey:"白飯",name:"白飯",quantity:1,unit:"碗",isPantryStaple:false,isVegetable:false,coveredByInventory:false},
+      {ingredientKey:"油",name:"食用油",quantity:5,unit:"毫升",isPantryStaple:true,isVegetable:false,coveredByInventory:false},
     ],
     steps:[
-      {id:"te-1",order:1,instruction:"番茄切成小塊，雞蛋打散。",voiceText:"番茄切成小塊，雞蛋打散。",timerSeconds:null,safetyNote:"切菜時讓指尖向內收。"},
+      {id:"te-1",order:1,instruction:"將 250 克番茄切成小塊，雞蛋打散。",voiceText:"將二百五十克番茄切成小塊，雞蛋打散。",timerSeconds:null,safetyNote:"切菜時讓指尖向內收。"},
       {id:"te-2",order:2,instruction:"鍋中少量油，中火炒蛋到半熟後先盛起。",voiceText:"中火炒蛋到半熟後先盛起。",timerSeconds:90,safetyNote:null},
       {id:"te-3",order:3,instruction:"同鍋炒番茄至出汁，放回雞蛋拌勻。",voiceText:"炒番茄至出汁，放回雞蛋拌勻。",timerSeconds:180,safetyNote:"蛋液需完全凝固。"},
     ],imageUrl:null,fallbackImageUrl:"/favicon.svg",downloadedAt:null,
@@ -38,13 +39,13 @@ export const brandSafeRecipes: RecipePackage[] = [
   {
     id:"brand-miso-udon-v1",recipeId:"22222222-2222-4222-8222-222222222222",title:"味噌蔬菜烏龍麵",servings:1,prepMinutes:5,totalMinutes:15,estimatedCost:65,cookwareTypes:["電磁爐"],
     ingredients:[
-      {ingredientKey:"青菜",name:"當季青菜",quantity:1,unit:"把",isPantryStaple:false,isVegetable:true,coveredByInventory:false},
+      {ingredientKey:"青花菜",name:"青花菜",quantity:100,unit:"克",isPantryStaple:false,isVegetable:true,coveredByInventory:false},
       {ingredientKey:"蛋",name:"雞蛋",quantity:1,unit:"顆",isPantryStaple:false,isVegetable:false,coveredByInventory:false},
       {ingredientKey:"烏龍麵",name:"冷凍烏龍麵",quantity:1,unit:"包",isPantryStaple:false,isVegetable:false,coveredByInventory:false},
-      {ingredientKey:"味噌",name:"味噌",quantity:1,unit:"大匙",isPantryStaple:true,isVegetable:false,coveredByInventory:false},
+      {ingredientKey:"味噌",name:"味噌",quantity:18,unit:"克",isPantryStaple:true,isVegetable:false,coveredByInventory:false},
     ],
     steps:[
-      {id:"mu-1",order:1,instruction:"一鍋水煮滾，放入烏龍麵與青菜。",voiceText:"一鍋水煮滾，放入烏龍麵與青菜。",timerSeconds:180,safetyNote:"避免蒸氣燙傷。"},
+      {id:"mu-1",order:1,instruction:"一鍋水煮滾，放入烏龍麵與 100 克青花菜。",voiceText:"一鍋水煮滾，放入烏龍麵與一百克青花菜。",timerSeconds:180,safetyNote:"避免蒸氣燙傷。"},
       {id:"mu-2",order:2,instruction:"打入雞蛋，煮到蛋白完全凝固。",voiceText:"打入雞蛋，煮到蛋白完全凝固。",timerSeconds:150,safetyNote:"雞蛋需完全熟透。"},
       {id:"mu-3",order:3,instruction:"關火後再拌入味噌。",voiceText:"關火後再拌入味噌。",timerSeconds:null,safetyNote:null},
     ],imageUrl:null,fallbackImageUrl:"/favicon.svg",downloadedAt:null,
@@ -52,14 +53,14 @@ export const brandSafeRecipes: RecipePackage[] = [
   {
     id:"brand-sesame-chicken-v1",recipeId:"33333333-3333-4333-8333-333333333333",title:"胡麻雞絲拌麵",servings:1,prepMinutes:8,totalMinutes:25,estimatedCost:88,cookwareTypes:["電磁爐"],
     ingredients:[
-      {ingredientKey:"青菜",name:"當季青菜",quantity:1,unit:"把",isPantryStaple:false,isVegetable:true,coveredByInventory:false},
+      {ingredientKey:"青花菜",name:"青花菜",quantity:100,unit:"克",isPantryStaple:false,isVegetable:true,coveredByInventory:false},
       {ingredientKey:"雞肉",name:"雞胸肉",quantity:120,unit:"克",isPantryStaple:false,isVegetable:false,coveredByInventory:false},
-      {ingredientKey:"麵",name:"麵條",quantity:1,unit:"份",isPantryStaple:false,isVegetable:false,coveredByInventory:false},
-      {ingredientKey:"芝麻",name:"胡麻醬",quantity:1,unit:"大匙",isPantryStaple:true,isVegetable:false,coveredByInventory:false},
+      {ingredientKey:"麵條",name:"麵條",quantity:100,unit:"克",isPantryStaple:false,isVegetable:false,coveredByInventory:false},
+      {ingredientKey:"胡麻醬",name:"胡麻醬",quantity:20,unit:"毫升",isPantryStaple:true,isVegetable:false,coveredByInventory:false},
     ],
     steps:[
-      {id:"sc-1",order:1,instruction:"雞胸肉煮至中心完全熟透後撕成絲。",voiceText:"雞胸肉煮熟後撕成絲。",timerSeconds:600,safetyNote:"雞肉中心不可呈粉紅色。"},
-      {id:"sc-2",order:2,instruction:"同鍋煮麵與青菜，撈起瀝乾。",voiceText:"同鍋煮麵與青菜，撈起瀝乾。",timerSeconds:300,safetyNote:"撈麵時小心熱水。"},
+      {id:"sc-1",order:1,instruction:"雞胸肉煮熟，以食物溫度計確認中心至少 74°C 後撕成絲。",voiceText:"雞胸肉中心至少七十四度後撕成絲。",timerSeconds:600,safetyNote:"使用食物溫度計確認中心至少 74°C，不以顏色作為唯一熟度判斷。"},
+      {id:"sc-2",order:2,instruction:"同鍋煮 100 克麵條與 100 克青花菜，撈起瀝乾。",voiceText:"同鍋煮一百克麵條與一百克青花菜，撈起瀝乾。",timerSeconds:300,safetyNote:"撈麵時小心熱水。"},
       {id:"sc-3",order:3,instruction:"拌入雞絲與胡麻醬。",voiceText:"拌入雞絲與胡麻醬。",timerSeconds:null,safetyNote:"芝麻過敏者不可食用。"},
     ],imageUrl:null,fallbackImageUrl:"/favicon.svg",downloadedAt:null,
   },
@@ -75,6 +76,16 @@ export function rankRecipes(recipes:RecipePackage[],context:RecommendationContex
 
 const normalize = (value: string) => value.trim().toLocaleLowerCase("zh-TW");
 
+export function isCookwareSufficient(required: string, available: Set<string>): boolean {
+  const norm = normalize(required);
+  if (available.has(norm)) return true;
+  if (norm === "電磁爐" || norm === "瓦斯爐") {
+    const directHeaters = ["瓦斯爐", "電磁爐", "ih爐", "卡式爐", "黑晶爐", "快煮鍋", "電子壓力鍋", "電鍋"];
+    return directHeaters.some((h) => available.has(normalize(h)));
+  }
+  return false;
+}
+
 export function evaluateRecipe(
   recipe: RecipePackage,
   context: RecommendationContext,
@@ -85,7 +96,7 @@ export function evaluateRecipe(
     restriction.ingredientKeys.some((key) => ingredientKeys.has(normalize(key))),
   );
   const availableCookware = new Set(context.cookwareTypes.map(normalize));
-  const missingCookware = recipe.cookwareTypes.filter((item) => !availableCookware.has(normalize(item)));
+  const missingCookware = recipe.cookwareTypes.filter((item) => !isCookwareSufficient(item, availableCookware));
   const cost = recipe.estimatedCost;
   const reasons: string[] = [];
   if (blocked.length) reasons.push(`含有禁用食材：${blocked.map((item) => item.label).join("、")}`);

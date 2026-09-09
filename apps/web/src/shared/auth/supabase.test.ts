@@ -7,6 +7,10 @@ describe("Supabase email authentication", () => {
       shouldCreateUser: true,
       emailRedirectTo: "http://localhost:5173",
     });
+    expect(buildEmailOtpOptions("http://localhost:5173/onboarding")).toEqual({
+      shouldCreateUser: true,
+      emailRedirectTo: "http://localhost:5173/onboarding",
+    });
   });
 
   test("turns an expired callback into an actionable message", () => {

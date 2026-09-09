@@ -1,0 +1,226 @@
+@font-face {
+  font-family: 'Cedarville Cursive';
+  font-style: normal;
+  font-weight: 400;
+  src: url('https://fonts.gstatic.com/s/cedarvillecursive/v18/yYL00g_a2veiudhUmxjo5VKkoqA-B_neJQ.ttf') format('truetype');
+  font-display: swap;
+}
+
+/* Micro-interaction */
+.spring-btn {
+  transition: transform 0.16s ease, background-color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+.spring-btn:active {
+  transform: scale(0.96);
+}
+
+/* Gentle Slide In Down for Step Transitions */
+.step-slide-down {
+  animation: slideInDown 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes slideInDown {
+  0% {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Living Chef CooCoo Avatar Animations */
+@keyframes chefBlink {
+  0%, 88%, 100% { transform: scaleY(1); }
+  94% { transform: scaleY(0.12); }
+}
+.chef-eyes {
+  animation: chefBlink 4.2s infinite;
+  transform-origin: center;
+}
+@keyframes chefNod {
+  0%, 100% { transform: rotate(0deg); }
+  30% { transform: rotate(-8deg) translateY(-2px); }
+  60% { transform: rotate(5deg) translateY(1px); }
+}
+.chef-nodding {
+  animation: chefNod 0.55s ease-in-out;
+}
+
+/* Ticket Unfold */
+@keyframes ticketPrintFold {
+  0% { max-height: 0; opacity: 0; transform: translateY(-8px); }
+  100% { max-height: 600px; opacity: 1; transform: translateY(0); }
+}
+.animate-ticket-fold {
+  animation: ticketPrintFold 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Heavy Stamp Drop & Radial Shockwave */
+@keyframes heavyStampDrop {
+  0% { transform: scale(3.2) rotate(-22deg); opacity: 0; }
+  65% { transform: scale(0.9) rotate(-3deg); opacity: 1; }
+  85% { transform: scale(1.04) rotate(-5deg); }
+  100% { transform: scale(1) rotate(-4deg); opacity: 1; }
+}
+.animate-stamp-impact {
+  animation: heavyStampDrop 0.42s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+@keyframes heavyStampDropCircle {
+  0% { transform: scale(3.2) rotate(-28deg); opacity: 0; }
+  65% { transform: scale(0.9) rotate(-12deg); opacity: 1; }
+  85% { transform: scale(1.04) rotate(-7deg); }
+  100% { transform: scale(1) rotate(-9deg); opacity: 1; }
+}
+.animate-stamp-impact-circle {
+  animation: heavyStampDropCircle 0.42s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+@keyframes shockwaveRing {
+  0% { transform: scale(0.4); opacity: 0.85; }
+  100% { transform: scale(2.6); opacity: 0; }
+}
+.shockwave-ring {
+  animation: shockwaveRing 0.5s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+}
+
+/* Cedarville Cursive SVG Ink Flow Stroke Mask (Phase 1: 0s ~ 1.05s) */
+.sig-mask-anim {
+  stroke-dasharray: 620;
+  stroke-dashoffset: 620;
+  animation: drawStrokeMask 1.05s cubic-bezier(0.3, 0.05, 0.25, 1) forwards;
+}
+@keyframes drawStrokeMask {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Liquid Golden Underline Sweep (Phase 2: 1.05s ~ 1.47s) */
+.sig-underline-sweep {
+  stroke-dasharray: 180;
+  stroke-dashoffset: 180;
+  animation: drawUnderlineSweep 0.42s cubic-bezier(0.2, 0.1, 0.25, 1) 1.05s forwards;
+}
+@keyframes drawUnderlineSweep {
+  0% {
+    stroke-dashoffset: 180;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* 3D Perspective Flight Viewport */
+.flight-viewport {
+  perspective: 1000px;
+  perspective-origin: 50% 40%;
+}
+
+/* Parabolic 3D Flight Path Keyframes */
+@keyframes parabolicFlightCurve {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1) rotateZ(0deg) rotateX(0deg);
+    opacity: 1;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  }
+  18% {
+    /* Anticipation float upwards */
+    transform: translate3d(0, -16px, 30px) scale(1.02) rotateZ(-2.5deg) rotateX(6deg);
+    box-shadow: 0 25px 35px -5px rgba(217, 119, 6, 0.25), 0 12px 15px -6px rgba(0, 0, 0, 0.15);
+  }
+  55% {
+    /* Parabolic Apex towards right-top */
+    transform: translate3d(55px, -180px, 60px) scale(0.68) rotateZ(7deg) rotateX(16deg);
+    opacity: 0.96;
+    box-shadow: 0 20px 40px -5px rgba(217, 119, 6, 0.35);
+  }
+  82% {
+    /* Diving towards target navigation / dream card position */
+    transform: translate3d(85px, 60px, 20px) scale(0.38) rotateZ(13deg) rotateX(12deg);
+    opacity: 0.85;
+  }
+  100% {
+    /* Landing warp dissolution */
+    transform: translate3d(95px, 240px, -40px) scale(0.15) rotateZ(18deg) rotateX(5deg);
+    opacity: 0;
+    filter: blur(2.5px);
+  }
+}
+.ticket-flying-active {
+  animation: parabolicFlightCurve 0.72s cubic-bezier(0.25, 0.9, 0.35, 1) forwards;
+  pointer-events: none;
+  z-index: 50;
+}
+
+/* Flight Aura Trail */
+.flight-aura {
+  position: absolute;
+  inset: -4px;
+  border-radius: 20px;
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.3) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+.ticket-flying-active .flight-aura {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ticket-flying-active {
+    animation: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+}
+
+/* Container & Step Card Styles */
+.onboarding-shell {
+  width: min(100%, 540px);
+  margin: 0 auto;
+  padding: 16px 12px 64px;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.onboarding-card-wrapper {
+  background: #ffffff;
+  border-radius: 28px;
+  border: 1px solid #e7dac2;
+  box-shadow: 0 12px 40px rgba(84, 63, 39, 0.08);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.onboarding-header-nav {
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid #e7e5e4;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.step-content-area {
+  padding: 18px 18px 24px;
+  min-height: 440px;
+}
+
+.onboarding-bottom-actions {
+  padding: 14px 18px;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(8px);
+  border-top: 1px solid #e7e5e4;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
+}
+
+.font-cedarville {
+  font-family: 'Cedarville Cursive', cursive;
+}

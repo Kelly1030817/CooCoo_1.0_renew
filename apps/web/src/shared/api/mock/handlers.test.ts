@@ -93,6 +93,31 @@ describe("MSW contract adapter", () => {
     expect(body.data.cookingPlan?.weeklyCookingMeals).toBe(3);
   });
 
+  test("updates dream goal and cooking plan when onboarding is replayed with new values", async () => {
+    const replayProfile = {
+      ...completedProfile,
+      dreamName: "綠島遊",
+      dreamTargetAmount: 5000,
+      dailyMealBudget: 350,
+    };
+    const response = await api("/onboarding", {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(replayProfile),
+    });
+    expect(response.status).toBe(200);
+
+    const body = (await (await api("/state")).json()) as {
+      data: {
+        activeGoal: { name: string; targetAmount: number } | null;
+        cookingPlan: { homeCookBudget: number } | null;
+      };
+    };
+    expect(body.data.activeGoal).toEqual(expect.objectContaining({ name: "綠島遊", targetAmount: 5000 }));
+    expect(body.data.cookingPlan?.homeCookBudget).toBe(350);
+  });
+
+
   test("labels preview shopping advice as rules instead of AI", async () => {
     const response = await api("/shopping/analyze", { method: "POST" });
     const body = (await response.json()) as {
@@ -132,5 +157,25 @@ describe("MSW contract adapter", () => {
     expect(body.data.source).toBe("brand_safe");
     expect(body.data.recipe.ingredients.length).toBeGreaterThan(0);
     expect(body.data.recipe.steps.length).toBeGreaterThan(0);
+  });
+
+  test("serves recipe settings and small purchase recommendations", async () => {
+    const settings = await (await api("/settings/recipes")).json() as { data: { purchaseBudget: number } };
+    expect(settings.data.purchaseBudget).toBe(100);
+
+    const recsResponse = await api("/recipes/recommendations", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ mode: "small_purchase", purchaseBudget: 100, allowRepeat: false }),
+    });
+    expect(recsResponse.status).toBe(200);
+    const recs = await recsResponse.json() as {
+      data: {
+        mode: string;
+        eligible: Array<{ recipe: { title: string }; missing: unknown[]; estimatedPurchaseCost: number | null }>;
+      };
+    };
+    expect(recs.data.mode).toBe("small_purchase");
+    expect(Array.isArray(recs.data.eligible)).toBe(true);
   });
 });

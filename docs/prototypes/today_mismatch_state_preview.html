@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CooCoo 今日介面 · 條件未匹配檢核卡片配色方案沙盒</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Noto+Sans+TC:wght@400;500;700;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+
+  <style>
+    :root {
+      --font-main: "Plus Jakarta Sans", "Noto Sans TC", sans-serif;
+    }
+    body {
+      font-family: var(--font-main);
+      background-color: #f6f3ee;
+      color: #1c1c11;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Common Ticket Structure */
+    .preview-ticket {
+      position: relative;
+      display: grid;
+      grid-template-columns: 66px 1fr;
+      overflow: hidden;
+      border-radius: 20px;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @media (max-width: 600px) {
+      .preview-ticket {
+        grid-template-columns: 52px 1fr;
+      }
+    }
+
+    /* Notches */
+    .preview-notch {
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      background-color: #fdfae7;
+      border-radius: 50%;
+      z-index: 5;
+    }
+    .preview-notch-top {
+      top: -9px;
+      left: 57px;
+    }
+    .preview-notch-bottom {
+      bottom: -9px;
+      left: 57px;
+    }
+    @media (max-width: 600px) {
+      .preview-notch-top, .preview-notch-bottom {
+        left: 43px;
+      }
+    }
+
+    /* Ticket Stub */
+    .preview-stub {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-direction: column;
+      border-right: 2px dashed;
+      padding: 22px 6px;
+      user-select: none;
+      transition: all 0.25s ease;
+    }
+    @media (max-width: 600px) {
+      .preview-stub {
+        padding: 18px 4px;
+      }
+    }
+    .preview-stub-text {
+      writing-mode: vertical-rl;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 0.26em;
+    }
+    .preview-stub-center {
+      text-align: center;
+      margin: auto 0;
+    }
+    .preview-stub-center small {
+      display: block;
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+    .preview-stub-center strong {
+      font-family: "Plus Jakarta Sans", sans-serif;
+      font-size: 26px;
+      font-weight: 900;
+      line-height: 1;
+    }
+    @media (max-width: 600px) {
+      .preview-stub-center strong {
+        font-size: 22px;
+      }
+    }
+    .preview-stub-icon {
+      font-size: 18px;
+    }
+
+    /* Ticket Body */
+    .preview-body {
+      padding: 20px;
+      transition: all 0.25s ease;
+    }
+    @media (max-width: 600px) {
+      .preview-body {
+        padding: 16px 14px 18px;
+      }
+    }
+
+    /* Scheme A Theme (深石板藍 + 暖金檢核字) */
+    .theme-scheme-a {
+      border: 1px solid #d9cab2;
+      background: #fffdf8;
+      box-shadow: 0 16px 40px -12px rgba(41, 60, 78, 0.12), 0 4px 16px -2px rgba(41, 60, 78, 0.05);
+    }
+    .theme-scheme-a .preview-notch-top { border-bottom: 1px solid #d9cab2; }
+    .theme-scheme-a .preview-notch-bottom { border-top: 1px solid #d9cab2; }
+    .theme-scheme-a .preview-stub {
+      background: #34465b;
+      border-color: #bba98d;
+      color: rgba(251, 191, 36, 0.85);
+    }
+    .theme-scheme-a .preview-stub-center small { color: rgba(251, 191, 36, 0.75); }
+    .theme-scheme-a .preview-stub-center strong { color: #fbbf24; }
+    .theme-scheme-a .preview-stub-icon { color: rgba(251, 191, 36, 0.85); }
+    .theme-scheme-a .preview-tag {
+      background: #fef3c7;
+      color: #92400e;
+      border: 1px solid #fde68a;
+    }
+    .theme-scheme-a .preview-diag-box {
+      background: #fffdfa;
+      border: 1px solid #eedec9;
+    }
+    .theme-scheme-a .preview-btn-primary {
+      background: #9a442d;
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(154, 68, 45, 0.25);
+    }
+    .theme-scheme-a .preview-btn-primary:hover { background: #853621; }
+
+    /* Scheme B Theme (深陶土琥珀棕 + 工坊工單) */
+    .theme-scheme-b {
+      border: 1px solid #d4c3a7;
+      background: #ffffff;
+      box-shadow: 0 16px 40px -12px rgba(120, 53, 15, 0.15), 0 4px 16px -2px rgba(120, 53, 15, 0.06);
+    }
+    .theme-scheme-b .preview-notch-top { border-bottom: 1px solid #d4c3a7; }
+    .theme-scheme-b .preview-notch-bottom { border-top: 1px solid #d4c3a7; }
+    .theme-scheme-b .preview-stub {
+      background: #78350f;
+      border-color: #d97706;
+      color: rgba(254, 243, 199, 0.85);
+    }
+    .theme-scheme-b .preview-stub-center small { color: rgba(254, 243, 199, 0.75); }
+    .theme-scheme-b .preview-stub-center strong { color: #fef3c7; }
+    .theme-scheme-b .preview-stub-icon { color: rgba(254, 243, 199, 0.85); }
+    .theme-scheme-b .preview-tag {
+      background: #fef3c7;
+      color: #78350f;
+      border: 1px solid #fcd34d;
+    }
+    .theme-scheme-b .preview-diag-box {
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+    }
+    .theme-scheme-b .preview-btn-primary {
+      background: #78350f;
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(120, 53, 15, 0.25);
+    }
+    .theme-scheme-b .preview-btn-primary:hover { background: #602a0a; }
+
+    /* Scheme C Theme (霧面冷岩灰 + 理性診斷) */
+    .theme-scheme-c {
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      box-shadow: 0 16px 40px -12px rgba(71, 85, 105, 0.14), 0 4px 16px -2px rgba(71, 85, 105, 0.05);
+    }
+    .theme-scheme-c .preview-notch-top { border-bottom: 1px solid #cbd5e1; }
+    .theme-scheme-c .preview-notch-bottom { border-top: 1px solid #cbd5e1; }
+    .theme-scheme-c .preview-stub {
+      background: #475569;
+      border-color: #94a3b8;
+      color: rgba(241, 245, 249, 0.85);
+    }
+    .theme-scheme-c .preview-stub-center small { color: rgba(241, 245, 249, 0.75); }
+    .theme-scheme-c .preview-stub-center strong { color: #f8fafc; }
+    .theme-scheme-c .preview-stub-icon { color: rgba(241, 245, 249, 0.85); }
+    .theme-scheme-c .preview-tag {
+      background: #f1f5f9;
+      color: #334155;
+      border: 1px solid #cbd5e1;
+    }
+    .theme-scheme-c .preview-diag-box {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+    }
+    .theme-scheme-c .preview-btn-primary {
+      background: #334155;
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(51, 65, 85, 0.25);
+    }
+    .theme-scheme-c .preview-btn-primary:hover { background: #1e293b; }
+
+    /* Current Original Theme (現況：淺粉杏色，供對比) */
+    .theme-current-original {
+      border: 1px solid #e5cdb8;
+      background: #fffefb;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    }
+    .theme-current-original .preview-notch-top { border-bottom: 1px solid #e5cdb8; }
+    .theme-current-original .preview-notch-bottom { border-top: 1px solid #e5cdb8; }
+    .theme-current-original .preview-stub {
+      background: #fdf6ec;
+      border-color: #eedcc9;
+      color: #b86230;
+    }
+    .theme-current-original .preview-stub-center small { color: #b86230; opacity: 0.8; }
+    .theme-current-original .preview-stub-center strong { color: #b86230; }
+    .theme-current-original .preview-stub-icon { color: #b86230; }
+    .theme-current-original .preview-tag {
+      background: #fdf2ee;
+      color: #9a442d;
+      border: 1px solid #f5cfc4;
+    }
+    .theme-current-original .preview-diag-box {
+      background: #faf4e8;
+      border: 1px solid #eedec9;
+    }
+    .theme-current-original .preview-btn-primary {
+      background: #9a442d;
+      color: #fff;
+    }
+
+    /* Spring buttons */
+    .spring-btn {
+      transition: all 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .spring-btn:active {
+      transform: scale(0.96);
+    }
+  </style>
+</head>
+<body class="min-h-screen p-3 md:p-8 flex flex-col items-center">
+
+  <!-- TOP CONTROL TOOLBAR -->
+  <header class="w-full max-w-5xl mb-6 bg-white border border-[#ded1be] rounded-3xl p-5 shadow-sm space-y-4">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#ebd9c6]/70 pb-4">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-wider uppercase bg-[#9a442d]/10 text-[#9a442d]">
+            Visual Prototype Sandbox
+          </span>
+          <span class="text-xs text-stone-400 font-bold">· 先行預覽不改正式站</span>
+        </div>
+        <h1 class="text-xl md:text-2xl font-black text-[#293c4e] mt-1">
+          「目前條件暫無匹配料理」檢核卡片 · 配色方案對比
+        </h1>
+        <p class="text-xs text-stone-500 mt-0.5">
+          背景為正式站真實底色 <code class="text-amber-900 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 font-mono text-[11px]">#fdfae7</code>，可點選上方按鈕切換方案或開啟並排檢視。
+        </p>
+      </div>
+
+      <!-- View Mode Switcher -->
+      <div class="flex items-center gap-2 bg-[#f4efe4] p-1.5 rounded-2xl shrink-0">
+        <button id="viewMobileBtn" onclick="switchViewMode('mobile')" class="spring-btn px-4 py-2 rounded-xl text-xs font-black bg-white text-[#293c4e] shadow-xs">
+          📱 手機情境預覽
+        </button>
+        <button id="viewCompareBtn" onclick="switchViewMode('compare')" class="spring-btn px-4 py-2 rounded-xl text-xs font-bold text-stone-600 hover:text-stone-900">
+          ⚖️ 四方案橫向並排
+        </button>
+      </div>
+    </div>
+
+    <!-- SCHEME SWITCHER BUTTONS (FOR MOBILE VIEW) -->
+    <div id="schemeButtonsContainer" class="grid grid-cols-2 md:grid-cols-4 gap-2">
+      <!-- Option A -->
+      <button onclick="selectScheme('scheme-a')" id="tab-scheme-a" class="spring-btn p-3 rounded-2xl border-2 border-[#34465b] bg-[#34465b]/5 text-left transition-all">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-black text-[#34465b] flex items-center gap-1.5">
+            <span class="w-3 h-3 rounded-full bg-[#34465b]"></span>
+            方案 A（推薦）
+          </span>
+          <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#34465b] text-[#fef08a]">首選</span>
+        </div>
+        <p class="text-[11px] font-bold text-stone-700 mt-1">深石板藍票根 + 琥珀金檢核字</p>
+        <p class="text-[10px] text-stone-500 mt-0.5 leading-tight">保留剪票卡高質感外輪廓，與首選票券最一致</p>
+      </button>
+
+      <!-- Option B -->
+      <button onclick="selectScheme('scheme-b')" id="tab-scheme-b" class="spring-btn p-3 rounded-2xl border-2 border-transparent bg-stone-50 hover:bg-stone-100 text-left transition-all">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-black text-[#78350f] flex items-center gap-1.5">
+            <span class="w-3 h-3 rounded-full bg-[#78350f]"></span>
+            方案 B
+          </span>
+          <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-[#78350f]">工坊風</span>
+        </div>
+        <p class="text-[11px] font-bold text-stone-700 mt-1">深陶土琥珀棕票根</p>
+        <p class="text-[10px] text-stone-500 mt-0.5 leading-tight">職人調校工單質感，一眼識別不同狀態</p>
+      </button>
+
+      <!-- Option C -->
+      <button onclick="selectScheme('scheme-c')" id="tab-scheme-c" class="spring-btn p-3 rounded-2xl border-2 border-transparent bg-stone-50 hover:bg-stone-100 text-left transition-all">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-black text-[#475569] flex items-center gap-1.5">
+            <span class="w-3 h-3 rounded-full bg-[#475569]"></span>
+            方案 C
+          </span>
+          <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-[#475569]">冷調</span>
+        </div>
+        <p class="text-[11px] font-bold text-stone-700 mt-1">霧面冷岩灰票根</p>
+        <p class="text-[10px] text-stone-500 mt-0.5 leading-tight">冷色反差跳脫暖底，理性客觀診斷回饋</p>
+      </button>
+
+      <!-- Option Original -->
+      <button onclick="selectScheme('current-original')" id="tab-current-original" class="spring-btn p-3 rounded-2xl border-2 border-transparent bg-stone-50 hover:bg-stone-100 text-left transition-all">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-black text-[#b86230] flex items-center gap-1.5">
+            <span class="w-3 h-3 rounded-full bg-[#fdf6ec] border border-[#eedcc9]"></span>
+            現況（原版對照）
+          </span>
+          <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-rose-100 text-[#9a442d]">過淺</span>
+        </div>
+        <p class="text-[11px] font-bold text-stone-700 mt-1">淺粉杏色票根</p>
+        <p class="text-[10px] text-stone-500 mt-0.5 leading-tight">與底色近乎同色階，輪廓過淡易融化</p>
+      </button>
+    </div>
+  </header>
+
+  <!-- ============================================================= -->
+  <!-- VIEW 1: SINGLE MOBILE CONTAINER (iPhone Viewport)            -->
+  <!-- ============================================================= -->
+  <main id="mobileViewContainer" class="w-full max-w-[414px] flex flex-col items-center">
+
+    <!-- Mobile Frame -->
+    <div class="w-full bg-[#fdfae7] border border-[#e5dcbe] shadow-2xl rounded-[40px] p-4 sm:p-5 overflow-hidden min-h-[780px] flex flex-col justify-between relative">
+
+      <!-- Top Status Bar -->
+      <div class="flex items-center justify-between text-[11px] font-bold text-[#293c4e]/60 mb-2 px-1">
+        <span>21:19</span>
+        <div class="flex items-center gap-1.5">
+          <span class="material-symbols-outlined text-xs">signal_cellular_alt</span>
+          <span class="material-symbols-outlined text-xs">wifi</span>
+          <span class="material-symbols-outlined text-xs">battery_full</span>
+        </div>
+      </div>
+
+      <!-- App Header Mockup -->
+      <div class="flex items-center justify-between border-b border-[#ebd9c6]/60 pb-2.5 mb-3">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-xl text-[#9a442d]">kitchen</span>
+          <span class="font-black text-sm text-[#293c4e]">CooCoo 煮煮</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="w-7 h-7 rounded-full bg-amber-100 text-amber-900 flex items-center justify-center font-bold text-xs">
+            🍳
+          </span>
+        </div>
+      </div>
+
+      <div class="space-y-3.5 flex-1">
+
+        <!-- 1. Header Greeting & Energy Toggle -->
+        <section class="flex items-end justify-between gap-3">
+          <div>
+            <p class="text-[10px] font-black tracking-[0.16em] uppercase text-[#9a442d] flex items-center gap-1">
+              <span class="inline-block w-1.5 h-1.5 rounded-full bg-[#9a442d]"></span>
+              <span>今天 · 晚餐</span>
+            </p>
+            <h2 class="text-xl sm:text-2xl font-black text-[#293c4e] tracking-tight leading-tight mt-0.5">
+              先別想一整週，<br>決定下一餐就好。
+            </h2>
+          </div>
+
+          <!-- Energy Toggle -->
+          <div class="px-3 py-1.5 rounded-full border border-[#d8cdbb] bg-white text-[#34465b] text-xs font-extrabold flex items-center gap-1.5 shrink-0 shadow-2xs">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>
+            </svg>
+            <span>今天有點累</span>
+          </div>
+        </section>
+
+        <!-- Pocket Chef Consultation Capsule -->
+        <section class="w-full bg-amber-50/90 border border-amber-200/90 rounded-2xl p-2.5 flex items-center justify-between shadow-2xs">
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-full bg-amber-600 text-white flex items-center justify-center text-xs shrink-0">
+              👨‍🍳
+            </div>
+            <div>
+              <div class="flex items-center gap-1">
+                <span class="font-black text-xs text-amber-950">主廚 CooCoo 相談室</span>
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              </div>
+              <p class="text-[10px] text-stone-600 font-medium">太累想煮快手菜？點此向主廚諮詢</p>
+            </div>
+          </div>
+          <span class="text-[10px] font-black text-amber-800 bg-white border border-amber-200 px-2 py-1 rounded-xl shadow-2xs">
+            諮詢主廚 →
+          </span>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- THE MISMATCH TICKET CARD UNDER TEST       -->
+        <!-- ========================================== -->
+        <article id="liveTicketCard" class="preview-ticket theme-scheme-a">
+          <!-- Top & Bottom Semi-circular Notches -->
+          <div class="preview-notch preview-notch-top" aria-hidden="true"></div>
+          <div class="preview-notch preview-notch-bottom" aria-hidden="true"></div>
+
+          <!-- Left Ticket Stub -->
+          <div class="preview-stub">
+            <span class="preview-stub-text">STATUS</span>
+            <div class="preview-stub-center">
+              <small>檢核</small>
+              <strong>!</strong>
+            </div>
+            <span class="material-symbols-outlined preview-stub-icon">tune</span>
+          </div>
+
+          <!-- Right Ticket Body -->
+          <div class="preview-body space-y-2.5">
+            <!-- Warning Badge -->
+            <div class="flex items-center justify-between">
+              <span class="preview-tag inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black">
+                <span class="material-symbols-outlined text-xs">info</span>
+                後端食安與廚具檢核
+              </span>
+            </div>
+
+            <!-- Title & Subtitle -->
+            <div>
+              <h3 class="text-base font-black text-[#293c4e] leading-snug tracking-tight">
+                目前條件暫無完全匹配的料理
+              </h3>
+              <p class="text-[11px] font-medium text-stone-600 mt-1 leading-relaxed">
+                後台檢核您的可用廚具、預算與飲食限制，尚未找到同時符合全部條件的食譜。
+              </p>
+            </div>
+
+            <!-- Diagnostics Box -->
+            <div class="preview-diag-box rounded-xl p-2.5 space-y-1.5 text-xs">
+              <div class="text-[10px] font-extrabold tracking-wider uppercase text-stone-500 mb-1">
+                後端目前讀取的偏好設定：
+              </div>
+
+              <div class="flex items-center justify-between text-[11px]">
+                <span class="text-stone-600 font-bold flex items-center gap-1">
+                  <span class="material-symbols-outlined text-xs text-stone-400">skillet</span>
+                  可用廚具
+                </span>
+                <strong class="text-[#293c4e] font-extrabold">單平底鍋</strong>
+              </div>
+
+              <div class="flex items-center justify-between text-[11px] pt-1 border-t border-stone-200/60">
+                <span class="text-stone-600 font-bold flex items-center gap-1">
+                  <span class="material-symbols-outlined text-xs text-stone-400">payments</span>
+                  每日餐飲預算
+                </span>
+                <strong class="text-[#293c4e] font-extrabold">NT$ 80</strong>
+              </div>
+
+              <div class="flex items-center justify-between text-[11px] pt-1 border-t border-stone-200/60">
+                <span class="text-stone-600 font-bold flex items-center gap-1">
+                  <span class="material-symbols-outlined text-xs text-stone-400">no_food</span>
+                  飲食限制
+                </span>
+                <strong class="text-[#293c4e] font-extrabold">無特殊飲食限制</strong>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="space-y-1.5 pt-1">
+              <button class="preview-btn-primary w-full py-2.5 px-3 rounded-xl font-black text-xs flex items-center justify-center gap-1.5 transition-all">
+                <span class="material-symbols-outlined text-sm">skillet</span>
+                <span>前往「廚房」新增或調整廚具</span>
+              </button>
+
+              <button class="w-full py-2 px-3 rounded-xl font-bold text-xs bg-white text-[#293c4e] border border-[#d9cab2] hover:bg-stone-50 flex items-center justify-center gap-1.5 transition-all">
+                <span class="material-symbols-outlined text-sm">kitchen</span>
+                <span>前往「冰箱」選取食材生成料理</span>
+              </button>
+            </div>
+
+          </div>
+        </article>
+
+      </div>
+
+      <!-- Bottom Navigation Mockup -->
+      <div class="border-t border-[#ebd9c6]/80 pt-2 mt-4 grid grid-cols-5 text-center text-[10px] font-black text-stone-500">
+        <div class="text-[#9a442d] flex flex-col items-center gap-0.5">
+          <span class="material-symbols-outlined text-base">today</span>
+          <span>今日</span>
+        </div>
+        <div class="flex flex-col items-center gap-0.5">
+          <span class="material-symbols-outlined text-base">shopping_cart</span>
+          <span>採買</span>
+        </div>
+        <div class="flex flex-col items-center gap-0.5">
+          <span class="material-symbols-outlined text-base">kitchen</span>
+          <span>冰箱</span>
+        </div>
+        <div class="flex flex-col items-center gap-0.5">
+          <span class="material-symbols-outlined text-base">skillet</span>
+          <span>廚房</span>
+        </div>
+        <div class="flex flex-col items-center gap-0.5">
+          <span class="material-symbols-outlined text-base">savings</span>
+          <span>圓夢</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Active Scheme Rationale Card -->
+    <div id="activeSchemeRationale" class="w-full mt-4 bg-white border border-[#ded1be] rounded-2xl p-4 shadow-sm text-xs space-y-2">
+      <div class="flex items-center justify-between">
+        <span class="font-black text-[#293c4e]">方案 A 配色分析（推薦）</span>
+        <span class="font-mono text-[10px] bg-[#34465b] text-[#fef08a] px-2 py-0.5 rounded font-black">#34465b + #fbbf24</span>
+      </div>
+      <p class="text-stone-600 leading-relaxed font-medium">
+        維持與正常料理票券一致的「深石板藍票根」，卡片形狀在米黃背景（#fdfae7）上輪廓鮮明立體。文字以亮琥珀金標記「STATUS 檢核 !」，右側為米白底色，兼顧剪票儀式感與清晰可讀性。
+      </p>
+    </div>
+  </main>
+
+  <!-- ============================================================= -->
+  <!-- VIEW 2: SIDE-BY-SIDE COMPARISON (Desktop Grid)               -->
+  <!-- ============================================================= -->
+  <main id="compareViewContainer" class="w-full max-w-6xl hidden space-y-6">
+    <div class="text-center space-y-1">
+      <h2 class="text-lg font-black text-[#293c4e]">四方案橫向並排直觀比對</h2>
+      <p class="text-xs text-stone-500">背景均為正式站真實暖米黃底色（#fdfae7），可直接觀察票根在背景上的邊界反差</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+
+      <!-- Card 1: Scheme A -->
+      <div class="bg-[#fdfae7] p-3 rounded-3xl border border-[#e5dcbe] flex flex-col justify-between space-y-3">
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-black text-[#34465b]">方案 A（推薦）</span>
+            <span class="text-[9px] font-black bg-[#34465b] text-[#fbbf24] px-2 py-0.5 rounded">深藍 + 琥珀金</span>
+          </div>
+
+          <article class="preview-ticket theme-scheme-a">
+            <div class="preview-notch preview-notch-top"></div>
+            <div class="preview-notch preview-notch-bottom"></div>
+            <div class="preview-stub">
+              <span class="preview-stub-text">STATUS</span>
+              <div class="preview-stub-center">
+                <small>檢核</small>
+                <strong>!</strong>
+              </div>
+              <span class="material-symbols-outlined preview-stub-icon">tune</span>
+            </div>
+            <div class="preview-body space-y-2">
+              <span class="preview-tag inline-block px-2 py-0.5 rounded text-[9px] font-black">後端食安檢核</span>
+              <h4 class="text-xs font-black text-[#293c4e] leading-tight">目前條件暫無匹配料理</h4>
+              <p class="text-[10px] text-stone-600 line-clamp-2">後台檢核可用廚具、預算與限制，未找到匹配食譜。</p>
+              <div class="preview-diag-box p-2 rounded text-[10px] space-y-0.5">
+                <div class="flex justify-between"><span>廚具</span><strong>單平底鍋</strong></div>
+                <div class="flex justify-between"><span>預算</span><strong>NT$ 80</strong></div>
+              </div>
+              <button class="preview-btn-primary w-full py-1.5 rounded-lg font-black text-[10px]">前往廚房調整</button>
+            </div>
+          </article>
+        </div>
+        <p class="text-[10px] text-stone-600 font-medium">深色票根輪廓極明確，與首選票券 100% 格式呼應。</p>
+      </div>
+
+      <!-- Card 2: Scheme B -->
+      <div class="bg-[#fdfae7] p-3 rounded-3xl border border-[#e5dcbe] flex flex-col justify-between space-y-3">
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-black text-[#78350f]">方案 B</span>
+            <span class="text-[9px] font-black bg-[#78350f] text-[#fef3c7] px-2 py-0.5 rounded">深陶土棕</span>
+          </div>
+
+          <article class="preview-ticket theme-scheme-b">
+            <div class="preview-notch preview-notch-top"></div>
+            <div class="preview-notch preview-notch-bottom"></div>
+            <div class="preview-stub">
+              <span class="preview-stub-text">STATUS</span>
+              <div class="preview-stub-center">
+                <small>檢核</small>
+                <strong>!</strong>
+              </div>
+              <span class="material-symbols-outlined preview-stub-icon">tune</span>
+            </div>
+            <div class="preview-body space-y-2">
+              <span class="preview-tag inline-block px-2 py-0.5 rounded text-[9px] font-black">後端食安檢核</span>
+              <h4 class="text-xs font-black text-[#293c4e] leading-tight">目前條件暫無匹配料理</h4>
+              <p class="text-[10px] text-stone-600 line-clamp-2">後台檢核可用廚具、預算與限制，未找到匹配食譜。</p>
+              <div class="preview-diag-box p-2 rounded text-[10px] space-y-0.5">
+                <div class="flex justify-between"><span>廚具</span><strong>單平底鍋</strong></div>
+                <div class="flex justify-between"><span>預算</span><strong>NT$ 80</strong></div>
+              </div>
+              <button class="preview-btn-primary w-full py-1.5 rounded-lg font-black text-[10px]">前往廚房調整</button>
+            </div>
+          </article>
+        </div>
+        <p class="text-[10px] text-stone-600 font-medium">深陶土工坊氛圍，一眼看出是特殊檢核工單。</p>
+      </div>
+
+      <!-- Card 3: Scheme C -->
+      <div class="bg-[#fdfae7] p-3 rounded-3xl border border-[#e5dcbe] flex flex-col justify-between space-y-3">
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-black text-[#475569]">方案 C</span>
+            <span class="text-[9px] font-black bg-[#475569] text-white px-2 py-0.5 rounded">霧面岩灰</span>
+          </div>
+
+          <article class="preview-ticket theme-scheme-c">
+            <div class="preview-notch preview-notch-top"></div>
+            <div class="preview-notch preview-notch-bottom"></div>
+            <div class="preview-stub">
+              <span class="preview-stub-text">STATUS</span>
+              <div class="preview-stub-center">
+                <small>檢核</small>
+                <strong>!</strong>
+              </div>
+              <span class="material-symbols-outlined preview-stub-icon">tune</span>
+            </div>
+            <div class="preview-body space-y-2">
+              <span class="preview-tag inline-block px-2 py-0.5 rounded text-[9px] font-black">後端食安檢核</span>
+              <h4 class="text-xs font-black text-[#293c4e] leading-tight">目前條件暫無匹配料理</h4>
+              <p class="text-[10px] text-stone-600 line-clamp-2">後台檢核可用廚具、預算與限制，未找到匹配食譜。</p>
+              <div class="preview-diag-box p-2 rounded text-[10px] space-y-0.5">
+                <div class="flex justify-between"><span>廚具</span><strong>單平底鍋</strong></div>
+                <div class="flex justify-between"><span>預算</span><strong>NT$ 80</strong></div>
+              </div>
+              <button class="preview-btn-primary w-full py-1.5 rounded-lg font-black text-[10px]">前往廚房調整</button>
+            </div>
+          </article>
+        </div>
+        <p class="text-[10px] text-stone-600 font-medium">冷調灰藍跳脫暖底，理性客觀診斷回饋。</p>
+      </div>
+
+      <!-- Card 4: Current Original -->
+      <div class="bg-[#fdfae7] p-3 rounded-3xl border border-[#e5dcbe] flex flex-col justify-between space-y-3">
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-black text-[#b86230]">現況（原版對照）</span>
+            <span class="text-[9px] font-black bg-rose-100 text-[#9a442d] px-2 py-0.5 rounded">過淺融色</span>
+          </div>
+
+          <article class="preview-ticket theme-current-original">
+            <div class="preview-notch preview-notch-top"></div>
+            <div class="preview-notch preview-notch-bottom"></div>
+            <div class="preview-stub">
+              <span class="preview-stub-text">STATUS</span>
+              <div class="preview-stub-center">
+                <small>檢核</small>
+                <strong>!</strong>
+              </div>
+              <span class="material-symbols-outlined preview-stub-icon">tune</span>
+            </div>
+            <div class="preview-body space-y-2">
+              <span class="preview-tag inline-block px-2 py-0.5 rounded text-[9px] font-black">後端食安檢核</span>
+              <h4 class="text-xs font-black text-[#293c4e] leading-tight">目前條件暫無匹配料理</h4>
+              <p class="text-[10px] text-stone-600 line-clamp-2">後台檢核可用廚具、預算與限制，未找到匹配食譜。</p>
+              <div class="preview-diag-box p-2 rounded text-[10px] space-y-0.5">
+                <div class="flex justify-between"><span>廚具</span><strong>單平底鍋</strong></div>
+                <div class="flex justify-between"><span>預算</span><strong>NT$ 80</strong></div>
+              </div>
+              <button class="preview-btn-primary w-full py-1.5 rounded-lg font-black text-[10px]">前往廚房調整</button>
+            </div>
+          </article>
+        </div>
+        <p class="text-[10px] text-rose-700 font-bold">現況底色與背景過於接近，剪票邊緣幾乎隱形。</p>
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    const rationales = {
+      'scheme-a': {
+        title: '方案 A 配色分析（推薦）',
+        badge: '#34465b + #fbbf24',
+        desc: '維持與正常料理票券一致的「深石板藍票根」，卡片形狀在米黃背景（#fdfae7）上輪廓鮮明立體。文字以亮琥珀金標記「STATUS 檢核 !」，右側為米白底色，兼顧剪票儀式感與清晰可讀性。'
+      },
+      'scheme-b': {
+        title: '方案 B 配色分析（深陶土工坊）',
+        badge: '#78350f + #fef3c7',
+        desc: '使用溫暖的深陶土琥珀棕票根，文字為淺米白金反白。既能與米黃背景拉開高反差，又具備強烈的「主廚正在檢視條件」職人工單識別感。'
+      },
+      'scheme-c': {
+        title: '方案 C 配色分析（霧面岩灰）',
+        badge: '#475569 + #f8fafc',
+        desc: '以低飽和的冷灰藍票根打破暖色背景的連貫性，冷暖反差讓卡片邊界一目了然，給人理性、客觀的系統檢核回饋。'
+      },
+      'current-original': {
+        title: '現況原版配色問題分析',
+        badge: '#fdf6ec（過淡）',
+        desc: '現況左側票根明度高達 97%，與頁面米黃底色（#fdfae7）的明度差不到 3%，導致整張票券在視覺上幾乎被抹平，剪票口弧形凹痕也完全失去立體感。'
+      }
+    };
+
+    function selectScheme(schemeKey) {
+      const card = document.getElementById('liveTicketCard');
+      card.className = 'preview-ticket theme-' + schemeKey;
+
+      // Update button active borders
+      ['scheme-a', 'scheme-b', 'scheme-c', 'current-original'].forEach(key => {
+        const btn = document.getElementById('tab-' + key);
+        if (key === schemeKey) {
+          btn.className = 'spring-btn p-3 rounded-2xl border-2 border-[#293c4e] bg-[#293c4e]/5 text-left transition-all';
+        } else {
+          btn.className = 'spring-btn p-3 rounded-2xl border-2 border-transparent bg-stone-50 hover:bg-stone-100 text-left transition-all';
+        }
+      });
+
+      // Update rationale text
+      const r = rationales[schemeKey];
+      const rationaleCard = document.getElementById('activeSchemeRationale');
+      rationaleCard.innerHTML = `
+        <div class="flex items-center justify-between">
+          <span class="font-black text-[#293c4e]">${r.title}</span>
+          <span class="font-mono text-[10px] bg-[#293c4e] text-white px-2 py-0.5 rounded font-black">${r.badge}</span>
+        </div>
+        <p class="text-stone-600 leading-relaxed font-medium">${r.desc}</p>
+      `;
+    }
+
+    function switchViewMode(mode) {
+      const mobileView = document.getElementById('mobileViewContainer');
+      const compareView = document.getElementById('compareViewContainer');
+      const schemeBtns = document.getElementById('schemeButtonsContainer');
+      const btnMobile = document.getElementById('viewMobileBtn');
+      const btnCompare = document.getElementById('viewCompareBtn');
+
+      if (mode === 'mobile') {
+        mobileView.classList.remove('hidden');
+        compareView.classList.add('hidden');
+        schemeBtns.classList.remove('opacity-40', 'pointer-events-none');
+        btnMobile.className = 'spring-btn px-4 py-2 rounded-xl text-xs font-black bg-white text-[#293c4e] shadow-xs';
+        btnCompare.className = 'spring-btn px-4 py-2 rounded-xl text-xs font-bold text-stone-600 hover:text-stone-900';
+      } else {
+        mobileView.classList.add('hidden');
+        compareView.classList.remove('hidden');
+        schemeBtns.classList.add('opacity-40', 'pointer-events-none');
+        btnCompare.className = 'spring-btn px-4 py-2 rounded-xl text-xs font-black bg-white text-[#293c4e] shadow-xs';
+        btnMobile.className = 'spring-btn px-4 py-2 rounded-xl text-xs font-bold text-stone-600 hover:text-stone-900';
+      }
+    }
+  </script>
+</body>
+</html>
