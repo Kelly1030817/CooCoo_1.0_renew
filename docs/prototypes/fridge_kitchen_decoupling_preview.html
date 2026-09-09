@@ -1,0 +1,1813 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="theme-b">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CooCoo 冰箱與廚房配色對齊 · 4 套設計方案互動預覽</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Noto+Sans+TC:wght@400;500;700;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+
+  <style>
+    /* ==================== THEME VARIABLES ==================== */
+    /* 預設：方案 B (日式冷暖溫差雙態 · 推薦方案) */
+    :root, .theme-b {
+      --app-bg: #fbf9f2;
+      --fridge-bg: #fbf9f2;              /* 淨潤冷米白 (4°C 保鮮感) */
+      --kitchen-bg: #fdf8ee;             /* 溫潤暖麥色 (灶台備料感) */
+      --header-bg: #ffffff;
+      --cold-chamber-bg: #f0f7f3;        /* 淺薄荷冷藏襯底 */
+      --cold-chamber-border: #cfe2d6;
+      --cold-chamber-title: #224b3b;
+      --cold-tag-bg: #e2f0e8;
+      --cold-tag-text: #224b3b;
+      --frozen-chamber-bg: #f1f5fa;      /* 冰霧霜藍冷凍襯底 */
+      --frozen-chamber-border: #d2deec;
+      --frozen-chamber-title: #1e3a5f;
+      --frozen-tag-bg: #e3ecf7;
+      --frozen-tag-text: #1e3a5f;
+      --urgent-bg: #fef3c7;              /* 高反差鵝黃琥珀警示 */
+      --urgent-border: #fcd34d;
+      --urgent-title: #b45309;
+      --urgent-btn-bg: #e07a5f;
+      --urgent-btn-text: #ffffff;
+      --tray-bg: #ffffff;                /* 純白瓷盤 Mise en place */
+      --tray-border: #e07a5f;
+      --tray-badge-bg: #e07a5f;
+      --tray-badge-text: #ffffff;
+      --tray-accent-glow: rgba(224, 122, 95, 0.2);
+      --cookware-active-bg: #242220;     /* 曜石黑底 (Motion Specs 質變) */
+      --cookware-active-border: #f2cc8f; /* 琥珀金邊 */
+      --cookware-active-text: #ffffff;
+      --cookware-active-shadow: 0 0 0 1.5px #f2cc8f, 0 3px 10px rgba(242, 204, 143, 0.35);
+      --style-active-bg: #e07a5f;
+      --style-active-text: #ffffff;
+      --generate-bar-bg: #242220;        /* 曜石黑底浮動欄 */
+      --generate-bar-text: #ffffff;
+      --generate-btn-bg: #e07a5f;
+      --timer-card-bg: #242220;          /* 曜石黑計時器 */
+      --timer-digits-color: #ffffff;
+      --timer-accent: #fbbf24;           /* 琥珀金標籤與數字 */
+      --settle-btn-bg: #2d6a4f;          /* 翡翠綠出餐入帳 (Motion Specs 拍板標準) */
+      --card-border: #ede7d5;
+      --text-main: #1f1c1a;
+      --text-muted: #78716c;
+    }
+
+    /* 方案 A：經典番紅花暖奶油 (Canonical Saffron Cream Baseline) */
+    .theme-a {
+      --app-bg: #fdfae7;
+      --fridge-bg: #fdfae7;
+      --kitchen-bg: #fdfae7;
+      --header-bg: #fdfae7;
+      --cold-chamber-bg: #ffffff;
+      --cold-chamber-border: #ede7d5;
+      --cold-chamber-title: #1f1c1a;
+      --cold-tag-bg: #eef5f0;
+      --cold-tag-text: #386753;
+      --frozen-chamber-bg: #ffffff;
+      --frozen-chamber-border: #ede7d5;
+      --frozen-chamber-title: #1f1c1a;
+      --frozen-tag-bg: #f0f2f5;
+      --frozen-tag-text: #3d405b;
+      --urgent-bg: #fef8eb;
+      --urgent-border: #fde68a;
+      --urgent-title: #92400e;
+      --urgent-btn-bg: #386753;
+      --urgent-btn-text: #ffffff;
+      --tray-bg: #fffdfa;
+      --tray-border: #e07a5f;
+      --tray-badge-bg: #e07a5f;
+      --tray-badge-text: #ffffff;
+      --tray-accent-glow: rgba(56, 103, 83, 0.2);
+      --cookware-active-bg: #386753;
+      --cookware-active-border: #386753;
+      --cookware-active-text: #ffffff;
+      --cookware-active-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      --style-active-bg: #386753;
+      --style-active-text: #ffffff;
+      --generate-bar-bg: #ffffff;
+      --generate-bar-text: #1f1c1a;
+      --generate-btn-bg: #e07a5f;
+      --timer-card-bg: #293c4e;
+      --timer-digits-color: #ffffff;
+      --timer-accent: #f2cc8f;
+      --settle-btn-bg: #386753;
+      --card-border: #ede7d5;
+      --text-main: #1f1c1a;
+      --text-muted: #78716c;
+    }
+
+    /* 方案 C：沉穩工坊和風便當 (Artisan Workshop & Bento) */
+    .theme-c {
+      --app-bg: #f9f6f0;
+      --fridge-bg: #f9f6f0;              /* 沉靜淡木白 */
+      --kitchen-bg: #f9f6f0;
+      --header-bg: #f9f6f0;
+      --cold-chamber-bg: #ebf3ee;        /* 竹青綠 */
+      --cold-chamber-border: #d5e2d9;
+      --cold-chamber-title: #2d4a3e;
+      --cold-tag-bg: #dbe7df;
+      --cold-tag-text: #2d4a3e;
+      --frozen-chamber-bg: #ecf2f7;      /* 霜霧藍 */
+      --frozen-chamber-border: #cfdce6;
+      --frozen-chamber-title: #243746;
+      --frozen-tag-bg: #dfe9f0;
+      --frozen-tag-text: #243746;
+      --urgent-bg: #fdf2f0;              /* 印泥深紅警告 */
+      --urgent-border: #fca5a5;
+      --urgent-title: #b91c1c;
+      --urgent-btn-bg: #b91c1c;
+      --urgent-btn-text: #ffffff;
+      --tray-bg: #ffffff;
+      --tray-border: #3c2a21;            /* 胡桃深木色框 */
+      --tray-badge-bg: #3c2a21;
+      --tray-badge-text: #f5dfae;
+      --tray-accent-glow: rgba(60, 42, 33, 0.2);
+      --cookware-active-bg: #33373b;     /* 鑄鐵霧黑 */
+      --cookware-active-border: #52575c;
+      --cookware-active-text: #ffffff;
+      --cookware-active-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      --style-active-bg: #3c2a21;
+      --style-active-text: #ffffff;
+      --generate-bar-bg: #3c2a21;
+      --generate-bar-text: #ffffff;
+      --generate-btn-bg: #9a442d;
+      --timer-card-bg: #1f2421;          /* 炭墨灰 */
+      --timer-digits-color: #f5dfae;
+      --timer-accent: #c59b27;           /* 老金 */
+      --settle-btn-bg: #1e4a38;          /* 松葉深綠 */
+      --card-border: #e3dbcc;
+      --text-main: #1f1c1a;
+      --text-muted: #78716c;
+    }
+
+    /* 方案 D：清新小資快手活潑 (活力日常 · 冰箱對齊廚房湖水綠) */
+    .theme-d {
+      --app-bg: #fcfbf4;
+      --fridge-bg: #fcfbf4;              /* 透白米黃 */
+      --kitchen-bg: #fcfbf4;
+      --header-bg: #ffffff;
+      --cold-chamber-bg: #e6f5f4;        /* 對齊廚房：清爽湖水青襯底 */
+      --cold-chamber-border: #bce3df;    /* 對齊廚房：湖水綠細框 */
+      --cold-chamber-title: #1b6b61;     /* 對齊廚房：深湖水綠標題與圖示 */
+      --cold-tag-bg: #e0f2f1;            /* 對齊廚房：淡湖水青標籤底 */
+      --cold-tag-text: #2a9d8f;          /* 對齊廚房：經典湖水綠 #2a9d8f */
+      --frozen-chamber-bg: #edf2fb;      /* 天青冷藍 */
+      --frozen-chamber-border: #d7e3fc;
+      --frozen-chamber-title: #2a6f97;
+      --frozen-tag-bg: #e2eafc;
+      --frozen-tag-text: #2a6f97;
+      --urgent-bg: #fff3e6;              /* 暖杏橙 */
+      --urgent-border: #fed7aa;
+      --urgent-title: #c2410c;
+      --urgent-btn-bg: #ea580c;          /* 恢復專屬警戒暖橘（對齊截圖 #ec611d / #ea580c），維持即期急迫感與清晰階層 */
+      --urgent-btn-text: #ffffff;
+      --tray-bg: #ffffff;
+      --tray-border: #f4a261;            /* 溫暖琥珀橙框 */
+      --tray-badge-bg: #f4a261;
+      --tray-badge-text: #ffffff;
+      --tray-accent-glow: rgba(244, 162, 97, 0.25);
+      --cookware-active-bg: #e9c46a;     /* 暖陽蜂蜜黃 */
+      --cookware-active-border: #d4a373;
+      --cookware-active-text: #78350f;
+      --cookware-active-shadow: 0 2px 8px rgba(233,196,106,0.35);
+      --style-active-bg: #2a9d8f;        /* 廚房湖水綠 #2a9d8f (全域連動核心) */
+      --style-active-text: #ffffff;
+      --generate-bar-bg: #264653;
+      --generate-bar-text: #ffffff;
+      --generate-btn-bg: #e76f51;
+      --timer-card-bg: #264653;
+      --timer-digits-color: #ffffff;
+      --timer-accent: #f4a261;
+      --settle-btn-bg: #2a9d8f;          /* 完賽結算按鈕為湖水綠 */
+      --card-border: #eee8dd;
+      --text-main: #1f1c1a;
+      --text-muted: #78716c;
+    }
+
+    body {
+      font-family: "Plus Jakarta Sans", "Noto Sans TC", sans-serif;
+      background-color: #e5dfd2;
+      color: #1f1c1a;
+      -webkit-font-smoothing: antialiased;
+      transition: background-color 0.3s ease;
+    }
+
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .material-symbols-outlined.fill {
+      font-variation-settings: 'FILL' 1;
+    }
+
+    /* Mobile Frame */
+    .mobile-frame {
+      width: 100%;
+      max-width: 414px;
+      min-height: 860px;
+      color: var(--text-main);
+      border-radius: 40px;
+      box-shadow: 0 25px 60px -15px rgba(61, 64, 91, 0.22), 0 0 0 10px #221f1d;
+      overflow: hidden;
+      position: relative;
+      transition: background-color 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar {
+      height: 4px;
+      width: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f5f4ed;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #d5cdbd;
+      border-radius: 10px;
+    }
+
+    @keyframes trayPulse {
+      0% { transform: scale(1); box-shadow: 0 0 0 0 var(--tray-accent-glow); }
+      50% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(0, 0, 0, 0); }
+      100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 0, 0, 0); }
+    }
+    .tray-pulse {
+      animation: trayPulse 1.2s ease-out 2;
+    }
+
+    /* Cooking Mode Segments */
+    .cooking-progress-segment {
+      height: 4px;
+      flex: 1;
+      background-color: #e5e5e4;
+      border-radius: 9999px;
+      transition: all 0.3s ease;
+    }
+    .cooking-progress-segment.active {
+      background-color: var(--settle-btn-bg);
+    }
+  </style>
+</head>
+<body class="p-2 sm:p-5 flex flex-col items-center min-h-screen">
+
+  <!-- TOP HEADER & CONTROLS BAR -->
+  <header class="w-full max-w-5xl bg-white/95 backdrop-blur border border-stone-300 rounded-3xl p-4 sm:p-5 shadow-sm mb-4 transition-all">
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-2 mb-1">
+          <span class="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-[#9a442d] text-white font-black text-sm shadow-xs">C</span>
+          <h1 class="font-black text-base sm:text-xl text-stone-900 tracking-tight">冰箱 vs 廚房介面配色 · 4 套設計方案互動預覽</h1>
+          <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-900 border border-emerald-300">後端 MD 規範 100% 對齊</span>
+        </div>
+        <p class="text-xs text-stone-500 leading-relaxed max-w-3xl">
+          <strong>規範對齊依據</strong>：
+          <span class="text-[#386753] font-bold">visual-baseline.md</span>（Saffron Cream 基準）、
+          <span class="text-[#b91c1c] font-bold">finalized-motion-design-specs.md</span>（零 Emoji、曜石金質變按鈕、火候四階徽章、翡翠綠結算）、
+          <span class="text-[#b45309] font-bold">legacy-business-rules.md</span>（4°C 冷藏 / -18°C 冷凍 / 食安救援）。
+        </p>
+      </div>
+
+      <!-- PAGE TOGGLE CONTROLS (冰箱 / 廚房 / 並排) -->
+      <div class="flex items-center gap-2 bg-stone-100 p-1.5 rounded-2xl border border-stone-200 shrink-0 self-start lg:self-center">
+        <button id="btn-page-fridge" onclick="switchActivePage('fridge')" class="px-3 py-1.5 rounded-xl text-stone-500 hover:text-stone-800 font-bold text-xs flex items-center gap-1.5 transition-all">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+          <span>方向 A：冰箱</span>
+        </button>
+        <button id="btn-page-kitchen" onclick="switchActivePage('kitchen')" class="px-3 py-1.5 rounded-xl bg-white text-stone-900 font-black text-xs shadow-xs flex items-center gap-1.5 transition-all">
+          <svg class="w-3.5 h-3.5 text-[#e07a5f]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3z"/></svg>
+          <span>方向 B：小廚房</span>
+        </button>
+        <button id="btn-page-both" onclick="switchActivePage('both')" class="px-2.5 py-1.5 rounded-xl text-stone-400 hover:text-stone-700 font-bold text-xs flex items-center gap-1 transition-all" title="雙螢幕聯動比對">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="7" height="18" x="3" y="3" rx="1"/><rect width="7" height="18" x="14" y="3" rx="1"/></svg>
+          <span>並排比對</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ==================== THEME SELECTOR TOOLBAR (4 大方案即時切換) ==================== -->
+    <div class="mt-4 pt-3.5 border-t border-stone-200">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2.5">
+        <div class="flex items-center gap-2">
+          <span class="inline-flex items-center justify-center w-6 h-6 rounded-lg bg-stone-900 text-white text-xs font-black">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24"/><path d="m14.83 9.17 4.24-4.24"/><path d="m14.83 14.83 4.24 4.24"/><path d="m9.17 14.83-4.24 4.24"/></svg>
+          </span>
+          <span class="text-xs font-black text-stone-900">配色方案切換器（點選實時預覽）</span>
+          <span class="text-[10px] text-stone-400 font-mono">即時連動 CSS Variables</span>
+        </div>
+        <div class="flex items-center gap-1.5 text-xs font-bold text-stone-600">
+          <span>目前套用：</span>
+          <span id="active-theme-name" class="font-black text-[#e07a5f] bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+            方案 B：日式冷暖溫差雙態 (推薦)
+          </span>
+        </div>
+      </div>
+
+      <!-- 4 THEME CARDS -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-left">
+
+        <!-- Theme A -->
+        <button id="btn-theme-a" onclick="applyTheme('a')" class="theme-select-btn p-2.5 rounded-2xl border transition-all text-xs flex flex-col justify-between gap-1.5 border-stone-200 bg-white hover:border-stone-400">
+          <div class="flex items-center justify-between w-full">
+            <strong class="text-stone-800 text-xs font-black">方案 A：經典番紅花</strong>
+            <span class="text-[9px] px-1.5 py-0.2 rounded bg-stone-100 text-stone-600 font-bold">黃金基準</span>
+          </div>
+          <p class="text-[10px] text-stone-500 leading-tight">100% 貼合 visual-baseline.md，暖米白畫布與單一主色</p>
+          <div class="flex gap-1 items-center mt-1">
+            <span class="w-3.5 h-3.5 rounded-full border border-stone-300" style="background:#fdfae7" title="畫布 #fdfae7"></span>
+            <span class="w-3.5 h-3.5 rounded-full" style="background:#386753" title="冷藏 #386753"></span>
+            <span class="w-3.5 h-3.5 rounded-full" style="background:#3d405b" title="冷凍 #3d405b"></span>
+            <span class="w-3.5 h-3.5 rounded-full" style="background:#e07a5f" title="備料 #e07a5f"></span>
+            <span class="w-3.5 h-3.5 rounded-full" style="background:#9a442d" title="主色 #9a442d"></span>
+          </div>
+        </button>
+
+        <!-- Theme B -->
+        <button id="btn-theme-b" onclick="applyTheme('b')" class="theme-select-btn p-2.5 rounded-2xl border transition-all text-xs flex flex-col justify-between gap-1.5 border-stone-200 bg-white hover:border-stone-400">
+          <div class="flex items-center justify-between w-full">
+            <strong class="text-stone-800 text-xs font-black">方案 B：日式冷暖溫差</strong>
+            <span class="text-[9px] px-1.5 py-0.2 rounded bg-stone-100 text-stone-600 font-bold">雙溫對比</span>
+          </div>
+          <p class="text-[10px] text-stone-500 leading-tight">4°C 薄荷青 & -18°C 霜藍 vs 曜石金出餐台</p>
+          <div class="flex gap-1 items-center mt-1">
+            <span class="w-3.5 h-3.5 rounded-full border border-stone-300" style="background:#fbf9f2" title="冷米白 #fbf9f2"></span>
+            <span class="w-3.5 h-3.5 rounded-full" style="background:#224b3b" title="冷藏 #224b3b"></span>
+            <span class="w-3.5 h-3.5 rounded-full" style="background:#1e3a5f" title="冷凍 #1e3a5f"></span>
+            <span class="w-3.5 h-3.5 rounded-full" style="background:#242220" title="曜石黑 #242220"></span>
+            <span class="w-3.5 h-3.5 rounded-full" style="background:#f2cc8f" title="琥珀金 #f2cc8f"></span>
+            <span class="w-3.5 h-3.5 rounded-full" style="background:#2d6a4f" title="翡翠綠 #2d6a4f"></span>
+          </div>
+        </button>
+
+        <!-- Theme C -->
+        <button id="btn-theme-c" onclick="applyTheme('c')" class="theme-select-btn p-2.5 rounded-2xl border transition-all text-xs flex flex-col justify-between gap-1.5 border-stone-200 bg-white hover:border-stone-400">
+          <div class="flex items-center justify-between w-full">
+            <strong class="text-stone-800 text-xs font-black">方案 C：沉穩工坊和風</strong>
+            <span class="text-[9px] px-1.5 py-0.2 rounded bg-stone-100 text-stone-600 font-bold">職人便當</span>
+          </div>
+          <p class="text-[10px] text-stone-500 leading-tight">胡桃木深框、青苔竹青、雪松純墨墨流意象</p>
+          <div class="flex gap-1 items-center mt-1">
+            <span class="w-3.5 h-3.5 rounded-full border border-stone-300" style="background:#f9f6f0" title="淡木白 #f9f6f0"></span>
+            <span class="w-3.5 h-3.5 rounded-full" style="background:#2d4a3e" title="青苔綠 #2d4a3e"></span>
+            <span class="w-3.5 h-3.5 rounded-full" style="background:#243746" title="靛青藍 #243746"></span>
+            <span class="w-3.5 h-3.5 rounded-full" style="background:#3c2a21" title="胡桃木 #3c2a21"></span>
+            <span class="w-3.5 h-3.5 rounded-full" style="background:#c59b27" title="老金 #c59b27"></span>
+          </div>
+        </button>
+
+        <!-- Theme D (拍板採用 · 冰箱對齊廚房湖水綠) -->
+        <button id="btn-theme-d" onclick="applyTheme('d')" class="theme-select-btn p-2.5 rounded-2xl border-2 transition-all text-xs flex flex-col justify-between gap-1.5 border-[#2a9d8f] bg-[#f0fbf9] shadow-xs">
+          <div class="flex items-center justify-between w-full">
+            <strong class="text-stone-900 text-xs font-black">方案 D：清新小資快手</strong>
+            <span class="text-[9px] px-1.5 py-0.2 rounded bg-[#2a9d8f] text-white font-black">拍板採用</span>
+          </div>
+          <p class="text-[10px] text-stone-600 leading-tight">冰箱冷藏對齊廚房湖水綠 #2a9d8f，活力出餐無負擔</p>
+          <div class="flex gap-1 items-center mt-1">
+            <span class="w-3.5 h-3.5 rounded-full border border-stone-300" style="background:#fcfbf4" title="透白 #fcfbf4"></span>
+            <span class="w-3.5 h-3.5 rounded-full" style="background:#2a9d8f" title="湖水綠 #2a9d8f"></span>
+            <span class="w-3.5 h-3.5 rounded-full" style="background:#2a6f97" title="天晴藍 #2a6f97"></span>
+            <span class="w-3.5 h-3.5 rounded-full" style="background:#f4a261" title="杏橘 #f4a261"></span>
+            <span class="w-3.5 h-3.5 rounded-full" style="background:#e9c46a" title="蜂蜜金 #e9c46a"></span>
+          </div>
+        </button>
+      </div>
+
+      <!-- THEME SPEC HUD (方案即時色票規範說明面板) -->
+      <div id="theme-spec-hud" class="mt-3 p-3 rounded-2xl bg-stone-50 border border-stone-200 text-xs transition-all">
+        <!-- Dynamically rendered by JS -->
+      </div>
+    </div>
+
+    <!-- CONTRACT ACCORDION -->
+    <div class="mt-3 pt-2.5 border-t border-stone-200 flex items-center justify-between">
+      <div class="flex items-center gap-2 text-[11px] font-bold">
+        <span class="px-2 py-0.5 rounded-md bg-[#eef5f0] text-[#386753] border border-[#386753]/30">後端契約遵循狀態：100% 合規</span>
+        <span id="current-api-indicator" class="font-mono text-stone-600 bg-stone-100 px-2 py-0.5 rounded text-[10px]">待命：點選介面操作將觸發 API 模擬</span>
+      </div>
+      <button onclick="toggleContractDrawer()" class="text-xs font-bold text-[#e07a5f] hover:underline flex items-center gap-1">
+        <span id="drawer-toggle-text">展開查看 6 大後端對齊規則</span>
+        <span class="material-symbols-outlined text-sm">tune</span>
+      </button>
+    </div>
+
+    <div id="contract-drawer" class="hidden mt-3 grid grid-cols-1 md:grid-cols-3 gap-2.5 text-[11px] bg-[#fdfae7] p-3 rounded-2xl border border-[#ede7d5]">
+      <div class="space-y-1 bg-white p-2.5 rounded-xl border border-stone-200">
+        <strong class="text-[#386753] block">1. 廚具指定過濾 ➔ style 參數包裝</strong>
+        <p class="text-stone-500">點選「電鍋」時，送出 <code class="bg-stone-100 px-1 py-0.5 rounded text-[#9a442d]">style: "... (指定設備：電鍋)"</code>，100% 滿足 <code class="font-mono">RecipeGenerateSchema</code>。</p>
+      </div>
+      <div class="space-y-1 bg-white p-2.5 rounded-xl border border-stone-200">
+        <strong class="text-[#386753] block">2. 備料盤 ➔ 前端 Client-side State</strong>
+        <p class="text-stone-500">備料為臨時準備狀態，透過 LocalStorage 跨頁持久化，不額外污染後端資料庫。</p>
+      </div>
+      <div class="space-y-1 bg-white p-2.5 rounded-xl border border-stone-200">
+        <strong class="text-[#386753] block">3. 常備底料 ➔ 在庫扣庫 vs 輔料免扣庫</strong>
+        <p class="text-stone-500">在庫蛋/菜具備真實 UUID；未在庫的青蔥/白飯標註為常備輔料，僅作風味提示，避免核銷報錯。</p>
+      </div>
+      <div class="space-y-1 bg-white p-2.5 rounded-xl border border-stone-200">
+        <strong class="text-[#e07a5f] block">4. 料理結算 ➔ 唯一 completionKey</strong>
+        <p class="text-stone-500">進入 CookingMode 手肘按鈕導引，結算時本人親自確認外食差額，符合 CONTEXT.md 防重複入帳。</p>
+      </div>
+      <div class="space-y-1 bg-white p-2.5 rounded-xl border border-stone-200">
+        <strong class="text-[#e07a5f] block">5. 食安救援 ➔ SafetyModal 檢核</strong>
+        <p class="text-stone-500">執行分裝冷凍時，強制勾選無酸腐發霉，呼叫 <code class="font-mono">POST /inventory/:id/rescue</code> 延長 14 天。</p>
+      </div>
+      <div class="space-y-1 bg-white p-2.5 rounded-xl border border-stone-200">
+        <strong class="text-[#e07a5f] block">6. 冰箱容積 ➔ boxSize 動態計算公式</strong>
+        <p class="text-stone-500">動態加總 S=1L, M=2.5L, L=5L，即時計算 130L 佔比與進度條，無需後端修改。</p>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== CONTAINER FOR MOBILE FRAMES ==================== -->
+  <div id="frames-wrapper" class="flex flex-col md:flex-row items-center justify-center gap-6 w-full max-w-5xl">
+
+    <!-- ==================== PHONE 1: FRIDGE PAGE (DIRECTION A) ==================== -->
+    <div id="frame-fridge" class="mobile-frame flex flex-col" style="background-color: var(--fridge-bg);">
+      <!-- HEADER -->
+      <header class="sticky top-0 z-40 border-b px-4 py-2.5 flex items-center justify-between shadow-2xs transition-colors" style="background-color: var(--header-bg); border-color: var(--card-border);">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-2xl" style="color: var(--cold-tag-text);">kitchen</span>
+          <h1 class="whitespace-nowrap text-base font-extrabold tracking-wide text-stone-900">
+            CooCoo 煮煮
+          </h1>
+        </div>
+        <div class="flex items-center gap-1.5 text-xs font-bold">
+          <span class="w-2 h-2 rounded-full" style="background-color: var(--cold-tag-text);"></span>
+          <span class="text-[11px] text-stone-500">冰箱沙漏 · 庫存管理</span>
+        </div>
+      </header>
+
+      <!-- FRIDGE MAIN CONTENT -->
+      <main class="flex-1 overflow-y-auto px-4 py-4 space-y-4 pb-24">
+
+        <!-- 冰箱動態容量計算卡 (規則 6) -->
+        <section class="rounded-2xl border bg-white p-3.5 space-y-2 shadow-2xs transition-all" style="border-color: var(--card-border);">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <div class="w-9 h-9 rounded-full flex items-center justify-center" style="background-color: var(--cold-tag-bg); color: var(--cold-tag-text);">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+              </div>
+              <div>
+                <h3 class="text-xs font-black text-stone-900">雙門小冰箱 (130L)</h3>
+                <p class="text-[10px] text-stone-500" id="fridge-capacity-text">加總計算中...</p>
+              </div>
+            </div>
+            <span class="px-2 py-0.5 rounded-full border text-[10px] font-bold" id="fridge-capacity-percent-badge" style="background-color: var(--cold-tag-bg); border-color: var(--cold-chamber-border); color: var(--cold-tag-text);">
+              8% 佔比
+            </span>
+          </div>
+          <!-- 容積進度條 -->
+          <div class="w-full bg-stone-100 rounded-full h-2 overflow-hidden">
+            <div id="fridge-capacity-bar" class="h-full rounded-full transition-all duration-500" style="width: 8%; background-color: var(--cold-tag-text);"></div>
+          </div>
+        </section>
+
+        <!-- 即期食材緊急警報區 -->
+        <section id="fridge-urgent-section" class="rounded-3xl border p-3.5 space-y-2 shadow-2xs transition-all" style="background-color: var(--urgent-bg); border-color: var(--urgent-border);">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
+              <h3 class="text-xs font-black" id="urgent-title" style="color: var(--urgent-title);">保鮮沙漏警報：即期推薦</h3>
+            </div>
+            <span class="text-[10px] font-bold" id="urgent-saving-hint" style="color: var(--urgent-title);">預估挽回 NT$ 95</span>
+          </div>
+          <p class="text-[10px] text-stone-600 leading-relaxed" id="urgent-desc">
+            牛番茄、板豆腐即將過黃金賞味期，建議優先帶入小廚房備料盤出餐！
+          </p>
+          <button onclick="sendAllUrgentToKitchen()" class="w-full py-2 rounded-xl text-xs font-black shadow-xs flex items-center justify-center gap-1.5 transition-all active:scale-[0.98]" style="background-color: var(--urgent-btn-bg); color: var(--urgent-btn-text);">
+            <span>一鍵將即期品帶入小廚房備料盤</span>
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+          </button>
+        </section>
+
+        <!-- 溫層 1：冷藏室庫存列表 (4°C) -->
+        <section class="space-y-2.5 rounded-3xl p-3 border transition-all" style="background-color: var(--cold-chamber-bg); border-color: var(--cold-chamber-border);">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-sm" style="color: var(--cold-chamber-title);">ac_unit</span>
+              <h4 class="text-xs font-black" style="color: var(--cold-chamber-title);">冷藏室 (4°C)</h4>
+            </div>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full" id="cold-chamber-count" style="background-color: var(--cold-tag-bg); color: var(--cold-tag-text);">
+              4 項在庫
+            </span>
+          </div>
+
+          <div class="space-y-2" id="cold-inventory-list">
+            <!-- Dynamically rendered from mockAppState -->
+          </div>
+        </section>
+
+        <!-- 溫層 2：冷凍庫庫存列表 (-18°C) -->
+        <section class="space-y-2.5 rounded-3xl p-3 border transition-all" style="background-color: var(--frozen-chamber-bg); border-color: var(--frozen-chamber-border);">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-sm" style="color: var(--frozen-chamber-title);">severe_cold</span>
+              <h4 class="text-xs font-black" style="color: var(--frozen-chamber-title);">冷凍庫 (-18°C)</h4>
+            </div>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full" id="frozen-chamber-count" style="background-color: var(--frozen-tag-bg); color: var(--frozen-tag-text);">
+              1 項在庫
+            </span>
+          </div>
+
+          <div class="space-y-2" id="frozen-inventory-list">
+            <!-- Dynamically rendered from mockAppState -->
+          </div>
+        </section>
+
+        <!-- 救援中心：專注食安與分裝冷凍 (規則 5) -->
+        <section class="rounded-3xl border bg-white p-3.5 space-y-2 shadow-2xs transition-all" style="border-color: var(--card-border);">
+          <div class="flex items-center justify-between">
+            <h4 class="text-xs font-black text-stone-800 flex items-center gap-1">
+              <span class="material-symbols-outlined text-sm text-[#e07a5f]">health_and_safety</span>
+              食安與延展保存中心
+            </h4>
+            <span class="text-[10px] text-stone-400 font-mono">POST /inventory/:id/rescue</span>
+          </div>
+          <p class="text-[10px] text-stone-500 leading-relaxed">
+            今天吃不完？點選即期食材執行<strong>「分裝冷凍」</strong>延長 14 天保存期，或檢核氣味進行過期處置。
+          </p>
+          <div class="flex gap-2 pt-1" id="rescue-action-triggers">
+            <button onclick="triggerRescueForItem('inv-tomato-01', 'preserve')" class="flex-1 py-2 rounded-xl border border-stone-200 bg-stone-50 text-stone-700 text-[11px] font-bold hover:bg-stone-100 transition-all">
+              牛番茄 · 分裝冷凍 (+14天)
+            </button>
+            <button onclick="triggerRescueForItem('inv-tofu-02', 'discard')" class="px-3 py-2 rounded-xl border border-red-200 bg-red-50 text-red-700 text-[11px] font-bold hover:bg-red-100 transition-all">
+              板豆腐 · 丟棄
+            </button>
+          </div>
+        </section>
+
+      </main>
+
+      <!-- BOTTOM NAV -->
+      <nav class="absolute bottom-0 inset-x-0 bg-white border-t py-1.5 px-2 flex justify-around items-center z-40" style="border-color: var(--card-border);">
+        <div class="flex flex-col items-center text-[10px] font-bold text-stone-400">
+          <span class="material-symbols-outlined text-xl">today</span>
+          <span>今日</span>
+        </div>
+        <div class="flex flex-col items-center text-[10px] font-black" style="color: var(--cold-tag-text);">
+          <span class="material-symbols-outlined text-xl fill" style="color: var(--cold-tag-text);">kitchen</span>
+          <span>冰箱庫存</span>
+        </div>
+        <div onclick="switchActivePage('kitchen')" class="cursor-pointer flex flex-col items-center text-[10px] font-bold text-stone-400 hover:text-[#e07a5f]">
+          <span class="material-symbols-outlined text-xl">soup_kitchen</span>
+          <span>小廚房</span>
+        </div>
+        <div class="flex flex-col items-center text-[10px] font-bold text-stone-400">
+          <span class="material-symbols-outlined text-xl">shopping_cart</span>
+          <span>補買</span>
+        </div>
+        <div class="flex flex-col items-center text-[10px] font-bold text-stone-400">
+          <span class="material-symbols-outlined text-xl">savings</span>
+          <span>圓夢</span>
+        </div>
+      </nav>
+    </div>
+
+    <!-- ==================== PHONE 2: KITCHEN PAGE (DIRECTION B) ==================== -->
+    <div id="frame-kitchen" class="mobile-frame flex flex-col" style="background-color: var(--kitchen-bg);">
+      <!-- HEADER -->
+      <header class="sticky top-0 z-40 border-b px-4 py-2.5 flex items-center justify-between shadow-2xs transition-colors" style="background-color: var(--header-bg); border-color: var(--tray-border);">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-2xl" style="color: var(--tray-border);">blender</span>
+          <h1 class="whitespace-nowrap text-base font-extrabold tracking-wide text-stone-900">
+            CooCoo 煮煮 · 小廚房
+          </h1>
+        </div>
+        <div class="flex items-center gap-1.5 text-xs font-bold">
+          <span class="w-2 h-2 rounded-full" style="background-color: var(--tray-border);"></span>
+          <span class="text-[11px] text-stone-500">出餐工作台</span>
+        </div>
+      </header>
+
+      <!-- KITCHEN NORMAL VIEW -->
+      <main id="kitchen-normal-view" class="flex-1 overflow-y-auto px-4 py-4 space-y-4 pb-28">
+
+        <!-- 區塊一：食譜庫推薦區 -->
+        <section class="rounded-3xl bg-white border p-3.5 space-y-2.5 shadow-xs transition-all" style="border-color: var(--card-border);">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-lg" style="color: var(--tray-border);">menu_book</span>
+              <h3 class="text-xs font-black text-stone-900">食譜庫推薦</h3>
+            </div>
+            <span class="px-2.5 py-0.5 rounded-full border text-[10px] font-bold" style="background-color: var(--app-bg); border-color: var(--card-border); color: var(--text-main);">
+              零浪費推薦
+            </span>
+          </div>
+          <div class="flex gap-2">
+            <button class="flex-1 py-1.5 px-2.5 rounded-xl text-white text-xs font-black shadow-xs transition-all" style="background-color: var(--style-active-bg);">現有庫存 (0元)</button>
+            <button class="flex-1 py-1.5 px-2.5 rounded-xl border border-stone-200 bg-stone-50 text-stone-600 text-xs font-bold">少量補買</button>
+          </div>
+        </section>
+
+        <!-- 區塊二：料理風格挑選 -->
+        <section class="space-y-1.5">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-black uppercase tracking-wider text-stone-500">1. 選擇料理風格</h3>
+            <span class="text-[10px] font-bold text-stone-400">風味導引</span>
+          </div>
+          <div class="flex gap-1.5 overflow-x-auto pb-1 custom-scrollbar" id="style-container">
+            <!-- Populated in JS to support dynamic active style -->
+          </div>
+        </section>
+
+        <!-- 區塊三：指定烹調設備 (規則 1：轉譯為 style 參數) -->
+        <section class="space-y-1.5">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-black uppercase tracking-wider text-stone-500">2. 指定烹調設備 (攤開點選)</h3>
+            <span class="text-[10px] font-bold" style="color: var(--tray-border);">自備 6 項裝備</span>
+          </div>
+          <div class="flex flex-wrap gap-1.5" id="cookware-container">
+            <!-- Populated in JS to support dynamic active cookware -->
+          </div>
+          <!-- 即時連動回饋小貼士 -->
+          <div class="text-[10px] text-stone-600 bg-white border rounded-xl px-2.5 py-1.5 flex items-center justify-between transition-all" style="border-color: var(--card-border);">
+            <span id="cookware-hint-text">智慧配對：依備料盤食材特性自動選配最適爐具</span>
+            <span id="cookware-tag-badge" class="font-black text-[9px] bg-stone-100 px-1.5 py-0.5 rounded border" style="color: var(--tray-border); border-color: var(--card-border);">不限設備</span>
+          </div>
+        </section>
+
+        <!-- 區塊四：今日出餐備料盤 (Prep Tray · Mise en place) -->
+        <section id="prep-tray-section" class="rounded-3xl border-2 p-4 space-y-3 shadow-xs transition-all" style="background-color: var(--tray-bg); border-color: var(--tray-border);">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="w-6 h-6 rounded-lg text-white flex items-center justify-center font-black text-xs shadow-2xs" style="background-color: var(--tray-badge-bg); color: var(--tray-badge-text);">
+                盤
+              </span>
+              <div>
+                <h3 class="text-sm font-black text-stone-900">3. 今日出餐備料盤</h3>
+                <span class="text-[10px] font-bold" style="color: var(--tray-border);">本地暫存 Client-State · 具備真實庫存 UUID</span>
+              </div>
+            </div>
+            <span id="tray-item-count" class="text-xs font-black px-2 py-0.5 rounded-full border bg-white" style="color: var(--tray-border); border-color: var(--tray-border);">
+              已備 2 項
+            </span>
+          </div>
+
+          <p class="text-[11px] text-stone-600 leading-relaxed">
+            來自<strong>冰箱即期推薦</strong>或手動挑選的食材（出餐將自動扣減庫存）：
+          </p>
+
+          <!-- 備料盤內的食材清單 -->
+          <div id="prep-tray-items" class="space-y-2">
+            <!-- Dynamically populated from mockAppState.prepTrayItemIds -->
+          </div>
+
+          <!-- 常備風味輔料標籤（免扣庫調味提示） -->
+          <div id="flavor-tags-row" class="hidden pt-1 border-t border-stone-200 flex flex-wrap gap-1.5 items-center">
+            <span class="text-[10px] font-bold text-stone-500">常備輔料：</span>
+            <div id="flavor-tags-container" class="flex flex-wrap gap-1"></div>
+          </div>
+        </section>
+
+        <!-- 區塊五：常備底料快捷點選（規則 3：區分在庫扣庫 vs 免扣庫輔料） -->
+        <section class="space-y-2">
+          <div class="flex items-center justify-between">
+            <h4 class="text-xs font-black text-stone-700">快捷加料（在庫實體 vs 常備輔料）</h4>
+            <span class="text-[10px] text-stone-400">合規防呆處理</span>
+          </div>
+          <div class="flex flex-wrap gap-1.5" id="pantry-chips-container">
+            <!-- Dynamically rendered -->
+          </div>
+          <p class="text-[9px] text-stone-400 leading-normal">
+            * 綠標代表冰箱在庫食材，出餐自動扣庫；灰標為常備輔料，僅提示風味，不傳入扣庫 UUID。
+          </p>
+        </section>
+
+      </main>
+
+      <!-- KITCHEN COOKING MODE VIEW (STEP BY STEP · 肘部友善大按鈕) -->
+      <div id="kitchen-cooking-view" class="hidden flex-1 flex flex-col p-4 space-y-4 pb-12 transition-colors" style="background-color: var(--kitchen-bg);">
+        <!-- COOKING HEADER -->
+        <div class="flex items-center justify-between border-b pb-3" style="border-color: var(--card-border);">
+          <button onclick="exitCookingMode()" class="w-8 h-8 rounded-full bg-white text-stone-600 flex items-center justify-center border shadow-xs hover:bg-stone-100 transition-all" style="border-color: var(--card-border);">
+            <span class="material-symbols-outlined text-lg">arrow_back</span>
+          </button>
+          <div class="text-center">
+            <span class="text-[10px] font-bold text-stone-400" id="cooking-mode-subtitle">電鍋蒸煮 · 日式和風</span>
+            <h3 class="text-xs font-black text-stone-900" id="cooking-mode-title">電鍋蒸牛番茄板豆腐</h3>
+          </div>
+          <span class="text-xs font-mono font-black" style="color: var(--tray-border);" id="cooking-step-counter">步驟 1 / 3</span>
+        </div>
+
+        <!-- PROGRESS SEGMENTS -->
+        <div class="flex gap-1.5" id="cooking-progress-segments">
+          <div class="cooking-progress-segment active"></div>
+          <div class="cooking-progress-segment"></div>
+          <div class="cooking-progress-segment"></div>
+        </div>
+
+        <!-- STEP CONTENT CARD -->
+        <div class="flex-1 flex flex-col justify-between space-y-3">
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-black tracking-wider text-white px-2.5 py-0.5 rounded-lg font-mono shadow-xs" style="background-color: var(--cookware-active-bg); border: 1px solid var(--cookware-active-border);" id="step-order-badge">STEP 01</span>
+              <!-- 火候徽章（嚴格符合 Motion Specs 第 13 條） -->
+              <span class="px-2.5 py-0.5 rounded-full border text-[10px] font-bold flex items-center gap-1 bg-[#feece7] text-[#9a442d] border-[#fbd4c8]" id="step-heat-badge">
+                <span class="material-symbols-outlined text-xs">local_fire_department</span>
+                <span id="step-heat-text">微火燜蒸</span>
+              </span>
+            </div>
+
+            <div class="rounded-3xl bg-white border p-4 shadow-sm" style="border-color: var(--card-border);">
+              <h2 class="text-sm font-black text-stone-900 leading-relaxed" id="step-instruction-text">
+                將牛番茄與板豆腐依序切厚塊，排入耐熱蒸碗中。
+              </h2>
+            </div>
+
+            <!-- STEP INGREDIENTS -->
+            <div class="rounded-2xl border bg-white p-3 shadow-2xs" style="border-color: var(--card-border);">
+              <span class="text-[10px] font-bold text-stone-500 block mb-1.5">本步驟投入食材：</span>
+              <div class="flex flex-wrap gap-1.5" id="step-ingredients-pills">
+                <span class="px-2 py-0.5 rounded-lg bg-stone-50 border border-stone-200 text-stone-800 text-[11px] font-bold font-mono">牛番茄 2 顆</span>
+                <span class="px-2 py-0.5 rounded-lg bg-stone-50 border border-stone-200 text-stone-800 text-[11px] font-bold font-mono">板豆腐 1 盒</span>
+              </div>
+            </div>
+
+            <!-- STEP COUNTDOWN TIMER (黑曜石/板岩深藍卡片 + 琥珀金標籤) -->
+            <div class="rounded-2xl p-3 flex items-center justify-between shadow-md transition-all" style="background-color: var(--timer-card-bg);">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold" style="background-color: rgba(255,255,255,0.12); color: var(--timer-accent);">
+                  <span class="material-symbols-outlined text-base">timer</span>
+                </div>
+                <div>
+                  <span class="text-[9px] font-bold block uppercase tracking-wider" style="color: var(--timer-accent);">步驟計時器</span>
+                  <span class="text-lg font-black font-mono" id="timer-digits" style="color: var(--timer-digits-color);">15:00</span>
+                </div>
+              </div>
+              <button onclick="toggleStepTimer()" class="px-3.5 py-1.5 rounded-xl text-xs font-black shadow-xs active:scale-95 transition-all" id="timer-btn" style="background-color: var(--timer-accent); color: #1e293b;">
+                開始計時
+              </button>
+            </div>
+
+            <!-- CHEF TIP -->
+            <div class="rounded-2xl bg-amber-50 border border-amber-200 p-2.5 text-[10px] text-amber-900 leading-relaxed">
+              <strong>大廚秘訣：</strong>
+              <span id="chef-tip-text">番茄紅素是脂溶性營養素，熱氣燜蒸更能釋放自然清甜，湯頭鮮甜醇厚！</span>
+            </div>
+          </div>
+
+          <!-- ELBOW FRIENDLY LARGE BUTTONS (手肘友善大按鈕) -->
+          <div class="space-y-2 pt-2">
+            <div class="flex gap-2">
+              <button onclick="prevCookingStep()" id="btn-prev-step" class="flex-1 py-3 rounded-2xl border-2 border-stone-300 bg-white text-stone-700 text-xs font-black transition-all active:scale-95 disabled:opacity-30">
+                上一步
+              </button>
+              <button onclick="nextCookingStep()" id="btn-next-step" class="flex-1 py-3 rounded-2xl text-white text-xs font-black shadow-md transition-all active:scale-95" style="background-color: var(--cookware-active-bg); border: 1px solid var(--cookware-active-border);">
+                下一步
+              </button>
+            </div>
+            <p class="text-[9px] text-stone-400 text-center">
+              手沾滿水或油？可用手腕、手背或手肘輕壓大按鈕前進
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- FLOATING ACTION BAR (NORMAL VIEW ONLY) -->
+      <div id="kitchen-floating-bar" class="absolute bottom-16 left-3 right-3 z-30 rounded-2xl p-3 flex items-center justify-between shadow-xl border transition-all" style="background-color: var(--generate-bar-bg); color: var(--generate-bar-text); border-color: var(--card-border);">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-xl flex items-center justify-center" style="background-color: rgba(255,255,255,0.15); color: var(--timer-accent);">
+            <span class="material-symbols-outlined text-lg">auto_awesome</span>
+          </div>
+          <div>
+            <h4 class="text-xs font-black">AI 備菜出餐就緒</h4>
+            <p class="text-[10px] opacity-80 truncate max-w-[170px]" id="floating-tray-summary">牛番茄 + 板豆腐</p>
+          </div>
+        </div>
+        <button onclick="startCookingFlow()" class="rounded-xl px-4 py-2 text-xs font-black text-white shadow-md transition-all active:scale-95" style="background-color: var(--generate-btn-bg);">
+          開始料理
+        </button>
+      </div>
+
+      <!-- BOTTOM NAV -->
+      <nav id="kitchen-bottom-nav" class="absolute bottom-0 inset-x-0 bg-white border-t py-1.5 px-2 flex justify-around items-center z-40" style="border-color: var(--card-border);">
+        <div class="flex flex-col items-center text-[10px] font-bold text-stone-400">
+          <span class="material-symbols-outlined text-xl">today</span>
+          <span>今日</span>
+        </div>
+        <div onclick="switchActivePage('fridge')" class="cursor-pointer flex flex-col items-center text-[10px] font-bold text-stone-400 hover:text-[#386753]">
+          <span class="material-symbols-outlined text-xl">kitchen</span>
+          <span>冰箱庫存</span>
+        </div>
+        <div class="flex flex-col items-center text-[10px] font-black" style="color: var(--tray-border);">
+          <span class="material-symbols-outlined text-xl fill" style="color: var(--tray-border);">soup_kitchen</span>
+          <span>小廚房</span>
+        </div>
+        <div class="flex flex-col items-center text-[10px] font-bold text-stone-400">
+          <span class="material-symbols-outlined text-xl">shopping_cart</span>
+          <span>補買</span>
+        </div>
+        <div class="flex flex-col items-center text-[10px] font-bold text-stone-400">
+          <span class="material-symbols-outlined text-xl">savings</span>
+          <span>圓夢</span>
+        </div>
+      </nav>
+    </div>
+
+  </div>
+
+  <!-- ==================== MODAL 1: SAFETY RESCUE MODAL (後端規範 5) ==================== -->
+  <div id="safety-rescue-modal" class="fixed inset-0 z-50 bg-stone-900/60 backdrop-blur-xs hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-5 space-y-4 shadow-2xl border" style="border-color: var(--card-border);">
+      <div class="flex items-start justify-between">
+        <div>
+          <span class="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full border" style="background-color: var(--cold-tag-bg); color: var(--cold-tag-text); border-color: var(--cold-chamber-border);">
+            食安救援 · getRescuePlan
+          </span>
+          <h3 class="text-base font-black text-stone-900 mt-1" id="safety-modal-title">
+            牛番茄 · 分裝冷凍保存
+          </h3>
+        </div>
+        <button onclick="closeSafetyModal()" class="w-8 h-8 rounded-full bg-stone-100 text-stone-400 hover:text-stone-700 flex items-center justify-center">
+          <span class="material-symbols-outlined text-lg">close</span>
+        </button>
+      </div>
+
+      <!-- 轉化規格 -->
+      <div class="rounded-2xl border p-3 space-y-1.5 text-xs" style="background-color: var(--cold-chamber-bg); border-color: var(--cold-chamber-border);">
+        <div class="flex items-center justify-between">
+          <span class="text-stone-500 font-bold">轉化為</span>
+          <strong class="text-stone-900" id="safety-target-name">牛番茄冷凍備料包</strong>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-stone-500 font-bold">分裝份數</span>
+          <strong class="text-stone-900" id="safety-target-packages">2 包</strong>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-stone-500 font-bold">效期延展</span>
+          <strong style="color: var(--cold-tag-text);">+14 天 (移入冷凍庫)</strong>
+        </div>
+      </div>
+
+      <!-- 食安檢核勾選 (不可違反規則) -->
+      <div class="rounded-2xl bg-amber-50 border border-amber-200 p-3 space-y-2 text-xs text-amber-900">
+        <span class="font-bold block text-[11px]">食安不可違反檢核門檻：</span>
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" id="check-safety-odor" onchange="validateSafetyChecks()" class="w-4 h-4 rounded text-emerald-700 focus:ring-0">
+          <span>氣味正常無酸敗異味</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" id="check-safety-mold" onchange="validateSafetyChecks()" class="w-4 h-4 rounded text-emerald-700 focus:ring-0">
+          <span>外觀完整無發霉變質斑點</span>
+        </label>
+      </div>
+
+      <div class="flex gap-2 pt-1">
+        <button onclick="closeSafetyModal()" class="flex-1 py-2.5 rounded-xl border border-stone-200 bg-stone-50 text-stone-600 text-xs font-bold hover:bg-stone-100">
+          取消
+        </button>
+        <button id="btn-confirm-rescue" onclick="executeSafetyRescue()" disabled class="flex-1 py-2.5 rounded-xl text-white text-xs font-black shadow-md disabled:opacity-40 disabled:cursor-not-allowed transition-all" style="background-color: var(--cold-tag-text);">
+          確認分裝冷凍
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 2: FINANCIAL SETTLEMENT MODAL (後端規範 4) ==================== -->
+  <div id="cooking-settlement-modal" class="fixed inset-0 z-50 bg-stone-900/60 backdrop-blur-xs hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-5 space-y-4 shadow-2xl border" style="border-color: var(--card-border);">
+      <div class="flex items-start justify-between">
+        <div>
+          <span class="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full border" style="background-color: #fef2f2; color: #e07a5f; border-color: rgba(224,122,95,0.3);">
+            料理核銷與圓夢結算
+          </span>
+          <h3 class="text-base font-black text-stone-900 mt-1">
+            確認自煮差額並存入圓夢
+          </h3>
+        </div>
+        <button onclick="closeSettlementModal()" class="w-8 h-8 rounded-full bg-stone-100 text-stone-400 hover:text-stone-700 flex items-center justify-center">
+          <span class="material-symbols-outlined text-lg">close</span>
+        </button>
+      </div>
+
+      <!-- 財務試算表 (CONTEXT.md 規則 11 & 12) -->
+      <div class="rounded-2xl border p-3 space-y-2 text-xs" style="background-color: var(--app-bg); border-color: var(--card-border);">
+        <div class="flex items-center justify-between">
+          <span class="text-stone-500 font-bold">本人外食比較價</span>
+          <span class="font-bold text-stone-800">NT$ 180 /餐</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-stone-500 font-bold">本餐自煮食材成本</span>
+          <span class="font-bold text-[#e07a5f]">- NT$ 45</span>
+        </div>
+        <div class="flex items-center justify-between pt-1 border-t" style="border-color: var(--card-border);">
+          <span class="text-stone-700 font-black">最高可省下金額</span>
+          <span class="text-base font-black" style="color: var(--settle-btn-bg);">NT$ 135</span>
+        </div>
+      </div>
+
+      <!-- 存入金額輸入框 -->
+      <div class="space-y-1.5">
+        <label class="text-xs font-bold text-stone-700 flex items-center justify-between">
+          <span>確認入帳金額 (不可大於差額)</span>
+          <span class="text-[10px] text-stone-400">NT$</span>
+        </label>
+        <input type="number" id="deposit-amount-input" value="135" min="0" max="135" class="w-full rounded-xl border border-stone-300 px-3 py-2 text-sm font-black text-stone-900 focus:outline-none focus:ring-2 focus:ring-emerald-600">
+      </div>
+
+      <!-- 健康指標 (規則 6：不推算鈉脂) -->
+      <div class="rounded-xl bg-stone-50 border border-stone-200 p-2.5 text-[10px] text-stone-600 flex items-center justify-between">
+        <span>蔬菜習慣成果：自煮吃了 1 餐、1 種蔬菜</span>
+        <span class="font-bold text-emerald-700">健康累計 +1</span>
+      </div>
+
+      <!-- 防重複防呆碼 -->
+      <p class="text-[9px] font-mono text-stone-400">
+        唯一操作防重碼: <span id="completion-key-display">op-20260909-xxxx</span>
+      </p>
+
+      <div class="flex gap-2 pt-1">
+        <button onclick="closeSettlementModal()" class="flex-1 py-2.5 rounded-xl border border-stone-200 bg-stone-50 text-stone-600 text-xs font-bold hover:bg-stone-100">
+          返回料理
+        </button>
+        <button onclick="confirmAndExecuteSettlement()" class="flex-1 py-2.5 rounded-xl text-white text-xs font-black shadow-md transition-all active:scale-95" style="background-color: var(--settle-btn-bg);">
+          確認存入圓夢基金
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LIVE API ACTIVITY TOAST (底層即時日誌) -->
+  <div id="api-activity-toast" class="fixed bottom-4 right-4 z-50 bg-stone-900/90 backdrop-blur-md text-white px-4 py-2.5 rounded-2xl shadow-xl border border-stone-700 text-xs font-mono hidden flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2">
+    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+    <span id="api-activity-text">POST /api/v1/recipes/generate 200 OK</span>
+  </div>
+
+  <!-- ==================== JAVASCRIPT LOGIC ==================== -->
+  <script>
+    // 1. Mock AppState (完全對齊 packages/contracts/src/index.ts)
+    const mockAppState = {
+      fridgeProfile: {
+        brand: "Panasonic",
+        model: "NR-B139T",
+        capacityLiters: 130,
+        coldRatio: 0.7,
+        isConfigured: true
+      },
+      outsideMealComparisonPrice: 180,
+      homeCookBudget: 45,
+      dreamSaved: 1240,
+      inventory: [
+        {
+          id: "inv-tomato-01",
+          name: "牛番茄",
+          chamber: "cold",
+          qty: 2,
+          unit: "顆",
+          daysLeft: 3,
+          boxSize: "M", // 2.5L
+          category: "melon",
+          roi: { savings: 60, sodium: 0, fat: 0 }
+        },
+        {
+          id: "inv-tofu-02",
+          name: "板豆腐",
+          chamber: "cold",
+          qty: 1,
+          unit: "盒",
+          daysLeft: 2,
+          boxSize: "M", // 2.5L
+          category: "bean",
+          roi: { savings: 35, sodium: 0, fat: 0 }
+        },
+        {
+          id: "inv-egg-03",
+          name: "洗選雞蛋",
+          chamber: "cold",
+          qty: 6,
+          unit: "顆",
+          daysLeft: 10,
+          boxSize: "S", // 1.0L
+          category: "egg",
+          roi: { savings: 48, sodium: 0, fat: 0 }
+        },
+        {
+          id: "inv-cabbage-04",
+          name: "高麗菜",
+          chamber: "cold",
+          qty: 0.5,
+          unit: "顆",
+          daysLeft: 5,
+          boxSize: "L", // 5.0L
+          category: "leafy",
+          roi: { savings: 40, sodium: 0, fat: 0 }
+        },
+        {
+          id: "inv-pork-05",
+          name: "豬梅花肉片",
+          chamber: "frozen",
+          qty: 1,
+          unit: "盒",
+          daysLeft: 25,
+          boxSize: "M", // 2.5L
+          category: "meat",
+          roi: { savings: 95, sodium: 0, fat: 0 }
+        }
+      ],
+      prepTrayItemIds: ["inv-tomato-01", "inv-tofu-02"], // Client-state
+      flavorPantryItems: [] // Garnish virtual tags: e.g. "青蔥", "白飯"
+    };
+
+    let activePage = 'kitchen'; // 'fridge' | 'kitchen' | 'both'
+    let currentTheme = 'b';      // 'a' | 'b' | 'c' | 'd'
+    let selectedCookware = '全部設備';
+    let selectedStyle = 'AI 自由發揮';
+    let currentStepIdx = 0;
+    let timerInterval = null;
+    let secondsLeft = 900;
+    let timerRunning = false;
+    let currentRescueTarget = null;
+
+    // Theme Specifications & Metadata
+    const themeMetadata = {
+      a: {
+        name: "方案 A：經典番紅花暖奶油 (黃金基準)",
+        desc: "嚴格對齊 docs/migration/visual-baseline.md 與 tailwind.config.js，全站維持暖米白畫布，以鼠尾草綠與陶土橘收斂點綴。",
+        alignments: [
+          "visual-baseline.md：100% 遵守 saffron_cream_style 基準與 #fdfae7 畫布",
+          "tailwind.config.js：primary #9a442d, terracotta #e07a5f, secondary #386753",
+          "雙頁溫差感知：藉由組件配置區隔，底色維持單一暖色調"
+        ],
+        tokens: {
+          canvas: "#fdfae7",
+          coldCard: "#ffffff (標籤 #eef5f0 / #386753)",
+          frozenCard: "#ffffff (標籤 #f0f2f5 / #3d405b)",
+          urgent: "#fef8eb / #d95d39",
+          prepTray: "#fffdfa / 框 #e07a5f",
+          cookwareActive: "#386753 (鼠尾草綠實心)",
+          timer: "#293c4e (深板岩藍) + #f2cc8f (金字)",
+          settle: "#386753 (鼠尾草綠)"
+        }
+      },
+      b: {
+        name: "方案 B：日式冷暖溫差雙態 (推薦方案)",
+        desc: "依據 legacy-business-rules.md 打造 4°C 冷藏薄荷青與 -18°C 冷凍冰霧藍，廚房結合 Motion Specs 第 07 條曜石金質變按鈕與翡翠綠出餐。",
+        alignments: [
+          "legacy-business-rules.md：4°C 冷藏與 -18°C 冷凍物理溫度色彩映射",
+          "finalized-motion-design-specs.md 第 07 條：黑曜石底 #242220 + 琥珀金邊 #f2cc8f 質變選取態",
+          "finalized-motion-design-specs.md 第 13 條：翡翠綠 #2d6a4f 完賽出餐結算按鈕"
+        ],
+        tokens: {
+          canvas: "冰箱 #fbf9f2 (冷米白) / 廚房 #fdf8ee (暖麥色)",
+          coldCard: "#f0f7f3 (薄荷青底) / #224b3b",
+          frozenCard: "#f1f5fa (冰霧霜藍) / #1e3a5f",
+          urgent: "#fef3c7 (琥珀鵝黃) / #b45309",
+          prepTray: "#ffffff (瓷盤白) / 框 #e07a5f",
+          cookwareActive: "#242220 (曜石黑) + 琥珀金邊微光",
+          timer: "#242220 (曜石黑) + #fbbf24 (琥珀金)",
+          settle: "#2d6a4f (翡翠綠 · 規格書標準)"
+        }
+      },
+      c: {
+        name: "方案 C：沉穩工坊和風便當 (職人便當)",
+        desc: "呼應主廚相談室的現代工坊圓章、雪松維爾純墨揮毫與羊皮紙券票，運用胡桃深木色、青苔竹青與老金打造沉穩職人工作台。",
+        alignments: [
+          "finalized-motion-design-specs.md 第 05 條：工坊印章深紅 #b91c1c 應用於即期警示",
+          "finalized-motion-design-specs.md 第 06 條：雪松純墨墨流深灰底色與老金點綴",
+          "CONTEXT.md：便當盒式分格收納，每項食材井然有序"
+        ],
+        tokens: {
+          canvas: "#f9f6f0 (沉靜淡木白)",
+          coldCard: "#ebf3ee (竹青綠) / #2d4a3e",
+          frozenCard: "#ecf2f7 (霜霧藍) / #243746",
+          urgent: "#fdf2f0 / #b91c1c (印泥深紅)",
+          prepTray: "#ffffff / 框 #3c2a21 (胡桃深木)",
+          cookwareActive: "#33373b (鑄鐵霧黑)",
+          timer: "#1f2421 (炭墨灰) + #c59b27 (老金)",
+          settle: "#1e4a38 (松葉深綠)"
+        }
+      },
+      d: {
+        name: "方案 D：清新小資快手活潑 (已對齊廚房湖水綠 #2a9d8f)",
+        desc: "專為租屋小資族打造。冰箱冷藏常規介面（4°C 冷藏室襯底、細框、食材標籤、在庫標記）100% 對齊廚房「現有庫存 (0元)」與「AI 自由發揮」的活力湖水綠 (#2a9d8f)；保鮮沙漏警報則維持高辨識度的警戒暖橘 (#ea580c)，兼顧全域和諧與食安急迫感。",
+        alignments: [
+          "色彩精準對齊：冰箱 4°C 冷藏室與廚房食譜庫按鈕統一為湖水綠 #2a9d8f",
+          "警報語意獨立：保鮮沙漏警報維持專屬警戒暖橘 #ea580c，強化即期救援辨識",
+          "CONTEXT.md：小資族無負擔自煮情境，出餐流暢、零損耗舒心"
+        ],
+        tokens: {
+          canvas: "#fcfbf4 (透白米黃)",
+          coldCard: "#e6f5f4 (清爽湖綠襯底) / #2a9d8f",
+          frozenCard: "#edf2fb (天青冷藍) / #2a6f97",
+          urgent: "#fff3e6 (暖杏橙) / 按鈕 #ea580c (警戒橘)",
+          prepTray: "#ffffff / 框 #f4a261 (溫暖琥珀橙)",
+          cookwareActive: "#e9c46a (暖陽蜂蜜黃)",
+          timer: "#264653 (海軍藍) + #f4a261 (暖金)",
+          settle: "#2a9d8f (活力湖水綠)"
+        }
+      }
+    };
+
+    // Category SVG lookup (Zero emojis!)
+    function getCategorySvg(category) {
+      if (category === 'melon') {
+        return `<div class="w-8 h-8 rounded-full bg-[#fef2f2] text-[#e07a5f] flex items-center justify-center shrink-0 shadow-2xs"><svg class="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="14" r="7" fill="#fef2f2" stroke="#e07a5f"/><path d="M12 7V3.5" stroke="#386753" stroke-width="2"/><path d="M9.5 5c1 .8 2.5.8 2.5.8s1.5 0 2.5-.8" stroke="#386753" stroke-width="2"/></svg></div>`;
+      } else if (category === 'bean' || category === 'tofu') {
+        return `<div class="w-8 h-8 rounded-full bg-white text-[#386753] border border-[#ede7d5] flex items-center justify-center shrink-0 shadow-2xs"><svg class="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="6" width="16" height="14" rx="2" fill="#ffffff" stroke="#386753"/><line x1="12" y1="6" x2="12" y2="20" stroke="#ede7d5" stroke-width="1.5"/><line x1="4" y1="13" x2="20" y2="13" stroke="#ede7d5" stroke-width="1.5"/></svg></div>`;
+      } else if (category === 'egg') {
+        return `<div class="w-8 h-8 rounded-full bg-[#fef9c3] text-[#d97706] flex items-center justify-center shrink-0 shadow-2xs"><svg class="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3.5C8.5 3.5 6 8.5 6 14a6 6 0 0 0 12 0c0-5.5-2.5-10.5-6-10.5z" fill="#fef9c3" stroke="#d97706"/></svg></div>`;
+      } else if (category === 'meat') {
+        return `<div class="w-8 h-8 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center shrink-0 shadow-2xs"><svg class="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 10a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2a4 4 0 0 0 4 4h8a4 4 0 0 0 4-4v-2z" fill="#ffe4e6" stroke="#e11d48"/><path d="M14 6v12" stroke="#e11d48"/></svg></div>`;
+      } else {
+        return `<div class="w-8 h-8 rounded-full bg-[#bbf7d0] text-[#16a34a] flex items-center justify-center shrink-0 shadow-2xs"><svg class="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.5 19 2c0 4-1 9-5 13-1.5 1.5-2 3-3 5z" fill="#bbf7d0" stroke="#16a34a"/><path d="M10.5 13.5 14 10" stroke="#16a34a" stroke-width="2"/></svg></div>`;
+      }
+    }
+
+    // Apply Theme Function
+    function applyTheme(themeKey) {
+      currentTheme = themeKey;
+      document.documentElement.className = `theme-${themeKey}`;
+
+      const themeColors = {
+        a: { border: '#e07a5f', bg: '#fffcf8' },
+        b: { border: '#e07a5f', bg: '#fffcf8' },
+        c: { border: '#3c2a21', bg: '#fbf9f5' },
+        d: { border: '#2a9d8f', bg: '#f0fbf9' }
+      };
+
+      // Update top button active highlights
+      ['a', 'b', 'c', 'd'].forEach(key => {
+        const btn = document.getElementById(`btn-theme-${key}`);
+        if (key === themeKey) {
+          btn.className = 'theme-select-btn p-2.5 rounded-2xl border-2 transition-all text-xs flex flex-col justify-between gap-1.5 shadow-xs';
+          btn.style.borderColor = themeColors[key].border;
+          btn.style.backgroundColor = themeColors[key].bg;
+        } else {
+          btn.className = 'theme-select-btn p-2.5 rounded-2xl border transition-all text-xs flex flex-col justify-between gap-1.5 border-stone-200 bg-white hover:border-stone-400';
+          btn.style.borderColor = '';
+          btn.style.backgroundColor = '';
+        }
+      });
+
+      const meta = themeMetadata[themeKey];
+      document.getElementById('active-theme-name').innerText = meta.name;
+      document.getElementById('active-theme-name').style.color = themeColors[themeKey].border;
+
+      // Update HUD Spec Card
+      renderThemeSpecHud(meta);
+
+      // Re-render UI elements
+      renderFridge();
+      renderKitchen();
+
+      logApiActivity(`配色已切換至「${meta.name}」· 100% 對齊後端規範`);
+    }
+
+    function renderThemeSpecHud(meta) {
+      const hud = document.getElementById('theme-spec-hud');
+      hud.innerHTML = `
+        <div class="space-y-2.5">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 pb-2 border-b border-stone-200">
+            <div>
+              <span class="text-[10px] uppercase font-mono tracking-wider text-[#e07a5f] font-bold">ACTIVE PALETTE SPEC</span>
+              <h3 class="text-stone-900 font-black text-xs sm:text-sm mt-0.5">${meta.name}</h3>
+            </div>
+            <p class="text-stone-600 text-[11px] max-w-xl leading-relaxed">${meta.desc}</p>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[10px] text-stone-600 pb-2 border-b border-stone-200">
+            ${meta.alignments.map(a => `<div class="flex items-start gap-1.5 bg-white p-2 rounded-xl border border-stone-100"><span class="text-emerald-600 font-bold shrink-0">✓</span><span>${a}</span></div>`).join('')}
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-1.5 text-[10px] font-mono">
+            <div class="p-1.5 rounded-lg bg-white border border-stone-200 shadow-2xs">
+              <span class="block text-[8px] text-stone-400">畫布底色</span>
+              <strong class="text-stone-800 text-[9px] block truncate">${meta.tokens.canvas}</strong>
+            </div>
+            <div class="p-1.5 rounded-lg bg-white border border-stone-200 shadow-2xs">
+              <span class="block text-[8px] text-stone-400">4°C 冷藏室</span>
+              <strong class="text-emerald-800 text-[9px] block truncate">${meta.tokens.coldCard}</strong>
+            </div>
+            <div class="p-1.5 rounded-lg bg-white border border-stone-200 shadow-2xs">
+              <span class="block text-[8px] text-stone-400">-18°C 冷凍庫</span>
+              <strong class="text-blue-800 text-[9px] block truncate">${meta.tokens.frozenCard}</strong>
+            </div>
+            <div class="p-1.5 rounded-lg bg-white border border-stone-200 shadow-2xs">
+              <span class="block text-[8px] text-stone-400">出餐備料盤</span>
+              <strong class="text-amber-800 text-[9px] block truncate">${meta.tokens.prepTray}</strong>
+            </div>
+            <div class="p-1.5 rounded-lg bg-white border border-stone-200 shadow-2xs">
+              <span class="block text-[8px] text-stone-400">廚具選取態</span>
+              <strong class="text-stone-900 text-[9px] block truncate">${meta.tokens.cookwareActive}</strong>
+            </div>
+            <div class="p-1.5 rounded-lg bg-white border border-stone-200 shadow-2xs">
+              <span class="block text-[8px] text-stone-400">即期警報</span>
+              <strong class="text-red-700 text-[9px] block truncate">${meta.tokens.urgent}</strong>
+            </div>
+            <div class="p-1.5 rounded-lg bg-white border border-stone-200 shadow-2xs">
+              <span class="block text-[8px] text-stone-400">步驟計時器</span>
+              <strong class="text-stone-800 text-[9px] block truncate">${meta.tokens.timer}</strong>
+            </div>
+            <div class="p-1.5 rounded-lg bg-white border border-stone-200 shadow-2xs">
+              <span class="block text-[8px] text-stone-400">完賽結算按鈕</span>
+              <strong class="text-emerald-700 text-[9px] block truncate">${meta.tokens.settle}</strong>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // 2. Capacity Calculation (Rule 6)
+    function updateFridgeCapacity() {
+      const boxVolumes = { S: 1.0, M: 2.5, L: 5.0 };
+      const totalLiters = mockAppState.inventory.reduce((sum, item) => sum + (boxVolumes[item.boxSize] || 2.5), 0);
+      const capacity = mockAppState.fridgeProfile.capacityLiters || 130;
+      const percent = Math.min(100, Math.round((totalLiters / capacity) * 100));
+
+      document.getElementById('fridge-capacity-text').innerText = `目前庫存佔比 ${percent}% (${totalLiters}L / ${capacity}L) · 運作正常`;
+      document.getElementById('fridge-capacity-percent-badge').innerText = `${percent}% 佔比`;
+      document.getElementById('fridge-capacity-bar').style.width = `${percent}%`;
+    }
+
+    // 3. Render Fridge Inventory (Cold & Frozen)
+    function renderFridge() {
+      updateFridgeCapacity();
+
+      const coldList = document.getElementById('cold-inventory-list');
+      const frozenList = document.getElementById('frozen-inventory-list');
+      coldList.innerHTML = '';
+      frozenList.innerHTML = '';
+
+      const coldItems = mockAppState.inventory.filter(i => i.chamber === 'cold');
+      const frozenItems = mockAppState.inventory.filter(i => i.chamber === 'frozen');
+
+      document.getElementById('cold-chamber-count').innerText = `${coldItems.length} 項在庫`;
+      document.getElementById('frozen-chamber-count').innerText = `${frozenItems.length} 項在庫`;
+
+      // Urgent summary
+      const urgentItems = coldItems.filter(i => i.daysLeft <= 3);
+      if (urgentItems.length > 0) {
+        document.getElementById('fridge-urgent-section').classList.remove('hidden');
+        document.getElementById('urgent-title').innerText = `保鮮沙漏警報：${urgentItems.length} 件即將到期`;
+        const totalSav = urgentItems.reduce((s, i) => s + i.roi.savings, 0);
+        document.getElementById('urgent-saving-hint').innerText = `預估挽回 NT$ ${totalSav}`;
+        document.getElementById('urgent-desc').innerText = `${urgentItems.map(i => i.name + '(剩' + i.daysLeft + '天)').join('、')} 即將過期，建議優先帶入備料盤！`;
+      } else {
+        document.getElementById('fridge-urgent-section').classList.add('hidden');
+      }
+
+      // Cold items
+      coldItems.forEach(item => {
+        const isInTray = mockAppState.prepTrayItemIds.includes(item.id);
+        const card = document.createElement('div');
+        card.className = 'rounded-2xl border bg-white p-3 flex items-center justify-between shadow-2xs transition-all';
+        card.style.borderColor = 'var(--cold-chamber-border)';
+        card.innerHTML = `
+          <div class="flex items-center gap-2.5">
+            ${getCategorySvg(item.category)}
+            <div>
+              <div class="flex items-center gap-1.5">
+                <h5 class="text-xs font-black text-stone-900">${item.name}</h5>
+                <span class="text-[10px] font-bold text-stone-500 font-mono">${item.qty} ${item.unit}</span>
+              </div>
+              <span class="text-[10px] font-bold ${item.daysLeft <= 3 ? 'text-[#92400e] bg-[#fef3c7]' : 'text-emerald-800 bg-emerald-50'} px-1.5 py-0.2 rounded font-mono">
+                剩餘 ${item.daysLeft} 天
+              </span>
+            </div>
+          </div>
+          <div class="flex items-center gap-1">
+            <button onclick="toggleItemInTray('${item.id}')" class="px-2.5 py-1.5 rounded-xl text-[11px] font-black border transition-all active:scale-95" style="${isInTray ? 'background-color: var(--cold-tag-text); color: white; border-color: var(--cold-tag-text);' : 'background-color: var(--cold-tag-bg); color: var(--cold-tag-text); border-color: var(--cold-chamber-border);'}">
+              <span>${isInTray ? '✓ 已在備料盤' : '帶入廚房 ➔'}</span>
+            </button>
+          </div>
+        `;
+        coldList.appendChild(card);
+      });
+
+      // Frozen items
+      frozenItems.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'rounded-2xl border bg-white p-3 flex items-center justify-between shadow-2xs transition-all';
+        card.style.borderColor = 'var(--frozen-chamber-border)';
+        card.innerHTML = `
+          <div class="flex items-center gap-2.5">
+            ${getCategorySvg(item.category)}
+            <div>
+              <div class="flex items-center gap-1.5">
+                <h5 class="text-xs font-black text-stone-900">${item.name}</h5>
+                <span class="text-[10px] font-bold text-stone-500 font-mono">${item.qty} ${item.unit}</span>
+              </div>
+              <span class="text-[10px] font-bold px-1.5 py-0.2 rounded font-mono" style="background-color: var(--frozen-tag-bg); color: var(--frozen-tag-text);">
+                冷凍保存中 · 剩 ${item.daysLeft} 天
+              </span>
+            </div>
+          </div>
+          <span class="text-[10px] font-bold text-stone-400">已低溫延展</span>
+        `;
+        frozenList.appendChild(card);
+      });
+    }
+
+    // 4. Render Kitchen Prep Tray & Cookware
+    function renderKitchen() {
+      // Cookware buttons
+      const cookwareList = ['全部設備', '瓦斯爐', '電鍋', '氣炸鍋', '微波爐', '小烤箱'];
+      const cwContainer = document.getElementById('cookware-container');
+      cwContainer.innerHTML = '';
+      cookwareList.forEach(cw => {
+        const isActive = (selectedCookware === cw);
+        const btn = document.createElement('button');
+        btn.onclick = () => selectCookware(cw);
+        btn.innerText = cw;
+        if (isActive) {
+          btn.className = 'cookware-btn whitespace-nowrap rounded-full px-3.5 py-1 text-xs font-black transition-all';
+          btn.style.backgroundColor = 'var(--cookware-active-bg)';
+          btn.style.color = 'var(--cookware-active-text)';
+          btn.style.border = '1.5px solid var(--cookware-active-border)';
+          btn.style.boxShadow = 'var(--cookware-active-shadow)';
+        } else {
+          btn.className = 'cookware-btn whitespace-nowrap rounded-full border border-stone-200 bg-white px-3 py-1 text-xs font-bold text-stone-600 hover:border-stone-400 transition-all';
+        }
+        cwContainer.appendChild(btn);
+      });
+
+      // Style buttons
+      const styleList = ['AI 自由發揮', '台式家常', '日式和風', '低卡減脂'];
+      const stContainer = document.getElementById('style-container');
+      stContainer.innerHTML = '';
+      styleList.forEach(st => {
+        const isActive = (selectedStyle === st);
+        const btn = document.createElement('button');
+        btn.onclick = () => selectStyle(st);
+        btn.innerText = st;
+        if (isActive) {
+          btn.className = 'style-btn whitespace-nowrap rounded-full px-3 py-1 text-xs font-black shadow-xs transition-all';
+          btn.style.backgroundColor = 'var(--style-active-bg)';
+          btn.style.color = 'var(--style-active-text)';
+        } else {
+          btn.className = 'style-btn whitespace-nowrap rounded-full border border-stone-200 bg-white px-3 py-1 text-xs font-bold text-stone-600 hover:border-stone-400 transition-all';
+        }
+        stContainer.appendChild(btn);
+      });
+
+      // Prep tray items
+      const container = document.getElementById('prep-tray-items');
+      container.innerHTML = '';
+      const trayItems = mockAppState.inventory.filter(i => mockAppState.prepTrayItemIds.includes(i.id));
+
+      document.getElementById('tray-item-count').innerText = `已備 ${trayItems.length} 項`;
+
+      trayItems.forEach(item => {
+        const el = document.createElement('div');
+        el.className = 'rounded-2xl bg-white p-2.5 flex items-center justify-between shadow-2xs border border-[#ede7d5] animate-in fade-in';
+        el.innerHTML = `
+          <div class="flex items-center gap-2.5">
+            ${getCategorySvg(item.category)}
+            <div>
+              <div class="flex items-center gap-1.5">
+                <h4 class="text-xs font-black text-stone-900">${item.name}</h4>
+                <span class="text-[9px] font-mono text-stone-400 bg-stone-100 px-1 rounded">UUID: ${item.id}</span>
+              </div>
+              <span class="text-[9px] font-bold" style="color: var(--tray-border);">在庫 ${item.qty}${item.unit} · 剩 ${item.daysLeft} 天</span>
+            </div>
+          </div>
+          <button onclick="toggleItemInTray('${item.id}')" class="w-6 h-6 rounded-full text-stone-400 hover:text-red-600 hover:bg-stone-100 flex items-center justify-center" title="移出備料盤">
+            <span class="material-symbols-outlined text-sm">close</span>
+          </button>
+        `;
+        container.appendChild(el);
+      });
+
+      // Flavor garnish tags
+      const flavorRow = document.getElementById('flavor-tags-row');
+      const flavorContainer = document.getElementById('flavor-tags-container');
+      if (mockAppState.flavorPantryItems.length > 0) {
+        flavorRow.classList.remove('hidden');
+        flavorContainer.innerHTML = mockAppState.flavorPantryItems.map(f => `
+          <span class="px-2 py-0.5 rounded-full bg-white border border-stone-200 text-stone-700 text-[10px] font-bold flex items-center gap-1">
+            ${f} <span class="text-[8px] text-stone-400">(免扣庫)</span>
+            <span onclick="removeFlavorItem('${f}')" class="cursor-pointer text-stone-300 hover:text-stone-600">&times;</span>
+          </span>
+        `).join('');
+      } else {
+        flavorRow.classList.add('hidden');
+      }
+
+      // Quick-add pantry chips
+      renderPantryChips();
+
+      // Floating bar summary
+      const titles = trayItems.map(i => i.name).concat(mockAppState.flavorPantryItems);
+      const ingText = titles.join(' + ') || '備料盤目前為空';
+      const cookwareLabel = selectedCookware === '全部設備' ? '全設備通用' : selectedCookware;
+      document.getElementById('floating-tray-summary').innerText = `${ingText} ‧ ${cookwareLabel} ‧ ${selectedStyle}`;
+
+      // Update API contract indicator
+      const payloadSnippet = `POST /recipes/generate { ingredientIds: [${mockAppState.prepTrayItemIds.map(id => `"${id}"`).join(', ')}], style: "${selectedStyle}${selectedCookware === '全部設備' ? '' : ` (指定設備：${selectedCookware})`}" }`;
+      document.getElementById('current-api-indicator').innerText = payloadSnippet;
+    }
+
+    // 5. Render Pantry Quick Chips (Rule 3)
+    function renderPantryChips() {
+      const container = document.getElementById('pantry-chips-container');
+      container.innerHTML = '';
+
+      const candidates = [
+        { name: "洗選雞蛋", invId: "inv-egg-03" },
+        { name: "高麗菜", invId: "inv-cabbage-04" },
+        { name: "青蔥", invId: null }, // Virtual staple
+        { name: "白飯", invId: null }  // Virtual staple
+      ];
+
+      candidates.forEach(c => {
+        const inInventory = c.invId ? mockAppState.inventory.some(i => i.id === c.invId) : false;
+        const btn = document.createElement('button');
+
+        if (inInventory) {
+          const isAdded = mockAppState.prepTrayItemIds.includes(c.invId);
+          btn.className = `px-2.5 py-1 rounded-xl text-xs font-bold border transition-all active:scale-95 ${isAdded ? 'text-white' : 'bg-emerald-50 text-emerald-900 border-emerald-300 hover:bg-emerald-100'}`;
+          if (isAdded) {
+            btn.style.backgroundColor = 'var(--cold-tag-text)';
+            btn.style.borderColor = 'var(--cold-tag-text)';
+          }
+          btn.innerHTML = `${isAdded ? '✓ 已加 · ' : '＋ '}${c.name} <span class="text-[9px] font-normal opacity-80">(在庫)</span>`;
+          btn.onclick = () => toggleItemInTray(c.invId);
+        } else {
+          const isAdded = mockAppState.flavorPantryItems.includes(c.name);
+          btn.className = `px-2.5 py-1 rounded-xl text-xs font-bold border transition-all active:scale-95 ${isAdded ? 'bg-stone-800 text-white border-stone-800' : 'bg-stone-100 text-stone-600 border-stone-200 hover:bg-stone-200'}`;
+          btn.innerHTML = `${isAdded ? '✓ 提味 · ' : '＋ '}${c.name} <span class="text-[9px] font-normal opacity-80">(常備輔料)</span>`;
+          btn.onclick = () => toggleFlavorItem(c.name);
+        }
+        container.appendChild(btn);
+      });
+    }
+
+    function toggleItemInTray(id) {
+      if (mockAppState.prepTrayItemIds.includes(id)) {
+        mockAppState.prepTrayItemIds = mockAppState.prepTrayItemIds.filter(x => x !== id);
+      } else {
+        mockAppState.prepTrayItemIds.push(id);
+        if (activePage === 'fridge') {
+          switchActivePage('kitchen');
+          highlightPrepTray();
+        }
+      }
+      renderFridge();
+      renderKitchen();
+    }
+
+    function toggleFlavorItem(name) {
+      if (mockAppState.flavorPantryItems.includes(name)) {
+        mockAppState.flavorPantryItems = mockAppState.flavorPantryItems.filter(x => x !== name);
+      } else {
+        mockAppState.flavorPantryItems.push(name);
+      }
+      renderKitchen();
+    }
+
+    function removeFlavorItem(name) {
+      mockAppState.flavorPantryItems = mockAppState.flavorPantryItems.filter(x => x !== name);
+      renderKitchen();
+    }
+
+    function sendAllUrgentToKitchen() {
+      const urgent = mockAppState.inventory.filter(i => i.chamber === 'cold' && i.daysLeft <= 3);
+      urgent.forEach(i => {
+        if (!mockAppState.prepTrayItemIds.includes(i.id)) {
+          mockAppState.prepTrayItemIds.push(i.id);
+        }
+      });
+      renderFridge();
+      renderKitchen();
+      switchActivePage('kitchen');
+      highlightPrepTray();
+      logApiActivity('POST /api/v1/recipes/generate (已將即期推薦食材帶入備料盤)');
+    }
+
+    function highlightPrepTray() {
+      const tray = document.getElementById('prep-tray-section');
+      tray.classList.remove('tray-pulse');
+      void tray.offsetWidth;
+      tray.classList.add('tray-pulse');
+    }
+
+    // 6. Food Safety Rescue Modal (Rule 5)
+    function triggerRescueForItem(itemId, action) {
+      const item = mockAppState.inventory.find(i => i.id === itemId);
+      if (!item) return;
+
+      if (action === 'discard') {
+        if (confirm(`確認「${item.name}」已發霉或變質，執行安全丟棄？\n此動作將自庫存核銷。`)) {
+          mockAppState.inventory = mockAppState.inventory.filter(i => i.id !== itemId);
+          mockAppState.prepTrayItemIds = mockAppState.prepTrayItemIds.filter(id => id !== itemId);
+          renderFridge();
+          renderKitchen();
+          logApiActivity(`POST /api/v1/inventory/${itemId}/rescue { action: "discard", foodSafe: false } 200 OK`);
+        }
+        return;
+      }
+
+      currentRescueTarget = item;
+      document.getElementById('safety-modal-title').innerText = `${item.name} · 分裝冷凍保存`;
+      document.getElementById('safety-target-name').innerText = `${item.name}冷凍備料包`;
+      document.getElementById('safety-target-packages').innerText = `2 包`;
+      document.getElementById('check-safety-odor').checked = false;
+      document.getElementById('check-safety-mold').checked = false;
+      document.getElementById('btn-confirm-rescue').disabled = true;
+
+      const modal = document.getElementById('safety-rescue-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function validateSafetyChecks() {
+      const odor = document.getElementById('check-safety-odor').checked;
+      const mold = document.getElementById('check-safety-mold').checked;
+      document.getElementById('btn-confirm-rescue').disabled = !(odor && mold);
+    }
+
+    function executeSafetyRescue() {
+      if (!currentRescueTarget) return;
+      currentRescueTarget.name = `${currentRescueTarget.name}冷凍備料包`;
+      currentRescueTarget.chamber = 'frozen';
+      currentRescueTarget.daysLeft = 14;
+      currentRescueTarget.qty = 2;
+      currentRescueTarget.unit = '包';
+
+      closeSafetyModal();
+      renderFridge();
+      renderKitchen();
+      logApiActivity(`POST /api/v1/inventory/${currentRescueTarget.id}/rescue { action: "preserve", foodSafe: true } 200 OK (已轉化為冷凍包)`);
+    }
+
+    function closeSafetyModal() {
+      const modal = document.getElementById('safety-rescue-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      currentRescueTarget = null;
+    }
+
+    // 7. Cookware & Style Selection (Rule 1)
+    function selectCookware(name) {
+      selectedCookware = name;
+      renderKitchen();
+
+      const hintText = document.getElementById('cookware-hint-text');
+      const tagBadge = document.getElementById('cookware-tag-badge');
+      if (name === '電鍋') {
+        hintText.innerText = '鎖定電鍋：優先推薦蒸煮、燉肉、免顧火一鍋到底料理';
+        tagBadge.innerText = '免顧火首選';
+      } else if (name === '氣炸鍋') {
+        hintText.innerText = '鎖定氣炸鍋：優先推薦低油酥脆、逼油快烤速成料理';
+        tagBadge.innerText = '無油煙推薦';
+      } else if (name === '瓦斯爐') {
+        hintText.innerText = '鎖定瓦斯爐：優先推薦大火熱炒、焦香鑊氣快手菜';
+        tagBadge.innerText = '焦香快手';
+      } else if (name === '微波爐') {
+        hintText.innerText = '鎖定微波爐：優先推薦 5 分鐘快熟、少洗碗無煙料理';
+        tagBadge.innerText = '極速5分';
+      } else if (name === '小烤箱') {
+        hintText.innerText = '鎖定小烤箱：優先推薦焗烤、烘烤焦香料理';
+        tagBadge.innerText = '香酥焗烤';
+      } else {
+        hintText.innerText = '智慧配對：依備料盤食材特性自動選配最適爐具';
+        tagBadge.innerText = '不限設備';
+      }
+      logApiActivity(`後端規範對齊：style 參數附加「${name}」，合規傳送！`);
+    }
+
+    function selectStyle(name) {
+      selectedStyle = name;
+      renderKitchen();
+    }
+
+    // 8. Step-by-Step CookingMode Flow (Rule 4)
+    const cookingStepsData = [
+      {
+        order: 1,
+        instruction: "將牛番茄頂部劃十字、板豆腐切厚片排入料理碗。",
+        heat: "微火燜蒸",
+        timerSeconds: 300,
+        tip: "番茄劃十字可讓蒸氣迅速滲透果皮，加熱後輕輕一剝即可去皮。"
+      },
+      {
+        order: 2,
+        instruction: "淋上薄鹽醬油、味醂與少許白胡椒，外鍋注入一杯水。",
+        heat: "中溫加蓋",
+        timerSeconds: 600,
+        tip: "調味直接淋在豆腐上，蒸煮時湯汁會自然被豆腐氣孔吸飽。"
+      },
+      {
+        order: 3,
+        instruction: "按下開關蒸煮，跳起後燜 3 分鐘，撒上蔥花即可享用。",
+        heat: "關火燜香",
+        timerSeconds: 180,
+        tip: "跳起後的燜煮 3 分鐘是口感軟嫩關鍵，請勿立即開蓋！"
+      }
+    ];
+
+    function startCookingFlow() {
+      if (mockAppState.prepTrayItemIds.length === 0) {
+        alert('今日出餐備料盤目前為空，請先從冰箱帶入或加入常備食材！');
+        return;
+      }
+      currentStepIdx = 0;
+      document.getElementById('kitchen-normal-view').classList.add('hidden');
+      document.getElementById('kitchen-floating-bar').classList.add('hidden');
+      document.getElementById('kitchen-bottom-nav').classList.add('hidden');
+      document.getElementById('kitchen-cooking-view').classList.remove('hidden');
+
+      const titles = mockAppState.inventory.filter(i => mockAppState.prepTrayItemIds.includes(i.id)).map(i => i.name);
+      document.getElementById('cooking-mode-title').innerText = `${selectedStyle}${selectedCookware === '全部設備' ? '' : selectedCookware + '蒸'}${titles.join('')}`;
+      document.getElementById('cooking-mode-subtitle').innerText = `${selectedCookware} ‧ ${selectedStyle}`;
+
+      updateCookingStepView();
+      logApiActivity(`POST /api/v1/recipes/generate 200 OK (下載離線料理包至裝置)`);
+    }
+
+    function exitCookingMode() {
+      if (timerInterval) clearInterval(timerInterval);
+      timerRunning = false;
+      document.getElementById('kitchen-cooking-view').classList.add('hidden');
+      document.getElementById('kitchen-normal-view').classList.remove('hidden');
+      document.getElementById('kitchen-floating-bar').classList.remove('hidden');
+      document.getElementById('kitchen-bottom-nav').classList.remove('hidden');
+    }
+
+    function updateCookingStepView() {
+      const step = cookingStepsData[currentStepIdx];
+      document.getElementById('cooking-step-counter').innerText = `步驟 ${currentStepIdx + 1} / 3`;
+      document.getElementById('step-order-badge').innerText = `STEP 0${step.order}`;
+      document.getElementById('step-heat-text').innerText = step.heat;
+      document.getElementById('step-instruction-text').innerText = step.instruction;
+      document.getElementById('chef-tip-text').innerText = step.tip;
+
+      // Timer
+      secondsLeft = step.timerSeconds;
+      document.getElementById('timer-digits').innerText = `${Math.floor(secondsLeft / 60)}:${String(secondsLeft % 60).padStart(2, '0')}`;
+      document.getElementById('timer-btn').innerText = '開始計時';
+      if (timerInterval) clearInterval(timerInterval);
+      timerRunning = false;
+
+      // Segments
+      const segments = document.querySelectorAll('#cooking-progress-segments > div');
+      segments.forEach((seg, idx) => {
+        if (idx <= currentStepIdx) seg.classList.add('active');
+        else seg.classList.remove('active');
+      });
+
+      // Buttons
+      document.getElementById('btn-prev-step').disabled = (currentStepIdx === 0);
+      const nextBtn = document.getElementById('btn-next-step');
+      if (currentStepIdx === cookingStepsData.length - 1) {
+        nextBtn.innerText = '完成料理並結算';
+        nextBtn.style.backgroundColor = 'var(--settle-btn-bg)';
+      } else {
+        nextBtn.innerText = '下一步';
+        nextBtn.style.backgroundColor = 'var(--cookware-active-bg)';
+      }
+    }
+
+    function prevCookingStep() {
+      if (currentStepIdx > 0) {
+        currentStepIdx--;
+        updateCookingStepView();
+      }
+    }
+
+    function nextCookingStep() {
+      if (currentStepIdx < cookingStepsData.length - 1) {
+        currentStepIdx++;
+        updateCookingStepView();
+      } else {
+        openSettlementModal();
+      }
+    }
+
+    function toggleStepTimer() {
+      const btn = document.getElementById('timer-btn');
+      if (timerRunning) {
+        clearInterval(timerInterval);
+        timerRunning = false;
+        btn.innerText = '繼續計時';
+      } else {
+        timerRunning = true;
+        btn.innerText = '暫停';
+        timerInterval = setInterval(() => {
+          if (secondsLeft > 0) {
+            secondsLeft--;
+            document.getElementById('timer-digits').innerText = `${Math.floor(secondsLeft / 60)}:${String(secondsLeft % 60).padStart(2, '0')}`;
+          } else {
+            clearInterval(timerInterval);
+            timerRunning = false;
+            btn.innerText = '已完成！';
+          }
+        }, 1000);
+      }
+    }
+
+    // 9. Financial Settlement Flow (Rule 4)
+    function openSettlementModal() {
+      const completionKey = `op-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.random().toString(36).substring(2, 6)}`;
+      document.getElementById('completion-key-display').innerText = completionKey;
+
+      const modal = document.getElementById('cooking-settlement-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeSettlementModal() {
+      const modal = document.getElementById('cooking-settlement-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function confirmAndExecuteSettlement() {
+      const deposit = parseInt(document.getElementById('deposit-amount-input').value, 10) || 135;
+      const cookedIds = [...mockAppState.prepTrayItemIds];
+
+      mockAppState.inventory = mockAppState.inventory.filter(i => !cookedIds.includes(i.id));
+      mockAppState.prepTrayItemIds = [];
+      mockAppState.flavorPantryItems = [];
+      mockAppState.dreamSaved += deposit;
+
+      closeSettlementModal();
+      exitCookingMode();
+      renderFridge();
+      renderKitchen();
+
+      logApiActivity(`POST /api/v1/cooking/outcomes { actualDeposit: ${deposit} } 200 OK (食材扣除、圓夢入帳)`);
+      alert(`太棒了！料理已完成核銷：\n1. 備料盤食材已自冰箱庫存扣除\n2. 圓夢入帳 NT$ ${deposit} 元！\n3. 容積與效期已重新計算！`);
+    }
+
+    // 10. Drawer & Page Navigation
+    function toggleContractDrawer() {
+      const drawer = document.getElementById('contract-drawer');
+      const text = document.getElementById('drawer-toggle-text');
+      if (drawer.classList.contains('hidden')) {
+        drawer.classList.remove('hidden');
+        text.innerText = '收起後端對齊規範';
+      } else {
+        drawer.classList.add('hidden');
+        text.innerText = '展開查看 6 大後端對齊規則';
+      }
+    }
+
+    function switchActivePage(page) {
+      activePage = page;
+      const fFridge = document.getElementById('frame-fridge');
+      const fKitchen = document.getElementById('frame-kitchen');
+      const btnFridge = document.getElementById('btn-page-fridge');
+      const btnKitchen = document.getElementById('btn-page-kitchen');
+      const btnBoth = document.getElementById('btn-page-both');
+
+      if (page === 'fridge') {
+        fFridge.classList.remove('hidden');
+        fKitchen.classList.add('hidden');
+        btnFridge.className = 'px-3 py-1.5 rounded-xl bg-white text-stone-900 font-black text-xs shadow-xs flex items-center gap-1.5 transition-all';
+        btnKitchen.className = 'px-3 py-1.5 rounded-xl text-stone-500 hover:text-stone-800 font-bold text-xs flex items-center gap-1.5 transition-all';
+        btnBoth.className = 'px-2.5 py-1.5 rounded-xl text-stone-400 hover:text-stone-700 font-bold text-xs flex items-center gap-1 transition-all';
+      } else if (page === 'kitchen') {
+        fFridge.classList.add('hidden');
+        fKitchen.classList.remove('hidden');
+        btnKitchen.className = 'px-3 py-1.5 rounded-xl bg-white text-stone-900 font-black text-xs shadow-xs flex items-center gap-1.5 transition-all';
+        btnFridge.className = 'px-3 py-1.5 rounded-xl text-stone-500 hover:text-stone-800 font-bold text-xs flex items-center gap-1.5 transition-all';
+        btnBoth.className = 'px-2.5 py-1.5 rounded-xl text-stone-400 hover:text-stone-700 font-bold text-xs flex items-center gap-1 transition-all';
+      } else {
+        fFridge.classList.remove('hidden');
+        fKitchen.classList.remove('hidden');
+        btnBoth.className = 'px-2.5 py-1.5 rounded-xl bg-white text-stone-900 font-black text-xs shadow-xs flex items-center gap-1 transition-all';
+        btnFridge.className = 'px-3 py-1.5 rounded-xl text-stone-500 hover:text-stone-800 font-bold text-xs flex items-center gap-1.5 transition-all';
+        btnKitchen.className = 'px-3 py-1.5 rounded-xl text-stone-500 hover:text-stone-800 font-bold text-xs flex items-center gap-1.5 transition-all';
+      }
+    }
+
+    function logApiActivity(msg) {
+      const toast = document.getElementById('api-activity-toast');
+      const text = document.getElementById('api-activity-text');
+      text.innerText = msg;
+      toast.classList.remove('hidden');
+      setTimeout(() => {
+        toast.classList.add('hidden');
+      }, 3500);
+    }
+
+    // Initial Load & Hash routing
+    const hash = window.location.hash.toLowerCase();
+    const searchParams = new URLSearchParams(window.location.search);
+    const themeFromQuery = searchParams.get('theme') || (hash.match(/theme-([abcd])/)?.[1]);
+
+    if (themeFromQuery && ['a', 'b', 'c', 'd'].includes(themeFromQuery)) {
+      applyTheme(themeFromQuery);
+    } else {
+      applyTheme('d'); // Default to Scheme D (Aligned with Kitchen teal green as requested)
+    }
+
+    if (hash.includes('fridge')) {
+      switchActivePage('fridge');
+    } else if (hash.includes('both') || hash.includes('split')) {
+      switchActivePage('both');
+    } else {
+      switchActivePage('kitchen');
+    }
+
+    if (hash.includes('cooking')) {
+      startCookingFlow();
+    } else if (hash.includes('safety')) {
+      triggerRescueForItem('inv-tomato-01', 'preserve');
+    } else if (hash.includes('settlement')) {
+      startCookingFlow();
+      openSettlementModal();
+    }
+  </script>
+</body>
+</html>
