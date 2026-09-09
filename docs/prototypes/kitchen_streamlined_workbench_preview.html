@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CooCoo 小廚房 · 出餐工作台互動預覽 (去重疊、去矛盾版)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Noto+Sans+TC:wght@400;500;700;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+
+  <style>
+    :root {
+      /* CooCoo 暖麥雙溫活潑配色 (Scheme D 清新小資快手) */
+      --app-bg: #fcfbf4;
+      --card-bg: #ffffff;
+      --card-border: #eee8dd;
+      --primary-teal: #2a9d8f;
+      --primary-teal-hover: #238276;
+      --primary-teal-light: #e0f2f1;
+      --amber-accent: #f4a261;
+      --amber-light: #fef8eb;
+      --amber-border: #fde68a;
+      --amber-text: #92400e;
+      --burnt-sienna: #e76f51;
+      --dark-navy: #264653;
+      --text-main: #1f1c1a;
+      --text-muted: #78716c;
+      --urgent-red: #ea580c;
+      --urgent-red-bg: #fff3e6;
+    }
+
+    body {
+      font-family: "Plus Jakarta Sans", "Noto Sans TC", sans-serif;
+      background-color: #ede6d6;
+      color: var(--text-main);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      vertical-align: middle;
+    }
+    .material-symbols-outlined.fill {
+      font-variation-settings: 'FILL' 1;
+    }
+
+    /* Mobile Frame */
+    .mobile-frame {
+      width: 100%;
+      max-width: 414px;
+      min-height: 860px;
+      background-color: var(--app-bg);
+      border-radius: 40px;
+      box-shadow: 0 25px 60px -15px rgba(61, 64, 91, 0.22), 0 0 0 10px #221f1d;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar {
+      height: 4px;
+      width: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f5f4ed;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #d5cdbd;
+      border-radius: 10px;
+    }
+
+    .spring-btn:active {
+      transform: scale(0.96);
+    }
+
+    /* Floating Cooking Bar */
+    .floating-cooking-bar {
+      position: absolute;
+      bottom: 4.25rem;
+      left: 1rem;
+      right: 1rem;
+      z-index: 30;
+      border-radius: 1.25rem;
+      background-color: var(--dark-navy);
+      color: #ffffff;
+      padding: 0.75rem 1rem;
+      box-shadow: 0 8px 24px rgba(38, 70, 83, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+
+    /* Cooking Mode Segments */
+    .progress-segment {
+      height: 4px;
+      flex: 1;
+      background-color: rgba(255, 255, 255, 0.2);
+      border-radius: 9999px;
+      transition: all 0.3s ease;
+    }
+    .progress-segment.active {
+      background-color: #fbbf24;
+    }
+  </style>
+</head>
+<body class="p-3 sm:p-6 flex flex-col items-center min-h-screen">
+
+  <!-- TOP COMPARISON & CONTROLS TOOLBAR -->
+  <header class="w-full max-w-5xl bg-white/95 backdrop-blur border border-stone-300 rounded-3xl p-4 sm:p-5 shadow-sm mb-4">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-[#2a9d8f] text-white font-black text-sm shadow-xs">K</span>
+          <h1 class="font-black text-base sm:text-lg text-stone-900 tracking-tight">小廚房 · 出餐工作台去重疊重構預覽</h1>
+          <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-900 border border-emerald-300">零更動正式站程式碼</span>
+        </div>
+        <p class="text-xs text-stone-500 mt-1 leading-relaxed">
+          <strong>去重疊四大核心</strong>：
+          ① 移出大塊「今天想怎麼煮？」，回歸「今日」決策；
+          ② 新增「今日餐券無縫接球」模式；
+          ③ 自備廚具動態讀取＋管理彈窗（打通 Today 跳轉死胡同）；
+          ④ 備料盤與加料標註「即期天數與急迫性」。
+        </p>
+      </div>
+
+      <!-- WORKFLOW SIMULATOR CONTROLS -->
+      <div class="flex flex-wrap items-center gap-2">
+        <div class="bg-stone-100 p-1 rounded-2xl flex items-center border border-stone-200 text-xs font-bold">
+          <button id="btn-mode-today" onclick="switchWorkflowMode('today')" class="px-3 py-1.5 rounded-xl bg-white text-stone-900 shadow-xs font-black inline-flex items-center gap-1.5 transition-all">
+            <span class="w-2 h-2 rounded-full bg-[#f4a261]"></span>
+            <span>接球今日餐券模式</span>
+          </button>
+          <button id="btn-mode-freestyle" onclick="switchWorkflowMode('freestyle')" class="px-3 py-1.5 rounded-xl text-stone-500 hover:text-stone-800 inline-flex items-center gap-1.5 transition-all">
+            <span class="w-2 h-2 rounded-full bg-stone-300"></span>
+            <span>自由備料出餐模式</span>
+          </button>
+        </div>
+
+        <button onclick="openCookwareModal()" class="px-3 py-1.5 rounded-xl bg-[#2a9d8f] text-white font-black text-xs shadow-xs hover:brightness-105 active:scale-95 transition-all flex items-center gap-1">
+          <span class="material-symbols-outlined text-sm">tune</span>
+          <span>管理自備廚具</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- DIFFERENCE HIGHLIGHT PILLS -->
+    <div class="mt-3 pt-3 border-t border-stone-200 flex flex-wrap items-center gap-2 text-[11px]">
+      <span class="text-stone-500 font-bold">已解決問題：</span>
+      <span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold">✓ 解決雙重出餐入口矛盾</span>
+      <span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold">✓ 承接今日排定菜色</span>
+      <span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold">✓ 廚具支援自訂與多選</span>
+      <span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold">✓ 盲目加料改為即期天數可視化</span>
+      <span class="px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200 font-bold">✓ 移出技術性離線衝突元件</span>
+    </div>
+  </header>
+
+  <!-- MOBILE PREVIEW CONTAINER -->
+  <div class="mobile-frame flex flex-col">
+
+    <!-- 1. APP HEADER -->
+    <header class="sticky top-0 z-20 border-b border-[#eee8dd] bg-[#fcfbf4]/95 backdrop-blur px-4 py-3 flex items-center justify-between shadow-2xs">
+      <div class="flex items-center gap-2">
+        <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-[#e0f2f1] text-[#2a9d8f]">
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z" />
+            <line x1="6" y1="17" x2="18" y2="17" />
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-1.5">
+            <h2 class="text-base font-black tracking-tight text-stone-900">小廚房</h2>
+            <span class="px-1.5 py-0.2 rounded bg-amber-100 text-[#92400e] text-[9px] font-extrabold">出餐工作台</span>
+          </div>
+          <p class="text-[10px] text-stone-500">專注料理引導 · 離線烹煮 · 圓夢結算</p>
+        </div>
+      </div>
+
+      <!-- 右側快捷廚具裝備標籤 -->
+      <button onclick="openCookwareModal()" class="spring-btn flex items-center gap-1 px-2.5 py-1 rounded-full border border-stone-200 bg-white hover:bg-stone-50 text-xs font-bold text-stone-700 shadow-2xs">
+        <span class="material-symbols-outlined text-xs text-[#2a9d8f]">countertops</span>
+        <span>自備 <strong id="header-cookware-count" class="text-[#2a9d8f] font-black">4</strong> 項</span>
+      </button>
+    </header>
+
+    <!-- 2. MAIN SCROLLABLE CONTENT -->
+    <main class="flex-1 overflow-y-auto px-3.5 py-3.5 space-y-4 pb-28">
+
+      <!-- ==================== FLOW A: 接球今日餐券 (TODAY'S PLANNED MEAL) ==================== -->
+      <section id="section-today-meal" class="rounded-3xl border-2 border-[#f4a261] bg-white p-4 space-y-3 shadow-xs transition-all">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="flex h-6 w-6 items-center justify-center rounded-lg bg-orange-100 text-[#ea580c] font-black text-xs">
+              首
+            </span>
+            <div>
+              <span class="text-[9px] font-black uppercase tracking-wider text-[#ea580c] block">TODAY'S TICKET RECEIVER</span>
+              <h3 class="text-sm font-black text-stone-900 leading-tight">今日預定出餐 · 接球就緒</h3>
+            </div>
+          </div>
+          <span class="px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10px] font-black">
+            庫存 100% 覆蓋
+          </span>
+        </div>
+
+        <!-- 菜色名片 -->
+        <div class="rounded-2xl bg-[#fcfbf4] border border-[#eee8dd] p-3 space-y-2">
+          <div class="flex items-start justify-between">
+            <div>
+              <h4 class="text-sm font-black text-stone-900">番茄滑蛋牛肉飯</h4>
+              <p class="text-[11px] text-stone-500 mt-0.5">15 分鐘 · 1 人份 · 外食比較價 NT$ 160</p>
+            </div>
+            <span class="px-2 py-0.5 rounded-lg bg-amber-100 text-amber-900 text-[10px] font-bold">快手低體力</span>
+          </div>
+
+          <!-- 本餐對應自備設備 -->
+          <div class="flex items-center gap-1.5 text-[10px] text-stone-600 pt-1">
+            <span class="font-bold text-stone-400">適配廚具：</span>
+            <span class="px-2 py-0.5 rounded-md bg-white border border-stone-200 font-bold">不沾平底鍋</span>
+            <span class="px-2 py-0.5 rounded-md bg-white border border-stone-200 font-bold">電鍋</span>
+          </div>
+
+          <!-- 食材檢查表 -->
+          <div class="pt-1.5 border-t border-stone-200/60">
+            <span class="text-[10px] font-bold text-stone-500 block mb-1">預載已備食材（來自今日餐券）：</span>
+            <div class="flex flex-wrap gap-1.5">
+              <span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-900 text-[11px] font-bold">
+                <span class="material-symbols-outlined text-xs text-emerald-600">check_circle</span>
+                牛番茄 2 顆 <span class="text-[9px] text-orange-600 font-bold">(剩2天)</span>
+              </span>
+              <span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-900 text-[11px] font-bold">
+                <span class="material-symbols-outlined text-xs text-emerald-600">check_circle</span>
+                洗選雞蛋 2 顆 <span class="text-[9px] text-stone-400">(剩10天)</span>
+              </span>
+              <span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-900 text-[11px] font-bold">
+                <span class="material-symbols-outlined text-xs text-emerald-600">check_circle</span>
+                牛肉片 100g <span class="text-[9px] text-blue-600">(冷凍)</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 快速開工行動 -->
+        <button onclick="startCookingFlow('番茄滑蛋牛肉飯', 'today')" class="w-full py-2.5 rounded-2xl bg-[#ea580c] hover:bg-[#d94e08] text-white font-black text-xs shadow-md transition-all active:scale-95 flex items-center justify-center gap-1.5">
+          <span class="material-symbols-outlined text-base">soup_kitchen</span>
+          <span>下載離線包，直接開煮今日餐券</span>
+        </button>
+      </section>
+
+      <!-- 輕量切換提示：不想吃這道？ -->
+      <div id="hint-switch-freestyle" class="flex items-center justify-between px-2 text-[11px] text-stone-500">
+        <span>想改用其他食材或自由發揮？</span>
+        <button onclick="switchWorkflowMode('freestyle')" class="text-[#2a9d8f] font-black underline hover:text-[#238276]">
+          切換為自由備料工作台 →
+        </button>
+      </div>
+
+      <!-- ==================== FLOW B: 自由出餐工作台 (FREESTYLE WORKBENCH) ==================== -->
+      <div id="freestyle-workbench-container" class="space-y-4">
+
+        <!-- 1. 選擇料理風格 -->
+        <section class="space-y-2">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-black text-stone-900">1. 選擇料理風味</h3>
+            <span class="text-[10px] text-stone-400">自由配菜導引</span>
+          </div>
+          <div class="flex flex-wrap gap-2" id="style-selector">
+            <button onclick="selectStyle(this, 'AI 自由發揮')" class="style-btn px-3.5 py-1.5 rounded-xl text-xs font-bold bg-[#2a9d8f] text-white shadow-xs">AI 自由發揮</button>
+            <button onclick="selectStyle(this, '台式家常')" class="style-btn px-3.5 py-1.5 rounded-xl text-xs font-bold border border-stone-200 bg-white text-stone-700 hover:bg-stone-50">台式家常</button>
+            <button onclick="selectStyle(this, '日式和風')" class="style-btn px-3.5 py-1.5 rounded-xl text-xs font-bold border border-stone-200 bg-white text-stone-700 hover:bg-stone-50">日式和風</button>
+            <button onclick="selectStyle(this, '低卡健康')" class="style-btn px-3.5 py-1.5 rounded-xl text-xs font-bold border border-stone-200 bg-white text-stone-700 hover:bg-stone-50">低卡健康</button>
+            <button onclick="selectStyle(this, '一鍋到底')" class="style-btn px-3.5 py-1.5 rounded-xl text-xs font-bold border border-stone-200 bg-white text-stone-700 hover:bg-stone-50">一鍋到底免洗</button>
+          </div>
+        </section>
+
+        <!-- 2. 指定本次烹調設備（讀取自真實登記設備，支援多選） -->
+        <section class="space-y-2">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-1.5">
+              <h3 class="text-xs font-black text-stone-900">2. 本次指定設備</h3>
+              <span class="text-[10px] text-stone-400">（可複選連動）</span>
+            </div>
+            <button onclick="openCookwareModal()" class="text-[10px] font-extrabold text-[#2a9d8f] hover:underline flex items-center gap-0.5">
+              <span>＋ 管理廚具</span>
+            </button>
+          </div>
+
+          <div class="flex flex-wrap gap-2" id="cookware-chips-list">
+            <!-- Dynamically populated from userCookware -->
+          </div>
+          <p class="text-[10px] text-stone-400">
+            * 僅顯示您擁有的真實設備；AI 將自動為選中廚具優化火候步驟。
+          </p>
+        </section>
+
+        <!-- 3. 今日出餐備料盤 (帶有即期標註) -->
+        <section class="rounded-3xl border-2 border-[#f4a261] bg-white p-3.5 space-y-2.5 shadow-xs">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-orange-100 text-[#f4a261]">
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect width="18" height="14" x="3" y="5" rx="2" />
+                  <path d="M7 15h4M15 15h2M7 11h2M13 11h4" />
+                </svg>
+              </div>
+              <h3 class="text-xs font-black text-stone-900">3. 出餐備料盤</h3>
+            </div>
+            <div class="flex items-center gap-2">
+              <span id="tray-badge" class="rounded-full bg-[#f4a261] px-2.5 py-0.5 text-[10px] font-black text-white">
+                已備 2 項
+              </span>
+              <button onclick="clearPrepTray()" class="text-[10px] font-bold text-stone-400 hover:text-stone-700">
+                清空
+              </button>
+            </div>
+          </div>
+          <p class="text-[10px] text-stone-500">
+            已挑選備料（優先消滅即期品，完賽後自動扣除庫存）：
+          </p>
+
+          <!-- 備料盤食材清單 -->
+          <div id="prep-tray-list" class="space-y-2">
+            <!-- Injected by JS -->
+          </div>
+        </section>
+
+        <!-- 4. 快捷加料 (含急迫性色標與天數) -->
+        <section class="space-y-2">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-black text-stone-900">4. 冰箱在庫快捷加料</h3>
+            <span class="text-[10px] text-emerald-800 font-bold">點擊加入備料盤</span>
+          </div>
+          <p class="text-[10px] text-stone-500">
+            依保鮮急迫度排序，橘紅標代表 3 天內即期：
+          </p>
+          <div class="flex flex-wrap gap-2" id="available-ingredients-chips">
+            <!-- Injected by JS -->
+          </div>
+        </section>
+
+        <!-- 5. 輕量收合式：公版食譜庫抽屜 (解決重疊與搶戲問題) -->
+        <section class="rounded-2xl border border-dashed border-stone-300 bg-stone-50/60 p-3 space-y-2">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-sm text-stone-600">auto_stories</span>
+              <span class="text-xs font-bold text-stone-700">沒靈感？也可以參考公版食譜庫</span>
+            </div>
+            <button onclick="toggleCatalogDrawer()" id="btn-catalog-drawer" class="text-xs font-black text-[#2a9d8f] hover:underline flex items-center gap-0.5">
+              <span>展開瀏覽 (4道)</span>
+              <span class="material-symbols-outlined text-sm" id="icon-catalog-arrow">expand_more</span>
+            </button>
+          </div>
+
+          <div id="catalog-drawer-content" class="hidden space-y-2 pt-2 border-t border-stone-200">
+            <p class="text-[10px] text-stone-500">公版檢核食譜，零額外 AI 費用：</p>
+            <div class="space-y-1.5 text-xs">
+              <div class="flex items-center justify-between p-2 rounded-xl bg-white border border-stone-200">
+                <div>
+                  <strong class="text-stone-900">味噌蔬菜烏龍麵</strong>
+                  <p class="text-[10px] text-stone-500">10 分鐘 · 庫存完全覆蓋</p>
+                </div>
+                <button onclick="startCookingFlow('味噌蔬菜烏龍麵', 'catalog')" class="px-2.5 py-1 rounded-lg bg-[#2a9d8f] text-white font-bold text-[11px]">
+                  煮這道
+                </button>
+              </div>
+              <div class="flex items-center justify-between p-2 rounded-xl bg-white border border-stone-200">
+                <div>
+                  <strong class="text-stone-900">蒜香清炒時蔬</strong>
+                  <p class="text-[10px] text-stone-500">8 分鐘 · 庫存完全覆蓋</p>
+                </div>
+                <button onclick="startCookingFlow('蒜香清炒時蔬', 'catalog')" class="px-2.5 py-1 rounded-lg bg-[#2a9d8f] text-white font-bold text-[11px]">
+                  煮這道
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+
+    </main>
+
+    <!-- 3. FLOATING ACTION BAR (自由模式出餐列) -->
+    <div id="floating-bar" class="floating-cooking-bar">
+      <div class="flex items-center gap-2.5 overflow-hidden">
+        <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white/10 text-[#f4a261]">
+          <span class="material-symbols-outlined text-lg">restaurant</span>
+        </div>
+        <div class="min-w-0">
+          <h4 id="floating-bar-title" class="truncate text-xs font-black text-white">
+            備料就緒：牛番茄 + 洗選雞蛋
+          </h4>
+          <p id="floating-bar-subtitle" class="text-[10px] text-stone-300">
+            電鍋 + 不沾平底鍋 · AI 自由發揮
+          </p>
+        </div>
+      </div>
+      <button onclick="startCookingFlow('自由備料專屬食譜', 'freestyle')" id="btn-floating-start" class="rounded-xl bg-[#ea580c] hover:bg-[#d94e08] px-3.5 py-2 text-xs font-black text-white shadow-sm transition-all active:scale-95 whitespace-nowrap">
+        開始料理
+      </button>
+    </div>
+
+    <!-- 4. BOTTOM NAVIGATION BAR -->
+    <nav class="absolute bottom-0 inset-x-0 bg-white border-t border-[#eee8dd] py-1 px-2 flex justify-around items-center z-40">
+      <div class="flex flex-col items-center text-[10px] font-bold text-stone-400 py-0.5">
+        <span class="material-symbols-outlined text-xl">today</span>
+        <span>今日</span>
+      </div>
+      <div class="flex flex-col items-center text-[10px] font-bold text-stone-400 py-0.5">
+        <span class="material-symbols-outlined text-xl">kitchen</span>
+        <span>冰箱</span>
+      </div>
+      <div class="flex flex-col items-center text-[10px] font-black text-[#2a9d8f] py-0.5">
+        <span class="material-symbols-outlined text-xl fill text-[#2a9d8f]">soup_kitchen</span>
+        <span>小廚房</span>
+      </div>
+      <div class="flex flex-col items-center text-[10px] font-bold text-stone-400 py-0.5">
+        <span class="material-symbols-outlined text-xl">shopping_cart</span>
+        <span>採買</span>
+      </div>
+      <div class="flex flex-col items-center text-[10px] font-bold text-stone-400 py-0.5">
+        <span class="material-symbols-outlined text-xl">savings</span>
+        <span>圓夢</span>
+      </div>
+    </nav>
+
+    <!-- ==================== FULLSCREEN COOKING MODE OVERLAY ==================== -->
+    <div id="overlay-cooking-mode" class="absolute inset-0 z-50 bg-[#1e293b] text-white flex flex-col hidden animate-in fade-in">
+      <!-- HEADER -->
+      <header class="px-4 py-3 border-b border-white/10 flex items-center justify-between">
+        <button onclick="closeCookingMode()" class="h-8 w-8 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20">
+          <span class="material-symbols-outlined text-base">close</span>
+        </button>
+        <div class="text-center">
+          <span id="cooking-recipe-title" class="text-xs font-extrabold text-amber-400">番茄滑蛋牛肉飯</span>
+          <span id="cooking-step-badge" class="block text-[10px] text-stone-300 font-mono">步驟 1 / 3</span>
+        </div>
+        <div class="w-8"></div>
+      </header>
+
+      <!-- PROGRESS SEGMENTS -->
+      <div class="flex gap-1 px-4 pt-2 pb-1" id="cooking-segments-container">
+        <div class="progress-segment active"></div>
+        <div class="progress-segment"></div>
+        <div class="progress-segment"></div>
+      </div>
+
+      <!-- MAIN STEP AREA -->
+      <div class="flex-1 p-4 flex flex-col justify-between overflow-y-auto space-y-4">
+        <div class="space-y-3">
+          <!-- 火候徽章 -->
+          <div class="flex items-center justify-between">
+            <span id="step-number" class="px-2.5 py-0.5 rounded-lg bg-white/10 font-mono text-xs font-black">STEP 01</span>
+            <span id="step-heat" class="px-2.5 py-0.5 rounded-full text-xs font-extrabold flex items-center gap-1 bg-amber-500/20 text-amber-300 border border-amber-500/30">
+              <span class="material-symbols-outlined text-sm">local_fire_department</span>
+              <span>中小火熱鍋</span>
+            </span>
+          </div>
+
+          <!-- 步驟大字指示 -->
+          <div class="rounded-3xl bg-white/5 border border-white/10 p-4 shadow-sm">
+            <h3 id="step-instruction" class="text-base font-black leading-relaxed">
+              牛番茄切滾刀塊，打勻雞蛋加少許鹽；熱鍋溫油，先將蛋液滑炒至 7 分熟盛起備用。
+            </h3>
+          </div>
+
+          <!-- 投入食材 -->
+          <div class="rounded-2xl bg-white/5 border border-white/10 p-3 space-y-1">
+            <span class="text-[10px] text-stone-400 font-bold">本步驟投入食材：</span>
+            <div class="flex flex-wrap gap-1.5" id="step-ingredients-wrap">
+              <span class="px-2 py-0.5 rounded-md bg-white/10 text-xs font-bold">牛番茄 2 顆</span>
+              <span class="px-2 py-0.5 rounded-md bg-white/10 text-xs font-bold">洗選雞蛋 2 顆</span>
+            </div>
+          </div>
+
+          <!-- 烹煮計時器 -->
+          <div class="rounded-2xl bg-black/40 border border-white/10 p-3 flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <div class="flex h-8 w-8 items-center justify-center rounded-full bg-amber-400/20 text-amber-400">
+                <span class="material-symbols-outlined text-base">timer</span>
+              </div>
+              <div>
+                <span class="text-[9px] font-bold text-amber-400 uppercase tracking-wider block">步驟計時器</span>
+                <span id="step-timer-digits" class="text-lg font-mono font-black text-white">02:00</span>
+              </div>
+            </div>
+            <button onclick="toggleStepTimer()" id="btn-timer-action" class="px-3.5 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-stone-900 font-black text-xs transition-all active:scale-95">
+              開始計時
+            </button>
+          </div>
+
+          <!-- 大廚秘訣 -->
+          <div class="rounded-2xl bg-amber-400/10 border border-amber-400/20 p-3 text-[11px] text-amber-200 leading-relaxed">
+            <strong>大廚撇步 · 料理科學：</strong>
+            <span id="step-chef-tip">蛋液下鍋後先不要急著狂攪，底層微凝固後用鍋鏟輕輕向內推，餘溫熟成最滑嫩！</span>
+          </div>
+        </div>
+
+        <!-- ELBOW-FRIENDLY BUTTONS -->
+        <div class="space-y-2 pt-2">
+          <div class="flex gap-2">
+            <button onclick="prevCookingStep()" id="btn-prev-step" disabled class="flex-1 py-3 rounded-2xl border border-white/20 bg-white/5 text-white font-black text-xs disabled:opacity-30 active:scale-95 transition-all">
+              上一步
+            </button>
+            <button onclick="nextCookingStep()" id="btn-next-step" class="flex-[2] py-3 rounded-2xl bg-[#ea580c] hover:bg-[#d94e08] text-white font-black text-xs shadow-lg active:scale-95 transition-all flex items-center justify-center gap-1.5">
+              <span>下一步</span>
+              <span class="material-symbols-outlined text-sm">arrow_forward</span>
+            </button>
+          </div>
+          <p class="text-center text-[10px] text-stone-400">
+            手沾滿油水？可用手肘或手背輕壓大按鈕前進
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== COOKING COMPLETE MODAL ==================== -->
+    <div id="modal-cooking-complete" class="absolute inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 hidden animate-in fade-in">
+      <div class="w-full max-w-sm bg-white rounded-3xl p-5 shadow-2xl space-y-3.5 border border-stone-200">
+        <div class="flex items-center justify-between border-b pb-2.5">
+          <div>
+            <span class="text-[10px] font-black uppercase tracking-wider text-[#2a9d8f]">料理完成結算</span>
+            <h3 class="text-base font-black text-stone-900" id="complete-modal-title">番茄滑蛋牛肉飯</h3>
+          </div>
+          <button onclick="closeCompleteModal()" class="w-7 h-7 rounded-full bg-stone-100 flex items-center justify-center text-stone-500">
+            <span class="material-symbols-outlined text-sm">close</span>
+          </button>
+        </div>
+
+        <div class="space-y-2.5 text-xs">
+          <!-- 煮幾份 / 吃幾份 -->
+          <div class="grid grid-cols-2 gap-2">
+            <label class="block">
+              <span class="text-[10px] font-bold text-stone-500">這次煮幾份</span>
+              <input type="number" value="1" min="1" class="w-full mt-1 px-2.5 py-1.5 rounded-xl border border-stone-200 text-xs font-bold text-stone-900 bg-stone-50 focus:outline-none focus:border-[#2a9d8f]" />
+            </label>
+            <label class="block">
+              <span class="text-[10px] font-bold text-stone-500">現在吃幾份</span>
+              <input type="number" value="1" min="0" max="1" class="w-full mt-1 px-2.5 py-1.5 rounded-xl border border-stone-200 text-xs font-bold text-stone-900 bg-stone-50 focus:outline-none focus:border-[#2a9d8f]" />
+            </label>
+          </div>
+
+          <!-- 省下金額與圓夢入帳 -->
+          <div class="rounded-2xl bg-emerald-50 border border-emerald-200 p-3 flex items-center justify-between">
+            <div>
+              <span class="text-[10px] font-bold text-emerald-800">可確認省下</span>
+              <strong class="text-base font-black text-emerald-900 block">NT$ 95</strong>
+              <span class="text-[9px] text-emerald-700">外食 NT$160 − 食材成本 NT$65</span>
+            </div>
+            <div class="text-right">
+              <span class="text-[10px] font-bold text-stone-500">確認圓夢入帳</span>
+              <input type="number" value="95" class="w-20 mt-0.5 px-2 py-1 text-right rounded-lg border border-emerald-300 text-xs font-black text-emerald-900 bg-white" />
+            </div>
+          </div>
+
+          <!-- 健康蔬菜指標 -->
+          <label class="flex items-center gap-2 p-2 rounded-xl bg-stone-50 border border-stone-200 cursor-pointer">
+            <input type="checkbox" checked class="rounded text-[#2a9d8f] focus:ring-[#2a9d8f] h-4 w-4" />
+            <span class="text-[11px] font-bold text-stone-800">這餐實際吃到蔬菜（番茄）· 計入每週蔬食種類</span>
+          </label>
+        </div>
+
+        <button onclick="confirmCookingOutcome()" class="w-full py-2.5 rounded-xl bg-[#2a9d8f] hover:bg-[#238276] text-white font-black text-xs shadow-xs transition-all active:scale-95">
+          確認結算並扣庫入帳
+        </button>
+      </div>
+    </div>
+
+    <!-- ==================== COOKWARE MANAGEMENT MODAL (打通 TODAY 死胡同) ==================== -->
+    <div id="modal-cookware-admin" class="absolute inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 hidden animate-in fade-in">
+      <div class="w-full max-w-sm bg-white rounded-3xl p-5 shadow-2xl space-y-3.5 border border-stone-200 max-h-[580px] flex flex-col">
+        <div class="flex items-center justify-between border-b pb-2.5">
+          <div>
+            <span class="text-[10px] font-black uppercase tracking-wider text-[#2a9d8f]">自備裝備管理</span>
+            <h3 class="text-base font-black text-stone-900">維護自備烹調設備</h3>
+          </div>
+          <button onclick="closeCookwareModal()" class="w-7 h-7 rounded-full bg-stone-100 flex items-center justify-center text-stone-500">
+            <span class="material-symbols-outlined text-sm">close</span>
+          </button>
+        </div>
+
+        <p class="text-[11px] text-stone-500 leading-relaxed">
+          勾選您在租屋處現有的烹調裝備，CooCoo 推薦食譜時將嚴格限制在您擁有的設備內：
+        </p>
+
+        <div class="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar text-xs" id="cookware-modal-list">
+          <!-- Rendered in JS -->
+        </div>
+
+        <!-- 新增自訂廚具輸入框 -->
+        <div class="flex items-center gap-1.5 pt-2 border-t border-stone-200">
+          <input type="text" id="input-custom-cookware" placeholder="新增其他設備（如：黑晶爐、快煮壺）" class="flex-1 px-2.5 py-1.5 rounded-xl border border-stone-200 text-xs text-stone-800 bg-stone-50 focus:outline-none focus:border-[#2a9d8f]" />
+          <button onclick="addCustomCookware()" class="px-3 py-1.5 rounded-xl bg-[#2a9d8f] text-white font-bold text-xs shrink-0 hover:bg-[#238276] transition-all">
+            ＋ 新增
+          </button>
+        </div>
+
+        <button onclick="saveCookwareChanges()" class="w-full py-2.5 rounded-xl bg-[#2a9d8f] hover:bg-[#238276] text-white font-black text-xs shadow-xs transition-all">
+          儲存廚具設定
+        </button>
+      </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast" class="absolute top-14 inset-x-4 z-50 bg-stone-900/90 text-white text-xs font-bold px-3 py-2 rounded-xl shadow-lg flex items-center gap-2 transform -translate-y-4 opacity-0 pointer-events-none transition-all duration-300">
+      <span class="material-symbols-outlined text-sm text-emerald-400">check_circle</span>
+      <span id="toast-text">通知訊息</span>
+    </div>
+
+  </div>
+
+  <script>
+    // ==================== APP STATE ====================
+    let currentWorkflow = 'today'; // 'today' | 'freestyle'
+    let selectedStyle = 'AI 自由發揮';
+
+    // User's Real Owned Cookware (Dynamic, not hardcoded!)
+    let userCookware = [
+      { id: 'cw-1', name: '不沾平底鍋', owned: true, selectedForMeal: true },
+      { id: 'cw-2', name: '電鍋', owned: true, selectedForMeal: true },
+      { id: 'cw-3', name: '微波爐', owned: true, selectedForMeal: false },
+      { id: 'cw-4', name: '氣炸鍋', owned: true, selectedForMeal: false },
+      { id: 'cw-5', name: '單柄小湯鍋', owned: false, selectedForMeal: false },
+      { id: 'cw-6', name: '小烤箱', owned: false, selectedForMeal: false },
+    ];
+
+    // Real Inventory with Urgency Days & Chamber Info
+    let inventory = [
+      { id: 'inv-1', name: '牛番茄', qty: '2 顆', daysLeft: 2, urgent: true, chamber: 'cold', inTray: true },
+      { id: 'inv-2', name: '洗選雞蛋', qty: '6 顆', daysLeft: 10, urgent: false, chamber: 'cold', inTray: true },
+      { id: 'inv-3', name: '板豆腐', qty: '1 盒', daysLeft: 3, urgent: true, chamber: 'cold', inTray: false },
+      { id: 'inv-4', name: '高麗菜', qty: '半顆', daysLeft: 7, urgent: false, chamber: 'cold', inTray: false },
+      { id: 'inv-5', name: '牛肉片', qty: '100g', daysLeft: 30, urgent: false, chamber: 'frozen', inTray: false },
+      { id: 'inv-6', name: '鴻喜菇', qty: '1 包', daysLeft: 5, urgent: false, chamber: 'cold', inTray: false },
+    ];
+
+    // Step Data for Cooking Mode
+    const RECIPE_STEPS = {
+      today: [
+        {
+          order: 1,
+          heat: '中小火熱鍋',
+          heatStyle: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+          instruction: '牛番茄切滾刀塊，洗選雞蛋打勻加微量鹽。熱鍋溫油，先將蛋液滑炒至 7 分熟盛起備用。',
+          ingredients: ['牛番茄 2 顆', '洗選雞蛋 2 顆'],
+          seconds: 120,
+          chefTip: '蛋液下鍋後先不要急著狂攪，底層微凝固後用鍋鏟輕輕向內推，餘溫熟成最滑嫩！'
+        },
+        {
+          order: 2,
+          heat: '大火快炒',
+          heatStyle: 'bg-red-500/20 text-red-300 border-red-500/30',
+          instruction: '原鍋補少許油，放入牛番茄大火翻炒至出汁起紅油，接著加入牛肉片快速翻炒至八分熟。',
+          ingredients: ['牛肉片 100g', '炒出汁番茄'],
+          seconds: 90,
+          chefTip: '番茄紅素是脂溶性營養素，熱油翻炒至起紅油，湯汁不僅香濃甜美，營養更好吸收！'
+        },
+        {
+          order: 3,
+          heat: '微火燜煮',
+          heatStyle: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+          instruction: '倒回滑蛋輕輕拌勻，蓋鍋燜 20 秒吸附鮮甜番茄湯汁，關火直接淋在熱飯上即可出餐！',
+          ingredients: ['滑蛋', '白飯 1 碗'],
+          seconds: 30,
+          chefTip: '關火利用餘溫讓牛肉熟透，肉質最鮮嫩不柴，單鍋到底洗碗超輕鬆！'
+        }
+      ]
+    };
+
+    let currentStepIndex = 0;
+    let timerInterval = null;
+    let timerSecondsLeft = 120;
+    let isTimerRunning = false;
+
+    // ==================== INITIALIZATION ====================
+    window.addEventListener('DOMContentLoaded', () => {
+      renderCookwareChips();
+      renderPrepTray();
+      renderAvailableIngredients();
+      updateHeaderCookwareBadge();
+    });
+
+    // ==================== WORKFLOW SWITCHER ====================
+    function switchWorkflowMode(mode) {
+      currentWorkflow = mode;
+      const btnToday = document.getElementById('btn-mode-today');
+      const btnFreestyle = document.getElementById('btn-mode-freestyle');
+      const sectionToday = document.getElementById('section-today-meal');
+      const hintSwitch = document.getElementById('hint-switch-freestyle');
+      const floatingBar = document.getElementById('floating-bar');
+
+      if (mode === 'today') {
+        btnToday.className = 'px-3 py-1.5 rounded-xl bg-white text-stone-900 shadow-xs font-black inline-flex items-center gap-1.5 transition-all';
+        btnFreestyle.className = 'px-3 py-1.5 rounded-xl text-stone-500 hover:text-stone-800 inline-flex items-center gap-1.5 transition-all';
+        sectionToday.classList.remove('hidden');
+        hintSwitch.classList.remove('hidden');
+        floatingBar.classList.add('hidden'); // Today's ticket has its own full-width start button
+        showToast('已切換為：接球今日餐券模式');
+      } else {
+        btnToday.className = 'px-3 py-1.5 rounded-xl text-stone-500 hover:text-stone-800 inline-flex items-center gap-1.5 transition-all';
+        btnFreestyle.className = 'px-3 py-1.5 rounded-xl bg-white text-stone-900 shadow-xs font-black inline-flex items-center gap-1.5 transition-all';
+        sectionToday.classList.add('hidden');
+        hintSwitch.classList.add('hidden');
+        floatingBar.classList.remove('hidden');
+        showToast('已切換為：自由備料工作台模式');
+      }
+    }
+
+    // ==================== COOKWARE MANAGEMENT ====================
+    function updateHeaderCookwareBadge() {
+      const ownedCount = userCookware.filter(c => c.owned).length;
+      document.getElementById('header-cookware-count').innerText = ownedCount;
+    }
+
+    function renderCookwareChips() {
+      const container = document.getElementById('cookware-chips-list');
+      const ownedTools = userCookware.filter(c => c.owned);
+      container.innerHTML = ownedTools.map(tool => `
+        <button type="button" onclick="toggleCookwareSelection('${tool.id}')" class="px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${
+          tool.selectedForMeal
+            ? 'border-[#2a9d8f] bg-[#e0f2f1] text-[#1b6b61] font-black shadow-xs'
+            : 'border-stone-200 bg-white text-stone-600 hover:bg-stone-50'
+        }">
+          ${tool.selectedForMeal ? '✓ ' : ''}${tool.name}
+        </button>
+      `).join('');
+      updateFloatingBar();
+    }
+
+    function toggleCookwareSelection(id) {
+      const tool = userCookware.find(c => c.id === id);
+      if (tool) {
+        tool.selectedForMeal = !tool.selectedForMeal;
+        renderCookwareChips();
+      }
+    }
+
+    function openCookwareModal() {
+      const list = document.getElementById('cookware-modal-list');
+      list.innerHTML = userCookware.map(tool => `
+        <label class="flex items-center justify-between p-2.5 rounded-xl border border-stone-200 bg-stone-50/60 hover:bg-stone-100 cursor-pointer">
+          <div class="flex items-center gap-2">
+            <input type="checkbox" ${tool.owned ? 'checked' : ''} onchange="toggleOwnedStatus('${tool.id}', this.checked)" class="rounded text-[#2a9d8f] focus:ring-[#2a9d8f] h-4 w-4" />
+            <span class="text-xs font-bold text-stone-800">${tool.name}</span>
+          </div>
+          <span class="text-[10px] font-bold ${tool.owned ? 'text-emerald-700 bg-emerald-100' : 'text-stone-400 bg-stone-200'} px-2 py-0.5 rounded-full">
+            ${tool.owned ? '已擁有' : '未擁有'}
+          </span>
+        </label>
+      `).join('');
+      document.getElementById('modal-cookware-admin').classList.remove('hidden');
+    }
+
+    function toggleOwnedStatus(id, checked) {
+      const tool = userCookware.find(c => c.id === id);
+      if (tool) {
+        tool.owned = checked;
+        if (!checked) tool.selectedForMeal = false;
+      }
+    }
+
+    function addCustomCookware() {
+      const input = document.getElementById('input-custom-cookware');
+      const val = input.value.trim();
+      if (!val) return;
+      userCookware.push({
+        id: 'cw-custom-' + Date.now(),
+        name: val,
+        owned: true,
+        selectedForMeal: true
+      });
+      input.value = '';
+      openCookwareModal();
+      renderCookwareChips();
+      updateHeaderCookwareBadge();
+      showToast(`已新增自備設備：${val}`);
+    }
+
+    function closeCookwareModal() {
+      document.getElementById('modal-cookware-admin').classList.add('hidden');
+    }
+
+    function saveCookwareChanges() {
+      closeCookwareModal();
+      renderCookwareChips();
+      updateHeaderCookwareBadge();
+      showToast('自備廚具設定已保存！');
+    }
+
+    // ==================== INGREDIENTS & PREP TRAY ====================
+    function renderPrepTray() {
+      const trayList = document.getElementById('prep-tray-list');
+      const trayItems = inventory.filter(i => i.inTray);
+      document.getElementById('tray-badge').innerText = `已備 ${trayItems.length} 項`;
+
+      if (trayItems.length === 0) {
+        trayList.innerHTML = `
+          <div class="rounded-xl border border-dashed border-[#f4a261]/40 bg-orange-50/30 p-4 text-center text-xs text-stone-500">
+            備料盤目前無食材，請從下方在庫食材點擊加入，或至「冰箱」一鍵帶入！
+          </div>
+        `;
+      } else {
+        trayList.innerHTML = trayItems.map(item => `
+          <div class="flex items-center justify-between rounded-xl border border-stone-200 bg-white p-2.5 shadow-2xs">
+            <div class="flex items-center gap-2.5">
+              <div class="flex h-8 w-8 items-center justify-center rounded-lg ${item.urgent ? 'bg-orange-100 text-[#ea580c]' : 'bg-stone-100 text-stone-600'}">
+                <span class="material-symbols-outlined text-base">nutrition</span>
+              </div>
+              <div>
+                <h4 class="text-xs font-black text-stone-900 flex items-center gap-1.5">
+                  <span>${item.name}</span>
+                  <span class="font-normal text-stone-500 text-[11px]">${item.qty}</span>
+                  ${item.urgent
+                    ? '<span class="px-1.5 py-0.2 rounded bg-orange-100 text-[#c2410c] text-[9px] font-extrabold border border-orange-200">剩 '+item.daysLeft+' 天即期</span>'
+                    : '<span class="text-[10px] text-stone-400 font-mono">剩 '+item.daysLeft+' 天</span>'
+                  }
+                </h4>
+                <p class="text-[9px] text-stone-400 font-mono">
+                  ${item.chamber === 'frozen' ? '冷凍庫保存' : '冷藏室保存'} · UUID: ${item.id}
+                </p>
+              </div>
+            </div>
+            <button onclick="removeFromTray('${item.id}')" class="rounded-lg p-1 text-stone-400 hover:bg-stone-100 hover:text-stone-700">
+              <span class="material-symbols-outlined text-base">close</span>
+            </button>
+          </div>
+        `).join('');
+      }
+
+      updateFloatingBar();
+    }
+
+    function renderAvailableIngredients() {
+      const container = document.getElementById('available-ingredients-chips');
+      const available = inventory.filter(i => !i.inTray);
+
+      if (available.length === 0) {
+        container.innerHTML = `<p class="text-xs text-stone-400">已將冰箱庫存全數加入備料盤。</p>`;
+        return;
+      }
+
+      container.innerHTML = available.map(item => `
+        <button type="button" onclick="addToTray('${item.id}')" class="flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold transition-all active:scale-95 ${
+          item.urgent
+            ? 'border-orange-300 bg-orange-50 text-[#c2410c] hover:bg-orange-100'
+            : 'border-emerald-300 bg-emerald-50/60 text-emerald-800 hover:bg-emerald-100'
+        }">
+          <span>＋ ${item.name} (${item.qty})</span>
+          <span class="text-[9px] px-1 rounded ${item.urgent ? 'bg-orange-200 text-orange-900 font-black' : 'bg-emerald-100 text-emerald-800'}">
+            ${item.urgent ? '急·剩'+item.daysLeft+'天' : item.daysLeft+'天'}
+          </span>
+        </button>
+      `).join('');
+    }
+
+    function addToTray(id) {
+      const item = inventory.find(i => i.id === id);
+      if (item) {
+        item.inTray = true;
+        renderPrepTray();
+        renderAvailableIngredients();
+        showToast(`已加入備料盤：${item.name}`);
+      }
+    }
+
+    function removeFromTray(id) {
+      const item = inventory.find(i => i.id === id);
+      if (item) {
+        item.inTray = false;
+        renderPrepTray();
+        renderAvailableIngredients();
+      }
+    }
+
+    function clearPrepTray() {
+      inventory.forEach(i => i.inTray = false);
+      renderPrepTray();
+      renderAvailableIngredients();
+      showToast('已清空備料盤');
+    }
+
+    function selectStyle(btn, styleName) {
+      document.querySelectorAll('#style-selector .style-btn').forEach(b => {
+        b.className = 'style-btn px-3.5 py-1.5 rounded-xl text-xs font-bold border border-stone-200 bg-white text-stone-700 hover:bg-stone-50';
+      });
+      btn.className = 'style-btn px-3.5 py-1.5 rounded-xl text-xs font-bold bg-[#2a9d8f] text-white shadow-xs';
+      selectedStyle = styleName;
+      updateFloatingBar();
+    }
+
+    function updateFloatingBar() {
+      const trayItems = inventory.filter(i => i.inTray);
+      const selectedTools = userCookware.filter(c => c.owned && c.selectedForMeal).map(c => c.name);
+      const title = document.getElementById('floating-bar-title');
+      const subtitle = document.getElementById('floating-bar-subtitle');
+      const startBtn = document.getElementById('btn-floating-start');
+
+      if (trayItems.length === 0) {
+        title.innerText = '尚未選取備料食材';
+        subtitle.innerText = '請先從上方挑選至少 1 項食材';
+        startBtn.disabled = true;
+        startBtn.classList.add('opacity-40');
+      } else {
+        title.innerText = `備料就緒：${trayItems.map(i => i.name).join(' + ')}`;
+        subtitle.innerText = `${selectedTools.length > 0 ? selectedTools.join(' + ') : '全部設備'} · ${selectedStyle}`;
+        startBtn.disabled = false;
+        startBtn.classList.remove('opacity-40');
+      }
+    }
+
+    function toggleCatalogDrawer() {
+      const drawer = document.getElementById('catalog-drawer-content');
+      const isHidden = drawer.classList.contains('hidden');
+      const icon = document.getElementById('icon-catalog-arrow');
+      if (isHidden) {
+        drawer.classList.remove('hidden');
+        icon.innerText = 'expand_less';
+      } else {
+        drawer.classList.add('hidden');
+        icon.innerText = 'expand_more';
+      }
+    }
+
+    // ==================== COOKING MODE & TIMERS ====================
+    function startCookingFlow(recipeTitle, source) {
+      currentStepIndex = 0;
+      document.getElementById('cooking-recipe-title').innerText = recipeTitle;
+      renderCurrentStep();
+      document.getElementById('overlay-cooking-mode').classList.remove('hidden');
+      showToast(`已成功下載食譜離線包，進入 Cooking Mode！`);
+    }
+
+    function renderCurrentStep() {
+      const steps = RECIPE_STEPS.today;
+      const step = steps[currentStepIndex];
+      document.getElementById('cooking-step-badge').innerText = `步驟 ${currentStepIndex + 1} / ${steps.length}`;
+      document.getElementById('step-number').innerText = `STEP 0${step.order}`;
+
+      const heatEl = document.getElementById('step-heat');
+      heatEl.className = `px-2.5 py-0.5 rounded-full text-xs font-extrabold flex items-center gap-1 border ${step.heatStyle}`;
+      heatEl.innerHTML = `<span class="material-symbols-outlined text-sm">local_fire_department</span><span>${step.heat}</span>`;
+
+      document.getElementById('step-instruction').innerText = step.instruction;
+      document.getElementById('step-ingredients-wrap').innerHTML = step.ingredients.map(ing => `
+        <span class="px-2 py-0.5 rounded-md bg-white/10 text-xs font-bold">${ing}</span>
+      `).join('');
+
+      document.getElementById('step-chef-tip').innerText = step.chefTip;
+
+      // Timer Reset
+      timerSecondsLeft = step.seconds;
+      isTimerRunning = false;
+      clearInterval(timerInterval);
+      updateTimerDisplay();
+      document.getElementById('btn-timer-action').innerText = '開始計時';
+
+      // Progress segments
+      const segs = document.getElementById('cooking-segments-container').children;
+      for (let i = 0; i < segs.length; i++) {
+        segs[i].className = i <= currentStepIndex ? 'progress-segment active' : 'progress-segment';
+      }
+
+      // Buttons
+      document.getElementById('btn-prev-step').disabled = currentStepIndex === 0;
+      const nextBtn = document.getElementById('btn-next-step');
+      if (currentStepIndex === steps.length - 1) {
+        nextBtn.innerHTML = `<span>完成料理並結算</span><span class="material-symbols-outlined text-sm">check_circle</span>`;
+        nextBtn.className = 'flex-[2] py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs shadow-lg active:scale-95 transition-all flex items-center justify-center gap-1.5';
+      } else {
+        nextBtn.innerHTML = `<span>下一步</span><span class="material-symbols-outlined text-sm">arrow_forward</span>`;
+        nextBtn.className = 'flex-[2] py-3 rounded-2xl bg-[#ea580c] hover:bg-[#d94e08] text-white font-black text-xs shadow-lg active:scale-95 transition-all flex items-center justify-center gap-1.5';
+      }
+    }
+
+    function toggleStepTimer() {
+      const btn = document.getElementById('btn-timer-action');
+      if (isTimerRunning) {
+        clearInterval(timerInterval);
+        isTimerRunning = false;
+        btn.innerText = '繼續計時';
+      } else {
+        isTimerRunning = true;
+        btn.innerText = '暫停';
+        timerInterval = setInterval(() => {
+          if (timerSecondsLeft > 0) {
+            timerSecondsLeft--;
+            updateTimerDisplay();
+          } else {
+            clearInterval(timerInterval);
+            isTimerRunning = false;
+            btn.innerText = '計時完畢';
+            showToast('叮！本步驟烹飪時間已到！');
+          }
+        }, 1000);
+      }
+    }
+
+    function updateTimerDisplay() {
+      const mins = Math.floor(timerSecondsLeft / 60);
+      const secs = timerSecondsLeft % 60;
+      document.getElementById('step-timer-digits').innerText =
+        `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
+
+    function prevCookingStep() {
+      if (currentStepIndex > 0) {
+        currentStepIndex--;
+        renderCurrentStep();
+      }
+    }
+
+    function nextCookingStep() {
+      const steps = RECIPE_STEPS.today;
+      if (currentStepIndex < steps.length - 1) {
+        currentStepIndex++;
+        renderCurrentStep();
+      } else {
+        // Finishing recipe
+        closeCookingMode();
+        openCompleteModal();
+      }
+    }
+
+    function closeCookingMode() {
+      clearInterval(timerInterval);
+      document.getElementById('overlay-cooking-mode').classList.add('hidden');
+    }
+
+    // ==================== OUTCOME SETTLEMENT ====================
+    function openCompleteModal() {
+      document.getElementById('modal-cooking-complete').classList.remove('hidden');
+    }
+
+    function closeCompleteModal() {
+      document.getElementById('modal-cooking-complete').classList.add('hidden');
+    }
+
+    function confirmCookingOutcome() {
+      closeCompleteModal();
+      // Simulate inventory deduction
+      inventory.forEach(i => {
+        if (i.inTray) i.inTray = false;
+      });
+      renderPrepTray();
+      renderAvailableIngredients();
+      showToast('料理完賽！已自動扣減食材庫存，圓夢資產入帳 NT$ 95！');
+    }
+
+    // ==================== TOAST HELPER ====================
+    let toastTimeout = null;
+    function showToast(text) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-text').innerText = text;
+      toast.classList.remove('opacity-0', 'pointer-events-none', '-translate-y-4');
+      toast.classList.add('opacity-100', 'translate-y-0');
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toast.classList.remove('opacity-100', 'translate-y-0');
+        toast.classList.add('opacity-0', 'pointer-events-none', '-translate-y-4');
+      }, 2500);
+    }
+  </script>
+</body>
+</html>
