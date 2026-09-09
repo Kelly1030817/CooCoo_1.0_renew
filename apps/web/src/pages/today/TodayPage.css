@@ -481,6 +481,10 @@
 }
 
 .today-page .segmented-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
   border: 0;
   background: transparent;
   padding: 4px 11px;
@@ -1097,6 +1101,16 @@
 
 .today-page .diag-action-btn.primary:hover {
   background: #853621;
+}
+
+.today-page .diag-action-btn.highlight-switch {
+  background: linear-gradient(135deg, #b45309, #d97706);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(180, 83, 9, 0.25);
+}
+
+.today-page .diag-action-btn.highlight-switch:hover {
+  background: linear-gradient(135deg, #92400e, #b45309);
 }
 
 .today-page .diag-action-btn.secondary {

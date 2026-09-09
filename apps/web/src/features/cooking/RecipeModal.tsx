@@ -553,8 +553,14 @@ function CookingCompleteModal({ recipePackage, ingredientIds, onClose, onComplet
           <input type="checkbox" checked={vegetables} onChange={(event) => setVegetables(event.target.checked)} />
           <span className="flex-1 flex items-center justify-between gap-1">
             <span>這餐實際吃到蔬菜</span>
-            <span className="text-[10px] font-extrabold text-[#2d6a4f] bg-[#d5ede1] px-2 py-0.5 rounded-full border border-[#b4dfc8]">
-              🌱 圓夢健康指標
+            <span className="text-[10px] font-extrabold text-[#2d6a4f] bg-[#d5ede1] px-2 py-0.5 rounded-full border border-[#b4dfc8] inline-flex items-center gap-1">
+              <svg className="w-3 h-3 text-[#2d6a4f]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M7 20h10" />
+                <path d="M10 20c0-4.5 1-8 2-10" />
+                <path d="M12 10c2-3 5-4 8-3-1 3-3 5-6 5" />
+                <path d="M12 14c-2-2-4.5-3-7-2 1 3 3 4 5 4" />
+              </svg>
+              <span>圓夢健康指標</span>
             </span>
           </span>
         </label>

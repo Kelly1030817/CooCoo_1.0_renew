@@ -75,6 +75,7 @@ export function TodayPage() {
   const ui = useContext(UiContext);
   const [energyLow, setEnergyLow] = useState(false);
   const [ticketMode, setTicketMode] = useState<"fridge" | "purchase">("fridge");
+  const [hasAutoSwitched, setHasAutoSwitched] = useState(false);
   const [decision, setDecision] = useState<TodayDecision | null>(null);
   const [planResult, setPlanResult] = useState<MealPlanResult | null>(null);
   const [primaryId, setPrimaryId] = useState("");
@@ -180,11 +181,55 @@ export function TodayPage() {
     purchaseChoices.find((item) => item.recipe.id === selectedPurchaseRecipeId) ||
     purchaseChoices[0];
 
+  // Smart fallback: When fridge inventory has 0 eligible meals, but small purchase has options, auto-switch to purchase mode
+  useEffect(() => {
+    if (decision && choices.length === 0 && purchaseChoices.length > 0 && !hasAutoSwitched && ticketMode === "fridge") {
+      setTicketMode("purchase");
+      setHasAutoSwitched(true);
+      ui.toast("冰箱現有食材不足以成菜，已為您推薦只需補買 1~2 項食材的菜色！");
+    }
+  }, [decision, choices.length, purchaseChoices.length, hasAutoSwitched, ticketMode]);
+
   const recommended = ticketMode === "fridge"
     ? recommendedFridge
     : (activePurchaseItem?.recipe || recommendedFridge);
 
   const activeMissing = ticketMode === "purchase" ? (activePurchaseItem?.missing || []) : [];
+
+  const renderModeSwitcher = () => (
+    <div className="ticket-mode-row">
+      <span className="mode-row-label">今日推薦模式</span>
+      <div className="segmented-switch" role="tablist" aria-label="今日推薦模式切換">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={ticketMode === "fridge"}
+          className={`segmented-btn ${ticketMode === "fridge" ? "active" : ""}`}
+          onClick={() => setTicketMode("fridge")}
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline-icon" aria-hidden="true">
+            <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
+            <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
+          </svg>
+          <span>冰箱現有 {choices.length > 0 ? "(0元)" : "(0道)"}</span>
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={ticketMode === "purchase"}
+          className={`segmented-btn ${ticketMode === "purchase" ? "active" : ""}`}
+          onClick={() => setTicketMode("purchase")}
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline-icon" aria-hidden="true">
+            <circle cx="8" cy="21" r="1"/>
+            <circle cx="19" cy="21" r="1"/>
+            <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
+          </svg>
+          <span>少量補買 {purchaseLoading ? "..." : (purchaseChoices.length > 0 ? (activePurchaseItem?.estimatedPurchaseCost ? `(+${activePurchaseItem.estimatedPurchaseCost}元)` : `(${purchaseChoices.length}道)`) : "(0道)")}</span>
+        </button>
+      </div>
+    </div>
+  );
 
   const choose = (meal: RecipePackage) => {
     if (ticketMode === "fridge") {
@@ -369,8 +414,11 @@ export function TodayPage() {
                   隨行速決
                 </span>
                 {energyLow && (
-                  <span className="text-[9px] font-bold text-amber-950 bg-amber-200 px-1.5 py-0.2 rounded">
-                    ⚡ 低體力模式中
+                  <span className="text-[9px] font-bold text-amber-950 bg-amber-200 px-1.5 py-0.2 rounded inline-flex items-center gap-0.5">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                    </svg>
+                    <span>低體力模式中</span>
                   </span>
                 )}
               </div>
@@ -440,21 +488,40 @@ export function TodayPage() {
           </div>
 
           <div className="ticket-body">
+            {renderModeSwitcher()}
+
             <div className="meal-tags">
               <span className="tag-warning">
                 <span className="material-symbols-outlined">info</span>
-                後端食安與廚具檢核
+                {ticketMode === "fridge" ? "冰箱現有庫存檢核" : "後端條件檢核"}
               </span>
             </div>
 
-            <h3>目前條件暫無完全匹配的料理</h3>
+            <h3>
+              {ticketMode === "fridge"
+                ? "目前冰箱現有食材暫無完全匹配的料理"
+                : "目前條件暫無完全匹配的料理"}
+            </h3>
             <p className="meal-subtitle">
-              {decision?.notice || decisionError || planError || "後台檢核您的可用廚具、預算與飲食限制，尚未找到同時符合全部條件的食譜。"}
+              {ticketMode === "fridge"
+                ? (purchaseChoices.length > 0
+                    ? "後端檢核您的食材庫存（目前僅有白飯、食用油），尚無可 100% 覆蓋的完整食譜。建議切換至「少量補買」查看只需補買 1~2 項食材的菜色。"
+                    : (decision?.notice || decisionError || planError || "後台檢核您的可用廚具、預算與飲食限制，尚未找到同時符合全部條件的食譜。"))
+                : (purchaseError || purchaseResult?.notice || "目前沒有符合預算且補買 ≤ 2 項食材的候選食譜。")}
             </p>
 
             <div className="backend-diagnostics-box">
               <div className="diag-header">後端目前讀取的偏好設定：</div>
               <div className="diag-grid">
+                <div className="diag-item">
+                  <span className="diag-label">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline-icon" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+                    現有冰箱食材
+                  </span>
+                  <strong className="diag-val">
+                    {(data?.inventory || []).map((i) => i.name).join("、") || "尚無在庫食材"}
+                  </strong>
+                </div>
                 <div className="diag-item">
                   <span className="diag-label">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline-icon" aria-hidden="true"><ellipse cx="9" cy="12" rx="7" ry="5"/><path d="M16 12h6"/></svg>
@@ -488,13 +555,23 @@ export function TodayPage() {
             </div>
 
             <div className="ticket-actions-group">
-              <a href="/kitchen" className="diag-action-btn primary">
-                <span className="material-symbols-outlined">skillet</span>
-                前往「廚房」新增或調整廚具
-              </a>
+              {ticketMode === "fridge" && purchaseChoices.length > 0 && (
+                <button
+                  type="button"
+                  className="diag-action-btn primary highlight-switch"
+                  onClick={() => setTicketMode("purchase")}
+                >
+                  <span className="material-symbols-outlined">shopping_cart</span>
+                  切換至「少量補買」推薦 ({purchaseChoices.length} 道菜可選)
+                </button>
+              )}
               <a href="/fridge" className="diag-action-btn secondary">
                 <span className="material-symbols-outlined">kitchen</span>
-                前往「冰箱」選取食材生成料理
+                前往「冰箱」新增或盤點食材
+              </a>
+              <a href="/kitchen" className="diag-action-btn text">
+                <span className="material-symbols-outlined">skillet</span>
+                前往「廚房」新增或調整廚具
               </a>
               <button
                 type="button"
@@ -524,30 +601,7 @@ export function TodayPage() {
 
           {/* Ticket Body (Right) */}
           <div className="ticket-body">
-            {/* Option A Segmented Mode Switcher */}
-            <div className="ticket-mode-row">
-              <span className="mode-row-label">今日推薦模式</span>
-              <div className="segmented-switch" role="tablist" aria-label="今日推薦模式切換">
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={ticketMode === "fridge"}
-                  className={`segmented-btn ${ticketMode === "fridge" ? "active" : ""}`}
-                  onClick={() => setTicketMode("fridge")}
-                >
-                  🥬 冰箱現有 (0元)
-                </button>
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={ticketMode === "purchase"}
-                  className={`segmented-btn ${ticketMode === "purchase" ? "active" : ""}`}
-                  onClick={() => setTicketMode("purchase")}
-                >
-                  🛒 少量補買 {purchaseLoading ? "..." : (activePurchaseItem?.estimatedPurchaseCost ? `(+${activePurchaseItem.estimatedPurchaseCost}元)` : "")}
-                </button>
-              </div>
-            </div>
+            {renderModeSwitcher()}
 
             <div className="meal-tags">
               <span className="tag-time">

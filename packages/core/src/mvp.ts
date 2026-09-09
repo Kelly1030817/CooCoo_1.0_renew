@@ -80,7 +80,7 @@ export function isCookwareSufficient(required: string, available: Set<string>): 
   const norm = normalize(required);
   if (available.has(norm)) return true;
   if (norm === "電磁爐" || norm === "瓦斯爐") {
-    const directHeaters = ["瓦斯爐", "電磁爐", "ih爐", "卡式爐", "黑晶爐", "快煮鍋", "電子壓力鍋", "電鍋"];
+    const directHeaters = ["瓦斯爐", "電磁爐", "ih爐", "卡式爐", "黑晶爐", "快煮鍋", "電子壓力鍋", "電鍋", "多功能電子鍋", "萬用鍋", "電子鍋"];
     return directHeaters.some((h) => available.has(normalize(h)));
   }
   return false;

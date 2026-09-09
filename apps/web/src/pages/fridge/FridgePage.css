@@ -1,0 +1,102 @@
+/* CooCoo Fridge Page - Scheme D (清新小資快手 · 湖水綠 #2a9d8f 對齊 + 鮮活警戒橘 #ea580c 警報) */
+.fridge-page {
+  --fridge-canvas-bg: #fcfbf4;
+  --cold-chamber-bg: #e6f5f4;
+  --cold-chamber-border: #bce3df;
+  --cold-chamber-title: #1b6b61;
+  --cold-tag-bg: #e0f2f1;
+  --cold-tag-text: #2a9d8f;
+  --frozen-chamber-bg: #edf2fb;
+  --frozen-chamber-border: #d7e3fc;
+  --frozen-chamber-title: #2a6f97;
+  --frozen-tag-bg: #e2eafc;
+  --frozen-tag-text: #2a6f97;
+  --urgent-bg: #fff3e6;
+  --urgent-border: #fed7aa;
+  --urgent-title: #c2410c;
+  --urgent-btn-bg: #ea580c;
+  --urgent-btn-text: #ffffff;
+  --card-border: #eee8dd;
+  --text-main: #1f1c1a;
+  --text-muted: #78716c;
+
+  background-color: var(--fridge-canvas-bg);
+  min-height: 100%;
+  padding-bottom: 7rem;
+}
+
+.fridge-page .capacity-card {
+  background-color: #ffffff;
+  border: 1px solid var(--card-border);
+  border-radius: 1.25rem;
+  padding: 0.875rem 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.fridge-page .urgent-section {
+  background-color: var(--urgent-bg);
+  border: 1.5px solid var(--urgent-border);
+  border-radius: 1.25rem;
+  padding: 1rem;
+  box-shadow: 0 2px 6px rgba(234, 88, 12, 0.08);
+}
+
+.fridge-page .urgent-btn {
+  background-color: var(--urgent-btn-bg);
+  color: var(--urgent-btn-text);
+  font-weight: 800;
+  transition: all 0.2s ease;
+}
+.fridge-page .urgent-btn:hover {
+  filter: brightness(1.05);
+}
+.fridge-page .urgent-btn:active {
+  transform: scale(0.98);
+}
+
+.fridge-page .cold-chamber {
+  background-color: var(--cold-chamber-bg);
+  border: 1.5px solid var(--cold-chamber-border);
+  border-radius: 1.25rem;
+  padding: 1rem;
+}
+
+.fridge-page .frozen-chamber {
+  background-color: var(--frozen-chamber-bg);
+  border: 1.5px solid var(--frozen-chamber-border);
+  border-radius: 1.25rem;
+  padding: 1rem;
+}
+
+.fridge-page .ingredient-item-card {
+  background-color: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 1rem;
+  padding: 0.75rem 0.875rem;
+  transition: all 0.2s ease;
+}
+.fridge-page .ingredient-item-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.fridge-page .btn-in-tray {
+  background-color: var(--cold-tag-text);
+  color: #ffffff;
+}
+
+.fridge-page .btn-add-tray {
+  background-color: var(--cold-tag-bg);
+  color: var(--cold-tag-text);
+  border: 1px solid var(--cold-chamber-border);
+}
+.fridge-page .btn-add-tray:hover {
+  background-color: var(--cold-tag-text);
+  color: #ffffff;
+}
+
+.fridge-page .rescue-center {
+  background-color: #ffffff;
+  border: 1px solid var(--card-border);
+  border-radius: 1.25rem;
+  padding: 1rem;
+}
