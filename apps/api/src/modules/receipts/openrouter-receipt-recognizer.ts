@@ -9,7 +9,7 @@ export class OpenRouterReceiptModel implements ReceiptModel {
   readonly model: string;
   constructor(private readonly client = new OpenRouterJsonClient(
     process.env.OPENROUTER_API_KEY,
-    process.env.OPENROUTER_RECEIPT_MODEL || "openai/gpt-5.6-luna",
+    process.env.OPENROUTER_RECEIPT_MODEL || "google/gemini-2.5-flash-lite",
   )) { this.model=client.model; }
   recognize(image: ReceiptImage) {
     return this.client.generate<unknown>({
