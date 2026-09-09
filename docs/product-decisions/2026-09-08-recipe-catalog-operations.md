@@ -41,9 +41,9 @@ Actions: `改用現有食材` and `加入購物清單`.
 | --- | ---: |
 | Catalog candidates | 50 per month |
 | Catalog AI | NT$50 per month |
-| Shopping AI | NT$100 per month |
+| Shopping AI | NT$40 per month |
 | Combined OpenRouter usage | NT$150 per month |
-| Shopping AI per user | 20 calls per day |
+| Shopping AI per user | 5 calls per day |
 
 The teacher-provided OpenRouter credit is finite and has no automatic top-up. Database sync and published recipes remain available if AI budget or provider access is exhausted.
 

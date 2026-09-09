@@ -1,8 +1,8 @@
 # CooCoo 主廚相談室（Chef Consultation）完整設計與技術規格書
 
-> **文件版本**：v1.0 (Integrated MVP)  
-> **最後更新**：2026-09-06  
-> **適用範圍**：前端 `apps/web`、後端 `apps/api`、合約 `packages/contracts`、互動沙盒原型  
+> **文件版本**：v1.0 (Integrated MVP)
+> **最後更新**：2026-09-06
+> **適用範圍**：前端 `apps/web`、後端 `apps/api`、合約 `packages/contracts`、互動沙盒原型
 > **狀態**：已通過沙盒全功能驗證與 Headless Chrome 動態驗收，待移植正式站
 
 ---
@@ -206,7 +206,7 @@ export const OnboardingProfileSchema = Type.Object({
 ## 8. 新手接關與下階段執行指南
 
 > [!TIP]
-> **給使用者的專業建議：**  
+> **給使用者的專業建議：**
 > 這是非常成功的 MVP 原型設計！現在我們已經擁有了：
 > 1. 一份完整的規格說明書（本文件）。
 > 2. 一個可以隨時用瀏覽器打開體驗的獨立沙盒網頁（[`chef_consultation_merged_workflow.html`](file:///Users/kelly/.gemini/antigravity/brain/00ac4f47-1f53-4d9a-8e9e-f1a3c6e6e844/chef_consultation_merged_workflow.html)）。

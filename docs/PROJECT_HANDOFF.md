@@ -1,6 +1,6 @@
 # CooCoo integrated MVP handoff
 
-Last verified: 2026-09-08 (Asia/Taipei)
+Last verified: 2026-09-09 (Asia/Taipei)
 
 This is the canonical cross-model handoff. It summarizes decisions and evidence; it is not a verbatim chat transcript and contains no credentials.
 
@@ -51,11 +51,12 @@ At this handoff, `main` and the integration branch shared commit `ebd8d49` befor
 - OpenRouter receipt recognition parses structured OCR fields with per-field confidence and fails closed on invalid JSON, pure QR images, or non-itemized content.
 - Interactive OpenRouter work uses one idempotent ledger: shopping is capped at NT$40/month and 5 calls/user/day, recipe generation at NT$30/month and 3 calls/user/day, and receipt OCR at NT$30/month and 3 calls/user/day. Catalog remains capped at NT$50/month and all four uses share an NT$150 monthly ceiling.
 - Five real frontend routes with separate Today and Shopping CSS, mandatory ten-step onboarding with tag-based individual flavor input and custom cookware, auth recovery, card-based shopping UI, recipe package cooking flow, and dream dashboard integration.
+- The daily chef revisit applies hard dietary restrictions before offering its fixed low-energy recipe, persists weekly-target changes, records a planned takeout night by cancelling that meal without creating a charge, and routes small-purchase additions through the approved reminder and idempotent purchase operation.
 - PWA manifest/service worker, IndexedDB recipe packages, Cache Storage images, wake-lock attempt, voice commands where supported, and an offline operation queue foundation.
 - Published-recipe catalog: inventory-only and opt-in small-purchase recommendations, NT$100 user default, whole-package reference pricing, explicit dream-goal spending reminder, owner controls, quality/safety reports, and text-only scheduled generation with a NT$50 monthly operating cap. The Owner view reads the live budget and candidate limit, lists jobs and failures, and warns at 80% cost, after two hours without a heartbeat, and when reference prices approach or pass their 30-day expiry.
 - Demand-driven catalog jobs use three gates (deterministic rules, independent quality review, independent food-safety review), no more than 50 candidates per month, and defer budget-blocked work without consuming a retry.
 - Offline cooking replay is bound to the signed-in user and operation ID; unowned legacy operations require a visible preview and confirmation before adoption.
-- Local verification on 2026-09-08: `bun run verify` passed 125 tests across 23 files, lint, Web production build, API typecheck, and all migrations in PGlite, including the 25-price seed, canonical-key coverage, compatible priced units, and heating-equipment review instructions.
+- Local verification on 2026-09-09: `bun run verify` passed 142 tests across 25 files, lint, Web production build, API typecheck, and all migrations in PGlite, including the 25-price seed, canonical-key coverage, compatible priced units, and heating-equipment review instructions.
 
 ### Cloud evidence
 

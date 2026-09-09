@@ -8,10 +8,12 @@ import { ChefRevisitModal } from "./ChefRevisitModal";
 import { PurchaseReminder, OfflineImportAndConflicts } from "@/features/recipes/RecipeCatalogPanel";
 import {
   LOW_ENERGY_EMERGENCY_RECIPE,
-  type EmergencyMissingItem,
+  findEmergencyRecipeRestriction,
+  hasCompatibleEmergencyCookware,
 } from "@/features/cooking/emergencyRecipe";
 import { api, json } from "@/shared/api/client";
 import { Modal, ModalHeader } from "@/shared/ui/Modal";
+import { shouldAutoSwitchToPurchase } from "./recommendationMode";
 import "./TodayPage.css";
 
 const subtitles: Record<string, string> = {
@@ -75,6 +77,7 @@ export function TodayPage() {
   const ui = useContext(UiContext);
   const [energyLow, setEnergyLow] = useState(false);
   const [ticketMode, setTicketMode] = useState<"fridge" | "purchase">("fridge");
+  const [hasAutoSwitched, setHasAutoSwitched] = useState(false);
   const [decision, setDecision] = useState<TodayDecision | null>(null);
   const [planResult, setPlanResult] = useState<MealPlanResult | null>(null);
   const [primaryId, setPrimaryId] = useState("");
@@ -103,11 +106,32 @@ export function TodayPage() {
           setEnergyLow(true);
         }}
         onStartCooking={(customRecipe) => startCooking(customRecipe)}
-        onAddToShopping={handleAddToShopping}
         inventoryNames={(data?.inventory || []).map((item) => item.name)}
-        weeklyTarget={data?.cookingPlan?.weeklyCookingMeals || 3}
-        onAdjustTarget={(newTarget) => {
-          ui.toast(`已將本週目標調整為 ${newTarget} 餐`);
+        restrictions={data?.onboardingProfile?.restrictions || []}
+        cookwareTypes={(data?.cookware || []).map((item) => item.type)}
+        weeklyTarget={data?.cookingPlan?.weeklyCookingMeals ?? 3}
+        onAdjustTarget={async (newTarget) => {
+          if (!data?.activeGoal) throw new Error("GOAL_NOT_FOUND");
+          await api(`/goals/${data.activeGoal.id}`, json("PATCH", { weeklyCookingMeals: newTarget }));
+          await queryClient.invalidateQueries({ queryKey: stateQueryKey });
+        }}
+        onRecordTakeout={async () => {
+          const meal = planResult?.plan.meals.find(
+            (item) => item.date === today && item.status === "planned",
+          );
+          if (!planResult || !meal) {
+            return `目前沒有今日排定餐點，因此餐單沒有變更；外食比較價 NT$ ${outsidePrice} 只用於日後省錢比較，沒有新增支出或扣款。`;
+          }
+          const value = await api<MealPlanResult>(
+            `/meal-plans/meals/${meal.id}`,
+            json("PATCH", {
+              weekStart: planResult.plan.weekStart,
+              kind: "cancel",
+              expectedUpdatedAt: planResult.plan.updatedAt,
+            }),
+          );
+          setPlanResult(value);
+          return `已將今日「${meal.title}」從餐單取消；外食比較價 NT$ ${outsidePrice} 只用於日後省錢比較，沒有自動扣款。`;
         }}
         outsideMealPrice={outsidePrice}
       />,
@@ -145,9 +169,7 @@ export function TodayPage() {
       .then((value) => {
         if (active) {
           setPurchaseResult(value);
-          if (value.eligible[0] && !selectedPurchaseRecipeId) {
-            setSelectedPurchaseRecipeId(value.eligible[0].recipe.id);
-          }
+          setSelectedPurchaseRecipeId((current) => current ?? value.eligible[0]?.recipe.id ?? null);
         }
       })
       .catch((reason) => active && setPurchaseError(reason instanceof Error ? reason.message : "補買推薦載入失敗"))
@@ -180,11 +202,59 @@ export function TodayPage() {
     purchaseChoices.find((item) => item.recipe.id === selectedPurchaseRecipeId) ||
     purchaseChoices[0];
 
+  useEffect(() => {
+    if (shouldAutoSwitchToPurchase({
+      hasDecision: Boolean(decision),
+      inventoryRecipeCount: choices.length,
+      purchaseRecipeCount: purchaseChoices.length,
+      hasAutoSwitched,
+      ticketMode,
+    })) {
+      setTicketMode("purchase");
+      setHasAutoSwitched(true);
+      ui.toast("冰箱食材不足以成菜，已切換顯示需要少量補買的候選；加入清單前仍會再次確認。");
+    }
+  }, [decision, choices.length, purchaseChoices.length, hasAutoSwitched, ticketMode, ui]);
+
   const recommended = ticketMode === "fridge"
     ? recommendedFridge
     : (activePurchaseItem?.recipe || recommendedFridge);
 
   const activeMissing = ticketMode === "purchase" ? (activePurchaseItem?.missing || []) : [];
+
+  const renderModeSwitcher = () => (
+    <div className="ticket-mode-row">
+      <span className="mode-row-label">今日推薦模式</span>
+      <div className="segmented-switch" role="tablist" aria-label="今日推薦模式切換">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={ticketMode === "fridge"}
+          className={`segmented-btn ${ticketMode === "fridge" ? "active" : ""}`}
+          onClick={() => setTicketMode("fridge")}
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+            <path d="M12 22c4-2 7-6 7-11V3l-7 4-7-4v8c0 5 3 9 7 11Z" />
+            <path d="M8 13c3 0 5-2 8-5" />
+          </svg>
+          冰箱現有 {choices.length > 0 ? "（0 元）" : "（0 道）"}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={ticketMode === "purchase"}
+          className={`segmented-btn ${ticketMode === "purchase" ? "active" : ""}`}
+          onClick={() => setTicketMode("purchase")}
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+            <circle cx="9" cy="20" r="1" /><circle cx="18" cy="20" r="1" />
+            <path d="M3 4h2l2.4 10.2a2 2 0 0 0 2 1.6h7.8a2 2 0 0 0 2-1.6L21 7H6" />
+          </svg>
+          少量補買 {purchaseLoading ? "…" : activePurchaseItem?.estimatedPurchaseCost ? `（約 ${activePurchaseItem.estimatedPurchaseCost} 元）` : `（${purchaseChoices.length} 道）`}
+        </button>
+      </div>
+    </div>
+  );
 
   const choose = (meal: RecipePackage) => {
     if (ticketMode === "fridge") {
@@ -198,6 +268,17 @@ export function TodayPage() {
   const startCooking = (customRecipe?: RecipePackage) => {
     const targetRecipe = customRecipe || recommended || LOW_ENERGY_EMERGENCY_RECIPE;
     if (!targetRecipe) return;
+    if (targetRecipe.id === LOW_ENERGY_EMERGENCY_RECIPE.id) {
+      const blockedBy = findEmergencyRecipeRestriction(data?.onboardingProfile?.restrictions || []);
+      if (blockedBy) {
+        ui.toast(`「${blockedBy.label}」是硬限制，這道保底料理不會開啟。`, "error");
+        return;
+      }
+      if (!hasCompatibleEmergencyCookware((data?.cookware || []).map((item) => item.type))) {
+        ui.toast("目前登記的廚具不適合這道單鍋保底料理，因此不會開啟。", "error");
+        return;
+      }
+    }
     const ingredientIds = (data?.inventory || [])
       .filter((item) =>
         targetRecipe.ingredients.some((ingredient) =>
@@ -215,29 +296,6 @@ export function TodayPage() {
         onClose={ui.close}
       />,
     );
-  };
-
-  const handleAddToShopping = async (missing: EmergencyMissingItem[]) => {
-    try {
-      for (const item of missing) {
-        await api(
-          "/shopping-items",
-          json("POST", {
-            name: item.name,
-            category: item.category,
-            qty: item.qty,
-            unit: item.unit,
-            estCost: item.estCost,
-            checked: false,
-            status: "快手菜缺料",
-          }),
-        );
-      }
-      await queryClient.invalidateQueries({ queryKey: stateQueryKey });
-      ui.toast(`已將缺少的「${missing.map((i) => i.name).join("、")}」加入採買清單！`);
-    } catch {
-      ui.toast("加入採買清單失敗，請稍後重試");
-    }
   };
 
   const reschedule = (meal: PlannedMeal) =>
@@ -308,6 +366,28 @@ export function TodayPage() {
   const goalName = data?.activeGoal?.name || "圓夢目標";
   const generalError = decisionError || planError;
 
+  const openPurchaseReminder = () => {
+    if (!activePurchaseItem || activeMissing.length === 0) return;
+    ui.open(
+      <PurchaseReminder
+        item={activePurchaseItem}
+        budget={purchaseBudget}
+        allowRepeat={false}
+        goalName={goalName}
+        onClose={ui.close}
+        onUseInventory={() => {
+          ui.close();
+          setTicketMode("fridge");
+        }}
+        onAdded={async () => {
+          await queryClient.invalidateQueries({ queryKey: stateQueryKey });
+          ui.close();
+          ui.toast("已加入購物清單；完成採買入庫後再開始料理。");
+        }}
+      />,
+    );
+  };
+
   return (
     <div className="today-page">
       {generalError && recommended && (
@@ -370,7 +450,10 @@ export function TodayPage() {
                 </span>
                 {energyLow && (
                   <span className="text-[9px] font-bold text-amber-950 bg-amber-200 px-1.5 py-0.2 rounded">
-                    ⚡ 低體力模式中
+                    <svg className="mr-0.5 inline h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                      <path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z" />
+                    </svg>
+                    低體力模式中
                   </span>
                 )}
               </div>
@@ -440,21 +523,40 @@ export function TodayPage() {
           </div>
 
           <div className="ticket-body">
+            {renderModeSwitcher()}
+
             <div className="meal-tags">
               <span className="tag-warning">
                 <span className="material-symbols-outlined">info</span>
-                後端食安與廚具檢核
+                {ticketMode === "fridge" ? "冰箱現有庫存檢核" : "後端條件檢核"}
               </span>
             </div>
 
-            <h3>目前條件暫無完全匹配的料理</h3>
+            <h3>
+              {ticketMode === "fridge"
+                ? "目前冰箱現有食材暫無完全匹配的料理"
+                : "目前條件暫無完全匹配的料理"}
+            </h3>
             <p className="meal-subtitle">
-              {decision?.notice || decisionError || planError || "後台檢核您的可用廚具、預算與飲食限制，尚未找到同時符合全部條件的食譜。"}
+              {ticketMode === "fridge"
+                ? purchaseChoices.length > 0
+                  ? `後端檢核目前登記的庫存（${(data?.inventory || []).map((item) => item.name).join("、") || "尚無在庫食材"}），尚無可完全覆蓋的食譜。可切換至「少量補買」查看候選；加入清單前仍需確認。`
+                  : decision?.notice || decisionError || planError || "後台檢核您的可用廚具、預算與飲食限制，尚未找到同時符合全部條件的食譜。"
+                : purchaseError || purchaseResult?.notice || "目前沒有符合預算且補買不超過 2 項食材的候選食譜。"}
             </p>
 
             <div className="backend-diagnostics-box">
               <div className="diag-header">後端目前讀取的偏好設定：</div>
               <div className="diag-grid">
+                <div className="diag-item">
+                  <span className="diag-label">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline-icon" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+                    現有冰箱食材
+                  </span>
+                  <strong className="diag-val">
+                    {(data?.inventory || []).map((item) => item.name).join("、") || "尚無在庫食材"}
+                  </strong>
+                </div>
                 <div className="diag-item">
                   <span className="diag-label">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline-icon" aria-hidden="true"><ellipse cx="9" cy="12" rx="7" ry="5"/><path d="M16 12h6"/></svg>
@@ -488,13 +590,23 @@ export function TodayPage() {
             </div>
 
             <div className="ticket-actions-group">
-              <a href="/kitchen" className="diag-action-btn primary">
-                <span className="material-symbols-outlined">skillet</span>
-                前往「廚房」新增或調整廚具
-              </a>
+              {ticketMode === "fridge" && purchaseChoices.length > 0 && (
+                <button
+                  type="button"
+                  className="diag-action-btn primary highlight-switch"
+                  onClick={() => setTicketMode("purchase")}
+                >
+                  <span className="material-symbols-outlined">shopping_cart</span>
+                  查看「少量補買」候選（{purchaseChoices.length} 道）
+                </button>
+              )}
               <a href="/fridge" className="diag-action-btn secondary">
                 <span className="material-symbols-outlined">kitchen</span>
-                前往「冰箱」選取食材生成料理
+                前往「冰箱」新增或盤點食材
+              </a>
+              <a href="/kitchen" className="diag-action-btn text">
+                <span className="material-symbols-outlined">skillet</span>
+                前往「廚房」新增或調整廚具
               </a>
               <button
                 type="button"
@@ -524,30 +636,7 @@ export function TodayPage() {
 
           {/* Ticket Body (Right) */}
           <div className="ticket-body">
-            {/* Option A Segmented Mode Switcher */}
-            <div className="ticket-mode-row">
-              <span className="mode-row-label">今日推薦模式</span>
-              <div className="segmented-switch" role="tablist" aria-label="今日推薦模式切換">
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={ticketMode === "fridge"}
-                  className={`segmented-btn ${ticketMode === "fridge" ? "active" : ""}`}
-                  onClick={() => setTicketMode("fridge")}
-                >
-                  🥬 冰箱現有 (0元)
-                </button>
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={ticketMode === "purchase"}
-                  className={`segmented-btn ${ticketMode === "purchase" ? "active" : ""}`}
-                  onClick={() => setTicketMode("purchase")}
-                >
-                  🛒 少量補買 {purchaseLoading ? "..." : (activePurchaseItem?.estimatedPurchaseCost ? `(+${activePurchaseItem.estimatedPurchaseCost}元)` : "")}
-                </button>
-              </div>
-            </div>
+            {renderModeSwitcher()}
 
             <div className="meal-tags">
               <span className="tag-time">
@@ -639,24 +728,7 @@ export function TodayPage() {
                 className="cook-choice"
                 onClick={() => {
                   if (ticketMode === "purchase" && activePurchaseItem && activeMissing.length > 0) {
-                    ui.open(
-                      <PurchaseReminder
-                        item={activePurchaseItem}
-                        budget={purchaseBudget}
-                        allowRepeat={false}
-                        goalName={goalName}
-                        onClose={ui.close}
-                        onUseInventory={() => {
-                          ui.close();
-                          setTicketMode("fridge");
-                        }}
-                        onAdded={async () => {
-                          await queryClient.invalidateQueries({ queryKey: stateQueryKey });
-                          ui.close();
-                          ui.toast("已加入購物清單；完成採買入庫後再開始料理。");
-                        }}
-                      />,
-                    );
+                    openPurchaseReminder();
                   } else {
                     startCooking(recommended);
                   }
@@ -675,35 +747,14 @@ export function TodayPage() {
                 <button
                   type="button"
                   className="quick-add-shopping-btn"
-                  onClick={async () => {
-                    try {
-                      for (const item of activeMissing) {
-                        await api(
-                          "/shopping-items",
-                          json("POST", {
-                            name: item.name,
-                            category: "生鮮",
-                            qty: item.quantity,
-                            unit: item.unit,
-                            estCost: item.estimatedCost || 30,
-                            checked: false,
-                            status: "少量補買",
-                          }),
-                        );
-                      }
-                      await queryClient.invalidateQueries({ queryKey: stateQueryKey });
-                      ui.toast(`已將缺少的「${activeMissing.map((i) => i.name).join("、")}」加入採買清單！`);
-                    } catch {
-                      ui.toast("加入採買清單失敗，請稍後重試");
-                    }
-                  }}
+                  onClick={openPurchaseReminder}
                 >
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <circle cx="8" cy="21" r="1"/>
                     <circle cx="19" cy="21" r="1"/>
                     <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
                   </svg>
-                  <span>加待買</span>
+                  <span>補買前確認</span>
                 </button>
               )}
             </div>

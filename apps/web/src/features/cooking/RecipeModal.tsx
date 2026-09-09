@@ -6,6 +6,7 @@ import { Modal, ModalHeader } from "@/shared/ui/Modal";
 import { UiContext } from "@/app/ui-context";
 import { useAppState, stateQueryKey } from "@/entities/app-state/model";
 import { enqueueOperation, markRecipePackageCompleted, saveRecipePackage } from "@/shared/offline/recipe-packages";
+import "./RecipeModal.css";
 
 export function RecipeModal({ ingredientIds, style, onClose, onComplete }: { ingredientIds: string[]; style: string; onClose: () => void; onComplete?: () => void }) {
   const [generation, setGeneration] = useState<RecipeGeneration | null>(null);
@@ -554,7 +555,10 @@ function CookingCompleteModal({ recipePackage, ingredientIds, onClose, onComplet
           <span className="flex-1 flex items-center justify-between gap-1">
             <span>這餐實際吃到蔬菜</span>
             <span className="text-[10px] font-extrabold text-[#2d6a4f] bg-[#d5ede1] px-2 py-0.5 rounded-full border border-[#b4dfc8]">
-              🌱 圓夢健康指標
+              <svg className="mr-1 inline h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <path d="M12 22V10" /><path d="M12 14c-4 0-7-2-8-6 4 0 7 2 8 6Z" /><path d="M12 10c4 0 7-2 8-6-4 0-7 2-8 6Z" />
+              </svg>
+              圓夢健康指標
             </span>
           </span>
         </label>

@@ -1,4 +1,4 @@
-import type { RecipePackage } from "@coocoo/contracts";
+import type { DietaryRestriction, RecipePackage } from "@coocoo/contracts";
 
 export const LOW_ENERGY_EMERGENCY_RECIPE: RecipePackage = {
   id: "recipe-pkg-sesame-oil-egg-noodles",
@@ -92,6 +92,50 @@ export const EMERGENCY_RECIPE_REQUIREMENTS: EmergencyMissingItem[] = [
   { key: "greens", name: "青江菜", category: "produce", qty: 1, unit: "包", estCost: 35 },
   { key: "noodles", name: "烏龍麵", category: "pantry", qty: 1, unit: "包", estCost: 30 },
 ];
+
+const emergencyDietaryTokens = new Set([
+  "egg",
+  "蛋",
+  "雞蛋",
+  "gluten",
+  "wheat",
+  "麩質",
+  "小麥",
+  "全素",
+]);
+
+const compatibleEmergencyHeaters = new Set([
+  "瓦斯爐",
+  "電磁爐",
+  "ih爐",
+  "卡式爐",
+  "黑晶爐",
+  "快煮鍋",
+  "電子壓力鍋",
+  "電鍋",
+]);
+
+export function hasCompatibleEmergencyCookware(cookwareTypes: string[] = []) {
+  return cookwareTypes.some((type) =>
+    compatibleEmergencyHeaters.has(type.trim().toLocaleLowerCase("zh-TW")),
+  );
+}
+
+export function findEmergencyRecipeRestriction(
+  restrictions: DietaryRestriction[] = [],
+) {
+  return restrictions.find((restriction) => {
+    if (!restriction.isHardLimit) return false;
+    const tokens = [restriction.label, ...restriction.ingredientKeys]
+      .map((value) => value.trim().toLowerCase())
+      .filter(Boolean);
+    return tokens.some((token) =>
+      [...emergencyDietaryTokens].some(
+        (blocked) => token.includes(blocked) || blocked.includes(token),
+      ),
+    );
+  });
+}
 
 export function checkEmergencyIngredients(inventoryNames: string[] = []) {
   const isMatch = (keywords: string[]) =>

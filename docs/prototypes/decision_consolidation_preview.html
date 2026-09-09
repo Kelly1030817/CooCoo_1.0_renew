@@ -1867,24 +1867,24 @@
     // ========================================================
     function openRecipePackagePreview(recipeName) {
       activeRecipe = RECIPES_DB[recipeName] || RECIPES_DB["麻油焦香煎蛋湯麵"];
-      
+
       document.getElementById('preview-title').innerText = activeRecipe.title;
-      document.getElementById('preview-kicker').innerText = 
+      document.getElementById('preview-kicker').innerText =
         `${activeRecipe.totalMinutes} 分鐘 · ${activeRecipe.servings} 人份 · NT$ ${activeRecipe.cost}`;
 
       // Render tags
       const tagsContainer = document.getElementById('preview-tags');
-      tagsContainer.innerHTML = 
-        activeRecipe.tags.map(tag => 
+      tagsContainer.innerHTML =
+        activeRecipe.tags.map(tag =>
           `<span class="text-[10px] font-bold px-2 py-0.5 rounded-md ${tag.includes('快手') || tag.includes('低體力') ? 'bg-amber-50 text-amber-900 border border-amber-200' : 'bg-stone-100 text-stone-700 border border-stone-200'}">${tag}</span>`
-        ).join('') + 
-        activeRecipe.cookwareTypes.map(c => 
+        ).join('') +
+        activeRecipe.cookwareTypes.map(c =>
           `<span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-stone-100 text-stone-700 border border-stone-200">${c}</span>`
         ).join('');
 
       // Render Step List Preview
       const stepsList = document.getElementById('preview-steps-list');
-      stepsList.innerHTML = activeRecipe.steps.map(step => 
+      stepsList.innerHTML = activeRecipe.steps.map(step =>
         `<li class="flex gap-2.5 rounded-2xl bg-stone-50 border border-stone-200/70 p-3 text-xs text-stone-700 leading-relaxed">
           <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#9a442d] text-[10px] font-black text-white">${step.order}</span>
           <p class="m-0">${step.instruction}</p>
@@ -2078,14 +2078,14 @@
 
       eatenInput.max = cooked;
       const left = Math.max(0, cooked - eaten);
-      document.getElementById('complete-prepared-note').innerText = 
+      document.getElementById('complete-prepared-note').innerText =
         `剩下 ${left} 份會成為熟食庫存；料理次數仍只記 1 次。`;
 
       const outsideCost = 150; // User profile outside dining reference price
       const calculatedSaving = Math.max(0, outsideCost * eaten - cost);
 
       document.getElementById('complete-calc-saving').innerText = `NT$ ${calculatedSaving}`;
-      document.getElementById('complete-calc-formula').innerText = 
+      document.getElementById('complete-calc-formula').innerText =
         `本人外食比較價 NT$ ${outsideCost} × ${eaten} 份 − 食材成本`;
 
       const currentDeposit = parseInt(depositInput.value, 10);

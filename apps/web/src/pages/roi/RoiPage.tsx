@@ -10,6 +10,7 @@ import { UiContext } from "@/app/ui-context";
 import { GoalSetupModal } from "@/features/goal-setup/GoalSetupModal";
 import { GoalSettingsModal } from "@/features/goal-setup/GoalSettingsModal";
 import { useAppRoute } from "@/app/routing/useAppRoute";
+import "./RoiPage.css";
 
 export function RoiPage() {
   const { data } = useAppState();
@@ -21,7 +22,7 @@ export function RoiPage() {
   const weeklyVegetables = new Set((data.mealServings || []).filter((serving) => serving.status === "eaten" && Boolean(serving.eatenAt && serving.eatenAt.slice(0, 10) >= weekKey)).flatMap((serving) => serving.vegetableKeys)).size;
   if (!data.activeGoal)
     return (
-      <div className="mx-auto max-w-[760px] space-y-md">
+      <div className="roi-page mx-auto max-w-[760px] space-y-md">
         <section className="overflow-hidden rounded-3xl border border-primary/15 bg-white shadow-sm">
           <div className="h-2 bg-gradient-to-r from-primary via-terracotta to-ochre-gold" />
           <div className="p-lg text-center md:p-xl">
@@ -70,7 +71,7 @@ export function RoiPage() {
     targetDate: goal.targetDate,
   });
   return (
-    <div className="mx-auto max-w-[820px] space-y-lg">
+    <div className="roi-page mx-auto max-w-[820px] space-y-lg">
       <section className="flex flex-col justify-between gap-md sm:flex-row sm:items-start">
         <div>
           <p className="text-[10px] font-extrabold tracking-[.16em] text-secondary">

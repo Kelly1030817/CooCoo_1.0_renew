@@ -46,4 +46,3 @@ export function hasSavedOnboardingDraft(): boolean {
     return false;
   }
 }
-

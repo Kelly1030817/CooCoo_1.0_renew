@@ -1,8 +1,8 @@
 # CooCoo 拍板動態設計與互動架構規格書 (Finalized Motion Design Specs)
 
-**文件版本**：1.0 (拍板定案)  
-**更新日期**：2026-09-08  
-**狀態**：`已拍板待上線驗證`（Local Worktree Verified, Pending Production Review）  
+**文件版本**：1.0 (拍板定案)
+**更新日期**：2026-09-08
+**狀態**：`已拍板待上線驗證`（Local Worktree Verified, Pending Production Review）
 **適用範圍**：CooCoo 整合式 MVP 全流程（相談室、圓夢看板、今日決策、備料轉場、料理工坊）
 
 ---

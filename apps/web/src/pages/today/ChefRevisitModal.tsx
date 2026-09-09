@@ -3,9 +3,10 @@ import { Modal } from "../../shared/ui/Modal";
 import {
   LOW_ENERGY_EMERGENCY_RECIPE,
   checkEmergencyIngredients,
-  type EmergencyMissingItem,
+  findEmergencyRecipeRestriction,
+  hasCompatibleEmergencyCookware,
 } from "../../features/cooking/emergencyRecipe";
-import type { RecipePackage } from "@coocoo/contracts";
+import type { DietaryRestriction, RecipePackage } from "@coocoo/contracts";
 
 export interface ActionButtonConfig {
   label: string;
@@ -18,10 +19,12 @@ interface ChefRevisitModalProps {
   onClose: () => void;
   onSelectLowEnergy: () => void;
   onStartCooking?: (customRecipe?: RecipePackage) => void;
-  onAddToShopping?: (items: EmergencyMissingItem[]) => Promise<void> | void;
   inventoryNames?: string[];
+  restrictions?: DietaryRestriction[];
+  cookwareTypes?: string[];
   weeklyTarget?: number;
-  onAdjustTarget?: (newTarget: number) => void;
+  onAdjustTarget?: (newTarget: number) => Promise<void>;
+  onRecordTakeout?: () => Promise<string>;
   outsideMealPrice?: number;
 }
 
@@ -39,10 +42,12 @@ export function ChefRevisitModal({
   onClose,
   onSelectLowEnergy,
   onStartCooking,
-  onAddToShopping,
   inventoryNames = ["雞蛋", "青江菜"],
+  restrictions = [],
+  cookwareTypes = [],
   weeklyTarget = 3,
   onAdjustTarget,
+  onRecordTakeout,
   outsideMealPrice = 150,
 }: ChefRevisitModalProps) {
   const [messages, setMessages] = useState<MessageItem[]>(() => {
@@ -86,7 +91,7 @@ export function ChefRevisitModal({
     let userText = "";
     if (type === "tired") userText = "今天體力透支了，給我最簡單的 12 分鐘低體力餐！";
     if (type === "adjust") userText = "這週臨時聚餐多，自煮想少煮 1 餐，目標順延。";
-    if (type === "takeout") userText = "今晚純放鬆！登記一次外食。";
+    if (type === "takeout") userText = "今晚改外食，調整今天的餐單。";
 
     const userMsg: MessageItem = {
       id: `user-${Date.now()}`,
@@ -99,14 +104,39 @@ export function ChefRevisitModal({
     setIsPending(true);
 
     setTimeout(() => {
-      let chefMsg: MessageItem;
+      const finish = (chefMsg: MessageItem) => {
+        setMessages((prev) => [...prev, chefMsg]);
+        setIsPending(false);
+      };
 
       if (type === "tired") {
         onSelectLowEnergy();
-        const { isFullyCovered, missing } = checkEmergencyIngredients(inventoryNames);
+        const blockedBy = findEmergencyRecipeRestriction(restrictions);
+        if (blockedBy) {
+          finish({
+            id: `chef-${Date.now()}`,
+            sender: "chef",
+            actionType: "tired",
+            text: `主廚 CooCoo 已切換為低體力模式，但固定快手料理含有「${blockedBy.label}」限制的食材，因此不會派發或開啟這道料理。請關閉相談室，查看後端重新檢核過飲食限制的安全候選。`,
+            timestamp: "剛剛",
+          });
+          return;
+        }
 
+        if (!hasCompatibleEmergencyCookware(cookwareTypes)) {
+          finish({
+            id: `chef-${Date.now()}`,
+            sender: "chef",
+            actionType: "tired",
+            text: "主廚 CooCoo 已切換為低體力模式，但這道固定料理需要可搭配平底鍋或湯鍋的直接加熱設備；你目前登記的廚具不相容，因此不會派發或開啟。請關閉相談室，查看後端重新檢核廚具的安全候選。",
+            timestamp: "剛剛",
+          });
+          return;
+        }
+
+        const { isFullyCovered, missing } = checkEmergencyIngredients(inventoryNames);
         if (isFullyCovered) {
-          chefMsg = {
+          finish({
             id: `chef-${Date.now()}`,
             sender: "chef",
             actionType: "tired",
@@ -123,76 +153,96 @@ export function ChefRevisitModal({
                 }
               : undefined,
             timestamp: "剛剛",
-          };
-        } else {
-          const missingNames = missing.map((m) => m.name).join("、");
-          const fridgeStatus =
-            inventoryNames.length === 0
-              ? "目前冰箱尚無食材"
-              : `目前冰箱缺少「${missingNames}」`;
+          });
+          return;
+        }
 
-          chefMsg = {
-            id: `chef-${Date.now()}`,
-            sender: "chef",
-            actionType: "tired",
-            text: `主廚 CooCoo 收到！已為你切換為「低體力模式」：\n為你調派 11 分鐘單鍋「麻油焦香煎蛋湯麵」（步驟 ≤ 4、一鍋到底）。\n\n主廚檢視冰箱，${fridgeStatus}。\n今晚你可以自由選擇：自備現有食材直接跟著做，或先一鍵將缺料加入採買清單！`,
-            actionButtons: [
-              {
-                label: "自備食材 · 直接跟著主廚做 ➔",
-                variant: "primary",
-                icon: "play",
-                onClick: () => {
-                  onClose();
-                  onStartCooking?.(LOW_ENERGY_EMERGENCY_RECIPE);
-                },
-              },
-              {
-                label: `先將缺料（${missingNames}）加入採買清單 ➔`,
-                variant: "secondary",
-                icon: "cart",
-                onClick: async () => {
-                  if (onAddToShopping) {
-                    await onAddToShopping(missing);
-                  }
-                  setMessages((prev) => [
-                    ...prev,
-                    {
-                      id: `chef-reply-${Date.now()}`,
-                      sender: "chef",
-                      text: `主廚 CooCoo：已將「${missingNames}」加入你的待買清單！如果手邊有其他替代食材想直接開煮，也可以點擊上方的「自備食材 · 直接跟著主廚做」開始烹調喔！`,
-                      timestamp: "剛剛",
-                    },
-                  ]);
-                },
-              },
-            ],
-            timestamp: "剛剛",
-          };
-        }
-      } else if (type === "adjust") {
-        const nextTarget = Math.max(1, weeklyTarget - 1);
-        if (onAdjustTarget) {
-          onAdjustTarget(nextTarget);
-        }
-        chefMsg = {
+        const missingNames = missing.map((item) => item.name).join("、");
+        const fridgeStatus = inventoryNames.length === 0
+          ? "目前冰箱尚無食材"
+          : `目前冰箱缺少「${missingNames}」`;
+        finish({
           id: `chef-${Date.now()}`,
           sender: "chef",
-          actionType: "adjust",
-          text: `主廚 CooCoo：完全沒問題！生活彈性第一。\n已將本週自煮目標調整為 ${nextTarget} 餐。未煮餐次自動順延，圓夢計畫無痛推進，絕無任何挫折或懲罰！`,
+          actionType: "tired",
+          text: `主廚 CooCoo 收到！已為你切換為「低體力模式」：\n為你調派 11 分鐘單鍋「麻油焦香煎蛋湯麵」（步驟 ≤ 4、一鍋到底）。\n\n主廚檢視冰箱，${fridgeStatus}。\n若手邊確實有這些食材，可以直接開始；否則請關閉相談室，透過「少量補買」查看費用並確認後再加入採買清單。`,
+          actionButtons: [
+            {
+              label: "自備食材 · 直接跟著主廚做 ➔",
+              variant: "primary",
+              icon: "play",
+              onClick: () => {
+                onClose();
+                onStartCooking?.(LOW_ENERGY_EMERGENCY_RECIPE);
+              },
+            },
+            {
+              label: "關閉後查看少量補買",
+              variant: "secondary",
+              icon: "cart",
+              onClick: onClose,
+            },
+          ],
           timestamp: "剛剛",
-        };
-      } else {
-        chefMsg = {
+        });
+        return;
+      }
+
+      if (type === "adjust") {
+        const nextTarget = Math.max(1, weeklyTarget - 1);
+        if (!onAdjustTarget) {
+          finish({
+            id: `chef-${Date.now()}`,
+            sender: "chef",
+            actionType: "adjust",
+            text: "主廚 CooCoo：這次沒有可更新的圓夢目標，因此尚未變更本週餐數。請先完成目標設定。",
+            timestamp: "剛剛",
+          });
+          return;
+        }
+        void onAdjustTarget(nextTarget)
+          .then(() => finish({
+            id: `chef-${Date.now()}`,
+            sender: "chef",
+            actionType: "adjust",
+            text: `主廚 CooCoo：完全沒問題！已將本週自煮目標儲存為 ${nextTarget} 餐。生活有變化時再調整就好，不會扣除圓夢累積。`,
+            timestamp: "剛剛",
+          }))
+          .catch(() => finish({
+            id: `chef-${Date.now()}`,
+            sender: "chef",
+            actionType: "adjust",
+            text: "主廚 CooCoo：本週目標尚未儲存成功，原設定沒有改變。請稍後再試。",
+            timestamp: "剛剛",
+          }));
+        return;
+      }
+
+      if (!onRecordTakeout) {
+        finish({
           id: `chef-${Date.now()}`,
           sender: "chef",
           actionType: "takeout",
-          text: `主廚 CooCoo：好好享受外食的美味時光！\n外食也是生活平衡的重要調劑。已為你記錄外食比較價（NT$ ${outsideMealPrice}），下半週我們再挑合適的一天輕鬆煮一餐就好。`,
+          text: `主廚 CooCoo：今晚放心休息。外食比較價 NT$ ${outsideMealPrice} 只會用於日後的省錢比較；目前沒有新增支出或餐次紀錄。`,
           timestamp: "剛剛",
-        };
+        });
+        return;
       }
-
-      setMessages((prev) => [...prev, chefMsg]);
-      setIsPending(false);
+      void onRecordTakeout()
+        .then((detail) => finish({
+          id: `chef-${Date.now()}`,
+          sender: "chef",
+          actionType: "takeout",
+          text: `主廚 CooCoo：今晚放心享受外食。${detail}`,
+          timestamp: "剛剛",
+        }))
+        .catch(() => finish({
+          id: `chef-${Date.now()}`,
+          sender: "chef",
+          actionType: "takeout",
+          text: "主廚 CooCoo：餐單調整尚未儲存成功，原本安排沒有改變。請稍後再試。",
+          timestamp: "剛剛",
+        }));
     }, 350);
   };
 
@@ -528,9 +578,9 @@ export function ChefRevisitModal({
                 </div>
                 <div>
                   <div className="font-bold text-stone-800 text-[11px] group-hover:text-amber-950">
-                    今晚純放鬆！登記一次外食
+                    今晚改外食，調整今天的餐單
                   </div>
-                  <div className="text-[9px] text-stone-400">誠實記錄日常，主廚幫你重新分配下半週</div>
+                  <div className="text-[9px] text-stone-400">有今日排定餐點時才會儲存取消，不會自動扣款</div>
                 </div>
               </div>
               <svg

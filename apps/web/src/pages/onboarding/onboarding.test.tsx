@@ -99,4 +99,3 @@ describe("Chef Consultation Components", () => {
     expect(stored.status).toBe("draft");
   });
 });
-
