@@ -56,6 +56,7 @@ export function OnboardingPage({
   const [authVerified, setAuthVerified] = useState(false);
   const [finishError, setFinishError] = useState("");
   const [isStamped, setIsStamped] = useState(false);
+  const [isSealDropped, setIsSealDropped] = useState(false);
   const [isSignatureFinished, setIsSignatureFinished] = useState(false);
   const [isFlying, setIsFlying] = useState(false);
 
@@ -116,14 +117,24 @@ export function OnboardingPage({
       goToStep(step + 1);
     } else {
       if (!isStamped) {
-        if (typeof window !== "undefined" && window.navigator?.vibrate) {
-          window.navigator.vibrate([25, 45, 30]);
-        }
         setIsStamped(true);
-        triggerChefReaction("sealed");
+        triggerChefReaction("listen");
+
+        // Phase 1: Signature writes "CooCoo" (0s ~ 1.05s)
+        // Phase 2: Golden underline sweeps below (1.05s ~ 1.47s)
+        // Phase 3: Forcefully slam down seal stamp after signature and underline finish (1.5s)
+        setTimeout(() => {
+          setIsSealDropped(true);
+          triggerChefReaction("sealed");
+          if (typeof window !== "undefined" && window.navigator?.vibrate) {
+            window.navigator.vibrate([35, 55, 30]);
+          }
+        }, 1500);
+
+        // Phase 4: Signature & Stamp complete, unlock next action (2.1s)
         setTimeout(() => {
           setIsSignatureFinished(true);
-        }, 1750);
+        }, 2100);
       } else if (isSignatureFinished && !isFlying) {
         handleFlightTransition();
       }
@@ -230,6 +241,7 @@ export function OnboardingPage({
               step={step}
               profile={profile}
               update={update}
+              goToStep={goToStep}
               triggerChefReaction={triggerChefReaction}
               email={email}
               setEmail={setEmail}
@@ -238,6 +250,7 @@ export function OnboardingPage({
               authVerified={authVerified}
               setAuthVerified={setAuthVerified}
               isStamped={isStamped}
+              isSealDropped={isSealDropped}
               isFlying={isFlying}
             />
           </div>
@@ -245,7 +258,7 @@ export function OnboardingPage({
 
         {finishError && (
           <div role="alert" className="offline-error mx-4 mb-2">
-            {finishError}。本機草稿仍在，尚未標記完成。
+            {finishError.replace(/[。.]+$/, "")}。本機草稿仍在，尚未標記完成。
           </div>
         )}
 
@@ -291,7 +304,9 @@ export function OnboardingPage({
                 ? !isStamped
                   ? "蓋章，開始自煮"
                   : !isSignatureFinished
-                    ? "主廚 CooCoo 親筆見證中…"
+                    ? isSealDropped
+                      ? "認證圓章蓋印確認中…"
+                      : "主廚 CooCoo 親筆見證中…"
                     : "啟程！送入圓夢看板 ➔"
                 : "繼續"}
             </span>
@@ -320,6 +335,8 @@ export function OnboardingPage({
           saveOnboardingDraft(emptyOnboardingDraft);
           setProfile(emptyOnboardingDraft);
           setIsStamped(false);
+          setIsSealDropped(false);
+          setIsSignatureFinished(false);
           goToStep(1);
         }}
       >
@@ -333,6 +350,7 @@ function StepContent({
   step,
   profile,
   update,
+  goToStep,
   triggerChefReaction,
   email,
   setEmail,
@@ -341,11 +359,13 @@ function StepContent({
   authVerified,
   setAuthVerified,
   isStamped,
+  isSealDropped = isStamped,
   isFlying = false,
 }: {
   step: number;
   profile: OnboardingProfile;
   update: (value: Partial<OnboardingProfile>) => void;
+  goToStep: (targetStep: number) => void;
   triggerChefReaction: (mood: ChefMood) => void;
   email: string;
   setEmail: (value: string) => void;
@@ -354,6 +374,7 @@ function StepContent({
   authVerified: boolean;
   setAuthVerified: (value: boolean) => void;
   isStamped: boolean;
+  isSealDropped?: boolean;
   isFlying?: boolean;
 }) {
   if (step === 1) {
@@ -820,12 +841,14 @@ function StepContent({
   if (step === 9) {
     return (
       <AuthStep
+        profile={profile}
         email={email}
         setEmail={setEmail}
         codeSent={codeSent}
         setCodeSent={setCodeSent}
         verified={authVerified}
         setVerified={setAuthVerified}
+        goToStep={goToStep}
         triggerChefReaction={triggerChefReaction}
       />
     );
@@ -841,7 +864,12 @@ function StepContent({
         </p>
       </div>
 
-      <PassportTicket profile={profile} isStamped={isStamped} isFlying={isFlying} />
+      <PassportTicket
+        profile={profile}
+        isStamped={isStamped}
+        isSealDropped={isSealDropped}
+        isFlying={isFlying}
+      />
 
       <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-[11px] text-amber-950 flex items-center gap-2">
         <svg
@@ -858,9 +886,11 @@ function StepContent({
           <path d="m9 12 2 2 4-4" />
         </svg>
         <span>
-          {isStamped
+          {isSealDropped
             ? "立約見證完成！點選下方按鈕，通行證將啟程飛入圓夢看板。"
-            : "請核對以上檔案無誤後，點擊下方「蓋章，開始自煮」完成神聖立約。"}
+            : isStamped
+              ? "主廚 CooCoo 親筆見證中，即將落印立約…"
+              : "請核對以上檔案無誤後，點擊下方「蓋章，開始自煮」完成神聖立約。"}
         </span>
       </div>
     </div>
@@ -1152,20 +1182,24 @@ function DietaryStep({
 }
 
 function AuthStep({
+  profile,
   email,
   setEmail,
   codeSent,
   setCodeSent,
   verified,
   setVerified,
+  goToStep,
   triggerChefReaction,
 }: {
+  profile: OnboardingProfile;
   email: string;
   setEmail: (value: string) => void;
   codeSent: boolean;
   setCodeSent: (value: boolean) => void;
   verified: boolean;
   setVerified: (value: boolean) => void;
+  goToStep: (targetStep: number) => void;
   triggerChefReaction: (mood: ChefMood) => void;
 }) {
   const [token, setToken] = useState("");
@@ -1204,7 +1238,7 @@ function AuthStep({
       if (previewAuth) {
         setCodeSent(true);
       } else {
-        await requestEmailOtp(email);
+        await requestEmailOtp(email, `${window.location.origin}/onboarding`);
         setCodeSent(true);
       }
       triggerChefReaction("applause");
@@ -1222,10 +1256,16 @@ function AuthStep({
       if (previewAuth && token === "123456") {
         setVerified(true);
         triggerChefReaction("applause");
+        setTimeout(() => {
+          goToStep(10);
+        }, 300);
       } else {
         await verifyEmailOtp(email, token);
         setVerified(true);
         triggerChefReaction("applause");
+        setTimeout(() => {
+          goToStep(10);
+        }, 300);
       }
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "驗證碼不正確");
@@ -1238,12 +1278,22 @@ function AuthStep({
     setBusy(true);
     setError("");
     try {
+      // 1. Advance draft to Step 10 before initiating OAuth redirect
+      saveOnboardingDraft({
+        ...profile,
+        currentStep: 10,
+        status: "draft",
+      });
+
       if (previewAuth) {
         setVerified(true);
         setBusy(false);
         triggerChefReaction("applause");
+        setTimeout(() => {
+          goToStep(10);
+        }, 300);
       } else {
-        await startGoogleAuth();
+        await startGoogleAuth(`${window.location.origin}/onboarding`);
       }
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Google 登入未完成");
@@ -1303,32 +1353,33 @@ function AuthStep({
           <span>{codeSent ? "重新寄送登入驗證信" : "寄送登入驗證信"}</span>
         </button>
 
-        {codeSent && previewAuth && (
-          <div className="flex gap-2 items-center pt-1">
-            <input
-              type="text"
-              inputMode="numeric"
-              maxLength={6}
-              value={token}
-              onChange={(e) => setToken(e.target.value.replace(/\D/g, ""))}
-              placeholder="六位數驗證碼 (預設: 123456)"
-              className="flex-1 bg-stone-50 border border-stone-300 rounded-xl px-3 py-2 text-xs font-mono font-bold focus:outline-none focus:border-amber-600"
-            />
-            <button
-              type="button"
-              disabled={busy || token.length !== 6}
-              onClick={verify}
-              className="spring-btn bg-stone-900 hover:bg-stone-800 disabled:opacity-40 text-white font-bold px-3.5 py-2 rounded-xl text-xs"
-            >
-              {verified ? "已驗證" : "驗證"}
-            </button>
+        {codeSent && (
+          <div className="space-y-2">
+            <div className="flex gap-2 items-center pt-1">
+              <input
+                type="text"
+                inputMode="numeric"
+                maxLength={6}
+                value={token}
+                onChange={(e) => setToken(e.target.value.replace(/\D/g, ""))}
+                placeholder={previewAuth ? "六位數驗證碼 (預設: 123456)" : "輸入信件中的六位數驗證碼"}
+                className="flex-1 bg-stone-50 border border-stone-300 rounded-xl px-3 py-2 text-xs font-mono font-bold focus:outline-none focus:border-amber-600"
+              />
+              <button
+                type="button"
+                disabled={busy || token.length !== 6}
+                onClick={verify}
+                className="spring-btn bg-stone-900 hover:bg-stone-800 disabled:opacity-40 text-white font-bold px-3.5 py-2 rounded-xl text-xs"
+              >
+                {verified ? "已驗證" : "驗證"}
+              </button>
+            </div>
+            {!previewAuth && (
+              <p className="text-[10px] text-stone-500 leading-relaxed">
+                或直接開啟驗證信中的登入連結，回到 CooCoo 將自動完成登入。
+              </p>
+            )}
           </div>
-        )}
-
-        {codeSent && !previewAuth && (
-          <p className="text-[10px] text-stone-500 leading-relaxed">
-            請開啟最新驗證信中的登入連結；回到 CooCoo 後會自動完成登入。每封連結只能使用一次。
-          </p>
         )}
 
         <button

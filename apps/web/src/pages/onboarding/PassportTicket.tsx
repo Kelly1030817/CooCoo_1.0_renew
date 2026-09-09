@@ -4,10 +4,16 @@ import { ChefSignature } from "./ChefSignature";
 interface PassportTicketProps {
   profile: OnboardingProfile;
   isStamped: boolean;
+  isSealDropped?: boolean;
   isFlying?: boolean;
 }
 
-export function PassportTicket({ profile, isStamped, isFlying = false }: PassportTicketProps) {
+export function PassportTicket({
+  profile,
+  isStamped,
+  isSealDropped = isStamped,
+  isFlying = false,
+}: PassportTicketProps) {
   const cookwareDisplay = profile.cookware.map((c) => c.type).join("、") || "基本鍋具";
   const restrictionsDisplay = profile.restrictions.map((r) => r.label).join("、") || "無特殊禁忌";
 
@@ -75,7 +81,7 @@ export function PassportTicket({ profile, isStamped, isFlying = false }: Passpor
       </div>
 
       {/* Shockwave Impact Stamp (Scheme B: 現代工坊圓章) */}
-      {isStamped && (
+      {isSealDropped && (
         <>
           <div
             className="animate-stamp-impact-circle absolute right-2.5 bottom-2 w-20 h-20 rounded-full border-2 border-red-700 text-red-700 bg-[#fdfaf7]/95 flex flex-col items-center justify-center shadow-md select-none transform rotate-[-9deg] z-20 pointer-events-none"

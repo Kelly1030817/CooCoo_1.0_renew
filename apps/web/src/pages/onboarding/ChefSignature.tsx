@@ -43,15 +43,15 @@ export function ChefSignature({ runAnimation = false }: ChefSignatureProps) {
               />
             </mask>
 
-            <linearGradient id="orangeInkGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#ea580c" />
-              <stop offset="35%" stopColor="#f97316" />
-              <stop offset="85%" stopColor="#fb923c" />
-              <stop offset="100%" stopColor="#ea580c" />
+            <linearGradient id="goldInkGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#d97706" />
+              <stop offset="35%" stopColor="#f59e0b" />
+              <stop offset="70%" stopColor="#fbbf24" />
+              <stop offset="100%" stopColor="#b45309" />
             </linearGradient>
 
-            <filter id="inkSpread" x="-10%" y="-10%" width="120%" height="120%">
-              <feDropShadow dx="0" dy="0.5" stdDeviation="0.4" floodColor="#c2410c" floodOpacity="0.3" />
+            <filter id="goldInkSpread" x="-10%" y="-10%" width="120%" height="120%">
+              <feDropShadow dx="0" dy="0.5" stdDeviation="0.4" floodColor="#b45309" floodOpacity="0.35" />
             </filter>
           </defs>
 
@@ -67,15 +67,15 @@ export function ChefSignature({ runAnimation = false }: ChefSignatureProps) {
             CooCoo
           </text>
 
-          {/* Liquid Orange Underline Sweep, drawn from left to right */}
+          {/* Liquid Golden Underline Sweep, drawn from left to right */}
           <path
             className={runAnimation ? "sig-underline-sweep" : ""}
             d="M 18 86 Q 95 93, 168 83 Q 174 81, 178 78"
             fill="none"
-            stroke="url(#orangeInkGrad)"
+            stroke="url(#goldInkGrad)"
             strokeWidth="3.2"
             strokeLinecap="round"
-            filter="url(#inkSpread)"
+            filter="url(#goldInkSpread)"
             style={
               runAnimation
                 ? { strokeDasharray: "180" }

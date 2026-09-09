@@ -6,7 +6,7 @@ import { api } from "@/shared/api/client";
 import { UiContext } from "@/app/ui-context";
 import { Modal, ModalHeader } from "@/shared/ui/Modal";
 import { supabase, startGoogleAuth } from "@/shared/auth/supabase";
-import { readOnboardingDraft } from "@/shared/model/onboarding-draft";
+import { readOnboardingDraft, saveOnboardingDraft } from "@/shared/model/onboarding-draft";
 
 import type { AppRoute } from "@/app/routing/routes";
 import { useAppRoute } from "@/app/routing/useAppRoute";
@@ -81,6 +81,11 @@ export function Header({
                   onClose={ui.close}
                   onReplayOnboarding={() => {
                     ui.close();
+                    saveOnboardingDraft({
+                      ...readOnboardingDraft(),
+                      currentStep: 1,
+                      status: "draft",
+                    });
                     navigate("onboarding");
                   }}
                   enabled={enabled}

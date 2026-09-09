@@ -5,7 +5,7 @@ import { useAppRoute } from "@/app/routing/useAppRoute";
 import { Header } from "@/widgets/app-shell/Header";
 import { BottomNav } from "@/widgets/app-shell/BottomNav";
 import { OnboardingPage } from "@/pages/onboarding/OnboardingPage";
-import { readOnboardingDraft, saveOnboardingDraft } from "@/shared/model/onboarding-draft";
+import { hasSavedOnboardingDraft, readOnboardingDraft, saveOnboardingDraft } from "@/shared/model/onboarding-draft";
 import { startGoogleAuth, supabase } from "@/shared/auth/supabase";
 import { AuthRecoveryPanel } from "@/shared/auth/AuthRecoveryPanel";
 import { api, json } from "@/shared/api/client";
@@ -36,9 +36,77 @@ export default function App() {
   const [authStatus, setAuthStatus] = useState<"loading" | "signed-in" | "signed-out">(() => supabase ? "loading" : "signed-out");
   const [reauthBusy, setReauthBusy] = useState(false);
   const [reauthError, setReauthError] = useState("");
-  const [checkingCloud,setCheckingCloud]=useState(()=>!onboardingComplete&&Boolean(supabase));
+  const [checkingCloud, setCheckingCloud] = useState(() => !onboardingComplete && Boolean(supabase));
   const [goalSyncError, setGoalSyncError] = useState("");
-  useEffect(()=>{if(onboardingComplete||!supabase)return;void supabase.auth.getSession().then(async({data})=>{if(!data.session){setCheckingCloud(false);return}try{const bundle=await api<{profile:{household_servings:number;daily_meal_budget:number;outside_meal_price:number;weekly_home_cook_target:number;onboarding_status:"draft"|"complete";onboarding_step:number;planned_meal_slots:OnboardingProfile["plannedMealSlots"];preferred_flavors:string[]};cookware:Array<{type:string;capacity:string|null;limitations:string[]}>;restrictions:Array<{id:string;label:string;kind:"allergy"|"avoid"|"preference";ingredient_keys:string[];is_hard_limit:boolean}>;goal:{name:string;target_amount:number}|null}>("/onboarding");if(bundle.profile?.onboarding_status==="complete"){const profile:OnboardingProfile={status:"complete",currentStep:10,householdServings:bundle.profile.household_servings,cookware:bundle.cookware.map(item=>({type:item.type,capacity:item.capacity||undefined,limitations:item.limitations||[]})),restrictions:bundle.restrictions.map(item=>({id:item.id,label:item.label,kind:item.kind,ingredientKeys:item.ingredient_keys,isHardLimit:item.is_hard_limit})),preferredFlavors:bundle.profile.preferred_flavors||[],inventoryReviewed:true,hasNoInventory:false,dailyMealBudget:bundle.profile.daily_meal_budget,outsideMealComparisonPrice:bundle.profile.outside_meal_price,plannedMealSlots:bundle.profile.planned_meal_slots,weeklyHomeCookTarget:bundle.profile.weekly_home_cook_target,dreamName:bundle.goal?.name||"我的願望",dreamTargetAmount:bundle.goal?.target_amount||0,completedAt:new Date().toISOString()};saveOnboardingDraft(profile);setOnboardingComplete(true)}}finally{setCheckingCloud(false)}}).catch(()=>setCheckingCloud(false))},[onboardingComplete]);
+  useEffect(() => {
+    if (onboardingComplete || !supabase) return;
+    void supabase.auth.getSession().then(async ({ data }) => {
+      if (!data.session) {
+        setCheckingCloud(false);
+        return;
+      }
+      try {
+        const bundle = await api<{
+          profile: {
+            household_servings: number;
+            daily_meal_budget: number;
+            outside_meal_price: number;
+            weekly_home_cook_target: number;
+            onboarding_status: "draft" | "complete";
+            onboarding_step: number;
+            planned_meal_slots: OnboardingProfile["plannedMealSlots"];
+            preferred_flavors: string[];
+          };
+          cookware: Array<{ type: string; capacity: string | null; limitations: string[] }>;
+          restrictions: Array<{
+            id: string;
+            label: string;
+            kind: "allergy" | "avoid" | "preference";
+            ingredient_keys: string[];
+            is_hard_limit: boolean;
+          }>;
+          goal: { name: string; target_amount: number } | null;
+        }>("/onboarding");
+
+        const localDraft = readOnboardingDraft();
+        const hasActiveDraft = hasSavedOnboardingDraft() && localDraft.status === "draft";
+
+        if (bundle.profile?.onboarding_status === "complete" && !hasActiveDraft) {
+          const profile: OnboardingProfile = {
+            status: "complete",
+            currentStep: 10,
+            householdServings: bundle.profile.household_servings,
+            cookware: bundle.cookware.map((item) => ({
+              type: item.type,
+              capacity: item.capacity || undefined,
+              limitations: item.limitations || [],
+            })),
+            restrictions: bundle.restrictions.map((item) => ({
+              id: item.id,
+              label: item.label,
+              kind: item.kind,
+              ingredientKeys: item.ingredient_keys,
+              isHardLimit: item.is_hard_limit,
+            })),
+            preferredFlavors: bundle.profile.preferred_flavors || [],
+            inventoryReviewed: true,
+            hasNoInventory: false,
+            dailyMealBudget: bundle.profile.daily_meal_budget,
+            outsideMealComparisonPrice: bundle.profile.outside_meal_price,
+            plannedMealSlots: bundle.profile.planned_meal_slots,
+            weeklyHomeCookTarget: bundle.profile.weekly_home_cook_target,
+            dreamName: bundle.goal?.name || "我的願望",
+            dreamTargetAmount: bundle.goal?.target_amount || 0,
+            completedAt: new Date().toISOString(),
+          };
+          saveOnboardingDraft(profile);
+          setOnboardingComplete(true);
+        }
+      } finally {
+        setCheckingCloud(false);
+      }
+    }).catch(() => setCheckingCloud(false));
+  }, [onboardingComplete]);
   useEffect(() => {
     if (!supabase) return;
     let active = true;
@@ -86,10 +154,15 @@ export default function App() {
   const Page = route !== "onboarding" ? pages[route] : null;
   if(checkingCloud || (onboardingComplete && authStatus === "loading"))return <main className="onboarding-shell"><p className="eyebrow">CooCoo</p><h1 className="text-2xl font-extrabold text-slate-blue">正在找回你的通行證…</h1></main>;
   if(onboardingComplete && supabase && authStatus === "signed-out")return <AuthRecoveryPanel busy={reauthBusy} error={reauthError} onGoogleSignIn={() => { void restartGoogleAuth(); }} />;
+
+  const localDraft = readOnboardingDraft();
+  const isReplaying = route === "onboarding" && (onboardingComplete || localDraft.status === "complete" || localDraft.currentStep === 1);
+
   if (!onboardingComplete || route === "onboarding")
     return (
       <OnboardingPage
-        initialStep={route === "onboarding" ? 1 : undefined}
+        key={route === "onboarding" ? `onboarding-${isReplaying ? "replay-1" : localDraft.currentStep}` : "onboarding-initial"}
+        initialStep={isReplaying ? 1 : undefined}
         canExit={onboardingComplete}
         onExit={() => navigate("today")}
         onComplete={() => {

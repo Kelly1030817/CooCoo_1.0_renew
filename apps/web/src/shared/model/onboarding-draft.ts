@@ -35,3 +35,15 @@ export function readOnboardingDraft(): OnboardingProfile {
 export function saveOnboardingDraft(profile: OnboardingProfile) {
   localStorage.setItem(ONBOARDING_DRAFT_STORAGE_KEY, JSON.stringify({ version: 1, ...profile }));
 }
+
+export function hasSavedOnboardingDraft(): boolean {
+  try {
+    const raw = localStorage.getItem(ONBOARDING_DRAFT_STORAGE_KEY);
+    if (!raw) return false;
+    const parsed = JSON.parse(raw) as { version?: number };
+    return Boolean(parsed && parsed.version === 1);
+  } catch {
+    return false;
+  }
+}
+

@@ -83,11 +83,11 @@
   animation: shockwaveRing 0.5s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
 }
 
-/* Cedarville Cursive SVG Ink Flow Stroke Mask */
+/* Cedarville Cursive SVG Ink Flow Stroke Mask (Phase 1: 0s ~ 1.05s) */
 .sig-mask-anim {
   stroke-dasharray: 620;
   stroke-dashoffset: 620;
-  animation: drawStrokeMask 1.4s cubic-bezier(0.3, 0.05, 0.25, 1) forwards;
+  animation: drawStrokeMask 1.05s cubic-bezier(0.3, 0.05, 0.25, 1) forwards;
 }
 @keyframes drawStrokeMask {
   to {
@@ -95,11 +95,11 @@
   }
 }
 
-/* Liquid Orange Underline Sweep */
+/* Liquid Golden Underline Sweep (Phase 2: 1.05s ~ 1.47s) */
 .sig-underline-sweep {
   stroke-dasharray: 180;
   stroke-dashoffset: 180;
-  animation: drawUnderlineSweep 0.38s cubic-bezier(0.2, 0.1, 0.25, 1) 1.35s forwards;
+  animation: drawUnderlineSweep 0.42s cubic-bezier(0.2, 0.1, 0.25, 1) 1.05s forwards;
 }
 @keyframes drawUnderlineSweep {
   0% {
