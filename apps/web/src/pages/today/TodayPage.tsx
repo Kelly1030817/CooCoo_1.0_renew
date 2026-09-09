@@ -1,11 +1,11 @@
-import { RecipeCatalogPanel } from "@/features/recipes/RecipeCatalogPanel";
 import { useContext, useEffect, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import type { MealPlanResult, MealPostpone, MealSlot, PlannedMeal, RecipePackage, TodayDecision } from "@coocoo/contracts";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import type { MealPlanResult, MealPostpone, MealSlot, PlannedMeal, RecipePackage, RecipePreferences, RecipeRecommendations, TodayDecision } from "@coocoo/contracts";
 import { useAppState, stateQueryKey } from "@/entities/app-state/model";
 import { UiContext } from "@/app/ui-context";
 import { RecipePackageModal } from "@/features/cooking/RecipeModal";
 import { ChefRevisitModal } from "./ChefRevisitModal";
+import { PurchaseReminder, OfflineImportAndConflicts } from "@/features/recipes/RecipeCatalogPanel";
 import {
   LOW_ENERGY_EMERGENCY_RECIPE,
   type EmergencyMissingItem,
@@ -74,12 +74,25 @@ export function TodayPage() {
   const queryClient = useQueryClient();
   const ui = useContext(UiContext);
   const [energyLow, setEnergyLow] = useState(false);
+  const [ticketMode, setTicketMode] = useState<"fridge" | "purchase">("fridge");
   const [decision, setDecision] = useState<TodayDecision | null>(null);
   const [planResult, setPlanResult] = useState<MealPlanResult | null>(null);
   const [primaryId, setPrimaryId] = useState("");
   const [decisionError, setDecisionError] = useState("");
   const [planError, setPlanError] = useState("");
   const [weekExpanded, setWeekExpanded] = useState(false);
+
+  // Purchase recommendations state
+  const [purchaseResult, setPurchaseResult] = useState<RecipeRecommendations | null>(null);
+  const [purchaseLoading, setPurchaseLoading] = useState(false);
+  const [purchaseError, setPurchaseError] = useState("");
+  const [selectedPurchaseRecipeId, setSelectedPurchaseRecipeId] = useState<string | null>(null);
+
+  const recipeSettings = useQuery({
+    queryKey: ["recipe-preferences", data?.session.user?.id],
+    queryFn: () => api<RecipePreferences>("/settings/recipes").catch(() => null),
+  });
+  const purchaseBudget = recipeSettings.data?.purchaseBudget ?? 100;
   const today = dateOnly();
 
   const openChefConsultation = () => {
@@ -121,6 +134,33 @@ export function TodayPage() {
 
   useEffect(() => {
     let active = true;
+    setPurchaseLoading(true);
+    setPurchaseError("");
+    api<RecipeRecommendations>("/recipes/recommendations", json("POST", {
+      mode: "small_purchase",
+      purchaseBudget,
+      allowRepeat: false,
+      energy: energyLow ? "low" : "normal",
+    }))
+      .then((value) => {
+        if (active) {
+          setPurchaseResult(value);
+          if (value.eligible[0] && !selectedPurchaseRecipeId) {
+            setSelectedPurchaseRecipeId(value.eligible[0].recipe.id);
+          }
+        }
+      })
+      .catch((reason) => active && setPurchaseError(reason instanceof Error ? reason.message : "補買推薦載入失敗"))
+      .finally(() => {
+        if (active) setPurchaseLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [purchaseBudget, energyLow, today]);
+
+  useEffect(() => {
+    let active = true;
     const week = weekStart(today);
     setPlanError("");
     api<MealPlanResult>("/meal-plans", json("POST", { weekStart: week }))
@@ -134,9 +174,24 @@ export function TodayPage() {
   const choices = [decision?.primary, ...(decision?.alternatives || [])].filter(
     (item): item is RecipePackage => Boolean(item),
   );
-  const recommended = choices.find((item) => item.id === primaryId) || choices[0];
+  const recommendedFridge = choices.find((item) => item.id === primaryId) || choices[0];
+  const purchaseChoices = purchaseResult?.eligible || [];
+  const activePurchaseItem =
+    purchaseChoices.find((item) => item.recipe.id === selectedPurchaseRecipeId) ||
+    purchaseChoices[0];
+
+  const recommended = ticketMode === "fridge"
+    ? recommendedFridge
+    : (activePurchaseItem?.recipe || recommendedFridge);
+
+  const activeMissing = ticketMode === "purchase" ? (activePurchaseItem?.missing || []) : [];
+
   const choose = (meal: RecipePackage) => {
-    setPrimaryId(meal.id);
+    if (ticketMode === "fridge") {
+      setPrimaryId(meal.id);
+    } else {
+      setSelectedPurchaseRecipeId(meal.id);
+    }
     ui.toast("今天就煮「" + meal.title + "」");
   };
 
@@ -161,8 +216,6 @@ export function TodayPage() {
       />,
     );
   };
-
-  const start = () => startCooking();
 
   const handleAddToShopping = async (missing: EmergencyMissingItem[]) => {
     try {
@@ -206,7 +259,6 @@ export function TodayPage() {
   if (loading) {
     return (
       <div className="today-page">
-      <RecipeCatalogPanel/>
         <section className="today-intro">
           <div>
             <p className="eyebrow">
@@ -263,8 +315,13 @@ export function TodayPage() {
           {generalError}
         </p>
       )}
+      {ticketMode === "purchase" && purchaseError && (
+        <p className="today-warning" role="alert">
+          {purchaseError}
+        </p>
+      )}
 
-      {/* 1. Header greeting & energy toggle */}
+      {/* 1. Header greeting */}
       <section className="today-intro">
         <div>
           <p className="eyebrow">
@@ -277,24 +334,6 @@ export function TodayPage() {
             決定下一餐就好。
           </h2>
         </div>
-        <button
-          type="button"
-          className={energyLow ? "energy-toggle active" : "energy-toggle"}
-          onClick={() => setEnergyLow((value) => !value)}
-        >
-          <span className="energy-icon" aria-hidden="true">
-            {energyLow ? (
-              <svg width="18" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <rect x="2" y="6" width="16" height="12" rx="2.5" stroke="#ffffff" strokeWidth="2"/>
-                <path d="M21 10v4" stroke="#ffffff" strokeWidth="2" strokeLinecap="round"/>
-                <rect x="4.5" y="8.5" width="7" height="7" rx="1.5" fill="#fbbf24"/>
-              </svg>
-            ) : (
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
-            )}
-          </span>
-          {energyLow ? "低體力模式已開" : "今天有點累"}
-        </button>
       </section>
 
       {/* Pocket Chef CooCoo Consultation Entry Capsule */}
@@ -329,6 +368,11 @@ export function TodayPage() {
                 <span className="text-[9px] font-bold text-amber-900 bg-amber-100 px-1.5 py-0.2 rounded">
                   隨行速決
                 </span>
+                {energyLow && (
+                  <span className="text-[9px] font-bold text-amber-950 bg-amber-200 px-1.5 py-0.2 rounded">
+                    ⚡ 低體力模式中
+                  </span>
+                )}
               </div>
               <p className="text-[11px] text-stone-600 mt-0.5 font-medium">
                 太累想煮快手菜、臨時聚餐要順延？點此向主廚諮詢
@@ -350,8 +394,6 @@ export function TodayPage() {
           </span>
         </button>
       </section>
-
-      <RecipeCatalogPanel />
 
       {/* 2. Notification capsule: 熟食庫存 (溫和綠色提醒) */}
       {showPreparedCapsule && (
@@ -482,6 +524,31 @@ export function TodayPage() {
 
           {/* Ticket Body (Right) */}
           <div className="ticket-body">
+            {/* Option A Segmented Mode Switcher */}
+            <div className="ticket-mode-row">
+              <span className="mode-row-label">今日推薦模式</span>
+              <div className="segmented-switch" role="tablist" aria-label="今日推薦模式切換">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={ticketMode === "fridge"}
+                  className={`segmented-btn ${ticketMode === "fridge" ? "active" : ""}`}
+                  onClick={() => setTicketMode("fridge")}
+                >
+                  🥬 冰箱現有 (0元)
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={ticketMode === "purchase"}
+                  className={`segmented-btn ${ticketMode === "purchase" ? "active" : ""}`}
+                  onClick={() => setTicketMode("purchase")}
+                >
+                  🛒 少量補買 {purchaseLoading ? "..." : (activePurchaseItem?.estimatedPurchaseCost ? `(+${activePurchaseItem.estimatedPurchaseCost}元)` : "")}
+                </button>
+              </div>
+            </div>
+
             <div className="meal-tags">
               <span className="tag-time">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -491,10 +558,15 @@ export function TodayPage() {
                 {recommended.totalMinutes <= 15 ? "15 分快手" : `${recommended.totalMinutes} 分鐘`}
               </span>
               <span className="tag-cost">食材 NT$ {recommended.estimatedCost}</span>
+              <span className={`tag-coverage ${ticketMode === "fridge" ? "tag-covered" : "tag-purchase"}`}>
+                {ticketMode === "fridge" ? "庫存覆蓋 100%" : (activeMissing.length > 0 ? `需補買 ${activeMissing.length} 種` : "庫存充足")}
+              </span>
             </div>
 
             <h3>{recommended.title}</h3>
-            <p className="meal-subtitle">{subtitles[recommended.title] || decision?.notice || "符合你的廚具與飲食設定"}</p>
+            <p className="meal-subtitle">
+              {subtitles[recommended.title] || (ticketMode === "purchase" ? "精選補買 1~2 項食材，在預算內兼顧多樣性" : decision?.notice || "符合你的廚具與飲食設定")}
+            </p>
 
             <div className="cook-prep-row">
               <div>
@@ -519,20 +591,36 @@ export function TodayPage() {
               </div>
             </div>
 
+            {/* In Purchase Mode: Missing items notice banner */}
+            {ticketMode === "purchase" && activeMissing.length > 0 && (
+              <div className="purchase-tip-banner">
+                <div className="purchase-tip-content">
+                  <span className="material-symbols-outlined purchase-tip-icon">shopping_bag</span>
+                  <span>
+                    需補買 <strong>{activeMissing.map((m) => `${m.name} ${m.quantity} ${m.unit}`).join("、")}</strong>
+                    {activePurchaseItem?.estimatedPurchaseCost ? ` (約 NT$ ${activePurchaseItem.estimatedPurchaseCost})` : ""}
+                  </span>
+                </div>
+              </div>
+            )}
+
             <div className="ingredient-route-wrapper">
               <span className="route-title">食材路徑</span>
               <div className="ingredient-route">
                 {recommended.ingredients
                   .filter((item) => !item.isPantryStaple)
-                  .map((item) => (
-                    <span
-                      key={item.ingredientKey}
-                      className={`route-chip ${item.coveredByInventory ? "covered" : ""}`}
-                    >
-                      {item.name}
-                      {item.coveredByInventory && <small>（已有）</small>}
-                    </span>
-                  ))}
+                  .map((item) => {
+                    const isMissing = ticketMode === "purchase" && activeMissing.some((m) => m.ingredientKey === item.ingredientKey || m.name === item.name);
+                    return (
+                      <span
+                        key={item.ingredientKey}
+                        className={`route-chip ${isMissing ? "missing" : (item.coveredByInventory ? "covered" : "")}`}
+                      >
+                        {item.name}
+                        {isMissing ? <small>（需買）</small> : (item.coveredByInventory && <small>（已有）</small>)}
+                      </span>
+                    );
+                  })}
               </div>
             </div>
 
@@ -541,12 +629,39 @@ export function TodayPage() {
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
               </span>
               <p>
-                這餐預估為［{goalName}］省下 <strong>NT$ {mealSaving}</strong>
+                外食比對 NT$ {outsidePrice} · 這餐預估為［{goalName}］省下 <strong>NT$ {mealSaving}</strong>
               </p>
             </div>
 
             <div className="cook-choice-row">
-              <button type="button" className="cook-choice" onClick={() => start()}>
+              <button
+                type="button"
+                className="cook-choice"
+                onClick={() => {
+                  if (ticketMode === "purchase" && activePurchaseItem && activeMissing.length > 0) {
+                    ui.open(
+                      <PurchaseReminder
+                        item={activePurchaseItem}
+                        budget={purchaseBudget}
+                        allowRepeat={false}
+                        goalName={goalName}
+                        onClose={ui.close}
+                        onUseInventory={() => {
+                          ui.close();
+                          setTicketMode("fridge");
+                        }}
+                        onAdded={async () => {
+                          await queryClient.invalidateQueries({ queryKey: stateQueryKey });
+                          ui.close();
+                          ui.toast("已加入購物清單；完成採買入庫後再開始料理。");
+                        }}
+                      />,
+                    );
+                  } else {
+                    startCooking(recommended);
+                  }
+                }}
+              >
                 <span className="cook-choice-label">
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>
@@ -555,13 +670,49 @@ export function TodayPage() {
                 </span>
                 <span className="cook-choice-arrow">→</span>
               </button>
+
+              {ticketMode === "purchase" && activeMissing.length > 0 && (
+                <button
+                  type="button"
+                  className="quick-add-shopping-btn"
+                  onClick={async () => {
+                    try {
+                      for (const item of activeMissing) {
+                        await api(
+                          "/shopping-items",
+                          json("POST", {
+                            name: item.name,
+                            category: "生鮮",
+                            qty: item.quantity,
+                            unit: item.unit,
+                            estCost: item.estimatedCost || 30,
+                            checked: false,
+                            status: "少量補買",
+                          }),
+                        );
+                      }
+                      await queryClient.invalidateQueries({ queryKey: stateQueryKey });
+                      ui.toast(`已將缺少的「${activeMissing.map((i) => i.name).join("、")}」加入採買清單！`);
+                    } catch {
+                      ui.toast("加入採買清單失敗，請稍後重試");
+                    }
+                  }}
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <circle cx="8" cy="21" r="1"/>
+                    <circle cx="19" cy="21" r="1"/>
+                    <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
+                  </svg>
+                  <span>加待買</span>
+                </button>
+              )}
             </div>
           </div>
         </article>
       )}
 
-      {/* 4. Alternatives: 2 safe paths (only when choices exist) */}
-      {recommended && choices.filter((meal) => meal.id !== recommended.id).length > 0 && (
+      {/* 4. Alternatives: based on current mode */}
+      {ticketMode === "fridge" && recommended && choices.filter((meal) => meal.id !== recommended.id).length > 0 && (
         <section className="alternatives">
           <div className="section-heading">
             <h3>還有兩個方向</h3>
@@ -590,6 +741,50 @@ export function TodayPage() {
                   <footer>
                     <span>{meal.totalMinutes} 分</span>
                     <span>NT$ {meal.estimatedCost}</span>
+                  </footer>
+                </button>
+              ))}
+          </div>
+        </section>
+      )}
+
+      {ticketMode === "purchase" && purchaseChoices.filter((p) => p.recipe.id !== recommended?.id).length > 0 && (
+        <section className="alternatives">
+          <div className="section-heading">
+            <h3>其他補買候選</h3>
+            <span className="alternatives-hint">點選卡片即可置換</span>
+          </div>
+
+          <div className="alternative-grid">
+            {purchaseChoices
+              .filter((p) => p.recipe.id !== recommended?.id)
+              .slice(0, 2)
+              .map((p) => (
+                <button
+                  type="button"
+                  className="alternative-card"
+                  key={p.recipe.id}
+                  onClick={() => {
+                    setSelectedPurchaseRecipeId(p.recipe.id);
+                    ui.toast("已切換為「" + p.recipe.title + "」");
+                  }}
+                >
+                  <span className="alt-badge">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/>
+                      <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
+                    </svg>
+                    <span>少量補買</span>
+                  </span>
+                  <strong>{p.recipe.title}</strong>
+                  <small>
+                    {p.missing.length > 0
+                      ? `需買 ${p.missing.map((m) => m.name).join("、")}（約 NT$ ${p.estimatedPurchaseCost}）`
+                      : "食材已備妥"}
+                  </small>
+                  <footer>
+                    <span>{p.recipe.totalMinutes} 分</span>
+                    <span>NT$ {p.recipe.estimatedCost}</span>
                   </footer>
                 </button>
               ))}
@@ -662,6 +857,10 @@ export function TodayPage() {
           )}
         </section>
       )}
+
+      <div className="mt-8">
+        <OfflineImportAndConflicts userId={data?.session.user?.id} />
+      </div>
 
     </div>
   );

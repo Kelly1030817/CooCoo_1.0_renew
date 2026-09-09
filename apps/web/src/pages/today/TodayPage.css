@@ -453,10 +453,141 @@
   font-weight: 900;
 }
 
+/* Option A: Segmented Mode Switch Row inside ticket */
+.today-page .ticket-mode-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #ebd9c6;
+}
+
+.today-page .mode-row-label {
+  font-size: 10px;
+  font-weight: 800;
+  color: #8c8275;
+  letter-spacing: 0.05em;
+}
+
+.today-page .segmented-switch {
+  display: inline-flex;
+  background: #ebe4d6;
+  border: 1px solid #ddd3c0;
+  border-radius: 9999px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.today-page .segmented-btn {
+  border: 0;
+  background: transparent;
+  padding: 4px 11px;
+  font-size: 11px;
+  font-weight: 800;
+  border-radius: 9999px;
+  color: #716e66;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+
+.today-page .segmented-btn.active {
+  background: #ffffff;
+  color: #9a442d;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.today-page .segmented-btn:active {
+  transform: scale(0.97);
+}
+
+.today-page .tag-coverage {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.today-page .tag-coverage.tag-covered {
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.today-page .tag-coverage.tag-purchase {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.today-page .route-chip.missing {
+  background: #fffbeb;
+  border-color: #fcd34d;
+  color: #92400e;
+}
+
+.today-page .route-chip.missing small {
+  color: #b45309;
+}
+
+.today-page .purchase-tip-banner {
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  font-size: 11px;
+  color: #78350f;
+}
+
+.today-page .purchase-tip-content {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.today-page .purchase-tip-icon {
+  font-size: 16px;
+  color: #b45309;
+  flex-shrink: 0;
+}
+
+.today-page .quick-add-shopping-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 16px;
+  border: 1px solid #f59e0b;
+  background: #fffbeb;
+  color: #92400e;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.today-page .quick-add-shopping-btn:hover {
+  background: #fef3c7;
+}
+
+.today-page .quick-add-shopping-btn:active {
+  transform: scale(0.97);
+}
+
 /* Main CTA button: Compact & Right-Aligned */
 .today-page .cook-choice-row {
   display: flex;
   justify-content: flex-end;
+  gap: 8px;
   margin-top: 14px;
 }
 

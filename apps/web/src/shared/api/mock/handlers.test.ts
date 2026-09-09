@@ -158,4 +158,24 @@ describe("MSW contract adapter", () => {
     expect(body.data.recipe.ingredients.length).toBeGreaterThan(0);
     expect(body.data.recipe.steps.length).toBeGreaterThan(0);
   });
+
+  test("serves recipe settings and small purchase recommendations", async () => {
+    const settings = await (await api("/settings/recipes")).json() as { data: { purchaseBudget: number } };
+    expect(settings.data.purchaseBudget).toBe(100);
+
+    const recsResponse = await api("/recipes/recommendations", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ mode: "small_purchase", purchaseBudget: 100, allowRepeat: false }),
+    });
+    expect(recsResponse.status).toBe(200);
+    const recs = await recsResponse.json() as {
+      data: {
+        mode: string;
+        eligible: Array<{ recipe: { title: string }; missing: unknown[]; estimatedPurchaseCost: number | null }>;
+      };
+    };
+    expect(recs.data.mode).toBe("small_purchase");
+    expect(Array.isArray(recs.data.eligible)).toBe(true);
+  });
 });
