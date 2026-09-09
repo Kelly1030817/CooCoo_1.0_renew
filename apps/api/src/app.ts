@@ -356,10 +356,11 @@ export const app = new Elysia({ name: "coocoo-api" })
       const image = await receiptRepository.image(user.id, params.id);
       operationId=typeof body==='object'&&body&&'operationId' in body?String(body.operationId):crypto.randomUUID();
       const inputHash=await aiUsageRepository.hash(image.bytes);
-      const cached=await aiUsageRepository.reserve(user.id,operationId,"receipt_ocr",inputHash,process.env.OPENROUTER_MODEL||"google/gemini-3.7-flash",maxTwd);
+      const receiptModel=new OpenRouterReceiptModel();
+      const cached=await aiUsageRepository.reserve(user.id,operationId,"receipt_ocr",inputHash,receiptModel.model,maxTwd);
       if(cached)return ok(cached);
       reserved=true;
-      const result = await recognizeReceipt(new OpenRouterReceiptModel(), { bytes: image.bytes, mimeType: image.mimeType });
+      const result = await recognizeReceipt(receiptModel, { bytes: image.bytes, mimeType: image.mimeType });
       const saved=await receiptRepository.saveRecognition(user.id, params.id, result.recognition);
       await aiUsageRepository.settle(user.id,operationId,"completed",result.costUsd===undefined?maxTwd:result.costUsd*Number(process.env.OPENROUTER_USD_TO_TWD_RATE||process.env.CATALOG_USD_TO_TWD_RATE||35),saved);
       return ok(saved);
