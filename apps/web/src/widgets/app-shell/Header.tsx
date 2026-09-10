@@ -1,6 +1,5 @@
-import { CatalogAdminModal } from "@/features/recipes/CatalogAdminModal";
 import { useContext, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAppState, stateQueryKey } from "@/entities/app-state/model";
 import { api } from "@/shared/api/client";
 import { UiContext } from "@/app/ui-context";
@@ -21,11 +20,6 @@ export function Header({
   const { data } = useAppState(enabled);
   const { navigate: routeNavigate } = useAppRoute();
   const navigate = onNavigate || routeNavigate;
-  const access = useQuery({
-    queryKey: ["catalog-access", data?.session.user?.id],
-    queryFn: () => api<{ owner: boolean }>("/admin/recipes/access"),
-    enabled: Boolean(data?.session.user),
-  });
   const ui = useContext(UiContext);
   const query = useQueryClient();
   const refresh = () => query.invalidateQueries({ queryKey: stateQueryKey });
@@ -48,30 +42,20 @@ export function Header({
           </h1>
         </div>
         <div className="flex shrink-0 items-center gap-xs sm:gap-sm">
-          <button
-            onClick={() => ui.open(<CookwareModal enabled={enabled} onClose={ui.close} />)}
-            aria-label="廚房裝備設定"
-            className="flex items-center justify-center rounded-full p-2 text-on-surface-variant hover:bg-surface-container-high/40"
-          >
-            <span className="material-symbols-outlined text-xl">skillet</span>
-          </button>
           {import.meta.env.DEV && (
-            <button
-              onClick={reset}
-              aria-label="重設範例資料"
-              className="flex items-center justify-center rounded-full p-2 text-on-surface-variant hover:bg-surface-container-high/40"
-            >
-              <span className="material-symbols-outlined text-xl">
-                restart_alt
-              </span>
-            </button>
+            <>
+              <button
+                onClick={reset}
+                aria-label="重設範例資料"
+                className="flex items-center justify-center rounded-full p-2 text-on-surface-variant hover:bg-surface-container-high/40"
+              >
+                <span className="material-symbols-outlined text-xl">
+                  restart_alt
+                </span>
+              </button>
+              <div className="h-8 w-px bg-outline-variant/40" />
+            </>
           )}
-          {access.data?.owner && (
-            <button className="text-xs" onClick={() => ui.open(<CatalogAdminModal onClose={ui.close} />)}>
-              食譜管理
-            </button>
-          )}
-          <div className="h-8 w-px bg-outline-variant/40" />
 
           {/* 我的 (Profile & Consultation Replay) SVG Button */}
           <button
@@ -276,32 +260,3 @@ function ProfileModal({
   );
 }
 
-function CookwareModal({ onClose, enabled = true }: { onClose: () => void; enabled?: boolean }) {
-  const { data } = useAppState(enabled);
-  return (
-    <Modal label="廚房裝備設定" onClose={onClose}>
-      <ModalHeader title="我的廚房裝備" onClose={onClose} />
-      <div className="space-y-sm">
-        {data?.cookware.map((item) => (
-          <div
-            key={item.id}
-            className="rounded-2xl bg-surface-container-low p-md"
-          >
-            <span className="material-symbols-outlined text-secondary">
-              skillet
-            </span>
-            <strong className="ml-2 text-sm text-slate-blue">
-              {item.name}
-            </strong>
-            <p className="mt-1 text-[10px] text-on-surface-variant">
-              {item.brand} {item.model} · {item.capacity || `${item.wattage}W`}
-            </p>
-          </div>
-        ))}
-      </div>
-      <button onClick={onClose} className="primary-btn mt-lg w-full">
-        完成設定
-      </button>
-    </Modal>
-  );
-}

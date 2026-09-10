@@ -8,6 +8,7 @@ import { IngredientIcon } from "@/shared/ui/IngredientIcon";
 import { usePrepTray } from "@/features/kitchen/prep-tray";
 import { api, json } from "@/shared/api/client";
 import { Modal, ModalHeader } from "@/shared/ui/Modal";
+import { CatalogAdminModal } from "@/features/recipes/CatalogAdminModal";
 import "./KitchenPage.css";
 
 const STYLES = [
@@ -77,6 +78,14 @@ export function KitchenPage() {
       })).catch(() => null),
     enabled: isCatalogDrawerOpen,
   });
+
+  // Check if current user has owner role for recipe catalog administration
+  const access = useQuery({
+    queryKey: ["catalog-access", data?.session.user?.id],
+    queryFn: () => api<{ owner: boolean }>("/admin/recipes/access"),
+    enabled: Boolean(data?.session.user),
+  });
+  const isOwner = Boolean(access.data?.owner);
 
   if (!data) return null;
 
@@ -533,16 +542,27 @@ export function KitchenPage() {
                 <span className="material-symbols-outlined text-sm text-stone-600">auto_stories</span>
                 <span className="text-xs font-bold text-stone-700">沒靈感？也可以參考公版食譜庫</span>
               </div>
-              <button
-                type="button"
-                onClick={() => setIsCatalogDrawerOpen((prev) => !prev)}
-                className="text-xs font-black text-[#2a9d8f] hover:underline flex items-center gap-0.5"
-              >
-                <span>{isCatalogDrawerOpen ? "收合" : "展開瀏覽"}</span>
-                <span className="material-symbols-outlined text-sm">
-                  {isCatalogDrawerOpen ? "expand_less" : "expand_more"}
-                </span>
-              </button>
+              <div className="flex items-center gap-3">
+                {isOwner && (
+                  <button
+                    type="button"
+                    onClick={() => ui.open(<CatalogAdminModal onClose={ui.close} />)}
+                    className="text-xs font-black text-[#2a9d8f] hover:underline"
+                  >
+                    食譜管理
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setIsCatalogDrawerOpen((prev) => !prev)}
+                  className="text-xs font-black text-[#2a9d8f] hover:underline flex items-center gap-0.5"
+                >
+                  <span>{isCatalogDrawerOpen ? "收合" : "展開瀏覽"}</span>
+                  <span className="material-symbols-outlined text-sm">
+                    {isCatalogDrawerOpen ? "expand_less" : "expand_more"}
+                  </span>
+                </button>
+              </div>
             </div>
 
             {isCatalogDrawerOpen && (
