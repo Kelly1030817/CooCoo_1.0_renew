@@ -6,7 +6,7 @@ import { api } from "@/shared/api/client";
 import { UiContext } from "@/app/ui-context";
 import { Modal, ModalHeader } from "@/shared/ui/Modal";
 import { supabase, startGoogleAuth } from "@/shared/auth/supabase";
-import { readOnboardingDraft, saveOnboardingDraft } from "@/shared/model/onboarding-draft";
+import { readOnboardingDraft } from "@/shared/model/onboarding-draft";
 
 import type { AppRoute } from "@/app/routing/routes";
 import { useAppRoute } from "@/app/routing/useAppRoute";
@@ -48,13 +48,6 @@ export function Header({
           </h1>
         </div>
         <div className="flex shrink-0 items-center gap-xs sm:gap-sm">
-          <button
-            onClick={() => ui.open(<CookwareModal enabled={enabled} onClose={ui.close} />)}
-            aria-label="廚房裝備設定"
-            className="flex items-center justify-center rounded-full p-2 text-on-surface-variant hover:bg-surface-container-high/40"
-          >
-            <span className="material-symbols-outlined text-xl">skillet</span>
-          </button>
           {import.meta.env.DEV && (
             <button
               onClick={reset}
@@ -75,24 +68,8 @@ export function Header({
 
           {/* 我的 (Profile & Consultation Replay) SVG Button */}
           <button
-            onClick={() =>
-              ui.open(
-                <ProfileModal
-                  onClose={ui.close}
-                  onReplayOnboarding={() => {
-                    ui.close();
-                    saveOnboardingDraft({
-                      ...readOnboardingDraft(),
-                      currentStep: 1,
-                      status: "draft",
-                    });
-                    navigate("onboarding");
-                  }}
-                  enabled={enabled}
-                />,
-              )
-            }
-            aria-label="我的自煮檔案與相談室"
+            onClick={() => navigate("me")}
+            aria-label="前往我的主廚檔案"
             className="flex items-center gap-1.5 rounded-full border border-amber-300/80 bg-amber-50/90 hover:bg-amber-100 px-3 py-1.5 text-xs font-bold text-amber-950 shadow-2xs transition-all active:scale-95 group"
           >
             <svg
@@ -116,7 +93,7 @@ export function Header({
   );
 }
 
-function ProfileModal({
+export function ProfileModal({
   onClose,
   onReplayOnboarding,
   enabled = true,
@@ -208,29 +185,29 @@ function ProfileModal({
 
         {error && <p role="alert" className="offline-error text-xs text-error">{error}</p>}
 
-        {/* Current Dream Goal Overview */}
+        {/* Current Chef Profile Overview */}
         <div className="bg-amber-50/80 border border-amber-200 rounded-2xl p-3 space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-amber-800 uppercase tracking-wider">圓夢計畫目標</span>
+            <span className="text-[10px] font-bold text-amber-800 uppercase tracking-wider">本週主目標</span>
             <span className="text-[10px] font-mono font-bold text-amber-900 bg-amber-100/90 px-1.5 py-0.5 rounded">
-              每週自煮 {draft.weeklyHomeCookTarget || 3} 餐
+              每週 {draft.weeklyGoalTarget || 1} {draft.primaryGoalMetric === "self_cooked_servings" ? "份" : "次"}
             </span>
           </div>
           <div className="flex items-baseline justify-between">
             <h4 className="font-black text-stone-900 text-sm">
-              {draft.dreamName || "自煮圓夢願望"}
+              {data?.growth.rank.name || "初火學徒"}
             </h4>
             <span className="font-mono font-black text-emerald-800 text-sm">
-              NT$ {(draft.dreamTargetAmount || 0).toLocaleString()}
+              {data?.growth.totalExp || 0} EXP
             </span>
           </div>
           <div className="text-[10px] text-stone-500 flex items-center justify-between pt-1 border-t border-amber-200/60">
-            <span>每日餐費預算：NT$ {draft.dailyMealBudget || 240}</span>
+            <span>預設指引：{draft.guidanceMode === "compact" ? "精簡" : "詳細"}</span>
             <span>份量：{draft.householdServings || 1} 人份</span>
           </div>
         </div>
 
-        {/* Replay 10-Step Consultation Action Card */}
+        {/* Replay five-step setup action card */}
         <div className="bg-stone-900 text-white rounded-2xl p-3.5 space-y-2.5">
           <div className="flex items-center gap-2">
             <svg
@@ -245,10 +222,10 @@ function ProfileModal({
             >
               <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
             </svg>
-            <h4 className="text-xs font-black text-amber-300">主廚相談室十步設定</h4>
+            <h4 className="text-xs font-black text-amber-300">五步主廚檔案設定</h4>
           </div>
           <p className="text-[11px] text-stone-300 leading-relaxed">
-            想重新調整自煮目標、重測廚具適配度，或再次體驗現代工坊圓章蓋印與 3D 破空起飛？
+            想重新調整自煮目標、料理偏好、廚具適配度或提醒節奏，可以再次檢視五步設定。
           </p>
           <button
             type="button"
@@ -268,7 +245,7 @@ function ProfileModal({
               <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
               <path d="M3 3v5h5" />
             </svg>
-            <span>重新體驗主廚相談室十步設定 ➔</span>
+            <span>重新檢視五步主廚檔案設定 ➔</span>
           </button>
         </div>
       </div>
@@ -276,7 +253,7 @@ function ProfileModal({
   );
 }
 
-function CookwareModal({ onClose, enabled = true }: { onClose: () => void; enabled?: boolean }) {
+export function CookwareModal({ onClose, enabled = true }: { onClose: () => void; enabled?: boolean }) {
   const { data } = useAppState(enabled);
   return (
     <Modal label="廚房裝備設定" onClose={onClose}>

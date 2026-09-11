@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import type { MealPlanResult, MealPostpone, MealSlot, PlannedMeal, RecipePackage, RecipePreferences, RecipeRecommendations, TodayDecision } from "@coocoo/contracts";
+import type { MealSlot, RecipePackage, RecipePreferences, RecipeRecommendations, TodayDecision } from "@coocoo/contracts";
 import { useAppState, stateQueryKey } from "@/entities/app-state/model";
 import { UiContext } from "@/app/ui-context";
 import { RecipePackageModal } from "@/features/cooking/RecipeModal";
@@ -12,7 +12,6 @@ import {
   hasCompatibleEmergencyCookware,
 } from "@/features/cooking/emergencyRecipe";
 import { api, json } from "@/shared/api/client";
-import { Modal, ModalHeader } from "@/shared/ui/Modal";
 import { shouldAutoSwitchToPurchase } from "./recommendationMode";
 import "./TodayPage.css";
 
@@ -55,35 +54,18 @@ const dateOnly = () => {
   const parts = taipeiDateParts(new Date());
   return `${parts.year}-${parts.month}-${parts.day}`;
 };
-const weekStart = (date: string) => {
-  const value = new Date(date + "T12:00:00+08:00");
-  const day = value.getDay() || 7;
-  value.setDate(value.getDate() - day + 1);
-  const parts = taipeiDateParts(value);
-  return `${parts.year}-${parts.month}-${parts.day}`;
-};
 const slotName: Record<MealSlot, string> = { breakfast: "早餐", lunch: "午餐", dinner: "晚餐" };
-const dayLabel = (date: string) =>
-  new Intl.DateTimeFormat("zh-TW", {
-    timeZone: "Asia/Taipei",
-    weekday: "short",
-    month: "numeric",
-    day: "numeric",
-  }).format(new Date(date + "T12:00:00+08:00"));
 
 export function TodayPage() {
   const { data } = useAppState();
   const queryClient = useQueryClient();
   const ui = useContext(UiContext);
   const [energyLow, setEnergyLow] = useState(false);
-  const [ticketMode, setTicketMode] = useState<"fridge" | "purchase">("fridge");
+  const [ticketMode, setTicketMode] = useState<"fridge" | "low" | "purchase">("fridge");
   const [hasAutoSwitched, setHasAutoSwitched] = useState(false);
   const [decision, setDecision] = useState<TodayDecision | null>(null);
-  const [planResult, setPlanResult] = useState<MealPlanResult | null>(null);
   const [primaryId, setPrimaryId] = useState("");
   const [decisionError, setDecisionError] = useState("");
-  const [planError, setPlanError] = useState("");
-  const [weekExpanded, setWeekExpanded] = useState(false);
 
   // Purchase recommendations state
   const [purchaseResult, setPurchaseResult] = useState<RecipeRecommendations | null>(null);
@@ -104,36 +86,18 @@ export function TodayPage() {
         onClose={ui.close}
         onSelectLowEnergy={() => {
           setEnergyLow(true);
+          setTicketMode("low");
         }}
         onStartCooking={(customRecipe) => startCooking(customRecipe)}
         inventoryNames={(data?.inventory || []).map((item) => item.name)}
         restrictions={data?.onboardingProfile?.restrictions || []}
         cookwareTypes={(data?.cookware || []).map((item) => item.type)}
-        weeklyTarget={data?.cookingPlan?.weeklyCookingMeals ?? 3}
+        weeklyTarget={data?.weeklyGoal.target ?? 1}
         onAdjustTarget={async (newTarget) => {
-          if (!data?.activeGoal) throw new Error("GOAL_NOT_FOUND");
-          await api(`/goals/${data.activeGoal.id}`, json("PATCH", { weeklyCookingMeals: newTarget }));
+          await api("/weekly-goal", json("PATCH", { metric: data?.weeklyGoal.metric ?? "cooking_sessions", target: newTarget }));
           await queryClient.invalidateQueries({ queryKey: stateQueryKey });
         }}
-        onRecordTakeout={async () => {
-          const meal = planResult?.plan.meals.find(
-            (item) => item.date === today && item.status === "planned",
-          );
-          if (!planResult || !meal) {
-            return `目前沒有今日排定餐點，因此餐單沒有變更；外食比較價 NT$ ${outsidePrice} 只用於日後省錢比較，沒有新增支出或扣款。`;
-          }
-          const value = await api<MealPlanResult>(
-            `/meal-plans/meals/${meal.id}`,
-            json("PATCH", {
-              weekStart: planResult.plan.weekStart,
-              kind: "cancel",
-              expectedUpdatedAt: planResult.plan.updatedAt,
-            }),
-          );
-          setPlanResult(value);
-          return `已將今日「${meal.title}」從餐單取消；外食比較價 NT$ ${outsidePrice} 只用於日後省錢比較，沒有自動扣款。`;
-        }}
-        outsideMealPrice={outsidePrice}
+        onRecordTakeout={async () => "今晚休息也沒關係；本週目標可以隨生活調整，不會扣除 EXP 或留下失敗標記。"}
       />,
     );
   };
@@ -181,18 +145,6 @@ export function TodayPage() {
     };
   }, [purchaseBudget, energyLow, today]);
 
-  useEffect(() => {
-    let active = true;
-    const week = weekStart(today);
-    setPlanError("");
-    api<MealPlanResult>("/meal-plans", json("POST", { weekStart: week }))
-      .then((value) => active && setPlanResult(value))
-      .catch((reason) => active && setPlanError(reason instanceof Error ? reason.message : "本週餐單載入失敗"));
-    return () => {
-      active = false;
-    };
-  }, [today]);
-
   const choices = [decision?.primary, ...(decision?.alternatives || [])].filter(
     (item): item is RecipePackage => Boolean(item),
   );
@@ -208,7 +160,7 @@ export function TodayPage() {
       inventoryRecipeCount: choices.length,
       purchaseRecipeCount: purchaseChoices.length,
       hasAutoSwitched,
-      ticketMode,
+      ticketMode: ticketMode === "purchase" ? "purchase" : "fridge",
     })) {
       setTicketMode("purchase");
       setHasAutoSwitched(true);
@@ -216,9 +168,7 @@ export function TodayPage() {
     }
   }, [decision, choices.length, purchaseChoices.length, hasAutoSwitched, ticketMode, ui]);
 
-  const recommended = ticketMode === "fridge"
-    ? recommendedFridge
-    : (activePurchaseItem?.recipe || recommendedFridge);
+  const recommended = ticketMode === "purchase" ? (activePurchaseItem?.recipe || recommendedFridge) : recommendedFridge;
 
   const activeMissing = ticketMode === "purchase" ? (activePurchaseItem?.missing || []) : [];
 
@@ -231,33 +181,43 @@ export function TodayPage() {
           role="tab"
           aria-selected={ticketMode === "fridge"}
           className={`segmented-btn ${ticketMode === "fridge" ? "active" : ""}`}
-          onClick={() => setTicketMode("fridge")}
+          onClick={() => {setTicketMode("fridge");setEnergyLow(false);}}
         >
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
             <path d="M12 22c4-2 7-6 7-11V3l-7 4-7-4v8c0 5 3 9 7 11Z" />
             <path d="M8 13c3 0 5-2 8-5" />
           </svg>
-          冰箱現有 {choices.length > 0 ? "（0 元）" : "（0 道）"}
+          冰箱就能煮 {choices.length > 0 ? `（${choices.length} 道）` : "（0 道）"}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={ticketMode === "low"}
+          className={`segmented-btn ${ticketMode === "low" ? "active" : ""}`}
+          onClick={() => {setTicketMode("low");setEnergyLow(true);}}
+        >
+          <span className="material-symbols-outlined">bolt</span>
+          最低體力／時間
         </button>
         <button
           type="button"
           role="tab"
           aria-selected={ticketMode === "purchase"}
           className={`segmented-btn ${ticketMode === "purchase" ? "active" : ""}`}
-          onClick={() => setTicketMode("purchase")}
+          onClick={() => {setTicketMode("purchase");setEnergyLow(false);}}
         >
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
             <circle cx="9" cy="20" r="1" /><circle cx="18" cy="20" r="1" />
             <path d="M3 4h2l2.4 10.2a2 2 0 0 0 2 1.6h7.8a2 2 0 0 0 2-1.6L21 7H6" />
           </svg>
-          少量補買 {purchaseLoading ? "…" : activePurchaseItem?.estimatedPurchaseCost ? `（約 ${activePurchaseItem.estimatedPurchaseCost} 元）` : `（${purchaseChoices.length} 道）`}
+          少量補買 {purchaseLoading ? "…" : `（${purchaseChoices.length} 道）`}
         </button>
       </div>
     </div>
   );
 
   const choose = (meal: RecipePackage) => {
-    if (ticketMode === "fridge") {
+    if (ticketMode !== "purchase") {
       setPrimaryId(meal.id);
     } else {
       setSelectedPurchaseRecipeId(meal.id);
@@ -298,21 +258,6 @@ export function TodayPage() {
     );
   };
 
-  const reschedule = (meal: PlannedMeal) =>
-    ui.open(
-      <PostponeModal
-        meal={meal}
-        planWeekStart={planResult!.plan.weekStart}
-        planUpdatedAt={planResult!.plan.updatedAt}
-        onClose={ui.close}
-        onSaved={(value) => {
-          setPlanResult(value);
-          ui.close();
-          ui.toast("本週餐單已更新");
-        }}
-      />,
-    );
-
   const loading = !decision && !decisionError;
   if (loading) {
     return (
@@ -332,25 +277,19 @@ export function TodayPage() {
         </section>
         <div className="today-loading-card" role="status">
           <span className="material-symbols-outlined spinning">sync</span>
-          <p>正在依你的廚具、預算與庫存檢核今日餐點…</p>
+          <p>正在依你的廚具、時間與庫存檢核今日餐點…</p>
         </div>
       </div>
     );
   }
 
   const todaySlotText = decision?.slot ? slotName[decision.slot] : "晚餐";
-  const todayPlanned = planResult?.plan?.meals.find(
-    (m) => m.date === today && m.status === "planned",
-  );
-  const plannedDayNumber = todayPlanned && planResult
-    ? planResult.plan.meals.indexOf(todayPlanned) + 1
-    : null;
-
   const preparedServings = (data?.mealServings || []).filter(
     (item) => item.status === "prepared_inventory",
   );
   const showPreparedCapsule = preparedServings.length > 0;
   const preparedCount = preparedServings.length;
+  const eatPreparedServing = async () => { const serving = preparedServings[0]; if (!serving) return; await api(`/meal-servings/${serving.id}/eat`, json("POST", { operationId: crypto.randomUUID() })); await queryClient.invalidateQueries({ queryKey: stateQueryKey }); ui.toast("熟食已記為吃完，獲得 10 EXP"); };
 
   const cookwareLabel =
     recommended && recommended.cookwareTypes.length > 0
@@ -361,10 +300,7 @@ export function TodayPage() {
   const stepCountLabel =
     recommended && recommended.steps.length > 0 ? `${recommended.steps.length} 大步驟` : "4 大步驟";
 
-  const outsidePrice = data?.cookingPlan?.eatingOutCost || 150;
-  const mealSaving = recommended ? Math.max(0, outsidePrice - recommended.estimatedCost) : 0;
-  const goalName = data?.activeGoal?.name || "圓夢目標";
-  const generalError = decisionError || planError;
+  const generalError = decisionError;
 
   const openPurchaseReminder = () => {
     if (!activePurchaseItem || activeMissing.length === 0) return;
@@ -373,11 +309,11 @@ export function TodayPage() {
         item={activePurchaseItem}
         budget={purchaseBudget}
         allowRepeat={false}
-        goalName={goalName}
         onClose={ui.close}
         onUseInventory={() => {
           ui.close();
           setTicketMode("fridge");
+          setEnergyLow(false);
         }}
         onAdded={async () => {
           await queryClient.invalidateQueries({ queryKey: stateQueryKey });
@@ -406,7 +342,7 @@ export function TodayPage() {
         <div>
           <p className="eyebrow">
             <span className="eyebrow-dot" />
-            今天 · {plannedDayNumber ? `第 ${plannedDayNumber} 餐 · ` : ""}{todaySlotText}
+            今天 · {todaySlotText}
           </p>
           <h2>
             先別想一整週，
@@ -500,7 +436,7 @@ export function TodayPage() {
           <button
             type="button"
             className="cooked-capsule-btn"
-            onClick={() => ui.toast("今天優先食用熟食庫存，省去備料與洗鍋！")}
+            onClick={() => void eatPreparedServing()}
           >
             加熱即食 5m
           </button>
@@ -528,20 +464,20 @@ export function TodayPage() {
             <div className="meal-tags">
               <span className="tag-warning">
                 <span className="material-symbols-outlined">info</span>
-                {ticketMode === "fridge" ? "冰箱現有庫存檢核" : "後端條件檢核"}
+                {ticketMode === "purchase" ? "少量補買條件檢核" : ticketMode === "low" ? "最低體力／時間檢核" : "冰箱現有庫存檢核"}
               </span>
             </div>
 
             <h3>
-              {ticketMode === "fridge"
+              {ticketMode !== "purchase"
                 ? "目前冰箱現有食材暫無完全匹配的料理"
                 : "目前條件暫無完全匹配的料理"}
             </h3>
             <p className="meal-subtitle">
-              {ticketMode === "fridge"
+              {ticketMode !== "purchase"
                 ? purchaseChoices.length > 0
                   ? `後端檢核目前登記的庫存（${(data?.inventory || []).map((item) => item.name).join("、") || "尚無在庫食材"}），尚無可完全覆蓋的食譜。可切換至「少量補買」查看候選；加入清單前仍需確認。`
-                  : decision?.notice || decisionError || planError || "後台檢核您的可用廚具、預算與飲食限制，尚未找到同時符合全部條件的食譜。"
+                  : decision?.notice || decisionError || "後台檢核您的可用廚具、時間與飲食限制，尚未找到同時符合全部條件的食譜。"
                 : purchaseError || purchaseResult?.notice || "目前沒有符合預算且補買不超過 2 項食材的候選食譜。"}
             </p>
 
@@ -568,15 +504,6 @@ export function TodayPage() {
                 </div>
                 <div className="diag-item">
                   <span className="diag-label">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline-icon" aria-hidden="true"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                    每日餐飲預算
-                  </span>
-                  <strong className="diag-val">
-                    NT$ {data?.cookingPlan?.homeCookBudget ?? 300}
-                  </strong>
-                </div>
-                <div className="diag-item">
-                  <span className="diag-label">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline-icon" aria-hidden="true"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
                     飲食限制
                   </span>
@@ -590,7 +517,7 @@ export function TodayPage() {
             </div>
 
             <div className="ticket-actions-group">
-              {ticketMode === "fridge" && purchaseChoices.length > 0 && (
+              {ticketMode !== "purchase" && purchaseChoices.length > 0 && (
                 <button
                   type="button"
                   className="diag-action-btn primary highlight-switch"
@@ -604,9 +531,9 @@ export function TodayPage() {
                 <span className="material-symbols-outlined">kitchen</span>
                 前往「冰箱」新增或盤點食材
               </a>
-              <a href="/kitchen" className="diag-action-btn text">
+              <a href="/me" className="diag-action-btn text">
                 <span className="material-symbols-outlined">skillet</span>
-                前往「廚房」新增或調整廚具
+                前往「我的」新增或調整廚具
               </a>
               <button
                 type="button"
@@ -628,7 +555,7 @@ export function TodayPage() {
           <div className="ticket-stub">
             <span className="stub-vertical-text">TODAY</span>
             <div className="stub-center">
-              <small>首選</small>
+              <small>{data?.inventory.length ? "冰箱就能煮" : "從零也能開始"}</small>
               <strong>01</strong>
             </div>
             <span className="material-symbols-outlined stub-icon">restaurant</span>
@@ -647,8 +574,8 @@ export function TodayPage() {
                 {recommended.totalMinutes <= 15 ? "15 分快手" : `${recommended.totalMinutes} 分鐘`}
               </span>
               <span className="tag-cost">食材 NT$ {recommended.estimatedCost}</span>
-              <span className={`tag-coverage ${ticketMode === "fridge" ? "tag-covered" : "tag-purchase"}`}>
-                {ticketMode === "fridge" ? "庫存覆蓋 100%" : (activeMissing.length > 0 ? `需補買 ${activeMissing.length} 種` : "庫存充足")}
+              <span className={`tag-coverage ${ticketMode !== "purchase" ? "tag-covered" : "tag-purchase"}`}>
+                {ticketMode !== "purchase" ? "庫存覆蓋 100%" : (activeMissing.length > 0 ? `需補買 ${activeMissing.length} 種` : "庫存充足")}
               </span>
             </div>
 
@@ -718,7 +645,7 @@ export function TodayPage() {
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
               </span>
               <p>
-                外食比對 NT$ {outsidePrice} · 這餐預估為［{goalName}］省下 <strong>NT$ {mealSaving}</strong>
+                完成可獲得 <strong>+30 EXP</strong>；使用即期食材再加 +10 EXP
               </p>
             </div>
 
@@ -763,17 +690,17 @@ export function TodayPage() {
       )}
 
       {/* 4. Alternatives: based on current mode */}
-      {ticketMode === "fridge" && recommended && choices.filter((meal) => meal.id !== recommended.id).length > 0 && (
+      {ticketMode !== "purchase" && recommended && choices.filter((meal) => meal.id !== recommended.id).length > 0 && (
         <section className="alternatives">
           <div className="section-heading">
-            <h3>還有兩個方向</h3>
+            <h3>三個可行方向</h3>
             <span className="alternatives-hint">點選卡片即可置換</span>
           </div>
 
           <div className="alternative-grid">
             {choices
               .filter((meal) => meal.id !== recommended.id)
-              .map((meal) => (
+              .map((meal, index) => (
                 <button
                   type="button"
                   className="alternative-card"
@@ -783,9 +710,9 @@ export function TodayPage() {
                   <span className="alt-badge">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                       <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
-                      <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 12" />
+                      <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" />
                     </svg>
-                    <span>換個口味</span>
+                    <span>{index === 0 ? "最低體力／時間" : "少量補買或新口味"}</span>
                   </span>
                   <strong>{meal.title}</strong>
                   <small>{renderSubtitle(meal.title)}</small>
@@ -843,82 +770,10 @@ export function TodayPage() {
         </section>
       )}
 
-      {/* 5. Weekly rhythm: Collapsible accordion (when planResult is available) */}
-      {planResult && (
-        <section className="week-strip">
-          <div className="week-summary">
-            <div className="week-summary-header">
-              <div>
-                <p className="eyebrow">
-                  這週的 {planResult.plan.meals.filter((meal) => meal.status !== "cancelled").length} 餐
-                </p>
-                <h3>買一次，食材多用幾次</h3>
-              </div>
-              <button
-                type="button"
-                className="week-toggle-btn"
-                onClick={() => setWeekExpanded((value) => !value)}
-                aria-expanded={weekExpanded}
-              >
-                <span>{weekExpanded ? "收摺明細" : "展開明細"}</span>
-                <span className="material-symbols-outlined">
-                  {weekExpanded ? "expand_less" : "expand_more"}
-                </span>
-              </button>
-            </div>
-
-            <div className="week-rates">
-              <span>
-                <strong>{Math.round(planResult.plan.overlapRate * 100)}%</strong>
-                <small>食材重疊率</small>
-              </span>
-              <span>
-                <strong>{Math.round(planResult.plan.inventoryCoverageRate * 100)}%</strong>
-                <small>庫存覆蓋率</small>
-              </span>
-            </div>
-
-            {planResult.expiryWarnings.map((message) => (
-              <small className="expiry-warning" key={message}>
-                <span className="material-symbols-outlined">warning</span>
-                {message}
-              </small>
-            ))}
-            {planResult.unfilledSlots.length>0&&<div className="expiry-warning" role="status"><span className="material-symbols-outlined">event_busy</span><span>依現有食材先排了 {planResult.plan.meals.filter(meal=>meal.status!=="cancelled").length} 餐，另有 {planResult.unfilledSlots.length} 個餐次保留空白。少量補買候選不會自動加入餐單；請在上方切換後確認。</span></div>}
-            {planResult.purchaseCandidates.length>0&&<small>目前另有 {planResult.purchaseCandidates.length} 道少量補買候選，可由你主動查看；價格待確認者不會標示為符合預算。</small>}
-          </div>
-
-          {weekExpanded && (
-            <ol className="week-meals-list">
-              {planResult.plan.meals.map((meal, index) => (
-                <li key={meal.id}>
-                  <i>{index + 1}</i>
-                  <span>
-                    {dayLabel(meal.date)} · {slotName[meal.slot]} · {meal.title}
-                    {meal.status === "cancelled" ? "（已取消）" : ""}
-                  </span>
-                  {meal.status === "planned" && (
-                    <button type="button" onClick={() => reschedule(meal)}>
-                      順延
-                    </button>
-                  )}
-                </li>
-              ))}
-            </ol>
-          )}
-        </section>
-      )}
-
       <div className="mt-8">
         <OfflineImportAndConflicts userId={data?.session.user?.id} />
       </div>
 
     </div>
   );
-}
-
-function PostponeModal({meal,planWeekStart,planUpdatedAt,onClose,onSaved}:{meal:PlannedMeal;planWeekStart:string;planUpdatedAt:string;onClose:()=>void;onSaved:(value:MealPlanResult)=>void}){
-  const [date,setDate]=useState(meal.date);const [slot,setSlot]=useState<MealSlot>(meal.slot);const [error,setError]=useState("");const [saving,setSaving]=useState(false);
-  const submit=async(command:Pick<MealPostpone,"kind">)=>{setSaving(true);setError("");try{onSaved(await api<MealPlanResult>("/meal-plans/meals/"+meal.id,json("PATCH",{weekStart:planWeekStart,kind:command.kind,date:command.kind==="specific_date"?date:undefined,slot:command.kind==="specific_date"?slot:undefined,expectedUpdatedAt:planUpdatedAt})))}catch(reason){setError(reason instanceof Error?reason.message:"餐單更新失敗");setSaving(false)}};
-  return <Modal label="順延餐點" onClose={onClose}><ModalHeader title={"調整「"+meal.title+"」"} kicker="選擇下一步" onClose={onClose}/>{error&&<p className="offline-error" role="alert">{error}</p>}<button className="primary-btn w-full" disabled={saving} onClick={()=>submit({kind:"next_slot"})}>移到下一個空位</button><div className="mt-md grid grid-cols-2 gap-sm"><label className="field-label">指定日期<input className="field" type="date" value={date} onChange={event=>setDate(event.target.value)}/></label><label className="field-label">餐期<select className="field" value={slot} onChange={event=>setSlot(event.target.value as MealSlot)}><option value="breakfast">早餐</option><option value="lunch">午餐</option><option value="dinner">晚餐</option></select></label></div><button className="secondary-btn mt-sm w-full" disabled={saving} onClick={()=>submit({kind:"specific_date"})}>移到指定日期</button><button className="secondary-btn mt-sm w-full" disabled={saving} onClick={()=>submit({kind:"cancel"})}>取消這餐</button></Modal>;
 }

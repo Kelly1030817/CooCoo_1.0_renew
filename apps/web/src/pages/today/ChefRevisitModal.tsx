@@ -25,7 +25,6 @@ interface ChefRevisitModalProps {
   weeklyTarget?: number;
   onAdjustTarget?: (newTarget: number) => Promise<void>;
   onRecordTakeout?: () => Promise<string>;
-  outsideMealPrice?: number;
 }
 
 interface MessageItem {
@@ -48,7 +47,6 @@ export function ChefRevisitModal({
   weeklyTarget = 3,
   onAdjustTarget,
   onRecordTakeout,
-  outsideMealPrice = 150,
 }: ChefRevisitModalProps) {
   const [messages, setMessages] = useState<MessageItem[]>(() => {
     const fridgeItems =
@@ -195,7 +193,7 @@ export function ChefRevisitModal({
             id: `chef-${Date.now()}`,
             sender: "chef",
             actionType: "adjust",
-            text: "主廚 CooCoo：這次沒有可更新的圓夢目標，因此尚未變更本週餐數。請先完成目標設定。",
+            text: "主廚 CooCoo：這次還沒有可更新的週目標，先到「我的」成立主廚檔案吧。",
             timestamp: "剛剛",
           });
           return;
@@ -205,7 +203,7 @@ export function ChefRevisitModal({
             id: `chef-${Date.now()}`,
             sender: "chef",
             actionType: "adjust",
-            text: `主廚 CooCoo：完全沒問題！已將本週自煮目標儲存為 ${nextTarget} 餐。生活有變化時再調整就好，不會扣除圓夢累積。`,
+            text: `主廚 CooCoo：完全沒問題！已將本週自煮目標儲存為 ${nextTarget} 餐。生活有變化時再調整就好，不會扣除 EXP。`,
             timestamp: "剛剛",
           }))
           .catch(() => finish({
@@ -223,7 +221,7 @@ export function ChefRevisitModal({
           id: `chef-${Date.now()}`,
           sender: "chef",
           actionType: "takeout",
-          text: `主廚 CooCoo：今晚放心休息。外食比較價 NT$ ${outsideMealPrice} 只會用於日後的省錢比較；目前沒有新增支出或餐次紀錄。`,
+          text: "主廚 CooCoo：今晚放心休息。今天不料理也不會扣 EXP 或留下失敗標記，想回來時再回來。",
           timestamp: "剛剛",
         });
         return;

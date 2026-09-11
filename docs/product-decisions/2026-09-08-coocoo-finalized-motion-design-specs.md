@@ -1,5 +1,7 @@
 # CooCoo 拍板動態設計與互動架構規格書 (Finalized Motion Design Specs)
 
+> **歷史文件：產品敘事已於 2026-09-11 重整。** 本文件的圓夢、金額結算與十步 Onboarding 動態不得再實作；現行產品語言見 [`2026-09-11-coocoo-v1-brand-product-reset.md`](./2026-09-11-coocoo-v1-brand-product-reset.md)。
+
 **文件版本**：1.0 (拍板定案)
 **更新日期**：2026-09-08
 **狀態**：`已拍板待上線驗證`（Local Worktree Verified, Pending Production Review）

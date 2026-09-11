@@ -1,0 +1,510 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>CooCoo 採買 × MealTask · Throwaway Preview</title>
+  <!--
+    THROWAWAY UI PROTOTYPE — do not promote directly to production.
+    Question: How should Shopping preserve a Today MealTask through partial buying,
+    unavailable items, safe substitution, restock, return, and direct cooking?
+    Three variants are switchable with ?variant=A|B|C.
+    One-command local run: python3 -m http.server 4178 --directory docs/prototypes
+  -->
+  <style>
+    :root {
+      --tofu: #fffdf5;
+      --rice: #f4eee1;
+      --basket: #e4d8c6;
+      --ink: #263c3b;
+      --muted: #746f66;
+      --line: #d9cbb7;
+      --persimmon: #ad4934;
+      --persimmon-dark: #813122;
+      --scallion: #4f755d;
+      --scallion-soft: #e3eee6;
+      --yolk: #e2b341;
+      --plum: #72546c;
+      --danger: #9e3f37;
+      --shadow: 0 18px 48px rgba(52, 46, 38, .14);
+      --sans: ui-rounded, "PingFang TC", "Noto Sans TC", system-ui, sans-serif;
+      --serif: "Songti TC", "Noto Serif TC", Georgia, serif;
+      --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+
+    * { box-sizing: border-box; }
+    html { background: #d8cdbd; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 15% 10%, rgba(255,255,255,.9), transparent 25rem),
+        linear-gradient(135deg, #e7dccb, #c8bdad);
+      font-family: var(--sans);
+      -webkit-font-smoothing: antialiased;
+    }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+    button:focus-visible, input:focus-visible, select:focus-visible {
+      outline: 3px solid rgba(79,117,93,.28);
+      outline-offset: 2px;
+    }
+    button:disabled { cursor: not-allowed; opacity: .42; }
+    h1, h2, h3, p { margin-top: 0; }
+
+    .prototype-notice {
+      position: fixed;
+      z-index: 300;
+      top: 12px;
+      left: 50%;
+      width: min(90vw, 680px);
+      transform: translateX(-50%);
+      padding: 8px 14px;
+      border: 1px solid rgba(255,255,255,.35);
+      border-radius: 99px;
+      color: #fff;
+      background: rgba(28,38,37,.9);
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .04em;
+      text-align: center;
+      box-shadow: 0 8px 24px rgba(0,0,0,.15);
+      backdrop-filter: blur(14px);
+    }
+    .stage { min-height: 100vh; display: grid; place-items: center; padding: 58px 16px 96px; }
+    .phone {
+      position: relative;
+      width: min(100%, 420px);
+      height: min(860px, calc(100vh - 88px));
+      min-height: 690px;
+      overflow: hidden;
+      border: 8px solid #252a28;
+      border-radius: 38px;
+      background: var(--rice);
+      box-shadow: 0 28px 90px rgba(32,35,32,.24), inset 0 0 0 1px rgba(255,255,255,.4);
+    }
+    .screen {
+      position: absolute;
+      inset: 0;
+      overflow-y: auto;
+      padding-bottom: 102px;
+      overscroll-behavior: contain;
+      scrollbar-width: none;
+    }
+    .screen::-webkit-scrollbar { display: none; }
+    .app-top {
+      position: sticky;
+      z-index: 40;
+      top: 0;
+      min-height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: calc(11px + env(safe-area-inset-top)) 16px 10px;
+      border-bottom: 1px solid rgba(160,137,107,.16);
+      background: rgba(244,238,225,.9);
+      backdrop-filter: blur(18px);
+    }
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .brand-mark { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 12px 12px 12px 3px; color: #fff7db; background: var(--ink); font-size: 17px; }
+    .brand strong { display: block; font-family: var(--serif); font-size: 15px; }
+    .brand small { display: block; color: var(--muted); font-size: 8px; font-weight: 800; }
+    .basket-count { display: grid; place-items: center; min-width: 38px; height: 38px; border: 1px solid var(--line); border-radius: 14px; background: var(--tofu); color: var(--persimmon); font-family: var(--mono); font-size: 11px; font-weight: 900; }
+
+    .eyebrow { margin: 0 0 6px; color: var(--persimmon); font-size: 9px; font-weight: 900; letter-spacing: .15em; text-transform: uppercase; }
+    .display { margin: 0; font-family: var(--serif); font-size: 34px; line-height: 1.04; letter-spacing: -.04em; }
+    .lede { margin: 10px 0 0; color: var(--muted); font-size: 11px; line-height: 1.65; }
+    .section-title { margin: 0; font-family: var(--serif); font-size: 20px; line-height: 1.25; }
+    .section-copy { margin: 5px 0 0; color: var(--muted); font-size: 9px; line-height: 1.55; }
+    .tag { display: inline-flex; align-items: center; gap: 4px; width: fit-content; padding: 4px 7px; border-radius: 99px; color: var(--scallion); background: var(--scallion-soft); font-size: 8px; font-weight: 900; }
+    .tag-task { color: #fff; background: var(--persimmon); }
+    .tag-warn { color: #76520a; background: #f7e8b6; }
+    .card { border: 1px solid var(--line); border-radius: 18px; background: var(--tofu); box-shadow: 0 5px 16px rgba(57,47,38,.05); }
+    .btn { min-height: 42px; border: 0; border-radius: 13px; padding: 9px 13px; font-size: 10px; font-weight: 900; }
+    .btn-primary { color: #fff; background: var(--persimmon); }
+    .btn-dark { color: #fff; background: var(--ink); }
+    .btn-jade { color: #fff; background: var(--scallion); }
+    .btn-ghost { border: 1px solid var(--line); color: var(--ink); background: var(--tofu); }
+    .btn-link { min-height: 34px; color: var(--persimmon); background: transparent; text-decoration: underline; }
+    .btn-small { min-height: 32px; padding: 6px 9px; font-size: 8px; }
+    .btn-wide { width: 100%; }
+
+    .task-strip {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 9px;
+      margin: 12px 14px 0;
+      padding: 10px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 17px;
+      color: #fff;
+      background: var(--ink);
+      box-shadow: 0 12px 28px rgba(38,60,59,.2);
+    }
+    .task-strip .task-node { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; color: var(--ink); background: var(--yolk); font-weight: 900; }
+    .task-strip strong { display: block; font-size: 9px; }
+    .task-strip small { display: block; margin-top: 2px; color: rgba(255,255,255,.66); font-size: 7px; }
+    .task-strip button { color: #fff; border-color: rgba(255,255,255,.22); background: rgba(255,255,255,.08); }
+
+    .tool-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 7px; }
+    .tool-button { min-height: 74px; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 10px; border: 1px solid var(--line); border-radius: 15px; color: var(--ink); background: rgba(255,253,245,.75); text-align: left; }
+    .tool-button span { font-size: 17px; }
+    .tool-button strong { font-size: 9px; }
+    .tool-button small { color: var(--muted); font-size: 7px; line-height: 1.3; }
+
+    .item-row { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 9px; padding: 12px; border-bottom: 1px solid #e9dfd0; }
+    .item-row:last-child { border-bottom: 0; }
+    .item-check { width: 34px; height: 34px; display: grid; place-items: center; border: 2px solid #c8b9a4; border-radius: 50%; color: #fff; background: #fff; font-weight: 900; }
+    .item-row.bought .item-check, .item-row.restocked .item-check { border-color: var(--scallion); background: var(--scallion); }
+    .item-row.restocked { opacity: .68; }
+    .item-info { min-width: 0; }
+    .item-info strong { display: block; font-size: 12px; }
+    .item-info small { display: block; margin-top: 3px; color: var(--muted); font-size: 8px; }
+    .item-price { text-align: right; }
+    .item-price b { display: block; font-size: 10px; }
+    .item-price button { min-height: 28px; margin-top: 4px; padding: 4px 6px; border: 0; color: var(--persimmon); background: transparent; font-size: 8px; font-weight: 900; text-decoration: underline; }
+
+    .bottom-nav {
+      position: absolute;
+      z-index: 80;
+      right: 12px;
+      bottom: calc(10px + env(safe-area-inset-bottom));
+      left: 12px;
+      height: 66px;
+      display: grid;
+      grid-template-columns: repeat(5,1fr);
+      padding: 7px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 22px;
+      background: rgba(31,42,41,.96);
+      box-shadow: 0 16px 34px rgba(0,0,0,.24);
+      backdrop-filter: blur(16px);
+    }
+    .nav-btn { display: flex; align-items: center; flex-direction: column; justify-content: center; gap: 3px; border: 0; border-radius: 15px; color: rgba(255,255,255,.55); background: transparent; font-size: 8px; font-weight: 800; }
+    .nav-btn span:first-child { font-size: 16px; }
+    .nav-btn.active { color: #ffe19a; background: rgba(255,255,255,.08); }
+
+    .prototype-switcher {
+      position: fixed;
+      z-index: 350;
+      bottom: 8px;
+      left: 50%;
+      display: grid;
+      grid-template-columns: 42px minmax(190px,260px) 42px;
+      align-items: center;
+      transform: translateX(-50%);
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 99px;
+      color: #fff;
+      background: rgba(27,37,36,.96);
+      box-shadow: 0 12px 30px rgba(0,0,0,.23);
+      overflow: hidden;
+    }
+    .switch-btn { height: 42px; border: 0; color: #fff; background: rgba(255,255,255,.05); font-size: 18px; }
+    .switch-label { font-size: 9px; font-weight: 900; text-align: center; }
+
+    .variant-a { padding: 0 14px 28px; }
+    .variant-a .hero { padding: 24px 3px 16px; }
+    .scope-ledger { margin-bottom: 12px; overflow: hidden; }
+    .scope-ledger-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 13px; border-bottom: 1px solid var(--line); background: #fff9ed; }
+    .scope-ledger-head strong { display: block; font-family: var(--serif); font-size: 15px; }
+    .scope-ledger-head small { display: block; margin-top: 3px; color: var(--muted); font-size: 8px; }
+    .scope-flow { display: grid; grid-template-columns: 1fr auto 1fr; align-items: stretch; gap: 6px; padding: 10px; }
+    .scope-meal { padding: 10px; border-radius: 13px; background: var(--scallion-soft); }
+    .scope-meal span { display: block; color: var(--scallion); font-size: 7px; font-weight: 900; letter-spacing: .08em; }
+    .scope-meal strong { display: block; margin-top: 3px; font-size: 10px; }
+    .scope-meal small { display: block; margin-top: 2px; color: var(--muted); font-size: 7px; }
+    .scope-arrow { display: grid; place-items: center; color: var(--persimmon); font-weight: 900; }
+    .scope-rule { display: flex; align-items: flex-start; gap: 7px; margin: 0 10px 10px; padding: 9px 10px; border: 1px dashed #d5c4aa; border-radius: 12px; color: var(--muted); background: #fffdf7; font-size: 8px; line-height: 1.5; }
+    .scope-rule b { flex: none; color: var(--persimmon); }
+    .mission-ticket { position: relative; overflow: hidden; border-radius: 5px 22px 22px 5px; }
+    .mission-ticket::before { content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 7px; background: repeating-linear-gradient(to bottom,var(--persimmon) 0 9px,transparent 9px 15px); }
+    .ticket-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; padding: 15px 14px 12px 20px; background: #f8ead8; }
+    .ticket-head .progress { min-width: 54px; color: var(--persimmon); font-family: var(--mono); font-size: 18px; font-weight: 900; text-align: right; }
+    .ticket-note { padding: 10px 14px 10px 20px; border-top: 1px dashed #d6c5ae; color: var(--muted); background: #fff9ed; font-size: 8px; line-height: 1.5; }
+    .support-section { margin-top: 16px; }
+    .support-head { display: flex; align-items: end; justify-content: space-between; margin-bottom: 8px; }
+    .support-list { overflow: hidden; }
+    .run-footer { position: sticky; z-index: 20; bottom: 76px; display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 16px; padding: 9px; border: 1px solid var(--line); border-radius: 18px; background: rgba(255,253,245,.94); box-shadow: 0 12px 32px rgba(50,43,34,.16); backdrop-filter: blur(14px); }
+    .run-total { padding: 4px 8px; }
+    .run-total small { display: block; color: var(--muted); font-size: 7px; }
+    .run-total strong { display: block; font-size: 16px; }
+
+    .variant-b { padding-bottom: 28px; }
+    .market-hero { margin: 12px 14px 0; padding: 18px; border-radius: 24px; color: #fff; background: var(--persimmon); overflow: hidden; }
+    .market-hero .eyebrow { color: #ffdca1; }
+    .market-hero .display { font-size: 29px; }
+    .route-meter { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 9px; margin-top: 15px; font-family: var(--mono); font-size: 8px; }
+    .route-meter i { height: 4px; overflow: hidden; border-radius: 99px; background: rgba(255,255,255,.22); }
+    .route-meter i::after { content: ""; display: block; width: var(--route-progress,0%); height: 100%; background: #ffe29e; }
+    .aisle { margin-top: 14px; }
+    .aisle-head { display: flex; align-items: center; justify-content: space-between; padding: 0 17px 7px; }
+    .aisle-head strong { font-family: var(--serif); font-size: 16px; }
+    .aisle-head span { color: var(--muted); font-family: var(--mono); font-size: 8px; }
+    .aisle-track { display: grid; grid-auto-columns: minmax(212px,72%); grid-auto-flow: column; gap: 9px; overflow-x: auto; padding: 0 14px 8px; scroll-snap-type: x mandatory; scrollbar-width: none; }
+    .aisle-track::-webkit-scrollbar { display:none; }
+    .produce-card { min-height: 154px; scroll-snap-align: start; padding: 13px; border: 1px solid var(--line); border-radius: 20px; background: var(--tofu); }
+    .produce-art { width: 46px; height: 46px; display: grid; place-items: center; border-radius: 16px; background: #f2e6cf; font-size: 25px; }
+    .produce-card h3 { margin: 10px 0 3px; font-size: 13px; }
+    .produce-card p { margin: 0; color: var(--muted); font-size: 8px; }
+    .produce-actions { display: flex; gap: 6px; margin-top: 10px; }
+    .produce-actions button { flex: 1; }
+    .market-actions { margin: 12px 14px 0; }
+
+    .variant-c { padding: 0 14px 30px; }
+    .command-hero { padding: 22px 2px 13px; }
+    .readiness { display: grid; grid-template-columns: 76px 1fr; gap: 13px; padding: 14px; color: #fff; background: var(--ink); }
+    .readiness-ring { width: 70px; height: 70px; display: grid; place-items: center; border-radius: 50%; background: conic-gradient(var(--yolk) 0 var(--ready-progress,0%),rgba(255,255,255,.14) var(--ready-progress,0%)); box-shadow: inset 0 0 0 8px var(--ink); font-family: var(--mono); font-size: 16px; font-weight: 900; }
+    .readiness strong { display: block; margin-top: 5px; font-size: 12px; }
+    .readiness p { margin: 5px 0 0; color: rgba(255,255,255,.65); font-size: 8px; line-height: 1.5; }
+    .decision-card { margin-top: 12px; padding: 15px; border: 2px solid var(--persimmon); }
+    .decision-label { color: var(--persimmon); font-family: var(--mono); font-size: 8px; font-weight: 900; }
+    .decision-card h2 { margin: 8px 0 4px; font-family: var(--serif); font-size: 24px; }
+    .decision-card .need { color: var(--muted); font-size: 9px; }
+    .decision-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-top: 13px; }
+    .basket-log { margin-top: 13px; overflow: hidden; }
+    .log-row { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 9px; padding: 10px 12px; border-bottom: 1px solid #e8dfd2; }
+    .log-row:last-child { border-bottom: 0; }
+    .log-row span:first-child { width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; background: var(--scallion-soft); font-size: 10px; }
+    .log-row strong { font-size: 9px; }
+    .log-row small { color: var(--muted); font-size: 7px; }
+    .utility-drawer { margin-top: 12px; }
+    .utility-drawer summary { cursor: pointer; padding: 12px; font-size: 10px; font-weight: 900; }
+    .utility-drawer .tool-row { padding: 0 10px 10px; }
+
+    .state-panel { margin-top: 14px; padding: 9px 11px; border: 1px dashed #baa98f; border-radius: 12px; color: #625c54; background: rgba(255,255,255,.35); font-family: var(--mono); font-size: 7px; line-height: 1.55; }
+    .state-panel strong { color: var(--persimmon); }
+
+    .overlay { position: absolute; z-index: 120; inset: 0; display: flex; align-items: end; padding: 9px; background: rgba(25,31,30,.55); backdrop-filter: blur(5px); }
+    .sheet { width: 100%; max-height: 92%; overflow-y: auto; padding: 18px; border-radius: 26px 26px 18px 18px; background: var(--tofu); box-shadow: 0 -20px 60px rgba(0,0,0,.22); }
+    .sheet-grab { width: 38px; height: 4px; margin: -8px auto 13px; border-radius: 99px; background: #cabca8; }
+    .sheet-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+    .icon-close { width: 34px; height: 34px; border: 1px solid var(--line); border-radius: 50%; color: var(--ink); background: #fff; }
+    .choice-stack { display: grid; gap: 8px; margin-top: 13px; }
+    .choice { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; min-height: 62px; padding: 10px; border: 1px solid var(--line); border-radius: 15px; color: var(--ink); background: #fff; text-align: left; }
+    .choice span:first-child { font-size: 22px; }
+    .choice strong { display: block; font-size: 10px; }
+    .choice small { display: block; margin-top: 3px; color: var(--muted); font-size: 8px; }
+    .choice b { color: var(--persimmon); font-size: 9px; }
+    .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+    .summary-cell { padding: 11px; border: 1px solid var(--line); border-radius: 14px; background: #fff; }
+    .summary-cell small { display: block; color: var(--muted); font-size: 7px; }
+    .summary-cell strong { display: block; margin-top: 4px; font-size: 12px; }
+    .success-mark { width: 68px; height: 68px; display: grid; place-items: center; margin: 4px auto 12px; border-radius: 22px 22px 22px 7px; color: #fff; background: var(--scallion); font-size: 30px; box-shadow: 0 13px 28px rgba(79,117,93,.22); }
+    .toast { position: absolute; z-index: 220; left: 50%; bottom: 88px; width: max-content; max-width: calc(100% - 28px); transform: translateX(-50%); padding: 10px 13px; border-radius: 13px; color: #fff; background: rgba(38,60,59,.96); box-shadow: 0 10px 28px rgba(0,0,0,.2); font-size: 9px; font-weight: 900; text-align: center; }
+
+    @media (max-width: 520px) {
+      body { background: var(--rice); }
+      .stage { display: block; padding: 0; }
+      .prototype-notice { top: 6px; width: calc(100% - 18px); font-size: 8px; }
+      .phone { width: 100%; height: 100dvh; min-height: 100dvh; border: 0; border-radius: 0; box-shadow: none; }
+      .screen { padding-top: 28px; padding-bottom: 154px; }
+      .bottom-nav { bottom: 58px; }
+      .prototype-switcher { bottom: 7px; grid-template-columns: 38px minmax(170px,220px) 38px; }
+      .overlay { padding-top: 34px; padding-bottom: 62px; }
+      .toast { bottom: 145px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *,*::before,*::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="prototype-notice">THROWAWAY PREVIEW · 記憶體狀態，不會寫入帳號、GitHub 或 Production</div>
+  <main class="stage">
+    <div class="phone">
+      <div class="screen" id="screen"></div>
+      <nav class="bottom-nav" id="bottom-nav" aria-label="主要功能"></nav>
+      <div id="overlay-root"></div>
+      <div id="toast-root"></div>
+    </div>
+  </main>
+  <div class="prototype-switcher" aria-label="採買預覽方案切換">
+    <button class="switch-btn" id="prev-variant" aria-label="上一個方案">←</button>
+    <div class="switch-label" id="variant-label"></div>
+    <button class="switch-btn" id="next-variant" aria-label="下一個方案">→</button>
+  </div>
+
+  <script>
+    const variants = [
+      { key: 'A', name: '任務優先清單 · 已選定' },
+      { key: 'B', name: '市場動線分區' },
+      { key: 'C', name: '缺貨決策佇列' },
+    ];
+
+    const initialMissionItems = () => [
+      { id: 'mushroom', icon: '🍄', name: '金針菇', qty: '1 包', need: '料理需要約 180g', category: '蔬果區', cost: 35, status: 'needed', required: true, replacementFor: null },
+      { id: 'tofu', icon: '⬜', name: '嫩豆腐', qty: '1 盒', need: '料理需要 300g', category: '冷藏區', cost: 32, status: 'needed', required: true, replacementFor: null },
+    ];
+
+    const initialWeeklyItems = () => [
+      { id: 'eggs', icon: '🥚', name: '雞蛋', qty: '1 盒', need: '本週早餐', category: '冷藏區', cost: 68, status: 'needed', required: false, replacementFor: null },
+      { id: 'scallion', icon: '🌿', name: '青蔥', qty: '1 把', need: '下週備用', category: '蔬果區', cost: 25, status: 'needed', required: false, replacementFor: null },
+    ];
+
+    const state = {
+      variant: new URLSearchParams(location.search).get('variant') || 'A',
+      task: {
+        id: 'meal-task-preview',
+        title: '高麗菜豆腐鍋',
+        status: 'needs_shopping',
+        when: '今天晚餐',
+        currentMeal: '今天晚餐 · 1 人',
+        nextMeal: '明天午餐 · 1 人',
+        nextStrategy: '順便多煮',
+        servings: 2,
+      },
+      missionItems: initialMissionItems(),
+      weeklyItems: initialWeeklyItems(),
+      lastRestocked: 0,
+    };
+
+    const allItems = () => [...state.missionItems, ...state.weeklyItems];
+    const acquired = item => item.status === 'bought' || item.status === 'restocked';
+    const boughtItems = () => allItems().filter(item => item.status === 'bought');
+    const missionDone = () => state.missionItems.every(item => item.status === 'restocked');
+    const missionProgress = () => state.missionItems.filter(acquired).length;
+    const unresolvedMission = () => state.missionItems.filter(item => item.status !== 'restocked');
+
+    function appTop() {
+      return `<header class="app-top"><div class="brand"><span class="brand-mark">火</span><div><strong>CooCoo 煮煮</strong><small>今天缺的，買剛剛好</small></div></div><span class="basket-count">${boughtItems().length}</span></header>`;
+    }
+
+    function taskStrip() {
+      const status = state.task.status === 'ready' ? '食材已齊 · 可以開始料理' : state.task.status === 'needs_replan' ? '原餐期保留 · 回 Today 重選' : `還缺 ${unresolvedMission().length} 項任務食材`;
+      return `<section class="task-strip"><span class="task-node">${state.task.status === 'ready' ? '✓' : '→'}</span><div><strong>${state.task.when} · ${state.task.title}</strong><small>${status}</small></div><button class="btn btn-small btn-ghost" onclick="returnToday()">回 Today</button></section>`;
+    }
+
+    function tools() {
+      return `<div class="tool-row"><button class="tool-button" onclick="showToast('AI 只分析既有清單，不會直接改任務')"><span>✦</span><strong>AI 陪我逛</strong><small>分析份量與預算</small></button><button class="tool-button" onclick="showToast('發票逐項確認後才入庫')"><span>▣</span><strong>掃描發票</strong><small>核對實付與保存</small></button><button class="tool-button" onclick="showToast('語音會先轉成待確認文字')"><span>●</span><strong>用說的新增</strong><small>一般採買項目</small></button></div>`;
+    }
+
+    function itemRow(item) {
+      const done = acquired(item);
+      const note = item.replacementFor ? `替代 ${item.replacementFor} · ${item.need}` : item.need;
+      return `<div class="item-row ${item.status}"><button class="item-check" ${item.status === 'restocked' ? 'disabled' : ''} onclick="toggleBought('${item.id}')" aria-label="${done ? '取消買到' : '標記買到'} ${item.name}">${done ? '✓' : ''}</button><div class="item-info"><span class="tag ${item.required ? 'tag-task' : ''}">${item.required ? '雙餐任務必買' : '本週一般'}</span><strong>${item.icon} ${item.name} · ${item.qty}</strong><small>${note}${item.status === 'restocked' ? ' · 已入庫' : item.status === 'unavailable' ? ' · 本次缺貨' : ''}</small></div><div class="item-price"><b>約 NT$ ${item.cost}</b>${item.status !== 'restocked' ? `<button onclick="openUnavailable('${item.id}')">找不到／替代</button>` : ''}</div></div>`;
+    }
+
+    function statePanel() {
+      return `<div class="state-panel"><strong>PROTOTYPE STATE</strong><br>MealTask.status = ${state.task.status}<br>mission = ${missionProgress()}/${state.missionItems.length} acquired · basket = ${boughtItems().length} · last_restocked = ${state.lastRestocked}</div>`;
+    }
+
+    function actionFooter() {
+      const total = boughtItems().reduce((sum,item) => sum + item.cost, 0);
+      return `<div class="run-footer"><div class="run-total"><small>這次已買到 ${boughtItems().length} 項</small><strong>約 NT$ ${total}</strong></div><button class="btn btn-primary" ${!boughtItems().length ? 'disabled' : ''} onclick="openRestockSummary()">完成這次採買</button></div>`;
+    }
+
+    function renderA() {
+      return `${appTop()}${taskStrip()}<div class="variant-a"><section class="hero"><p class="eyebrow">任務優先清單 · 已選定</p><h1 class="display">先買任務缺的，<br>其他順路再帶。</h1><p class="lede">只有確認過的菜色與份數會進入任務必買；明日其他想法與本週備用品維持一般清單。</p></section><section class="card scope-ledger"><header class="scope-ledger-head"><div><strong>這次採買算到哪裡？</strong><small>${state.task.nextStrategy} · 合計 ${state.task.servings} 份</small></div><button class="btn btn-small btn-link" onclick="openScopeSheet()">查看依據</button></header><div class="scope-flow"><div class="scope-meal"><span>這一餐 · 已確認</span><strong>${state.task.currentMeal}</strong><small>${state.task.title} 1 份</small></div><div class="scope-arrow">→</div><div class="scope-meal"><span>下一餐 · 已確認</span><strong>${state.task.nextMeal}</strong><small>同一道菜留 1 份</small></div></div><p class="scope-rule"><b>不自動加購</b><span>尚未選定的明日料理不會進入 MealTask；等確認菜色與份數後才重新計算缺口。</span></p></section><section class="card mission-ticket"><header class="ticket-head"><div><span class="tag tag-task">MealTask 必買</span><h2 class="section-title" style="margin-top:7px">${state.task.title}</h2><p class="section-copy">依已確認雙餐計算 · 預計 ${state.task.servings} 份</p></div><div class="progress">${missionProgress()}/${state.missionItems.length}</div></header>${state.missionItems.map(itemRow).join('')}<div class="ticket-note">只有兩項任務食材都入庫後，任務才會從 needs_shopping 變成 ready。</div></section><section class="support-section"><div class="support-head"><div><p class="eyebrow">本週一般採買</p><h2 class="section-title">不影響任務就緒</h2></div><button class="btn btn-small btn-link" onclick="showToast('手動新增只會進一般清單，除非由已確認 MealTask 建立')">＋ 新增</button></div><div class="card support-list">${state.weeklyItems.map(itemRow).join('')}</div></section><section class="support-section"><p class="eyebrow">輔助入口</p>${tools()}</section>${statePanel()}${actionFooter()}</div>`;
+    }
+
+    function produceCard(item) {
+      return `<article class="produce-card"><div style="display:flex;justify-content:space-between;gap:8px"><span class="produce-art">${item.icon}</span><span class="tag ${item.required ? 'tag-task' : ''}">${item.required ? '任務必買' : '一般'}</span></div><h3>${item.name} · ${item.qty}</h3><p>${item.replacementFor ? `替代 ${item.replacementFor}` : item.need} · 約 NT$ ${item.cost}</p><div class="produce-actions"><button class="btn btn-small ${acquired(item) ? 'btn-jade' : 'btn-primary'}" ${item.status === 'restocked' ? 'disabled' : ''} onclick="toggleBought('${item.id}')">${acquired(item) ? '已買到 ✓' : '放進籃子'}</button><button class="btn btn-small btn-ghost" ${item.status === 'restocked' ? 'disabled' : ''} onclick="openUnavailable('${item.id}')">缺貨</button></div></article>`;
+    }
+
+    function renderB() {
+      const groups = ['蔬果區','冷藏區'];
+      const progress = state.missionItems.length ? Math.round(missionProgress()/state.missionItems.length*100) : 0;
+      return `${appTop()}${taskStrip()}<div class="variant-b"><section class="market-hero"><p class="eyebrow">市場動線</p><h1 class="display">走一圈，<br>任務就備齊。</h1><p class="lede" style="color:rgba(255,255,255,.7)">先蔬果、再冷藏；任務品項會一直帶著紅色標籤。</p><div class="route-meter" style="--route-progress:${progress}%"><span>入口</span><i></i><span>${progress}%</span></div></section>${groups.map((group,index)=>`<section class="aisle"><header class="aisle-head"><strong>${index+1}. ${group}</strong><span>${allItems().filter(item=>item.category===group).length} ITEMS</span></header><div class="aisle-track">${allItems().filter(item=>item.category===group).map(produceCard).join('')}</div></section>`).join('')}<div class="market-actions">${tools()}${statePanel()}${actionFooter()}</div></div>`;
+    }
+
+    function nextDecisionItem() {
+      return state.missionItems.find(item => item.status !== 'restocked') || null;
+    }
+
+    function renderC() {
+      const item = nextDecisionItem();
+      const progress = state.missionItems.length ? Math.round(state.missionItems.filter(x=>x.status==='restocked').length/state.missionItems.length*100) : 0;
+      return `${appTop()}${taskStrip()}<div class="variant-c"><section class="command-hero"><p class="eyebrow">缺貨決策佇列</p><h1 class="display">一次只處理<br>一個阻礙。</h1><p class="lede">不在長清單裡迷路。系統先問會影響今晚開火的下一個問題。</p></section><section class="card readiness" style="--ready-progress:${progress}%"><div class="readiness-ring">${progress}%</div><div><span class="tag tag-warn">料理就緒度</span><strong>${state.task.title}</strong><p>${state.task.status === 'ready' ? '任務食材已齊，可以交接到廚房。' : state.task.status === 'needs_replan' ? '原餐期保留，等待 Today 重新選菜。' : `已入庫 ${state.missionItems.filter(x=>x.status==='restocked').length}／${state.missionItems.length} 項。`}</p></div></section>${item && state.task.status === 'needs_shopping' ? `<section class="card decision-card"><span class="decision-label">NEXT BLOCKER · ${item.category}</span><h2>${item.icon} ${item.name}</h2><p class="need">需要 ${item.qty} · ${item.need} · 約 NT$ ${item.cost}</p><div class="decision-actions"><button class="btn btn-jade" onclick="toggleBought('${item.id}')">${item.status==='bought' ? '已在籃子 ✓' : '我買到了'}</button><button class="btn btn-ghost" onclick="openUnavailable('${item.id}')">這裡找不到</button></div>${item.status==='bought' ? `<button class="btn btn-primary btn-wide" style="margin-top:8px" onclick="openRestockSummary()">先入庫這一項</button>` : ''}</section>` : `<section class="card" style="padding:18px;margin-top:12px;text-align:center"><div class="success-mark">${state.task.status === 'ready' ? '✓' : '↩'}</div><h2 class="section-title">${state.task.status === 'ready' ? '今晚可以開火了' : '回 Today 換一道菜'}</h2><p class="section-copy">${state.task.status === 'ready' ? '所有必需食材均已入庫。' : '已買到的一般品項不會被刪除。'}</p><button class="btn ${state.task.status === 'ready' ? 'btn-primary' : 'btn-dark'} btn-wide" style="margin-top:12px" onclick="${state.task.status === 'ready' ? 'startCooking()' : 'returnToday()'}">${state.task.status === 'ready' ? '直接開始料理' : '返回 Today 重選'}</button></section>`}<section style="margin-top:13px"><p class="eyebrow">已處理的籃子</p><div class="card basket-log">${allItems().filter(item=>acquired(item)).length ? allItems().filter(item=>acquired(item)).map(item=>`<div class="log-row"><span>✓</span><div><strong>${item.name} · ${item.qty}</strong><small>${item.status==='restocked'?'已入庫':'等待入庫'}${item.replacementFor?` · 替代 ${item.replacementFor}`:''}</small></div><b style="font-size:9px">NT$ ${item.cost}</b></div>`).join('') : `<div style="padding:18px;text-align:center;color:var(--muted);font-size:9px">還沒有品項放進籃子</div>`}</div></section><details class="card utility-drawer"><summary>一般採買與其他工具</summary>${tools()}</details>${statePanel()}</div>`;
+    }
+
+    function render() {
+      document.getElementById('screen').innerHTML = state.variant === 'B' ? renderB() : state.variant === 'C' ? renderC() : renderA();
+      renderNav();
+      document.getElementById('variant-label').textContent = `${state.variant} — ${variants.find(item=>item.key===state.variant).name}`;
+    }
+
+    function renderNav() {
+      document.getElementById('bottom-nav').innerHTML = [['⌂','今日'],['▣','採買'],['□','冰箱'],['♨','廚房'],['◎','圓夢']].map(([icon,label])=>`<button class="nav-btn ${label==='採買'?'active':''}" onclick="showToast('${label}：預覽只示範採買頁')"><span>${icon}</span><span>${label}</span></button>`).join('');
+    }
+
+    function findItem(id) { return allItems().find(item=>item.id===id); }
+    function toggleBought(id) {
+      const item = findItem(id);
+      if (!item || item.status === 'restocked') return;
+      item.status = item.status === 'bought' ? 'needed' : 'bought';
+      render();
+      showToast(item.status === 'bought' ? `已把「${item.name}」放進這次籃子` : `已取消「${item.name}」的買到標記`);
+    }
+
+    function openUnavailable(id) {
+      const item = findItem(id);
+      if (!item) return;
+      document.getElementById('overlay-root').innerHTML = `<div class="overlay" role="dialog" aria-modal="true" aria-label="處理缺貨品項"><section class="sheet"><div class="sheet-grab"></div><header class="sheet-head"><div><p class="eyebrow">${item.required?'任務必需食材':'一般採買'}</p><h2 class="section-title">找不到「${item.name}」</h2><p class="section-copy">${item.required?'必需食材不能直接略過。替代品會先通過飲食限制、廚具與食譜相容檢核。':'可以保留到下次，或從一般清單移除。'}</p></div><button class="icon-close" onclick="closeOverlay()" aria-label="關閉">×</button></header><div class="choice-stack">${item.required?`<button class="choice" onclick="useReplacement('${item.id}')"><span>🍄</span><span><strong>改買杏鮑菇 1 包</strong><small>食譜相容 · 硬限制已通過 · 仍需標記買到</small></span><b>+NT$10</b></button><button class="choice" onclick="keepForLater('${item.id}')"><span>⏳</span><span><strong>這間店先不買</strong><small>已買到的可先入庫；任務維持 needs_shopping</small></span><b>保留</b></button><button class="choice" onclick="confirmReplan()"><span>↩</span><span><strong>放棄這道菜，回 Today 重選</strong><small>保留今晚餐期；不刪除一般採買項目</small></span><b>重選</b></button>`:`<button class="choice" onclick="keepForLater('${item.id}')"><span>⏳</span><span><strong>保留到下次</strong><small>這次不入庫，品項繼續留在一般清單</small></span><b>保留</b></button><button class="choice" onclick="removeGeneral('${item.id}')"><span>—</span><span><strong>從一般清單移除</strong><small>不影響 MealTask</small></span><b>移除</b></button>`}</div></section></div>`;
+    }
+
+    function useReplacement(id) {
+      const item = findItem(id);
+      if (!item) return;
+      const oldName = item.name;
+      Object.assign(item,{icon:'🍄',name:'杏鮑菇',qty:'1 包',need:'料理替代需要約 180g',cost:item.cost+10,status:'needed',replacementFor:oldName});
+      closeOverlay(); render(); showToast('替代方案已預覽套用；買到後仍要確認入庫');
+    }
+
+    function keepForLater(id) { const item=findItem(id); if(item)item.status='unavailable'; closeOverlay(); render(); showToast('已保留缺項；可先入庫其他買到的食材'); }
+    function removeGeneral(id) { state.weeklyItems=state.weeklyItems.filter(item=>item.id!==id); closeOverlay(); render(); showToast('已從一般清單移除，不影響 MealTask'); }
+
+    function confirmReplan() {
+      document.getElementById('overlay-root').innerHTML = `<div class="overlay" role="dialog" aria-modal="true" aria-label="確認回 Today 重選"><section class="sheet"><div class="sheet-grab"></div><p class="eyebrow">變更任務</p><h2 class="section-title">保留今晚餐期，回 Today 重選？</h2><p class="section-copy">任務會標記 needs_replan。已入庫食材與一般採買項目都會保留，不會自動退回或刪除。</p><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px"><button class="btn btn-ghost" onclick="closeOverlay()">繼續找食材</button><button class="btn btn-dark" onclick="setNeedsReplan()">確認回去重選</button></div></section></div>`;
+    }
+    function setNeedsReplan() { state.task.status='needs_replan'; closeOverlay(); render(); showToast('MealTask 已標記待重選，原餐期仍保留'); }
+
+    function openScopeSheet() {
+      document.getElementById('overlay-root').innerHTML = `<div class="overlay" role="dialog" aria-modal="true" aria-label="採買範圍依據"><section class="sheet"><div class="sheet-grab"></div><header class="sheet-head"><div><p class="eyebrow">採買範圍依據</p><h2 class="section-title">確認過，才列為任務必買</h2><p class="section-copy">AI 可以討論明日，但不會因為提過某道菜就自動增加品項。</p></div><button class="icon-close" onclick="closeOverlay()" aria-label="關閉">×</button></header><div class="summary-grid"><div class="summary-cell"><small>這一餐</small><strong>${state.task.currentMeal}</strong></div><div class="summary-cell"><small>下一餐</small><strong>${state.task.nextMeal}</strong></div><div class="summary-cell"><small>策略</small><strong>${state.task.nextStrategy}</strong></div><div class="summary-cell"><small>料理總份數</small><strong>${state.task.servings} 份</strong></div></div><div class="card" style="padding:12px;margin-top:10px"><strong style="font-size:10px">目前納入</strong><p class="section-copy">同一道「${state.task.title}」的兩餐份量；缺口依合計 ${state.task.servings} 份計算。</p></div><div class="card" style="padding:12px;margin-top:8px"><strong style="font-size:10px">目前不納入</strong><p class="section-copy">尚未選定的明日料理、本週備用品與 AI 口頭提議。它們可留在一般清單，但不會阻擋 MealTask 轉為 ready。</p></div><button class="btn btn-dark btn-wide" style="margin-top:13px" onclick="closeOverlay()">了解，回採買</button></section></div>`;
+    }
+
+    function openRestockSummary() {
+      const bought = boughtItems();
+      if (!bought.length) return;
+      const missionBought = state.missionItems.filter(item=>item.status==='bought').length;
+      const missionRemainingAfter = state.missionItems.filter(item=>item.status!=='restocked'&&item.status!=='bought').length;
+      document.getElementById('overlay-root').innerHTML = `<div class="overlay" role="dialog" aria-modal="true" aria-label="確認這次採買"><section class="sheet"><div class="sheet-grab"></div><header class="sheet-head"><div><p class="eyebrow">完成這次採買</p><h2 class="section-title">確認 ${bought.length} 項入庫</h2><p class="section-copy">只入庫標記買到的品項。未買到、缺貨與保留項目不會被刪除。</p></div><button class="icon-close" onclick="closeOverlay()" aria-label="關閉">×</button></header><div class="summary-grid"><div class="summary-cell"><small>任務食材買到</small><strong>${missionBought} 項</strong></div><div class="summary-cell"><small>入庫後仍缺</small><strong>${missionRemainingAfter} 項</strong></div><div class="summary-cell"><small>本次預估</small><strong>NT$ ${bought.reduce((s,i)=>s+i.cost,0)}</strong></div><div class="summary-cell"><small>任務狀態</small><strong>${missionRemainingAfter?'繼續採買':'可準備料理'}</strong></div></div><div class="card" style="padding:11px;margin-top:10px"><strong style="font-size:9px">快速入庫預覽</strong><p class="section-copy">蔬果／冷藏品先帶入冷藏；正式版仍應讓使用者確認保存位置與實際價格，或以發票核對。</p></div><button class="btn btn-jade btn-wide" style="margin-top:13px" onclick="commitRestock()">確認入庫這 ${bought.length} 項</button></section></div>`;
+    }
+
+    function commitRestock() {
+      const bought = boughtItems();
+      bought.forEach(item=>item.status='restocked');
+      state.lastRestocked=bought.length;
+      state.task.status=missionDone()?'ready':'needs_shopping';
+      closeOverlay();
+      if(state.task.status==='ready') openReadySheet(); else { render(); showToast(`已入庫 ${bought.length} 項；任務仍缺 ${unresolvedMission().length} 項`); }
+    }
+
+    function openReadySheet() {
+      render();
+      document.getElementById('overlay-root').innerHTML = `<div class="overlay" role="dialog" aria-modal="true" aria-label="任務食材已齊"><section class="sheet" style="text-align:center"><div class="sheet-grab"></div><div class="success-mark">✓</div><p class="eyebrow">MealTask · ready</p><h2 class="section-title">${state.task.title}可以開始了</h2><p class="section-copy">任務食材均已入庫。完成採買不會發 EXP，也不代表料理完成。</p><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px"><button class="btn btn-ghost" onclick="returnToday()">返回任務</button><button class="btn btn-primary" onclick="startCooking()">直接開始料理</button></div></section></div>`;
+    }
+
+    function startCooking() { document.getElementById('overlay-root').innerHTML = `<div class="overlay" role="dialog" aria-modal="true"><section class="sheet" style="text-align:center"><div class="sheet-grab"></div><div class="success-mark">♨</div><p class="eyebrow">交接到廚房</p><h2 class="section-title">下載「${state.task.title}」料理包</h2><p class="section-copy">這是預覽交接點。正式版必須等料理文字包存入裝置後，才宣稱可以離線開始。</p><button class="btn btn-dark btn-wide" style="margin-top:14px" onclick="closeOverlay()">回採買預覽</button></section></div>`; }
+    function returnToday() { closeOverlay(); showToast(state.task.status==='needs_replan'?'返回 Today 重新選菜（預覽）':'返回 Today 的原任務（預覽）'); }
+    function closeOverlay() { document.getElementById('overlay-root').innerHTML=''; }
+
+    let toastTimer;
+    function showToast(message) { clearTimeout(toastTimer); document.getElementById('toast-root').innerHTML=`<div class="toast" role="status">${message}</div>`; toastTimer=setTimeout(()=>document.getElementById('toast-root').innerHTML='',2400); }
+
+    function switchVariant(delta) {
+      const index=variants.findIndex(item=>item.key===state.variant);
+      state.variant=variants[(index+delta+variants.length)%variants.length].key;
+      const url=new URL(location.href); url.searchParams.set('variant',state.variant); history.replaceState(null,'',url);
+      closeOverlay(); render();
+    }
+    document.getElementById('prev-variant').addEventListener('click',()=>switchVariant(-1));
+    document.getElementById('next-variant').addEventListener('click',()=>switchVariant(1));
+    document.addEventListener('keydown',event=>{ if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName))return; if(event.key==='ArrowLeft')switchVariant(-1); if(event.key==='ArrowRight')switchVariant(1); });
+    if(!variants.some(item=>item.key===state.variant))state.variant='A';
+    render();
+  </script>
+</body>
+</html>

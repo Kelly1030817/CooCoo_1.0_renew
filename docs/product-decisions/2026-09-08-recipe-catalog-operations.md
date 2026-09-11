@@ -15,7 +15,7 @@ This record captures the approved production behavior for CooCoo recipe automati
 
 The approved confirmation copy is:
 
-> 這道食譜需要補買約 NT$ {amount} 的食材。這筆支出可能降低本週可存入「{goalName}」的金額，讓圓夢時間稍微延後。價格為參考值，實際結帳可能不同；系統不會自動扣除圓夢金額。要加入購物清單嗎？
+> 這道食譜需要補買約 NT$ {amount} 的食材。價格是參考值，實際結帳可能不同；確認後才會建立 MealTask 並加入必要採買。要繼續嗎？
 
 Actions: `改用現有食材` and `加入購物清單`.
 

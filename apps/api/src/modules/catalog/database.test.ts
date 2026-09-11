@@ -69,28 +69,48 @@ test('three distinct quality reporters in 30 days quarantine and queue one revis
  expect((await db.query("select * from public.recipe_catalog_jobs where context->>'revisionOf'=$1",[id])).rows).toHaveLength(1);
  expect((await db.query('select * from public.recipe_catalog_reports where version_id=$1 and processed_at is not null',[id])).rows).toHaveLength(3);
 });
-test('purchase replay is idempotent and does not change savings',async()=>{
+test('purchase replay is idempotent and does not award EXP',async()=>{
  const id=crypto.randomUUID(),items=JSON.stringify([{ingredientKey:'油',name:'油',quantity:500,unit:'ml',estimatedCost:120}]);
  for(let i=0;i<2;i++)await db.query('select public.add_recipe_purchases($1,$2,$3)',[user,id,items]);
- expect((await db.query('select * from public.shopping_items')).rows).toHaveLength(1);expect((await db.query('select * from public.savings_events')).rows).toHaveLength(0);
+ expect((await db.query('select * from public.shopping_items')).rows).toHaveLength(1);expect((await db.query('select * from public.exp_events')).rows).toHaveLength(0);
 });
-test('pantry quantities are deducted once and repeated completion cannot deposit twice',async()=>{
+test('inventory quantities and EXP are changed once by cooking replay',async()=>{
  await db.query("insert into public.inventory_batches(user_id,name,ingredient_key,quantity,unit,location) values($1,'油','油',500,'ml','cold')",[user]);
- const op=crypto.randomUUID(),recipe=JSON.stringify({title:'test',prepTime:'10',steps:[],source:'catalog'}),requirements=JSON.stringify([{ingredientKey:'油',name:'油',quantity:5,unit:'ml',isPantryStaple:true}]);
+ await db.query("insert into public.weekly_goals_v2(user_id,week_start,metric,target) values($1,date_trunc('week',timezone('Asia/Taipei',now()))::date,'cooking_sessions',1)",[user]);
+ const op=crypto.randomUUID(),recipe=JSON.stringify({title:'test',prepTime:'10',steps:[],source:'catalog'}),requirements=JSON.stringify([{ingredientKey:'油',name:'油',quantity:5,unit:'ml',isPantryStaple:false}]);
  const args=[user,op,recipe,requirements];
- for(let i=0;i<2;i++)await db.query('select public.complete_cooking_transaction($1,$2,$3,$4,10,0,2,1,false)',args);
+ for(let i=0;i<2;i++)await db.query('select public.complete_cooking_v2_transaction($1,$2,$3,$4,10,150,true,2,1,false,false,true,null)',args);
  expect(Number((await db.query<{quantity:number}>('select quantity from public.inventory_batches where ingredient_key=\'油\'')).rows[0].quantity)).toBe(490);
  expect((await db.query('select * from public.cooking_sessions')).rows).toHaveLength(1);
- expect((await db.query<{source:string}>('select source from public.recipes where title=\'test\'')).rows[0].source).toBe('catalog');
+ expect((await db.query('select * from public.exp_events')).rows).toHaveLength(3);
+ expect((await db.query('select * from public.cooking_cost_records')).rows).toHaveLength(1);
+ expect((await db.query<{source:string}>('select source from public.recipes where title=\'test\'')).rows[0].source).toBe('brand_safe');
 });
-test('save_onboarding_profile creates goal on first run and updates existing goal on consultation replay',async()=>{
+test('partial restocking keeps a MealTask open; full restocking and cooking close it',async()=>{
+ const recipeId=crypto.randomUUID(),taskId=crypto.randomUUID(),taskOperation=crypto.randomUUID(),shoppingId=crypto.randomUUID();
+ await db.query("insert into public.recipes(id,user_id,title,servings,prep_minutes,total_minutes,cookware_types,ingredients,steps,safety_reviewed,source) values($1,$2,'MealTask flow',1,5,10,'{}','[]','[]',true,'brand_safe')",[recipeId,user]);
+ await db.query("insert into public.meal_tasks(id,user_id,operation_id,recipe_id,status,current_meal,next_meal,planned_total_servings,shortages) values($1,$2,$3,$4,'needs_shopping',$5,$6,1,$7)",[taskId,user,taskOperation,recipeId,JSON.stringify({date:'2026-09-11',slot:'dinner',servings:1}),JSON.stringify({strategy:'skip'}),JSON.stringify([{id:crypto.randomUUID(),ingredientKey:'蛋',name:'雞蛋',quantity:2,unit:'顆',resolution:'needed'}])]);
+ await db.query("insert into public.shopping_items(id,user_id,name,ingredient_key,quantity,unit,category,estimated_cost,checked) values($1,$2,'雞蛋','蛋',1,'顆','protein',15,true)",[shoppingId,user]);
+ expect(Number((await db.query<{value:number}>('select public.restock_checked_shopping($1) value',[user])).rows[0].value)).toBe(1);
+ expect((await db.query<{status:string;shortages:Array<{quantity:number;resolution:string}>}>('select status,shortages from public.meal_tasks where id=$1',[taskId])).rows[0]).toMatchObject({status:'needs_shopping',shortages:[{quantity:1,resolution:'needed'}]});
+ await db.query("insert into public.shopping_items(user_id,name,ingredient_key,quantity,unit,category,estimated_cost,checked) values($1,'雞蛋','蛋',1,'顆','protein',15,true)",[user]);
+ expect(Number((await db.query<{value:number}>('select public.restock_checked_shopping($1) value',[user])).rows[0].value)).toBe(1);
+ expect((await db.query<{status:string}>('select status from public.meal_tasks where id=$1',[taskId])).rows[0].status).toBe('ready');
+ const completion=crypto.randomUUID();
+ await db.query("select public.complete_cooking_v2_transaction($1,$2,$3,'[]',0,null,false,1,1,false,false,false,$4)",[user,completion,JSON.stringify({title:'MealTask flow',prepTime:'10',steps:[],source:'brand_safe'}),taskId]);
+ expect((await db.query<{status:string}>('select status from public.meal_tasks where id=$1',[taskId])).rows[0].status).toBe('complete');
+});
+test('save_onboarding_profile creates and updates a weekly habit goal without money goals',async()=>{
  const testUser=crypto.randomUUID();await db.query('insert into auth.users(id) values($1)',[testUser]);
- const initialProfile=JSON.stringify({householdServings:2,dailyMealBudget:300,outsideMealComparisonPrice:150,weeklyHomeCookTarget:4,status:'complete',currentStep:10,plannedMealSlots:['dinner'],preferredFlavors:['清淡'],cookware:[],restrictions:[],dreamName:'北海道旅行',dreamTargetAmount:30000});
+ await db.query("insert into public.inventory_batches(user_id,name,ingredient_key,quantity,unit,location) values($1,'測試食材','test',1,'份','cold')",[testUser]);
+ const initialProfile=JSON.stringify({householdServings:2,weeklyGoalTarget:4,status:'complete',currentStep:5,plannedMealSlots:['dinner'],preferredFlavors:['清淡'],cookware:[],restrictions:[],cookingExperience:'beginner',currentWeeklyCookingFrequency:3,habitBarriers:['no_ideas'],guidanceMode:'detailed',availableMinutes:30,primaryGoalMetric:'cooking_sessions',inventoryReviewed:true,hasNoInventory:true,reminders:{}});
  await db.query('select public.save_onboarding_profile($1,$2)',[testUser,initialProfile]);
- let goal=(await db.query<{name:string;target_amount:number;status:string}>("select name,target_amount,status from public.goals where user_id=$1 and status='active'",[testUser])).rows[0];
- expect(goal.name).toBe('北海道旅行');expect(goal.target_amount).toBe(30000);
- const replayedProfile=JSON.stringify({householdServings:2,dailyMealBudget:300,outsideMealComparisonPrice:150,weeklyHomeCookTarget:4,status:'complete',currentStep:10,plannedMealSlots:['dinner'],preferredFlavors:['清淡'],cookware:[],restrictions:[],dreamName:'綠島遊',dreamTargetAmount:5000});
+ let goal=(await db.query<{metric:string;target:number}>("select metric,target from public.weekly_goals_v2 where user_id=$1",[testUser])).rows[0];
+ expect(goal).toEqual({metric:'cooking_sessions',target:4});
+ expect((await db.query('select * from public.inventory_batches where user_id=$1',[testUser])).rows).toHaveLength(0);
+ const replayedProfile=JSON.stringify({...JSON.parse(initialProfile),weeklyGoalTarget:5,primaryGoalMetric:'self_cooked_servings'});
  await db.query('select public.save_onboarding_profile($1,$2)',[testUser,replayedProfile]);
- goal=(await db.query<{name:string;target_amount:number;status:string}>("select name,target_amount,status from public.goals where user_id=$1 and status='active'",[testUser])).rows[0];
- expect(goal.name).toBe('綠島遊');expect(goal.target_amount).toBe(5000);
+ goal=(await db.query<{metric:string;target:number}>("select metric,target from public.weekly_goals_v2 where user_id=$1",[testUser])).rows[0];
+ expect(goal).toEqual({metric:'self_cooked_servings',target:5});
+ expect((await db.query("select to_regclass('public.goals') value")).rows[0]).toEqual({value:null});
 });

@@ -19,7 +19,7 @@ export function AuthRecoveryPanel({ busy, error, onGoogleSignIn }: AuthRecoveryP
         {busy ? "正在前往 Google…" : "使用 Google 重新登入"}
       </button>
       {error ? <p role="alert" className="offline-error">{error}</p> : null}
-      <small className="integration-note">不需要重新填寫廚具、飲食限制、預算或圓夢目標。</small>
+      <small className="integration-note">不需要重新填寫廚具、飲食限制、冰箱或週目標。</small>
     </main>
   );
 }

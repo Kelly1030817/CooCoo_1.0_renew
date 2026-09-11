@@ -2,7 +2,7 @@ import { http, HttpResponse } from "msw";
 import { FormatRegistry } from "@sinclair/typebox";
 import { Value } from "@sinclair/typebox/value";
 import type { TSchema, Static } from "@sinclair/typebox";
-import { brandSafeRecipes, CooCooService, getRescuePlan, parseShoppingText } from "@coocoo/core";
+import { brandSafeRecipes, CooCooService, createMealTask, getRescuePlan, parseShoppingText, searchRecipes } from "@coocoo/core";
 import { ContractSchemas, type IngredientPrice, type MealPostpone, type MealSlot } from "@coocoo/contracts";
 import { createMealPlan, createTodayDecision, refreshAvailability, rescheduleMeal, weekOf, type MealPlanningContext } from "../../../../../api/src/modules/meal-plans/meal-planning";
 import { MemoryPlanningRepository } from "../../../../../api/src/modules/meal-plans/memory-planning.repository";
@@ -54,12 +54,12 @@ const planningContext = (weekStart: string, energyLevel: "low" | "normal" = "nor
   const cookwareTypes = profile?.cookware.map((item) => item.type) ?? state.cookware.flatMap((item) => [item.type, item.name]);
   return {
     weekStart,
-    weeklyTarget: profile?.weeklyHomeCookTarget ?? 3,
+    weeklyTarget: profile?.weeklyGoalTarget ?? state.weeklyGoal.target,
     mealSlots,
     servings: profile?.householdServings ?? 1,
     restrictions: profile?.restrictions ?? [],
     cookwareTypes: cookwareTypes.length ? cookwareTypes : ["電磁爐"],
-    perMealBudget: Math.max(1, Math.floor((profile?.dailyMealBudget ?? 300) / mealSlots.length)),
+    perMealBudget: null,
     inventory: state.inventory.map((item) => ({ ingredientKey: item.name, name: item.name, daysLeft: item.daysLeft, quantity: item.qty, unit: item.unit })),
     energyLevel,
   };
@@ -117,56 +117,31 @@ export const handlers = [
       return error(e);
     }
   }),
-  http.get("/api/v1/goals/current", () => {
-    const s = service.state();
-    return ok({
-      goal: s.activeGoal,
-      cookingPlan: s.cookingPlan,
-      amountEvents: s.amountEvents,
-      habitProgress: s.habitProgress,
-      healthAssets: s.healthAssets,
-    });
-  }),
-  http.post("/api/v1/goals", async ({ request }) => {
+  http.patch("/api/v1/weekly-goal", async ({ request }) => {
     try {
-      const result = service.createGoal(
-        validated(ContractSchemas.GoalDraftSchema, await request.json()),
-      );
-      return result.valid
-        ? ok(result, 201)
-        : HttpResponse.json(
-            {
-              error: {
-                code: "VALIDATION_ERROR",
-                message: result.errors.join(" "),
-                requestId: crypto.randomUUID(),
-              },
-            },
-            { status: 422 },
-          );
-    } catch (e) {
-      return error(e);
-    }
+      const body = validated(ContractSchemas.WeeklyGoalPatchSchema, await request.json());
+      const state = service.state();
+      state.weeklyGoal = { ...state.weeklyGoal, ...body, updatedAt: new Date().toISOString() };
+      new BrowserStateRepository().write(state);
+      return ok(state.weeklyGoal);
+    } catch (e) { return error(e); }
   }),
-  http.patch("/api/v1/goals/:id", async ({ request }) => {
+  http.patch("/api/v1/settings/reminders", async ({ request }) => {
     try {
-      return ok(service.adjustGoal((await request.json()) as never));
-    } catch (e) {
-      return error(e, 404);
-    }
-  }),
-  http.post("/api/v1/goals/:id/amount-events", async ({ request }) => {
-    try {
-      return ok(
-        service.adjustGoal({
-          desiredSaved: Number(
-            ((await request.json()) as { desiredSaved: number }).desiredSaved,
-          ),
+      const body = validated(ContractSchemas.ReminderPreferencesPatchSchema, await request.json());
+      const state = service.state();
+      state.reminderPreferences = {
+        ...(state.reminderPreferences ?? {
+          pushEnabled: false,
+          quietHoursStart: "21:00",
+          quietHoursEnd: "09:00",
+          weeklyLimit: 3,
         }),
-      );
-    } catch (e) {
-      return error(e, 404);
-    }
+        ...body,
+      };
+      new BrowserStateRepository().write(state);
+      return ok(state.reminderPreferences);
+    } catch (e) { return error(e); }
   }),
   http.get("/api/v1/inventory", () => ok(service.state().inventory)),
   http.post("/api/v1/inventory", async ({ request }) => {
@@ -225,6 +200,16 @@ export const handlers = [
       return error(e);
     }
   }),
+  http.post("/api/v1/recipes/search", async ({request})=>{try{const body=validated(ContractSchemas.RecipeSearchRequestSchema,await request.json());const state=service.state();return ok({items:searchRecipes(brandSafeRecipes,state.inventory,body.query,body.ingredientKeywords,new Set(state.recipeFavoriteIds??[])),notice:"可靠食譜庫優先；全符合排在部分符合之前。"});}catch(e){return error(e)}}),
+  http.put("/api/v1/recipes/:id/favorite",({params})=>{const state=service.state();const id=String(params.id);state.recipeFavoriteIds=Array.from(new Set([...(state.recipeFavoriteIds??[]),id]));new BrowserStateRepository().write(state);return ok({recipeId:id,favorite:true})}),
+  http.delete("/api/v1/recipes/:id/favorite",({params})=>{const state=service.state();const id=String(params.id);state.recipeFavoriteIds=(state.recipeFavoriteIds??[]).filter((value)=>value!==id);new BrowserStateRepository().write(state);return ok({recipeId:id,favorite:false})}),
+  http.post("/api/v1/recipes/:id/adjustments/preview",async({params,request})=>{try{const body=validated(ContractSchemas.RecipeAdjustmentRequestSchema,await request.json());const recipe=brandSafeRecipes.find((item)=>item.id===params.id||item.recipeId===params.id);if(!recipe)throw new Error("RECIPE_NOT_FOUND");const factor=body.servings/Math.max(1,recipe.servings);const adjustedRecipe={...structuredClone(recipe),id:`${recipe.id}:adjusted:${body.operationId}`,servings:body.servings,ingredients:recipe.ingredients.map((item)=>({...item,quantity:Math.round(item.quantity*factor*100)/100}))};const preview={previewId:body.operationId,originalRecipeId:recipe.recipeId,adjustedRecipe,changes:recipe.servings===body.servings?[]:[{field:"servings",before:`${recipe.servings} 份`,after:`${body.servings} 份`,reason:"依本次用餐人數調整"}],missing:[],safetyChecks:["飲食硬限制已重新檢查","廚具維持原食譜需求","確認後才建立 MealTask"],source:"rules" as const,expiresAt:new Date(Date.now()+30*60_000).toISOString()};const state=service.state();state.recipeAdjustmentPreviews=[...(state.recipeAdjustmentPreviews??[]).filter((item)=>item.previewId!==preview.previewId),preview];new BrowserStateRepository().write(state);return ok(preview);}catch(e){return error(e)}}),
+  http.post("/api/v1/meal-tasks",async({request})=>{try{const body=validated(ContractSchemas.MealTaskCreateSchema,await request.json());const state=service.state();if(state.mealTasks?.some((task)=>task.operationId===body.operationId))return ok(state.mealTasks.find((task)=>task.operationId===body.operationId));const baseRecipe=brandSafeRecipes.find((item)=>item.id===body.recipePackageId||item.recipeId===body.recipePackageId);if(!baseRecipe)throw new Error("RECIPE_NOT_FOUND");const preview=body.adjustmentPreviewId?(state.recipeAdjustmentPreviews??[]).find((item)=>item.previewId===body.adjustmentPreviewId&&item.originalRecipeId===baseRecipe.recipeId&&Date.parse(item.expiresAt)>Date.now()):undefined;if(body.adjustmentPreviewId&&!preview)throw new Error("ADJUSTMENT_PREVIEW_INVALID");const task=createMealTask(body,preview?.adjustedRecipe??baseRecipe,state.inventory,state.onboardingProfile?.restrictions??[]);state.mealTasks=[...(state.mealTasks??[]),task];new BrowserStateRepository().write(state);return ok(task,201)}catch(e){return error(e)}}),
+  http.post("/api/v1/meal-servings/:id/eat",async({params,request})=>{try{const body=validated(ContractSchemas.PreparedServingEatSchema,await request.json());return ok(service.eatPreparedServing(String(params.id),body.operationId));}catch(e){return error(e)}}),
+  http.get("/api/v1/meal-tasks",()=>ok(service.state().mealTasks??[])),
+  http.get("/api/v1/chef-chat/sessions",()=>ok((service.state().chefChatSessions??[]).slice(-10).reverse())),
+  http.post("/api/v1/chef-chat/sessions",async({request})=>{try{const body=validated(ContractSchemas.ChefChatSendSchema,await request.json());const state=service.state();const today=new Date().toISOString().slice(0,10);const used=(state.chefChatSessions??[]).flatMap((session)=>session.messages).filter((message)=>message.role==="user"&&message.createdAt.startsWith(today)).length;if(used>=30)throw new Error("AI_DAILY_LIMITED");const now=new Date().toISOString();const session={id:crypto.randomUUID(),title:body.message.slice(0,24),source:"rules" as const,createdAt:now,updatedAt:now,messages:[{id:crypto.randomUUID(),role:"user" as const,content:body.message,createdAt:now},{id:crypto.randomUUID(),role:"assistant" as const,content:"AI 目前未連線，我先用規則型協助：從即期食材選一項，再挑 30 分鐘內、符合廚具與飲食限制的食譜。你也可以到食譜頁用多食材搜尋。",createdAt:now}]};state.chefChatSessions=[...(state.chefChatSessions??[]).slice(-9),session];new BrowserStateRepository().write(state);return ok(session,201)}catch(e){return error(e)}}),
+  http.delete("/api/v1/chef-chat/sessions/:id",({params})=>{const state=service.state();state.chefChatSessions=(state.chefChatSessions??[]).filter((session)=>session.id!==params.id);new BrowserStateRepository().write(state);return ok({id:params.id})}),
   http.get("/api/v1/meal-decisions/today", ({ request }) => {
     try {
       const url = new URL(request.url);

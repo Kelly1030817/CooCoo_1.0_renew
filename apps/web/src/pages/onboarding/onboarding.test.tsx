@@ -4,8 +4,14 @@ import { EquipmentRadar } from "./EquipmentRadar";
 import { ChefAvatar } from "./ChefAvatar";
 import { PassportTicket } from "./PassportTicket";
 import { emptyOnboardingDraft } from "../../shared/model/onboarding-draft";
+import { suggestWeeklyGoalTarget } from "./weekly-goal";
 
 describe("Chef Consultation Components", () => {
+  test("weekly goal suggestion is current frequency plus one within the supported range",()=>{
+    expect(suggestWeeklyGoalTarget(0)).toBe(1);
+    expect(suggestWeeklyGoalTarget(1)).toBe(2);
+    expect(suggestWeeklyGoalTarget(21)).toBe(21);
+  });
   test("EquipmentRadar renders correct unlocked recipe counts without emoji", () => {
     const html = renderToStaticMarkup(<EquipmentRadar cookwareCount={2} />);
     expect(html).toContain("裝備適配度雷達");
@@ -22,26 +28,23 @@ describe("Chef Consultation Components", () => {
     expect(html).toContain("chef-nodding");
   });
 
-  test("PassportTicket renders dream info, Cedarville cursive SVG signature, and stamp when sealed", () => {
+  test("PassportTicket renders chef profile, signature, and stamp when sealed", () => {
     const profile = {
       ...emptyOnboardingDraft,
-      dreamName: "冬天去北海道看初雪",
-      dreamTargetAmount: 30000,
-      weeklyHomeCookTarget: 3,
-      dailyMealBudget: 240,
+      weeklyGoalTarget: 3,
       householdServings: 1,
       cookware: [{ type: "電鍋", limitations: [] }],
       restrictions: [{ id: "r1", label: "甲殼類", kind: "allergy" as const, ingredientKeys: ["甲殼類"], isHardLimit: true }],
     };
 
     const unstampedHtml = renderToStaticMarkup(<PassportTicket profile={profile} isStamped={false} />);
-    expect(unstampedHtml).toContain("COOCOO DREAM PASSPORT");
-    expect(unstampedHtml).toContain("冬天去北海道看初雪");
-    expect(unstampedHtml).toContain("NT$ 30,000");
+    expect(unstampedHtml).toContain("COOCOO CHEF PROFILE");
+    expect(unstampedHtml).toContain("初火學徒");
+    expect(unstampedHtml).toContain("從 0 EXP 開始");
     expect(unstampedHtml).toContain("Cedarville Cursive");
     expect(unstampedHtml).not.toContain("sig-mask-anim");
     expect(unstampedHtml).not.toContain("重播簽名");
-    expect(unstampedHtml).not.toContain("圓夢契約已立");
+    expect(unstampedHtml).not.toContain("主廚檔案已成立");
 
     // Phase 1 & 2: Signature and gold underline sweeping, seal not dropped yet
     const signingOnlyHtml = renderToStaticMarkup(
@@ -57,7 +60,7 @@ describe("Chef Consultation Components", () => {
     );
     expect(stampedHtml).toContain("sig-mask-anim");
     expect(stampedHtml).not.toContain("重播簽名");
-    expect(stampedHtml).toContain("圓夢契約已立");
+    expect(stampedHtml).toContain("主廚檔案已成立");
     expect(stampedHtml).toContain("MASTER CHEF COOCOO SEALED");
     expect(stampedHtml).toContain("shockwave-ring");
 
@@ -87,15 +90,13 @@ describe("Chef Consultation Components", () => {
 
     saveOnboardingDraft({
       ...emptyOnboardingDraft,
-      currentStep: 10,
+      currentStep: 5,
       status: "draft",
-      dreamName: "冬天去北海道看初雪",
-      dreamTargetAmount: 50000,
     });
     expect(hasSavedOnboardingDraft()).toBe(true);
 
     const stored = JSON.parse(mockStorage.getItem(ONBOARDING_DRAFT_STORAGE_KEY) || "{}");
-    expect(stored.currentStep).toBe(10);
+    expect(stored.currentStep).toBe(5);
     expect(stored.status).toBe("draft");
   });
 });

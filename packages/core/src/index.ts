@@ -1,12 +1,8 @@
 import type {
-  AmountEvent,
   AppState,
   CookingOutcome,
-  GoalDraft,
-  GoalMilestone,
   HealthAssets,
   InventoryItem,
-  MoneyGoal,
   OnboardingProfile,
   Recipe,
   RescuePlan,
@@ -14,7 +10,14 @@ import type {
 } from "@coocoo/contracts";
 
 export * from "./mvp";
+export * from "./growth";
+export * from "./meal-task";
+export * from "./reminders";
+export * from "./inventory-confirmation";
+export * from "./ingredient";
 import { completeCookingSession } from "./mvp";
+import { awardBadges, awardExp, deriveGrowthProfile, grantWeeklyGoalReward } from "./growth";
+import { sameIngredient } from "./ingredient";
 
 const DAY_MS = 86_400_000;
 const int = (value: unknown, fallback = 0) =>
@@ -23,237 +26,6 @@ const nonNegative = (value: unknown, fallback = 0) =>
   Math.max(0, int(value, fallback));
 const dateOnly = (date: Date) =>
   Number.isNaN(date.getTime()) ? null : date.toISOString().slice(0, 10);
-export const parseDateOnly = (value: unknown) =>
-  /^\d{4}-\d{2}-\d{2}$/.test(String(value ?? ""))
-    ? new Date(`${String(value)}T00:00:00.000Z`)
-    : null;
-
-export const calculateAverageEatingOutCost = (
-  total: unknown,
-  meals: unknown,
-) => {
-  const count = nonNegative(meals);
-  return count === 0 ? null : Math.round(nonNegative(total) / count);
-};
-export const suggestHomeCookBudget = (cost: unknown, ratio = 0.6) =>
-  Math.round(nonNegative(cost) * Math.max(0, ratio));
-export const calculateEstimatedSaving = (outside: unknown, home: unknown) =>
-  Math.max(0, nonNegative(outside) - nonNegative(home));
-export const calculateCurrentSaved = (
-  events: Pick<AmountEvent, "amount">[] = [],
-) =>
-  Math.max(
-    0,
-    events.reduce((sum, event) => sum + int(event.amount), 0),
-  );
-export const createBalanceAdjustment = (
-  events: Pick<AmountEvent, "amount">[],
-  desired: unknown,
-) => {
-  const currentBalance = calculateCurrentSaved(events);
-  const nextBalance = nonNegative(desired);
-  return { amount: nextBalance - currentBalance, currentBalance, nextBalance };
-};
-
-export function validateMilestonePercents(
-  shortPercent = 25,
-  mediumPercent = 60,
-) {
-  const errors: string[] = [];
-  if (!Number.isFinite(shortPercent) || shortPercent <= 0)
-    errors.push("短期門檻必須大於 0%。");
-  if (!Number.isFinite(mediumPercent) || mediumPercent >= 100)
-    errors.push("中期門檻必須小於 100%。");
-  if (shortPercent >= mediumPercent) errors.push("短期門檻必須小於中期門檻。");
-  return { valid: errors.length === 0, errors, shortPercent, mediumPercent };
-}
-
-export function createMilestones(
-  targetAmount: unknown,
-  options: Partial<GoalDraft> = {},
-) {
-  const target = nonNegative(targetAmount);
-  const validation = validateMilestonePercents(
-    options.shortPercent ?? 25,
-    options.mediumPercent ?? 60,
-  );
-  if (!validation.valid)
-    return { milestones: [] as GoalMilestone[], errors: validation.errors };
-  return {
-    errors: [] as string[],
-    milestones: [
-      {
-        id: "short",
-        label: options.shortLabel || "第一段累積",
-        percent: validation.shortPercent,
-        targetAmount: Math.round((target * validation.shortPercent) / 100),
-      },
-      {
-        id: "medium",
-        label: options.mediumLabel || "穩定前進",
-        percent: validation.mediumPercent,
-        targetAmount: Math.round((target * validation.mediumPercent) / 100),
-      },
-      {
-        id: "long",
-        label: options.longLabel || "完成主要目標",
-        percent: 100,
-        targetAmount: target,
-      },
-    ],
-  };
-}
-
-export function calculateGoalProjection(
-  input: {
-    targetAmount?: number;
-    currentSavedAmount?: number;
-    estimatedSavingPerMeal?: number;
-    weeklyCookingMeals?: number;
-    targetDate?: string | null;
-    now?: Date;
-  } = {},
-) {
-  const targetAmount = nonNegative(input.targetAmount);
-  const currentSavedAmount = nonNegative(input.currentSavedAmount);
-  const estimatedSavingPerMeal = nonNegative(input.estimatedSavingPerMeal);
-  const weeklyCookingMeals = nonNegative(input.weeklyCookingMeals);
-  const remainingAmount = Math.max(0, targetAmount - currentSavedAmount);
-  const now =
-    input.now && !Number.isNaN(input.now.getTime())
-      ? new Date(input.now)
-      : new Date();
-  const base = {
-    status: "ready",
-    targetAmount,
-    currentSavedAmount,
-    remainingAmount,
-    mealsNeeded: null as number | null,
-    estimatedWeeks: null as number | null,
-    estimatedDate: null as string | null,
-    targetDate: input.targetDate || null,
-    requiredWeeklyMeals: null as number | null,
-    scheduleStatus: null as string | null,
-  };
-  if (targetAmount <= 0) return { ...base, status: "invalid_target" };
-  if (remainingAmount === 0)
-    return { ...base, status: "completed", mealsNeeded: 0, estimatedWeeks: 0 };
-  if (estimatedSavingPerMeal <= 0) return { ...base, status: "no_saving" };
-  const mealsNeeded = Math.ceil(remainingAmount / estimatedSavingPerMeal);
-  const result = { ...base, mealsNeeded };
-  const targetDate = parseDateOnly(input.targetDate);
-  if (targetDate) {
-    const today = new Date(
-      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
-    );
-    const remainingDays = Math.ceil(
-      (targetDate.getTime() - today.getTime()) / DAY_MS,
-    );
-    if (remainingDays < 0) result.scheduleStatus = "overdue";
-    else {
-      result.requiredWeeklyMeals = Math.ceil(
-        mealsNeeded / Math.max(remainingDays / 7, 1 / 7),
-      );
-      result.scheduleStatus =
-        weeklyCookingMeals > result.requiredWeeklyMeals
-          ? "ahead"
-          : weeklyCookingMeals === result.requiredWeeklyMeals
-            ? "on_track"
-            : "behind";
-    }
-  }
-  if (weeklyCookingMeals <= 0) return { ...result, status: "no_frequency" };
-  result.estimatedWeeks = mealsNeeded / weeklyCookingMeals;
-  result.estimatedDate = dateOnly(
-    new Date(now.getTime() + Math.ceil(result.estimatedWeeks * 7) * DAY_MS),
-  );
-  return result;
-}
-
-export function createGoalFromDraft(
-  draft: GoalDraft,
-  options: { id?: string; now?: Date } = {},
-) {
-  const errors: string[] = [];
-  const eatingOutCost =
-    calculateAverageEatingOutCost(draft.eatingOutTotal, draft.eatingOutMeals) ??
-    nonNegative(draft.directEatingOutCost);
-  const milestones = createMilestones(draft.targetAmount, draft);
-  if (!draft.name.trim()) errors.push("請輸入目標名稱。");
-  if (nonNegative(draft.targetAmount) <= 0)
-    errors.push("目標金額必須大於 0 元。");
-  if (eatingOutCost <= 0) errors.push("請提供可用的平均外食餐費。");
-  if (draft.targetDate && !parseDateOnly(draft.targetDate))
-    errors.push("目標日期格式不正確。");
-  errors.push(...milestones.errors);
-  if (errors.length) return { valid: false as const, errors };
-  const now = options.now ?? new Date();
-  const createdAt = now.toISOString();
-  const id = options.id || `goal_${now.getTime()}`;
-  const opening = nonNegative(draft.currentSavedAmount);
-  const goal: MoneyGoal = {
-    id,
-    purpose: draft.purpose || "custom",
-    name: draft.name.trim(),
-    targetAmount: nonNegative(draft.targetAmount),
-    targetDate: draft.targetDate || null,
-    status: opening >= draft.targetAmount ? "completed" : "active",
-    createdAt,
-    completedAt: opening >= draft.targetAmount ? createdAt : null,
-    milestones: milestones.milestones,
-  };
-  const plan = {
-    eatingOutMeals: nonNegative(draft.eatingOutMeals),
-    eatingOutTotal: nonNegative(draft.eatingOutTotal),
-    eatingOutCost,
-    homeCookBudget: nonNegative(draft.homeCookBudget),
-    weeklyCookingMeals: nonNegative(draft.weeklyCookingMeals),
-    estimatedSavingPerMeal: calculateEstimatedSaving(
-      eatingOutCost,
-      draft.homeCookBudget,
-    ),
-    updatedAt: createdAt,
-  };
-  const openingEvent: AmountEvent = {
-    id: `${id}_opening`,
-    goalId: id,
-    type: "opening_balance",
-    amount: opening,
-    createdAt,
-  };
-  return {
-    valid: true as const,
-    errors: [],
-    goal,
-    cookingPlan: plan,
-    openingEvent,
-    projection: calculateGoalProjection({
-      targetAmount: goal.targetAmount,
-      currentSavedAmount: opening,
-      estimatedSavingPerMeal: plan.estimatedSavingPerMeal,
-      weeklyCookingMeals: plan.weeklyCookingMeals,
-      targetDate: goal.targetDate,
-      now,
-    }),
-  };
-}
-
-export function goalDraftFromOnboarding(profile: OnboardingProfile): GoalDraft {
-  const plannedMealCount = Math.max(1, profile.plannedMealSlots.length);
-  return {
-    purpose: "dream",
-    name: profile.dreamName,
-    targetAmount: profile.dreamTargetAmount,
-    currentSavedAmount: 0,
-    targetDate: null,
-    eatingOutMeals: 1,
-    eatingOutTotal: profile.outsideMealComparisonPrice,
-    directEatingOutCost: profile.outsideMealComparisonPrice,
-    homeCookBudget: Math.floor(profile.dailyMealBudget / plannedMealCount),
-    weeklyCookingMeals: profile.weeklyHomeCookTarget,
-  };
-}
-
 export function applyOnboardingProfile(
   state: AppState,
   profile: OnboardingProfile,
@@ -261,76 +33,18 @@ export function applyOnboardingProfile(
 ) {
   const next = structuredClone(state);
   next.onboardingProfile = structuredClone(profile);
-
-  const result = createGoalFromDraft(goalDraftFromOnboarding(profile), options);
-  if (!result.valid) throw new Error("INVALID_ONBOARDING_GOAL");
-
-  if (next.activeGoal) {
-    next.activeGoal.name = result.goal.name;
-    next.activeGoal.targetAmount = result.goal.targetAmount;
-    next.activeGoal.milestones = result.goal.milestones;
-    const currentSaved = calculateCurrentSaved(
-      next.amountEvents.filter((e) => e.goalId === next.activeGoal!.id),
-    );
-    next.activeGoal.status =
-      currentSaved >= result.goal.targetAmount ? "completed" : "active";
-    next.activeGoal.completedAt =
-      currentSaved >= result.goal.targetAmount
-        ? (options.now ?? new Date()).toISOString()
-        : null;
-    next.cookingPlan = result.cookingPlan;
-    return next;
-  }
-
-  next.activeGoal = result.goal;
-  next.cookingPlan = result.cookingPlan;
-  next.amountEvents = [result.openingEvent, ...next.amountEvents];
-  return next;
-}
-
-export function getMilestoneProgress(
-  milestones: GoalMilestone[],
-  savedAmount: number,
-) {
-  let currentAssigned = false;
-  return milestones.map((milestone) => {
-    const status =
-      savedAmount >= milestone.targetAmount
-        ? "completed"
-        : !currentAssigned
-          ? ((currentAssigned = true), "current")
-          : "upcoming";
-    return {
-      ...milestone,
-      remainingAmount: Math.max(0, milestone.targetAmount - savedAmount),
-      status,
-    };
-  });
-}
-
-export function applyGoalProgress(
-  goal: MoneyGoal,
-  savedAmount: number,
-  now = new Date(),
-) {
-  const isCompleted = savedAmount >= goal.targetAmount;
-  const newlyCompleted = isCompleted && goal.status !== "completed";
-  const completedAt = now.toISOString();
-  return {
-    newlyCompleted,
-    goal: {
-      ...goal,
-      status: isCompleted ? ("completed" as const) : ("active" as const),
-      completedAt: isCompleted ? goal.completedAt || completedAt : null,
-      milestones: goal.milestones.map((m) => ({
-        ...m,
-        completedAt:
-          savedAmount >= m.targetAmount
-            ? m.completedAt || completedAt
-            : m.completedAt || null,
-      })),
-    },
+  if (profile.status === "complete" && profile.inventoryReviewed && profile.hasNoInventory) next.inventory = [];
+  const now = (options.now ?? new Date()).toISOString();
+  next.weeklyGoal = {
+    ...next.weeklyGoal,
+    id: next.weeklyGoal.id || options.id || `week:${getWeekStart(now)}`,
+    weekStart: getWeekStart(now)!,
+    metric: profile.primaryGoalMetric,
+    target: profile.weeklyGoalTarget,
+    updatedAt: now,
   };
+  next.reminderPreferences = structuredClone(profile.reminders);
+  return next;
 }
 
 export function getWeekStart(input: Date | string = new Date()) {
@@ -347,13 +61,12 @@ export function recordCookingOutcome(
   existing: CookingOutcome[],
   input: {
     completionKey: string;
-    goalId: string | null;
     mealName?: string;
     source?: string;
-    eatingOutCost?: number;
-    homeCookCost?: number;
-    estimatedSaving?: number;
-    actualDeposit?: number;
+    ingredientCost?: number;
+    servingsCooked?: number;
+    servingsEaten?: number;
+    expAwarded?: number;
   },
   options: { id?: string; now?: Date } = {},
 ) {
@@ -365,49 +78,22 @@ export function recordCookingOutcome(
       accepted: false as const,
       reason: input.completionKey ? "duplicate" : "invalid_identity",
       outcome: null,
-      amountEvents: [] as AmountEvent[],
     };
   const now = options.now ?? new Date();
   const createdAt = now.toISOString();
   const id = options.id || `meal_${now.getTime()}`;
-  const estimatedSaving = nonNegative(input.estimatedSaving);
-  const actualDeposit = nonNegative(input.actualDeposit);
-  const mealDeposit = Math.min(actualDeposit, estimatedSaving);
-  const extraDeposit = Math.max(0, actualDeposit - estimatedSaving);
   const outcome: CookingOutcome = {
     id,
     completionKey: input.completionKey,
-    goalId: input.goalId,
     mealName: input.mealName || "自煮料理",
     source: input.source || "manual",
-    eatingOutCost: nonNegative(input.eatingOutCost),
-    homeCookCost: nonNegative(input.homeCookCost),
-    estimatedSaving,
-    actualDeposit,
-    mealDeposit,
-    extraDeposit,
+    ingredientCost: nonNegative(input.ingredientCost),
+    servingsCooked: Math.max(1, nonNegative(input.servingsCooked, 1)),
+    servingsEaten: nonNegative(input.servingsEaten, 1),
+    expAwarded: nonNegative(input.expAwarded),
     createdAt,
   };
-  const amountEvents: AmountEvent[] = [];
-  if (input.goalId && mealDeposit)
-    amountEvents.push({
-      id: `${id}_meal`,
-      goalId: input.goalId,
-      outcomeId: id,
-      type: "meal_deposit",
-      amount: mealDeposit,
-      createdAt,
-    });
-  if (input.goalId && extraDeposit)
-    amountEvents.push({
-      id: `${id}_extra`,
-      goalId: input.goalId,
-      outcomeId: id,
-      type: "extra_deposit",
-      amount: extraDeposit,
-      createdAt,
-    });
-  return { accepted: true as const, reason: null, outcome, amountEvents };
+  return { accepted: true as const, reason: null, outcome };
 }
 
 export function recordMealProgress(
@@ -583,6 +269,7 @@ export function createSeedState(): AppState {
       addedDate,
     ]) => ({
       id: String(id),
+      ingredientKey: String(name),
       name: String(name),
       chamber: chamber as "cold" | "frozen",
       qty: Number(qty),
@@ -590,6 +277,9 @@ export function createSeedState(): AppState {
       daysLeft: Number(daysLeft),
       image: legacyInventoryImages[String(id)] || image,
       addedDate: String(addedDate),
+      expiresOn: new Date(Date.UTC(2026, 5, Number(String(addedDate).slice(-2)) + Number(daysLeft))).toISOString().slice(0, 10),
+      lastConfirmedAt: "2026-06-26T00:00:00.000Z",
+      estimatedValue: Number(savings),
       roi: { savings: Number(savings), sodium: 100, fat: 5 },
       storageProtocol:
         chamber === "frozen"
@@ -651,12 +341,24 @@ export function createSeedState(): AppState {
     },
   ];
   return {
-    version: 1,
+    version: 2,
     session: { user: null },
-    activeGoal: null,
-    archivedGoals: [],
-    amountEvents: [],
-    cookingPlan: null,
+    growth: {
+      totalExp: 0,
+      rank: { level: 1, name: "初火學徒", threshold: 0, nextThreshold: 100 },
+      nextBadge: { badgeKey: "cooking-1", title: "第一道火光", current: 0, target: 1 },
+    },
+    weeklyGoal: {
+      id: "week-seed",
+      weekStart: getWeekStart(new Date())!,
+      metric: "cooking_sessions",
+      target: 1,
+      progress: 0,
+      rewardGrantedAt: null,
+      updatedAt: new Date().toISOString(),
+    },
+    expEvents: [],
+    badgeAwards: [],
     cookingOutcomes: [],
     habitProgress: { totalMeals: 0, weeklyCompletions: {}, events: [] },
     healthAssets: {
@@ -758,83 +460,9 @@ export class CooCooService {
     this.repository.write(next);
     return {
       profile: structuredClone(profile),
-      goal: structuredClone(next.activeGoal),
-      cookingPlan: structuredClone(next.cookingPlan),
+      growth: structuredClone(next.growth),
+      weeklyGoal: structuredClone(next.weeklyGoal),
     };
-  }
-  createGoal(draft: GoalDraft) {
-    const s = this.state();
-    const result = createGoalFromDraft(draft, {
-      id: this.runtime.id(),
-      now: this.runtime.now(),
-    });
-    if (!result.valid) return result;
-    if (s.activeGoal)
-      s.archivedGoals.unshift({ ...s.activeGoal, status: "archived" });
-    s.activeGoal = result.goal;
-    s.cookingPlan = result.cookingPlan;
-    s.amountEvents = [result.openingEvent];
-    this.repository.write(s);
-    return result;
-  }
-  adjustGoal(patch: {
-    targetAmount?: number;
-    targetDate?: string | null;
-    desiredSaved?: number;
-    homeCookBudget?: number;
-    weeklyCookingMeals?: number;
-  }) {
-    const s = this.state();
-    if (!s.activeGoal) throw new Error("GOAL_NOT_FOUND");
-    const now = this.runtime.now().toISOString();
-    if (patch.targetAmount)
-      s.activeGoal.targetAmount = nonNegative(patch.targetAmount);
-    if (patch.targetDate !== undefined)
-      s.activeGoal.targetDate = patch.targetDate;
-    if (patch.desiredSaved !== undefined) {
-      const adj = createBalanceAdjustment(
-        s.amountEvents.filter((e) => e.goalId === s.activeGoal!.id),
-        patch.desiredSaved,
-      );
-      if (adj.amount)
-        s.amountEvents.push({
-          id: this.runtime.id(),
-          goalId: s.activeGoal.id,
-          type: "balance_adjustment",
-          amount: adj.amount,
-          createdAt: now,
-        });
-    }
-    if (s.cookingPlan) {
-      if (patch.homeCookBudget !== undefined)
-        s.cookingPlan.homeCookBudget = nonNegative(patch.homeCookBudget);
-      if (patch.weeklyCookingMeals !== undefined)
-        s.cookingPlan.weeklyCookingMeals = nonNegative(
-          patch.weeklyCookingMeals,
-        );
-      s.cookingPlan.estimatedSavingPerMeal = calculateEstimatedSaving(
-        s.cookingPlan.eatingOutCost,
-        s.cookingPlan.homeCookBudget,
-      );
-      s.cookingPlan.updatedAt = now;
-    }
-    s.activeGoal = createMilestones(s.activeGoal.targetAmount).milestones.length
-      ? {
-          ...applyGoalProgress(
-            {
-              ...s.activeGoal,
-              milestones: createMilestones(s.activeGoal.targetAmount)
-                .milestones,
-            },
-            calculateCurrentSaved(
-              s.amountEvents.filter((e) => e.goalId === s.activeGoal!.id),
-            ),
-            this.runtime.now(),
-          ).goal,
-        }
-      : s.activeGoal;
-    this.repository.write(s);
-    return s.activeGoal;
   }
   addInventory(item: Omit<InventoryItem, "id">) {
     const s = this.state();
@@ -908,50 +536,52 @@ export class CooCooService {
   }
   completeCooking(input: {
     completionKey: string;
+    mealTaskId?: string;
     recipe: Recipe;
     ingredientIds: string[];
-    homeCookCost: number;
-    actualDeposit: number;
+    ingredientCost: number;
+    comparisonMealPrice?: number;
+    trackCost: boolean;
     foodSafe: boolean;
     vegetables: boolean;
     lowOil: boolean;
     mindfulSeasoning: boolean;
+    usedExpiringIngredient: boolean;
+    completedDoubleMeal: boolean;
     servingsCooked?: number;
     servingsEaten?: number;
   }) {
     const s = this.state();
-    const estimated = s.cookingPlan
-      ? calculateEstimatedSaving(
-          s.cookingPlan.eatingOutCost,
-          input.homeCookCost,
-        )
-      : 0;
+    const servingsCooked = input.servingsCooked ?? 1;
+    const servingsEaten = input.servingsEaten ?? 1;
+    const expTypes = [
+      "cooking_completed" as const,
+      ...(input.usedExpiringIngredient ? ["expiring_ingredient_used" as const] : []),
+      ...(input.completedDoubleMeal ? ["double_meal_completed" as const] : []),
+    ];
+    const expAwarded = expTypes.reduce((total, type) => total + ({ cooking_completed: 30, expiring_ingredient_used: 10, double_meal_completed: 20 })[type], 0);
     const result = recordCookingOutcome(
       s.cookingOutcomes,
       {
         completionKey: input.completionKey,
-        goalId: s.activeGoal?.id || null,
         mealName: input.recipe.title,
         source: "recipe",
-        eatingOutCost: s.cookingPlan?.eatingOutCost || 0,
-        homeCookCost: input.homeCookCost,
-        estimatedSaving: estimated,
-        actualDeposit: input.actualDeposit,
+        ingredientCost: input.ingredientCost,
+        servingsCooked,
+        servingsEaten,
+        expAwarded,
       },
       { id: this.runtime.id(), now: this.runtime.now() },
     );
     if (!result.accepted) return result;
-    const servingsCooked = input.servingsCooked ?? 1;
-    const servingsEaten = input.servingsEaten ?? 1;
     const servingResult = completeCookingSession(
-      { completedOperationIds: [], servings: s.mealServings ?? [], savingsEvents: s.savingsEvents ?? [] },
-      { operationId: input.completionKey, sessionId: result.outcome.id, servingsCooked, servingsEaten, outsideMealPrice: s.cookingPlan?.eatingOutCost || 0, ingredientCost: input.homeCookCost, confirmedSavings: input.actualDeposit },
+      { completedOperationIds: s.cookingOutcomes.map((outcome) => outcome.completionKey), servings: s.mealServings ?? [], cookingCosts: s.cookingCosts ?? [] },
+      { operationId: input.completionKey, sessionId: result.outcome.id, servingsCooked, servingsEaten, ingredientCost: input.ingredientCost, comparisonMealPrice: input.comparisonMealPrice, trackCost: input.trackCost },
       this.runtime.now().toISOString(),
     );
     s.mealServings = servingResult.servings.map((serving) => ({ ...serving, vegetableKeys: input.vegetables && serving.status === "eaten" ? ["reported-vegetable"] : [] }));
-    s.savingsEvents = servingResult.savingsEvents;
+    s.cookingCosts = servingResult.cookingCosts;
     s.cookingOutcomes.push(result.outcome);
-    s.amountEvents.push(...result.amountEvents);
     s.inventory = s.inventory.filter(
       (i) => !input.ingredientIds.includes(i.id),
     );
@@ -977,16 +607,49 @@ export class CooCooService {
       s.habitProgress = extra.habitProgress;
       s.healthAssets = extra.healthAssets;
     }
-    if (s.activeGoal)
-      s.activeGoal = applyGoalProgress(
-        s.activeGoal,
-        calculateCurrentSaved(
-          s.amountEvents.filter((e) => e.goalId === s.activeGoal!.id),
-        ),
-        this.runtime.now(),
-      ).goal;
+    for (const type of expTypes) {
+      s.expEvents = awardExp(s.expEvents, { operationId: input.completionKey, type, sourceId: result.outcome.id }, this.runtime.now().toISOString()).events;
+    }
+    s.weeklyGoal.progress += s.weeklyGoal.metric === "cooking_sessions" ? 1 : servingsEaten;
+    const weekly = grantWeeklyGoalReward(s.weeklyGoal, s.expEvents, `${s.weeklyGoal.id}:reward`, this.runtime.now().toISOString());
+    s.weeklyGoal = weekly.goal;
+    s.expEvents = weekly.events;
+    const counters = {
+      cooking: s.cookingOutcomes.length,
+      rhythm: s.expEvents.filter((event) => event.type === "weekly_goal_completed").length,
+      wasteLess: s.expEvents.filter((event) => event.type === "expiring_ingredient_used" || event.type === "prepared_serving_eaten").length,
+      exploration: new Set(s.cookingOutcomes.map((outcome) => outcome.mealName)).size,
+    };
+    s.badgeAwards = awardBadges(s.badgeAwards, counters, this.runtime.now().toISOString()).awards;
+    s.growth = deriveGrowthProfile(s.expEvents, s.badgeAwards, counters);
+    if (input.mealTaskId) {
+      s.mealTasks = (s.mealTasks ?? []).map((task) =>
+        task.id === input.mealTaskId
+          ? { ...task, status: "complete" as const, revision: task.revision + 1, updatedAt: this.runtime.now().toISOString() }
+          : task,
+      );
+    }
     this.repository.write(s);
     return result;
+  }
+  eatPreparedServing(servingId: string, operationId: string) {
+    const s = this.state();
+    if (s.expEvents.some((event) => event.operationId === operationId && event.type === "prepared_serving_eaten")) return { accepted: false as const, reason: "duplicate" };
+    const serving = (s.mealServings ?? []).find((item) => item.id === servingId);
+    if (!serving || serving.status !== "prepared_inventory") throw new Error("PREPARED_SERVING_NOT_FOUND");
+    const now = this.runtime.now().toISOString();
+    serving.status = "eaten";
+    serving.eatenAt = now;
+    s.expEvents = awardExp(s.expEvents, { operationId, type: "prepared_serving_eaten", sourceId: serving.id }, now).events;
+    if (s.weeklyGoal.metric === "self_cooked_servings") s.weeklyGoal.progress += 1;
+    const weekly = grantWeeklyGoalReward(s.weeklyGoal, s.expEvents, `${s.weeklyGoal.id}:reward`, now);
+    s.weeklyGoal = weekly.goal;
+    s.expEvents = weekly.events;
+    const counters = { cooking: s.cookingOutcomes.length, rhythm: s.expEvents.filter((event) => event.type === "weekly_goal_completed").length, wasteLess: s.expEvents.filter((event) => event.type === "expiring_ingredient_used" || event.type === "prepared_serving_eaten").length, exploration: new Set(s.cookingOutcomes.map((outcome) => outcome.mealName)).size };
+    s.badgeAwards = awardBadges(s.badgeAwards, counters, now).awards;
+    s.growth = deriveGrowthProfile(s.expEvents, s.badgeAwards, counters);
+    this.repository.write(s);
+    return { accepted: true as const, serving: structuredClone(serving), expAwarded: 10 };
   }
   saveShopping(item: Partial<ShoppingItem> & Pick<ShoppingItem, "name">) {
     const s = this.state();
@@ -1020,6 +683,7 @@ export class CooCooService {
     selected.forEach((i) =>
       s.inventory.push({
         id: this.runtime.id(),
+        ingredientKey: i.name,
         name: i.name,
         chamber: "cold",
         qty: i.qty,
@@ -1027,12 +691,33 @@ export class CooCooService {
         daysLeft: 7,
         image,
         addedDate: dateOnly(this.runtime.now())!,
+        expiresOn: dateOnly(new Date(this.runtime.now().getTime() + 7 * DAY_MS)),
+        lastConfirmedAt: this.runtime.now().toISOString(),
+        estimatedValue: Math.max(50, i.estCost),
         roi: { savings: Math.max(50, i.estCost), sodium: 100, fat: 5 },
         storageProtocol: "方形收納管理：先進先出，定期檢查保鮮期。",
         boxSize: "M",
       }),
     );
     s.shoppingItems = s.shoppingItems.filter((i) => !i.checked);
+    const bought = selected.map((item) => ({ ...item, remaining: item.qty }));
+    s.mealTasks = (s.mealTasks ?? []).map((task) => {
+      const shortages = task.shortages.map((shortage) => {
+        let needed = shortage.quantity;
+        for (const item of bought.filter((candidate) => candidate.unit === shortage.unit && sameIngredient({ ingredientKey: candidate.name, name: candidate.name }, shortage))) {
+          const used = Math.min(needed, item.remaining);
+          needed -= used;
+          item.remaining -= used;
+          if (needed <= 0) break;
+        }
+        return needed <= 0
+          ? { ...shortage, resolution: "bought" as const }
+          : needed < shortage.quantity
+            ? { ...shortage, quantity: needed, resolution: "needed" as const }
+            : shortage;
+      });
+      return { ...task, shortages, status: shortages.every((item) => item.resolution === "bought" || item.resolution === "replaced") ? "ready" as const : task.status, revision: task.revision + (shortages.some((item,index) => item.resolution !== task.shortages[index].resolution) ? 1 : 0), updatedAt: this.runtime.now().toISOString() };
+    });
     this.repository.write(s);
     return { count: selected.length, items: selected };
   }

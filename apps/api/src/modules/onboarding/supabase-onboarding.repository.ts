@@ -9,13 +9,14 @@ export class SupabaseOnboardingRepository {
   }
   async read(userId: string) {
     const client = getSupabaseAdmin();
-    const [profile, cookware, restrictions, goal] = await Promise.all([
+    const [profile, cookware, restrictions, weeklyGoal, reminders] = await Promise.all([
       client.from("profiles").select("*").eq("user_id", userId).maybeSingle(),
       client.from("cookware").select("*").eq("user_id", userId),
       client.from("dietary_restrictions").select("*").eq("user_id", userId),
-      client.from("goals").select("*").eq("user_id", userId).eq("status", "active").maybeSingle(),
+      client.from("weekly_goals_v2").select("*").eq("user_id", userId).order("week_start", { ascending: false }).limit(1).maybeSingle(),
+      client.from("notification_preferences").select("*").eq("user_id", userId).maybeSingle(),
     ]);
-    for (const result of [profile, cookware, restrictions, goal]) if (result.error) throw result.error;
-    return { profile: profile.data, cookware: cookware.data, restrictions: restrictions.data, goal: goal.data };
+    for (const result of [profile, cookware, restrictions, weeklyGoal, reminders]) if (result.error) throw result.error;
+    return { profile: profile.data, cookware: cookware.data, restrictions: restrictions.data, weeklyGoal: weeklyGoal.data, reminders: reminders.data };
   }
 }

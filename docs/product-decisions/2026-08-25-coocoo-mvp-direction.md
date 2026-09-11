@@ -1,5 +1,7 @@
 # CooCoo MVP 產品方向決策紀錄
 
+> **已由 2026-09-11 CooCoo 1.0 品牌與產品重整決策取代。** 本文件只保留為版本歷史；圓夢、願望金額、入帳、必填預算、`/dream` 與 `/goals` 不再是 1.0 產品或資料模型。唯一現行語言以 `CONTEXT.md` 與 [`2026-09-11-coocoo-v1-brand-product-reset.md`](./2026-09-11-coocoo-v1-brand-product-reset.md) 為準。
+
 - 日期：2026-08-25
 - 文件狀態：產品方向與版本整合策略已確認；實作進度見 [`../PROJECT_HANDOFF.md`](../PROJECT_HANDOFF.md)
 - 比較基準：`main@a10c6b7`、`legacy-720-development@7862ce1`

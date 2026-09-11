@@ -224,3 +224,231 @@
 .font-cedarville {
   font-family: 'Cedarville Cursive', cursive;
 }
+
+/* CooCoo 1.0 five-step onboarding keeps the production card language. */
+.onboarding-topbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+  padding: 4px 2px 0;
+}
+
+.onboarding-topbar strong {
+  display: block;
+  max-width: 360px;
+  color: #293c4e;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.onboarding-topbar button {
+  flex-shrink: 0;
+  border: 0;
+  background: transparent;
+  padding: 8px;
+  color: #8a8375;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.onboarding-shell > .onboarding-progress {
+  display: block;
+  height: 5px;
+  margin-bottom: 14px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e8deca;
+}
+
+.onboarding-shell > .onboarding-progress > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #9a442d;
+  transition: width 0.3s ease;
+}
+
+.onboarding-card {
+  min-height: 560px;
+  border: 1px solid #e7dac2;
+  border-radius: 28px;
+  background: #fffdf6;
+  padding: 28px 24px 22px;
+  box-shadow: 0 20px 60px rgb(84 63 39 / 0.1);
+}
+
+.onboarding-card h1 {
+  margin: 0 0 10px;
+  color: #293c4e;
+  font-family: Georgia, "Noto Serif TC", serif;
+  font-size: clamp(25px, 7vw, 34px);
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+
+.onboarding-card > p:not(.eyebrow, .onboarding-error, .onboarding-note) {
+  margin: 0 0 22px;
+  color: #716b60;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.onboarding-card > label,
+.inventory-grid label {
+  display: grid;
+  gap: 7px;
+  margin-top: 16px;
+  color: #5e5a50;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.onboarding-card input:not([type="checkbox"], [type="range"]),
+.onboarding-card select {
+  width: 100%;
+  min-height: 46px;
+  border: 1px solid #d9cbb2;
+  border-radius: 14px;
+  background: #fff;
+  padding: 10px 12px;
+  color: #293c4e;
+  outline: none;
+}
+
+.onboarding-card input:not([type="checkbox"], [type="range"]):focus-visible,
+.onboarding-card select:focus-visible,
+.onboarding-card button:focus-visible {
+  border-color: #9a442d;
+  box-shadow: 0 0 0 4px rgb(154 68 45 / 0.14);
+  outline: none;
+}
+
+.onboarding-card input[type="range"] {
+  width: 100%;
+  accent-color: #9a442d;
+}
+
+.onboarding-card fieldset {
+  min-width: 0;
+  margin: 20px 0 0;
+  border: 0;
+  padding: 0;
+}
+
+.onboarding-card legend {
+  color: #5e5a50;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.onboarding-card .choice-grid {
+  margin-top: 9px;
+}
+
+.onboarding-card .choice-grid button {
+  justify-content: center;
+  text-align: center;
+}
+
+.inventory-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 10px;
+  margin-top: 4px;
+}
+
+.inventory-grid label:first-child,
+.inventory-grid label:last-child {
+  grid-column: 1 / -1;
+}
+
+.check-row {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  border: 1px solid #e7dac2;
+  border-radius: 13px;
+  background: #fff;
+  padding: 9px 12px;
+  color: #34465b;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.check-row input {
+  width: 18px;
+  height: 18px;
+  accent-color: #55755b;
+}
+
+.onboarding-card fieldset small {
+  display: block;
+  margin-top: 9px;
+  color: #817a6e;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.onboarding-note {
+  margin: 14px 0 0;
+  border-left: 3px solid #55755b;
+  border-radius: 0 12px 12px 0;
+  background: #f2f5ed;
+  padding: 11px 13px;
+  color: #386753;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.55;
+}
+
+.onboarding-error {
+  margin: 14px 0 0;
+  border-radius: 12px;
+  background: #fde5df;
+  padding: 12px;
+  color: #8f2f22;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.onboarding-card .onboarding-actions {
+  margin-top: 28px;
+  border-top: 1px solid #eee5d6;
+  padding-top: 16px;
+}
+
+.onboarding-card .onboarding-actions > button:not(.primary-btn) {
+  border: 0;
+  background: transparent;
+  padding: 10px 12px;
+  color: #857e72;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.onboarding-card .secondary-btn {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+}
+
+@media (max-width: 520px) {
+  .onboarding-shell {
+    padding: 12px 10px 40px;
+  }
+
+  .onboarding-card {
+    min-height: calc(100vh - 102px);
+    border-radius: 24px;
+    padding: 24px 18px 20px;
+  }
+
+  .onboarding-topbar strong {
+    font-size: 11px;
+  }
+}

@@ -2,8 +2,8 @@ export const appRoutePaths = {
   today: "/today",
   shopping: "/shopping",
   fridge: "/fridge",
-  kitchen: "/kitchen",
-  dream: "/dream",
+  recipes: "/recipes",
+  me: "/me",
   onboarding: "/onboarding",
 } as const;
 

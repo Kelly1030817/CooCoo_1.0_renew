@@ -1,16 +1,14 @@
-import { lazy, Suspense, useContext, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useContext, useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { stateQueryKey, useAppState } from "@/entities/app-state/model";
 import { useAppRoute } from "@/app/routing/useAppRoute";
 import { Header } from "@/widgets/app-shell/Header";
 import { BottomNav } from "@/widgets/app-shell/BottomNav";
 import { OnboardingPage } from "@/pages/onboarding/OnboardingPage";
-import { hasSavedOnboardingDraft, readOnboardingDraft, saveOnboardingDraft } from "@/shared/model/onboarding-draft";
+import { readOnboardingDraft } from "@/shared/model/onboarding-draft";
 import { startGoogleAuth, supabase } from "@/shared/auth/supabase";
 import { AuthRecoveryPanel } from "@/shared/auth/AuthRecoveryPanel";
-import { api, json } from "@/shared/api/client";
 import { UiContext } from "@/app/ui-context";
-import type { OnboardingProfile } from "@coocoo/contracts";
 
 const pages = {
   today: lazy(() =>
@@ -22,93 +20,21 @@ const pages = {
   fridge: lazy(() =>
     import("@/pages/fridge/FridgePage").then(({ FridgePage }) => ({ default: FridgePage })),
   ),
-  kitchen: lazy(() =>
-    import("@/pages/kitchen/KitchenPage").then(({ KitchenPage }) => ({ default: KitchenPage })),
+  recipes: lazy(() =>
+    import("@/pages/recipes/RecipesPage").then(({ RecipesPage }) => ({ default: RecipesPage })),
   ),
-  dream: lazy(() =>
-    import("@/pages/roi/RoiPage").then(({ RoiPage }) => ({ default: RoiPage })),
+  me: lazy(() =>
+    import("@/pages/me/MePage").then(({ MePage }) => ({ default: MePage })),
   ),
 };
 export default function App() {
   const { route, navigate } = useAppRoute();
   const queryClient = useQueryClient();
   const ui = useContext(UiContext);
-  const goalRepairAttempted = useRef(false);
   const [onboardingComplete, setOnboardingComplete] = useState(() => readOnboardingDraft().status === "complete");
   const [authStatus, setAuthStatus] = useState<"loading" | "signed-in" | "signed-out">(() => supabase ? "loading" : "signed-out");
   const [reauthBusy, setReauthBusy] = useState(false);
   const [reauthError, setReauthError] = useState("");
-  const [checkingCloud, setCheckingCloud] = useState(() => !onboardingComplete && Boolean(supabase));
-  const [goalSyncError, setGoalSyncError] = useState("");
-  useEffect(() => {
-    if (onboardingComplete || !supabase) return;
-    void supabase.auth.getSession().then(async ({ data }) => {
-      if (!data.session) {
-        setCheckingCloud(false);
-        return;
-      }
-      try {
-        const bundle = await api<{
-          profile: {
-            household_servings: number;
-            daily_meal_budget: number;
-            outside_meal_price: number;
-            weekly_home_cook_target: number;
-            onboarding_status: "draft" | "complete";
-            onboarding_step: number;
-            planned_meal_slots: OnboardingProfile["plannedMealSlots"];
-            preferred_flavors: string[];
-          };
-          cookware: Array<{ type: string; capacity: string | null; limitations: string[] }>;
-          restrictions: Array<{
-            id: string;
-            label: string;
-            kind: "allergy" | "avoid" | "preference";
-            ingredient_keys: string[];
-            is_hard_limit: boolean;
-          }>;
-          goal: { name: string; target_amount: number } | null;
-        }>("/onboarding");
-
-        const localDraft = readOnboardingDraft();
-        const hasActiveDraft = hasSavedOnboardingDraft() && localDraft.status === "draft";
-
-        if (bundle.profile?.onboarding_status === "complete" && !hasActiveDraft) {
-          const profile: OnboardingProfile = {
-            status: "complete",
-            currentStep: 10,
-            householdServings: bundle.profile.household_servings,
-            cookware: bundle.cookware.map((item) => ({
-              type: item.type,
-              capacity: item.capacity || undefined,
-              limitations: item.limitations || [],
-            })),
-            restrictions: bundle.restrictions.map((item) => ({
-              id: item.id,
-              label: item.label,
-              kind: item.kind,
-              ingredientKeys: item.ingredient_keys,
-              isHardLimit: item.is_hard_limit,
-            })),
-            preferredFlavors: bundle.profile.preferred_flavors || [],
-            inventoryReviewed: true,
-            hasNoInventory: false,
-            dailyMealBudget: bundle.profile.daily_meal_budget,
-            outsideMealComparisonPrice: bundle.profile.outside_meal_price,
-            plannedMealSlots: bundle.profile.planned_meal_slots,
-            weeklyHomeCookTarget: bundle.profile.weekly_home_cook_target,
-            dreamName: bundle.goal?.name || "我的願望",
-            dreamTargetAmount: bundle.goal?.target_amount || 0,
-            completedAt: new Date().toISOString(),
-          };
-          saveOnboardingDraft(profile);
-          setOnboardingComplete(true);
-        }
-      } finally {
-        setCheckingCloud(false);
-      }
-    }).catch(() => setCheckingCloud(false));
-  }, [onboardingComplete]);
   useEffect(() => {
     if (!supabase) return;
     let active = true;
@@ -126,23 +52,6 @@ export default function App() {
   }, [queryClient]);
   const stateEnabled = onboardingComplete && (!supabase || authStatus === "signed-in");
   const { data, isLoading, error } = useAppState(stateEnabled);
-  useEffect(() => {
-    const profile = readOnboardingDraft();
-    if (!onboardingComplete || !data || data.activeGoal || profile.status !== "complete" || goalRepairAttempted.current) return;
-    goalRepairAttempted.current = true;
-    const repair = async () => {
-      const usesMockApi = import.meta.env.DEV && import.meta.env.VITE_USE_REAL_API !== "true";
-      if (!usesMockApi) {
-        const session = (await supabase?.auth.getSession())?.data.session;
-        if (!session) return;
-      }
-      await api("/onboarding", json("PUT", profile));
-      await queryClient.invalidateQueries({ queryKey: stateQueryKey });
-    };
-    void repair().catch((reason) => {
-      setGoalSyncError(reason instanceof Error ? reason.message : "圓夢目標同步失敗");
-    });
-  }, [data, onboardingComplete, queryClient]);
   const restartGoogleAuth = async () => {
     setReauthBusy(true);
     setReauthError("");
@@ -154,7 +63,7 @@ export default function App() {
     }
   };
   const Page = route !== "onboarding" ? pages[route] : null;
-  if(checkingCloud || (onboardingComplete && authStatus === "loading"))return <main className="onboarding-shell"><p className="eyebrow">CooCoo</p><h1 className="text-2xl font-extrabold text-slate-blue">正在找回你的通行證…</h1></main>;
+  if(onboardingComplete && authStatus === "loading")return <main className="onboarding-shell"><p className="eyebrow">CooCoo</p><h1 className="text-2xl font-extrabold text-slate-blue">正在找回你的主廚檔案…</h1></main>;
   if(onboardingComplete && supabase && authStatus === "signed-out")return <AuthRecoveryPanel busy={reauthBusy} error={reauthError} onGoogleSignIn={() => { void restartGoogleAuth(); }} />;
 
   const localDraft = readOnboardingDraft();
@@ -168,10 +77,10 @@ export default function App() {
         canExit={onboardingComplete}
         onExit={() => {
           navigate("today");
-          ui.toast("相談室草稿已安全暫存；完成第 10 步立約才會正式更新圓夢看板喔！");
+          ui.toast("設定草稿已安全暫存；完成五步後才會成立主廚檔案。");
         }}
         onComplete={() => {
-          navigate("dream");
+          navigate("me");
           setOnboardingComplete(true);
         }}
       />
@@ -180,11 +89,6 @@ export default function App() {
     <>
       <Header enabled={stateEnabled} onNavigate={navigate} />
       <main className="mx-auto w-full max-w-[1200px] min-w-0 flex-1 px-md py-md transition-all duration-300 md:px-lg md:py-lg">
-        {goalSyncError && (
-          <div role="alert" className="mb-md rounded-2xl bg-error-container p-md text-sm font-bold text-on-error-container">
-            圓夢目標尚未同步：{goalSyncError}
-          </div>
-        )}
         {isLoading ? (
           <div className="py-xl text-center text-sm font-bold text-on-surface-variant">
             載入 CooCoo 中…

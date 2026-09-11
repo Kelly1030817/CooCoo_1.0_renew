@@ -56,7 +56,7 @@ export function planningRoutes(deps:PlanningDependencies){
       const recipe=brand?scalePackage(brand,context.servings,context.inventory):await deps.repository.package(user.id,params.id);
       await deps.catalog?.assertAvailable(recipe);
       if(!Value.Check(RecipePackageSchema,recipe))throw new Error("RECIPE_PACKAGE_INVALID");
-      const check=evaluateRecipe(recipe,{restrictions:context.restrictions,cookwareTypes:context.cookwareTypes,dailyBudget:context.perMealBudget*recipe.servings,energyLevel:"normal"});
+      const check=evaluateRecipe(recipe,{restrictions:context.restrictions,cookwareTypes:context.cookwareTypes,dailyBudget:context.perMealBudget===null?null:context.perMealBudget*recipe.servings,energyLevel:"normal"});
       if(!check.eligible)throw new Error("NO_SAFE_RECIPE_AVAILABLE");
       return {data:scalePackage(recipe,recipe.servings,context.inventory)};
     })

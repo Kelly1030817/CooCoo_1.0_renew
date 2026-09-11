@@ -1,132 +1,77 @@
-# CooCoo integrated MVP handoff
+# CooCoo 1.0 實作交接
 
-Last verified: 2026-09-09 (Asia/Taipei)
+- 更新：2026-09-11
+- 現行產品依據：[`../CONTEXT.md`](../CONTEXT.md)、[`product-decisions/2026-09-11-coocoo-v1-brand-product-reset.md`](product-decisions/2026-09-11-coocoo-v1-brand-product-reset.md)
+- 工作分支：`codex/coocoo-v1-visual-lock-preview`（由 `main@d9bdec9` 建立）
+- 狀態：本機獨立 Preview 實作；尚未提交、推送、部署或套用 Supabase migration
 
-This is the canonical cross-model handoff. It summarizes decisions and evidence; it is not a verbatim chat transcript and contains no credentials.
+## 唯一產品方向
 
-## Product and success criteria
+「陪你從冰箱裡，煮出自己的生活節奏。」
 
-CooCoo serves budget-conscious renters and frequent takeout diners who want help deciding what to eat, shopping for the right quantities, cooking in a small kitchen, and seeing the money and healthy habits they actually achieved.
+精確冰箱 → 三道可行推薦 → 選食譜／補買 → 料理 → EXP／徽章 → 再次回來。
 
-The core loop is:
+五頁固定為今日、採買、冰箱、食譜、我的。CooCoo 1.0 沒有舊用戶相容期；圓夢、願望金額、入帳、強制預算與 `/goals` 已從現行 UI、API、contracts 及 core 移除。成本只是選用紀錄，不影響 EXP。
 
-`設定目標 → 決定今日／本週餐點 → 採買 → 入庫 → 離線料理 → 確認省錢 → 圓夢與健康進度`
+## 本機已實作
 
-Primary measures are fewer takeout meals and confirmed money saved. Health measures are self-cooked meals eaten and distinct vegetables actually eaten; the MVP must not estimate sodium, fat, disease risk, or medical outcomes.
+- 五步 Onboarding v2，包含手動／發票 OCR 精確冰箱與空箱路徑。
+- 五步 Onboarding、食譜與我的頁已鎖回正式站暖米白／陶土橘／深藍／鼠尾草綠色票與圓角卡片語言。
+- Today 三種固定推薦角色；空箱使用「從零也能開始」。
+- 找食譜／自由搭配、搜尋、分類、收藏、全符合優先、缺料與調整確認。
+- MealTask 串接食譜、採買與補貨；必買品項全數補齊後才進入 `ready`。
+- 料理完成以 operation ID 防重，扣庫存、建立已吃／熟食品項、可選成本、EXP、週進度與徽章。
+- 五職階、12 枚徽章、週獎勵最多一次、目標可調整且未達不扣分。
+- 提醒每週最多三則、每類一次、21:00–09:00 安靜；首次成功料理後才詢問 Web Push 權限。
+- 「我的」可逐類開關提醒，並提供料理歷程、可選成本、廚具、帳號與主廚檔案入口。
+- 冰箱即期食材可直接帶入食譜頁的自由搭配備料盤。
+- 主廚相談室最近 10 次可刪除；每日 30 則與月 NT$100 由預算閘門控制，失敗時明示規則型備援。
+- 未套用 migration：`supabase/migrations/20260911090000_coocoo_v2_growth_and_meal_tasks.sql`。
 
-## Confirmed decisions
+## 正式站合併矛盾修正
 
-- Build one integrated product on the TypeScript `main` architecture while selectively carrying over the mobile cards, 主廚相談室, 圓夢通行證, cooking steps, and celebration behavior from `legacy-720-development`.
-- Keep both original branches intact for comparison and recovery.
-- The fixed mobile navigation has five separate pages: 今日、採買、冰箱、廚房、圓夢. Page-specific UI and CSS must stay isolated.
-- Onboarding is mandatory and collects servings, cookware including a free-text `其他`, hard dietary restrictions, current ingredients, daily meal budget, meal slots, weekly cooking target, dream name/amount, and sign-in.
-- Recommendations must apply hard restrictions first, then cookware, expiring inventory, budget, time/energy, and cross-meal ingredient overlap.
-- Shopping advice gives ingredients and quantities only; real retailer products, live prices, promotions, and ordering are outside MVP.
-- Receipt OCR accepts itemized photos/screenshots, requires user correction and confirmation before inventory entry, and must not fake success.
-- Cooking uses one large step per screen, button alternatives for every voice command, timers, wake lock where available, and an offline package downloaded before cooking begins.
-- AI may require network access. The active cooking flow must remain usable after its core package is stored locally.
-- Developer controls are development-only. Invite administration is a protected owner function, not a developer menu.
+- Today 只保留下一餐的三種推薦角色，不再自動建立或顯示另一套週餐單；廚具設定統一放在「我的」。
+- 舊 Kitchen 已拆除；食譜頁的自由搭配只保留風格、備料盤、冰箱食材與產生建議，不再重複 Today、食譜庫或廚具管理。
+- 中文、英文與常見食材別名共用同一套核心判定，硬限制、搜尋覆蓋率、缺料與採買推薦不再各自維護別名。
+- AI 調整預覽必須存在、屬於同一食譜且未過期；無效預覽回傳 422，確認後的份數與食材才寫入 MealTask。
+- 部分補貨只抵扣實際數量並維持 `needs_shopping`；完全補齊才轉為 `ready`，料理完成後同交易轉為 `complete`。
+- 取消舊 Onboarding 預算後，以 `null` 表示未設定餐費限制，不再將極大假數字送入推薦或 AI 提示。
+- Onboarding 的週目標預設會實際套用「目前頻率 +1」；確認空箱會清除該帳號庫存，避免 Today 讀到不存在的食材。
+- 帳號匯出只讀新版週目標、EXP、徽章、成本、MealTask、提醒及相談資料，不再查詢已移除的 goals／savings tables。
 
-Definitions and invariants are in `CONTEXT.md`.
+## 現行 API
 
-## Branch roles
+所有端點使用 `/api/v1`。
 
-| Branch | Role | Rule |
-| --- | --- | --- |
-| `codex/coocoo-integrated-mvp` | Active integrated implementation | Continue work here. |
-| `main` | TypeScript contracts/core/API/Web baseline | Do not silently replace with legacy code. |
-| `legacy-720-development` | Rich legacy UI and behavior reference | Preserve unchanged; port only selected behavior. |
+- 帳號與設定：`/profile`、`/onboarding`、`/session`、`/weekly-goal`、`/settings/fridge`、`/settings/cookware`、`/settings/reminders`
+- 決策與餐單：`/meal-plans`、`/meal-decisions/today`
+- 食譜與任務：`/recipes/search`、`/recipes/:id/favorite`、`/recipes/generate`、`/meal-tasks`
+- 採買與庫存：`/shopping-items`、`/shopping/analyze`、`/shopping/restock`、`/inventory`
+- 發票：`/receipts`、`/receipts/:id/recognize`、`/receipts/:id/confirm`
+- 料理與同步：`/cooking/outcomes`、`/sync`、`/sync/conflicts`
+- 陪伴：`/chef-chat/sessions`、`/push-subscriptions`
 
-At this handoff, `main` and the integration branch shared commit `ebd8d49` before the three local handoff commits. No push or deployment is implied by these commits.
+## 驗證邊界
 
-## Verified implementation status
+- 2026-09-11 本機 `bun run verify`：145 tests、Web build、API typecheck 與 PGlite migration 全數通過。
+- Playwright 以 390 × 844 viewport 檢查五步 Onboarding、Today、採買、找食譜、自由搭配與我的；無瀏覽器 console error。這是模擬 viewport，不是真機驗收。
+- `bun run verify` 只證明本機 lint、測試、Web build、API typecheck 與 PGlite migration。
+- 發票 OCR、OpenRouter、Google OAuth、Push、離線重播與衝突處理仍需在核准的 Preview 網域接真實服務驗收。
+- iPhone Safari 與 Android Chrome 真機驗收未完成；viewport 模擬不能替代真機。
+- GitHub、Supabase 正式資料庫與 Production 必須在人工確認後另行核准。
 
-### Implemented and locally verified
+## 下一個核准關卡
 
-- Shared TypeBox contracts and core rules for onboarding, dietary restrictions, meal plans, ingredients, receipts, recipe packages, cooking sessions, servings, savings, offline operations, conflicts, and beta invites.
-- Elysia `/api/v1` backend with authenticated Supabase repositories for onboarding/profile, goals, inventory, shopping, settings, receipts, cooking completion, account export/deletion, AI usage, and invite administration.
-- Today decision and persisted weekly meal-plan APIs, idempotent weekly creation, quantity-aware inventory coverage, overlap rate, expiry warnings, postpone/specific-date/cancel operations, and optimistic concurrency conflicts.
-- OpenRouter shopping analysis receives the user's inventory, restrictions, and budget. It uses deterministic safe rules after provider failure and labels that fallback honestly.
-- OpenRouter recipe generation produces a full `RecipePackage`; fallback uses reviewed catalog or brand recipes and is never labeled as AI output.
-- OpenRouter receipt recognition parses structured OCR fields with per-field confidence and fails closed on invalid JSON, pure QR images, or non-itemized content.
-- Interactive OpenRouter work uses one idempotent ledger: shopping is capped at NT$40/month and 5 calls/user/day, recipe generation at NT$30/month and 3 calls/user/day, and receipt OCR at NT$30/month and 3 calls/user/day. Catalog remains capped at NT$50/month and all four uses share an NT$150 monthly ceiling.
-- Five real frontend routes with separate Today and Shopping CSS, mandatory ten-step onboarding with tag-based individual flavor input and custom cookware, auth recovery, card-based shopping UI, recipe package cooking flow, and dream dashboard integration.
-- The daily chef revisit applies hard dietary restrictions before offering its fixed low-energy recipe, persists weekly-target changes, records a planned takeout night by cancelling that meal without creating a charge, and routes small-purchase additions through the approved reminder and idempotent purchase operation.
-- PWA manifest/service worker, IndexedDB recipe packages, Cache Storage images, wake-lock attempt, voice commands where supported, and an offline operation queue foundation.
-- Published-recipe catalog: inventory-only and opt-in small-purchase recommendations, NT$100 user default, whole-package reference pricing, explicit dream-goal spending reminder, owner controls, quality/safety reports, and text-only scheduled generation with a NT$50 monthly operating cap. The Owner view reads the live budget and candidate limit, lists jobs and failures, and warns at 80% cost, after two hours without a heartbeat, and when reference prices approach or pass their 30-day expiry.
-- Demand-driven catalog jobs use three gates (deterministic rules, independent quality review, independent food-safety review), no more than 50 candidates per month, and defer budget-blocked work without consuming a retry.
-- Offline cooking replay is bound to the signed-in user and operation ID; unowned legacy operations require a visible preview and confirmation before adoption.
-- Local verification on 2026-09-09: `bun run verify` passed 142 tests across 25 files, lint, Web production build, API typecheck, and all migrations in PGlite, including the 25-price seed, canonical-key coverage, compatible priced units, and heating-equipment review instructions.
+1. 人工檢視本機五頁與五步 Onboarding。
+2. 在 iPhone Safari、Android Chrome 驗證 OCR、料理、Push、離線與返回流程。
+3. 通過後另行盤點 migration、GitHub 與部署差異，再請求套用或發布核准。
 
-### Cloud evidence
-
-- Supabase project `cpyvizycjvburtpljxiu` has the integrated schema, hardening, settings, catalog, OpenRouter budget/Cron, RPC-name repair, cooking-status repair, and completed-job cleanup migrations applied.
-- Catalog tables and private transaction implementations are live with browser execution revoked. The hourly Supabase Cron is active and `recipe_catalog_control.paused=false` after seed, price-reference, advisor, and cloud E2E checks passed.
-- The initial natural-operation baseline on 2026-09-08 had 7/7 successful HTTP responses, no unmet demand, one completed catalog job, four published recipes, no duplicate published titles, and NT$0.80663625 catalog usage with no reservation. The later production test reached 8/8 successful responses and created two real demand signatures. One new candidate remained queued after the quality reviewer rejected it, while published-title duplicates remained zero; catalog usage was NT$1.352085 with no unsettled reservation. A seven-run daily monitor begins on 2026-09-09 and will report the full week after its final run.
-- A rollback-only remote transaction verified goal create/update/read, immutable amount events, idempotent weekly plan creation, recipe persistence, and meal rescheduling without retaining test data.
-- A second rollback-only production transaction verified purchase, inventory deduction, cooking completion, and savings idempotency without retaining test data.
-- Sensitive RPC execution is restricted to database administration and `service_role`.
-- Security Advisor had one warning: leaked-password protection is disabled. Beta currently uses Passwordless/Google; enable it before offering password login.
-- Vercel production deployment is active at `https://coocoo-marketing.vercel.app`, routing `/api/v1/*` to `https://coocoo-1-0-renew.onrender.com/api/v1/:match*` with SPA fallback.
-
-### Awaiting verification or implementation
-
-- Google OAuth configuration exists, and local recovery tests pass, but a fresh end-to-end Google login must be rechecked in the target Preview domain before calling it complete.
-- Receipt upload/OCR/correction/confirmation needs full browser-to-cloud mobile acceptance with a real receipt image.
-- `/sync`, idempotent cooking replay, conflict acknowledgement, and legacy-operation preview are implemented locally; mobile reconnect acceptance remains pending.
-- Flight-mode cooking, timer restoration, missing-image fallback, wake-lock behavior, and one-time reconnect sync still require iPhone Safari and Android Chrome testing.
-- Render deployment and the Vercel production API rewrite are verified. Cold-start timing and the full mobile acceptance matrix remain pending.
-- Supabase Cron, not Render or Vercel Cron, owns the hourly wake-up. Render executes the protected worker with verified secrets. The catalog has three corrected curated seeds, one reviewed OpenRouter recipe, and a traceable 25-item starter-price dataset. The three earlier immutable seed versions are quarantined as replaced.
-- The brand marketing-site source has not been migrated into this TypeScript workspace; local `marketing-site/.next` and `coocoo-webapp/dist` are generated remnants, not source of truth.
-
-## Public API inventory
-
-All endpoints use `/api/v1` and the shared success/error envelopes.
-
-- Profile/auth data: `/profile`, `/onboarding`, `/session`
-- Planning: `/meal-plans`, `/meal-plans/meals/:id`, `/meal-decisions/today`
-- Shopping: `/shopping-items`, `/shopping/analyze`, `/shopping/restock`, `/shopping/parse`
-- Inventory/settings: `/inventory`, `/inventory/:id/rescue`, `/settings/fridge`, `/settings/cookware`
-- Receipts: `/receipts`, `/receipts/:id/recognize`, `/receipts/:id/confirm`
-- Recipes/cooking: `/recipes/generate`, `/recipes/:id/package`, `/cooking/outcomes`
-- Recipe catalog: `/settings/recipes`, `/recipes/recommendations`, `/recipes/:id/start`, `/recipes/:id/purchases`, `/recipes/:id/report`, `/admin/recipes/*`
-- Offline sync: `/sync`, `/sync/conflicts`, `/sync/conflicts/:id/acknowledge`
-- Goals/account/admin: `/goals`, `/goals/:id/amount-events`, `/exports`, `/admin/invites`
-
-`/sync` and recipe catalog/settings/admin endpoints are implemented. A dedicated `/dashboard` endpoint remains unimplemented; the current dashboard state is assembled through `/state`.
-
-## Local operation
-
-Requirements: Bun 1.3.x. Install dependencies with `bun install`.
-
-Run the API and Web in separate terminals:
+## 本機操作
 
 ```bash
 bun run --cwd apps/api dev
 bun run --cwd apps/web dev -- --host 127.0.0.1
+bun run verify
 ```
 
-- Web: `http://127.0.0.1:5173/today`
-- API health: `http://127.0.0.1:3000/api/v1/health`
-- Full local verification: `bun run verify`
-
-The Web uses `VITE_USE_REAL_API=true` in an ignored development-local file to proxy `/api` to port 3000. Use `.env.example` for variable names only.
-
-## Credential boundary
-
-- Browser-visible values: `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`.
-- Server-only values: `SUPABASE_SECRET_KEY`, legacy `SUPABASE_SERVICE_ROLE_KEY`, and `OPENROUTER_API_KEY`.
-- Never paste credential values into issues, documents, commits, screenshots, or model prompts. Keep them in ignored local files or deployment secret stores.
-- Google OAuth JSON and all `.env.local` files are intentionally ignored.
-
-## Recommended next delivery order
-
-1. Verify the 25-item starter-price seed in production and refresh or replace any retailer observation that changes.
-2. Run both recommendation modes, NT$100 default/save behavior, the dream-goal reminder, purchase confirmation, cooking completion, and idempotency through the production mobile UI.
-3. Run real receipt OCR from mobile upload through confirmed inventory entry and private-image access checks.
-4. Complete flight-mode cooking, legacy-operation preview, conflict acknowledgement, reconnect, OAuth, and cold-start acceptance on both target mobile browsers.
-5. Monitor the first natural-demand week, then give 10–30 invited testers access after the checklist in `docs/PREVIEW_SETUP.md` passes.
-
-## Handoff protocol
-
-Before changing code, read `AGENTS.md`, `CONTEXT.md`, and this file; inspect branch/status; then verify the exact module involved. After changing code, run relevant focused tests followed by `bun run verify`. Report local, cloud, Preview, and production evidence separately. Never infer deployment or user-visible completion from local tests.
+Web：`http://127.0.0.1:5173/today`；API health：`http://127.0.0.1:3000/api/v1/health`。

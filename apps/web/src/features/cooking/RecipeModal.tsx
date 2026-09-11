@@ -6,6 +6,7 @@ import { Modal, ModalHeader } from "@/shared/ui/Modal";
 import { UiContext } from "@/app/ui-context";
 import { useAppState, stateQueryKey } from "@/entities/app-state/model";
 import { enqueueOperation, markRecipePackageCompleted, saveRecipePackage } from "@/shared/offline/recipe-packages";
+import { requestFirstCookingPushPermission } from "./push-permission";
 import "./RecipeModal.css";
 
 export function RecipeModal({ ingredientIds, style, onClose, onComplete }: { ingredientIds: string[]; style: string; onClose: () => void; onComplete?: () => void }) {
@@ -30,9 +31,9 @@ export function RecipeModal({ ingredientIds, style, onClose, onComplete }: { ing
   return <Modal label={recipe.title} onClose={onClose} wide><ModalHeader title={recipe.title} kicker={`${recipe.totalMinutes} 分鐘 · ${recipe.servings} 人份 · NT$ ${recipe.estimatedCost}`} onClose={onClose} />{generation.notice&&<p className="rounded-xl bg-secondary/10 p-md text-xs text-on-surface-variant">{generation.notice}</p>}<div className="meal-tags">{recipe.cookwareTypes.map(item=><span key={item}>{item}</span>)}</div><ol className="mt-md space-y-sm">{recipe.steps.map(step => <li key={step.id} className="flex gap-sm rounded-2xl bg-surface-container-low p-md"><span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-extrabold text-white">{step.order}</span><p className="text-sm leading-6 text-slate-blue">{step.instruction}{step.safetyNote&&<small className="mt-1 block text-error">注意：{step.safetyNote}</small>}</p></li>)}</ol>{offlineError && <p role="alert" className="offline-error">{offlineError}</p>}<div className="mt-lg flex flex-col gap-sm sm:flex-row"><button onClick={async () => setGeneration(await api<RecipeGeneration>("/recipes/generate", json("POST", { operationId:crypto.randomUUID(),ingredientIds, style, excludeTitle: recipe.title })))} className="secondary-btn flex-1">換一道</button><button onClick={start} className="primary-btn flex-1">下載並開始料理</button></div></Modal>;
 }
 
-export function RecipePackageModal({ recipePackage, ingredientIds, onClose, onComplete }: { recipePackage: RecipePackage; ingredientIds: string[]; onClose: () => void; onComplete?: () => void }) {
+export function RecipePackageModal({ recipePackage, ingredientIds, mealTaskId, onClose, onComplete }: { recipePackage: RecipePackage; ingredientIds: string[]; mealTaskId?: string; onClose: () => void; onComplete?: () => void }) {
   const [savedPackage,setSavedPackage]=useState<RecipePackage|null>(null);const [error,setError]=useState("");
-  if(savedPackage)return <CookingMode recipePackage={savedPackage} ingredientIds={ingredientIds} onClose={onClose} onComplete={onComplete}/>;
+  if(savedPackage)return <CookingMode recipePackage={savedPackage} ingredientIds={ingredientIds} mealTaskId={mealTaskId} onClose={onClose} onComplete={onComplete}/>;
   const start=async()=>{setError("");try{setSavedPackage(await saveRecipePackage(recipePackage.catalogVersionId?await api<RecipePackage>(`/recipes/${recipePackage.catalogVersionId}/start`,json("POST",{})):recipePackage))}catch{setError("核心食譜未能存到這台裝置，尚未進入離線料理。");}};
   return <Modal label={recipePackage.title} onClose={onClose} wide><ModalHeader title={recipePackage.title} kicker={`${recipePackage.totalMinutes} 分鐘 · ${recipePackage.servings} 人份 · NT$ ${recipePackage.estimatedCost}`} onClose={onClose}/><div className="meal-tags"><span>{recipePackage.totalMinutes<=15?"快手餐":"低體力可選"}</span>{recipePackage.cookwareTypes.map(item=><span key={item}>{item}</span>)}</div><ol className="mt-md space-y-sm">{recipePackage.steps.map(step=><li key={step.id} className="rounded-2xl bg-surface-container-low p-md text-sm text-slate-blue">{step.order}. {step.instruction}</li>)}</ol>{error&&<p className="offline-error">{error}</p>}<button onClick={start} className="primary-btn mt-lg w-full">下載並開始料理</button></Modal>;
 }
@@ -96,7 +97,7 @@ function playTimerChime() {
   }
 }
 
-function CookingMode({ recipePackage, ingredientIds, onClose, onComplete }: { recipePackage: RecipePackage; ingredientIds: string[]; onClose: () => void; onComplete?: () => void }) {
+function CookingMode({ recipePackage, ingredientIds, mealTaskId, onClose, onComplete }: { recipePackage: RecipePackage; ingredientIds: string[]; mealTaskId?: string; onClose: () => void; onComplete?: () => void }) {
   const [stepIndex, setStepIndex] = useState(0);
   const step = recipePackage.steps[stepIndex];
   const [secondsLeft, setSecondsLeft] = useState<number | null>(step?.timerSeconds ?? null);
@@ -179,7 +180,7 @@ function CookingMode({ recipePackage, ingredientIds, onClose, onComplete }: { re
     return cleanName.length >= 2 && normInstr.includes(cleanName);
   });
 
-  if (finishing) return <CookingCompleteModal recipePackage={recipePackage} ingredientIds={ingredientIds} onClose={onClose} onComplete={onComplete} />;
+  if (finishing) return <CookingCompleteModal recipePackage={recipePackage} ingredientIds={ingredientIds} mealTaskId={mealTaskId} onClose={onClose} onComplete={onComplete} />;
 
   return (
     <div className="cooking-mode" role="dialog" aria-modal="true" aria-label={`${recipePackage.title}料理模式`}>
@@ -315,14 +316,12 @@ function CookingMode({ recipePackage, ingredientIds, onClose, onComplete }: { re
   );
 }
 
-function CookingCompleteModal({ recipePackage, ingredientIds, onClose, onComplete }: { recipePackage: RecipePackage; ingredientIds: string[]; onClose: () => void; onComplete?: () => void }) {
+function CookingCompleteModal({ recipePackage, ingredientIds, mealTaskId, onClose, onComplete }: { recipePackage: RecipePackage; ingredientIds: string[]; mealTaskId?: string; onClose: () => void; onComplete?: () => void }) {
   const { data } = useAppState();
   const query = useQueryClient();
   const ui = useContext(UiContext);
-  const outsideCost = data?.cookingPlan?.eatingOutCost || 0;
-
-  // Raw string states to support backspacing to empty without sticky 0
-  const [costInput, setCostInput] = useState(String(data?.cookingPlan?.homeCookBudget ?? 80));
+  const [trackCost, setTrackCost] = useState(false);
+  const [costInput, setCostInput] = useState("0");
   const [servingsInput, setServingsInput] = useState(String(recipePackage.servings || 1));
   const [eatenInput, setEatenInput] = useState("1");
   const [vegetables, setVegetables] = useState(recipePackage.ingredients.some((item) => item.isVegetable));
@@ -332,20 +331,6 @@ function CookingCompleteModal({ recipePackage, ingredientIds, onClose, onComplet
   const servings = Math.max(1, parseInt(servingsInput, 10) || 1);
   const eaten = Math.min(servings, Math.max(0, parseInt(eatenInput, 10) || 0));
   const cost = costInput === "" ? 0 : Math.max(0, parseInt(costInput, 10) || 0);
-  const calculatedSaving = Math.max(0, outsideCost * eaten - cost);
-
-  const [depositInput, setDepositInput] = useState(String(calculatedSaving));
-  const deposit = depositInput === "" ? 0 : Math.min(calculatedSaving, Math.max(0, parseInt(depositInput, 10) || 0));
-
-  useEffect(() => {
-    setDepositInput((prev) => {
-      const current = parseInt(prev, 10);
-      if (isNaN(current) || current > calculatedSaving) {
-        return String(calculatedSaving);
-      }
-      return prev;
-    });
-  }, [calculatedSaving]);
 
   const finish = async () => {
     if (submitting) return;
@@ -365,18 +350,22 @@ function CookingCompleteModal({ recipePackage, ingredientIds, onClose, onComplet
     };
     const payload = {
       completionKey: operationId,
+      mealTaskId,
       recipe: legacyRecipe,
       ingredientIds,
       ingredientRequirements: recipePackage.ingredients.map((i) => ({
         ...i,
         quantity: i.quantity / (recipePackage.servings || 1),
       })),
-      homeCookCost: cost,
-      actualDeposit: deposit,
+      ingredientCost: cost,
+      comparisonMealPrice: undefined,
+      trackCost,
       foodSafe: true,
       vegetables,
       lowOil: false,
       mindfulSeasoning: false,
+      usedExpiringIngredient: ingredientIds.some((id) => data?.inventory.some((item) => item.id === id && item.daysLeft <= 3)),
+      completedDoubleMeal: servings >= 2 && eaten < servings,
       servingsCooked: servings,
       servingsEaten: eaten,
     };
@@ -406,9 +395,10 @@ function CookingCompleteModal({ recipePackage, ingredientIds, onClose, onComplet
       await api("/cooking/outcomes", json("POST", payload));
       await markRecipePackageCompleted(recipePackage.id);
       await query.invalidateQueries({ queryKey: stateQueryKey });
+      if ((data?.cookingOutcomes.length ?? 0) === 0) void requestFirstCookingPushPermission();
       onComplete?.();
       onClose();
-      ui.toast(`完成 1 次料理、吃了 ${eaten} 餐，圓夢入帳 NT$ ${deposit}`);
+      ui.toast(`完成 1 次料理、吃了 ${eaten} 份，獲得至少 30 EXP`);
     } catch (error) {
       if (error instanceof TypeError) {
         try {
@@ -441,7 +431,7 @@ function CookingCompleteModal({ recipePackage, ingredientIds, onClose, onComplet
             await markRecipePackageCompleted(recipePackage.id);
             onComplete?.();
             onClose();
-            ui.toast(`料理完成！訪客模式已先暫存本地（登入後自動同步），圓夢入帳 NT$ ${deposit}`);
+            ui.toast("料理完成！訪客模式已先暫存本地，登入後只會同步一次 EXP 與庫存結果。");
             return;
           } catch {
             // fallback
@@ -457,7 +447,7 @@ function CookingCompleteModal({ recipePackage, ingredientIds, onClose, onComplet
 
   return (
     <Modal label="料理完成結算" onClose={onClose}>
-      <ModalHeader title={recipePackage.title} kicker="確認後才會扣庫存與圓夢入帳" onClose={onClose} />
+      <ModalHeader title={recipePackage.title} kicker="確認後才會扣庫存並發放 EXP" onClose={onClose} />
       <div className="serving-grid">
         <label>
           這次煮幾份
@@ -506,7 +496,11 @@ function CookingCompleteModal({ recipePackage, ingredientIds, onClose, onComplet
         </label>
       </div>
       <p className="prepared-note">剩下 {Math.max(0, servings - eaten)} 份會成為熟食庫存；料理次數仍只記 1 次。</p>
-      <label className="field-label">
+      <label className="vegetable-check">
+        <input type="checkbox" checked={trackCost} onChange={(event) => setTrackCost(event.target.checked)} />
+        <span>記錄本餐成本（選用，不影響 EXP）</span>
+      </label>
+      {trackCost && <label className="field-label">
         本餐實際食材成本
         <input
           className="field"
@@ -523,32 +517,7 @@ function CookingCompleteModal({ recipePackage, ingredientIds, onClose, onComplet
             }
           }}
         />
-      </label>
-      <div className="saving-confirm">
-        <span>可確認省下</span>
-        <strong>NT$ {calculatedSaving}</strong>
-        <small>本人外食比較價 NT$ {outsideCost} × {eaten} 份 − 食材成本</small>
-      </div>
-      <label className="field-label">
-        這次確認圓夢入帳
-        <input
-          className="field"
-          type="number"
-          min="0"
-          max={calculatedSaving}
-          value={depositInput}
-          onFocus={(e) => e.target.select()}
-          onChange={(event) => setDepositInput(event.target.value)}
-          onBlur={() => {
-            if (depositInput === "" || isNaN(parseInt(depositInput, 10))) {
-              setDepositInput("0");
-            } else {
-              const clamped = Math.min(calculatedSaving, Math.max(0, parseInt(depositInput, 10) || 0));
-              setDepositInput(String(clamped));
-            }
-          }}
-        />
-      </label>
+      </label>}
       <div className="mt-3">
         <label className="vegetable-check">
           <input type="checkbox" checked={vegetables} onChange={(event) => setVegetables(event.target.checked)} />
@@ -558,23 +527,15 @@ function CookingCompleteModal({ recipePackage, ingredientIds, onClose, onComplet
               <svg className="mr-1 inline h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                 <path d="M12 22V10" /><path d="M12 14c-4 0-7-2-8-6 4 0 7 2 8 6Z" /><path d="M12 10c4 0 7-2 8-6-4 0-7 2-8 6Z" />
               </svg>
-              圓夢健康指標
+              料理歷程
             </span>
           </span>
         </label>
         <p className="text-[11px] text-[#5c6d5f] mt-1 px-1 leading-relaxed">
-          不計算卡路里壓力，紀錄將計入「圓夢進度」每週蔬菜攝取種類，建立正向飲食自主感。
+          不計算卡路里壓力；這項紀錄只用於料理歷程，不影響 EXP。
         </p>
       </div>
       <div className="mt-lg flex gap-sm">
-        <button
-          type="button"
-          disabled={submitting}
-          onClick={() => setDepositInput("0")}
-          className="secondary-btn flex-1"
-        >
-          這次不入帳
-        </button>
         <button
           type="button"
           disabled={submitting}

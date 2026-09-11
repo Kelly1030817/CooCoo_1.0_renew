@@ -6,8 +6,8 @@ const tabs: [AppRoute, string, string][] = [
   ["today", "today", "今日"],
   ["shopping", "shopping_bag", "採買"],
   ["fridge", "kitchen", "冰箱"],
-  ["kitchen", "skillet", "廚房"],
-  ["dream", "savings", "圓夢"],
+  ["recipes", "menu_book", "食譜"],
+  ["me", "person", "我的"],
 ];
 
 function shouldUseBrowserNavigation(event: MouseEvent<HTMLAnchorElement>) {

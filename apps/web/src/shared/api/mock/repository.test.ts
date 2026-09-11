@@ -1,13 +1,13 @@
-import { describe, expect, test } from 'vitest'
-import { createSeedState } from '@coocoo/core'
-import type { OnboardingProfile } from '@coocoo/contracts'
-import { migrateMockState } from './repository'
+import { describe, expect, test } from "vitest";
+import { createSeedState } from "@coocoo/core";
+import type { OnboardingProfile } from "@coocoo/contracts";
+import { migrateMockState } from "./repository";
 
-const completedProfile:OnboardingProfile={status:'complete',currentStep:10,householdServings:1,cookware:[{type:'電磁爐',limitations:[]}],restrictions:[],preferredFlavors:[],inventoryReviewed:true,hasNoInventory:true,dailyMealBudget:300,outsideMealComparisonPrice:150,plannedMealSlots:['dinner'],weeklyHomeCookTarget:3,dreamName:'北海道旅行',dreamTargetAmount:30000,completedAt:'2026-08-28T00:00:00.000Z'}
+const profile:OnboardingProfile={status:"complete",currentStep:5,cookingExperience:"beginner",currentWeeklyCookingFrequency:1,habitBarriers:["no_ideas"],guidanceMode:"detailed",householdServings:1,cookware:[{type:"電磁爐",limitations:[]}],restrictions:[],preferredFlavors:[],availableMinutes:30,inventoryReviewed:true,hasNoInventory:true,plannedMealSlots:["dinner"],primaryGoalMetric:"cooking_sessions",weeklyGoalTarget:3,reminders:{expiringIngredients:true,plannedMeals:true,weeklyRhythm:true,pushEnabled:false,quietHoursStart:"21:00",quietHoursEnd:"09:00",weeklyLimit:3},completedAt:"2026-09-11T00:00:00.000Z"};
 
-describe('mock repository schema migration',()=>{
-  test('keeps version one state',()=>expect(migrateMockState(createSeedState())?.version).toBe(1))
-  test('migrates unversioned state without losing inventory',()=>{const value=migrateMockState({inventory:[createSeedState().inventory[0]]});expect(value?.version).toBe(1);expect(value?.inventory).toHaveLength(1)})
-  test('rejects unknown future versions',()=>expect(migrateMockState({version:99})).toBeNull())
-  test('backfills a missing dream goal from an existing completed onboarding draft',()=>expect(migrateMockState(createSeedState(),completedProfile)).toMatchObject({activeGoal:{id:'goal-onboarding',name:'北海道旅行',targetAmount:30000},onboardingProfile:completedProfile}))
-})
+describe("mock repository v2",()=>{
+  test("keeps version two state",()=>expect(migrateMockState(createSeedState())?.version).toBe(2));
+  test("does not import unversioned or v1 state because there are no legacy users",()=>{expect(migrateMockState({inventory:[]})).toBeNull();expect(migrateMockState({...createSeedState(),version:1})).toBeNull();});
+  test("rejects unknown future versions",()=>expect(migrateMockState({version:99})).toBeNull());
+  test("applies a completed five-step profile to the weekly goal",()=>expect(migrateMockState(createSeedState(),profile)).toMatchObject({weeklyGoal:{metric:"cooking_sessions",target:3},onboardingProfile:profile}));
+});

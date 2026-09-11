@@ -28,19 +28,19 @@ export function PassportTicket({
       {/* Ticket Header */}
       <div className="flex items-center justify-between border-b border-stone-200 pb-2">
         <span className="font-black text-stone-900 text-[11px] tracking-wider uppercase">
-          COOCOO DREAM PASSPORT
+          COOCOO CHEF PROFILE
         </span>
         <span className="text-[10px] font-mono text-stone-400">NO. 88209</span>
       </div>
 
-      {/* Dream Plan */}
+      {/* Chef Profile */}
       <div>
-        <span className="text-[10px] text-stone-400 font-bold block">圓夢計畫</span>
+        <span className="text-[10px] text-stone-400 font-bold block">主廚檔案</span>
         <h3 className="text-base font-black text-stone-900 leading-snug">
-          {profile.dreamName || "首個自煮願望"}
+          初火學徒
         </h3>
         <span className="text-xs font-mono font-black text-amber-900">
-          NT$ {profile.dreamTargetAmount.toLocaleString()}
+          從 0 EXP 開始
         </span>
       </div>
 
@@ -48,11 +48,11 @@ export function PassportTicket({
       <dl className="grid grid-cols-2 gap-2 text-[11px] pt-1 border-t border-stone-100">
         <div>
           <dt className="text-stone-400 text-[10px] font-bold">每週自煮</dt>
-          <dd className="font-bold text-stone-800">{profile.weeklyHomeCookTarget} 餐 / 週</dd>
+          <dd className="font-bold text-stone-800">{profile.weeklyGoalTarget} {profile.primaryGoalMetric === "cooking_sessions" ? "次" : "份"} / 週</dd>
         </div>
         <div>
-          <dt className="text-stone-400 text-[10px] font-bold">每日餐費</dt>
-          <dd className="font-bold text-stone-800">NT$ {profile.dailyMealBudget}</dd>
+          <dt className="text-stone-400 text-[10px] font-bold">料理指引</dt>
+          <dd className="font-bold text-stone-800">{profile.guidanceMode === "detailed" ? "詳細" : "精簡"}</dd>
         </div>
         <div>
           <dt className="text-stone-400 text-[10px] font-bold">常用份量</dt>
@@ -87,7 +87,7 @@ export function PassportTicket({
             className="animate-stamp-impact-circle absolute right-2.5 bottom-2 w-20 h-20 rounded-full border-2 border-red-700 text-red-700 bg-[#fdfaf7]/95 flex flex-col items-center justify-center shadow-md select-none transform rotate-[-9deg] z-20 pointer-events-none"
             aria-label="MASTER CHEF COOCOO SEALED"
           >
-            <span className="sr-only">圓夢契約已立 MASTER CHEF COOCOO SEALED</span>
+            <span className="sr-only">主廚檔案已成立 MASTER CHEF COOCOO SEALED</span>
             <div className="w-[70px] h-[70px] rounded-full border border-dashed border-red-600/70 flex flex-col items-center justify-center relative p-1">
               <div className="text-[6.5px] font-black tracking-widest uppercase text-red-800 flex items-center gap-0.5">
                 <svg className="w-2 h-2 text-red-700" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">

@@ -1,5 +1,7 @@
 # CooCoo 主廚相談室（Chef Consultation）完整設計與技術規格書
 
+> **歷史文件：已由 2026-09-11 五步 Onboarding 與成長系統取代。** 圓夢、願望金額、入帳、十步流程與 `/goals` 不再適用；現行規格見 [`CONTEXT.md`](../CONTEXT.md) 與 [`2026-09-11-coocoo-v1-brand-product-reset.md`](product-decisions/2026-09-11-coocoo-v1-brand-product-reset.md)。
+
 > **文件版本**：v1.0 (Integrated MVP)
 > **最後更新**：2026-09-06
 > **適用範圍**：前端 `apps/web`、後端 `apps/api`、合約 `packages/contracts`、互動沙盒原型

@@ -9,7 +9,7 @@ export interface MealPlanningContext {
   servings: number;
   restrictions: DietaryRestriction[];
   cookwareTypes: string[];
-  perMealBudget: number;
+  perMealBudget: number | null;
   inventory: Stock[];
   energyLevel?: "low" | "normal";
   recipes?: RecipePackage[];
@@ -54,7 +54,7 @@ function eligiblePackages(context: MealPlanningContext) {
 export function createTodayDecision(context: MealPlanningContext, input: { date: string; slot: MealSlot }): TodayDecision {
   assertDate(input.date);
   const recipes = eligiblePackages(context);
-  return { date: input.date, slot: input.slot, primary: recipes[0] ?? null, alternatives: recipes.slice(1,3), source: context.strictCatalog ? "catalog" : "brand_safe", notice: recipes.length ? `依你的飲食限制、廚具、預算與庫存挑選${context.strictCatalog?'已發布':'品牌'}食譜。` : "目前沒有符合飲食限制、廚具與預算的餐點，請調整設定後再試。" };
+  return { date: input.date, slot: input.slot, primary: recipes[0] ?? null, alternatives: recipes.slice(1,3), source: context.strictCatalog ? "catalog" : "brand_safe", notice: recipes.length ? `依你的飲食限制、廚具、時間與庫存挑選${context.strictCatalog?'已發布':'品牌'}食譜。` : "目前沒有符合飲食限制、廚具與庫存的餐點，請調整設定後再試。" };
 }
 export function createMealPlan(context: MealPlanningContext, options: { now?: Date; id?: () => string } = {}): MealPlan {
   if (weekOf(context.weekStart) !== context.weekStart) throw new Error("WEEK_START_MUST_BE_MONDAY");

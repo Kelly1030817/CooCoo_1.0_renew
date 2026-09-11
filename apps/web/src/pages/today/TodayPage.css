@@ -1176,6 +1176,27 @@
     font-size: 20px;
   }
 
+  .today-page .ticket-mode-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .today-page .segmented-switch {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+    border-radius: 16px;
+  }
+
+  .today-page .segmented-btn {
+    min-width: 0;
+    padding: 7px 5px;
+    border-radius: 12px;
+    font-size: 10px;
+    line-height: 1.25;
+    white-space: normal;
+  }
+
   .today-page .cook-prep-row strong {
     font-size: 10px;
   }

@@ -1,27 +1,10 @@
 import type { IngredientPrice, RecipePackage, RecipeRecommendation, RecipeRecommendationRequest, RecipeRecommendations } from '@coocoo/contracts';
-import { evaluateRecipe } from '@coocoo/core';
+import { evaluateRecipe, sameIngredient } from '@coocoo/core';
 import type { MealPlanningContext, Stock } from '../meal-plans/meal-planning';
 
 export const normalize = (value: string) => value.normalize('NFKC').trim().toLocaleLowerCase('zh-TW');
-const aliases:Record<string,string>={
-  egg:'蛋',eggs:'蛋','雞蛋':'蛋','蛋':'蛋',tofu:'豆腐','豆腐':'豆腐',
-  chicken:'雞肉',chicken_breast:'雞肉','chicken breast':'雞肉','雞胸肉':'雞肉','雞肉':'雞肉',
-  chicken_thigh:'雞腿肉','chicken thigh':'雞腿肉','雞腿排':'雞腿肉','雞腿肉':'雞腿肉',
-  pork:'豬肉',pork_slices:'豬肉',pork_collar_slices:'豬肉','pork slices':'豬肉','豬梅花肉片':'豬肉','豬肉片':'豬肉','豬肉':'豬肉',
-  beef:'牛肉',beef_slices:'牛肉','beef slices':'牛肉','牛肉片':'牛肉','牛肉':'牛肉',
-  onion:'洋蔥','洋蔥':'洋蔥',tomato:'番茄','番茄':'番茄','蕃茄':'番茄',scallion:'青蔥',green_onion:'青蔥','green onion':'青蔥','青蔥':'青蔥','蔥':'青蔥',
-  carrot:'紅蘿蔔','紅蘿蔔':'紅蘿蔔','胡蘿蔔':'紅蘿蔔',enoki:'金針菇',enoki_mushroom:'金針菇','金針菇':'金針菇',
-  potato:'馬鈴薯','馬鈴薯':'馬鈴薯',sweet_potato:'地瓜','sweet potato':'地瓜','地瓜':'地瓜',broccoli:'青花菜','青花菜':'青花菜','綠花椰菜':'青花菜',
-  corn:'玉米粒',corn_kernels:'玉米粒','玉米粒':'玉米粒',garlic:'蒜頭','蒜頭':'蒜頭','蒜米':'蒜頭',tuna:'鮪魚','鮪魚':'鮪魚',milk:'牛奶','牛奶':'牛奶','鮮乳':'牛奶',
-  rice:'白米',raw_rice:'白米','白米':'白米',noodles:'麵條',noodle:'麵條','麵':'麵條','麵條':'麵條',udon:'烏龍麵','烏龍麵':'烏龍麵',
-  cooking_oil:'油','食用油':'油','油':'油',soy_sauce:'醬油','醬油':'醬油',miso:'味噌','味噌':'味噌',sesame_sauce:'胡麻醬','胡麻醬':'胡麻醬',mirin:'味醂','味醂':'味醂',
-};
-export const canonicalIngredient=(value:string)=>{const key=normalize(value).replace(/[（(][^）)]*[）)]/g,'').trim();return aliases[key]||key;};
 const units: Record<string, [string, number]> = { g:['g',1], 克:['g',1], 公克:['g',1], kg:['g',1000], 公斤:['g',1000], ml:['ml',1], 毫升:['ml',1], l:['ml',1000], 公升:['ml',1000], 個:['piece',1], 顆:['piece',1] };
 export function measure(quantity: number, unit: string) { const [base,factor]=units[normalize(unit)] || [normalize(unit),1];return {quantity:quantity*factor,unit:base,factor}; }
-export function sameIngredient(a: { ingredientKey: string; name?: string }, b: { ingredientKey: string; name?: string }) {
-  return [a.ingredientKey,a.name||''].filter(Boolean).map(canonicalIngredient).some(key=>[b.ingredientKey,b.name||''].filter(Boolean).map(canonicalIngredient).includes(key));
-}
 export function recipeFingerprint(recipe: RecipePackage) { return recipe.ingredients.map(i=>normalize(i.ingredientKey)).sort().join('|')+'::'+recipe.cookwareTypes.map(normalize).sort().join('|')+'::'+recipe.steps.map(s=>normalize(s.instruction).replace(/[\s，。、]/g,'')).join('|'); }
 export function evaluatePurchase(recipe: RecipePackage, inventory: Stock[], prices: IngredientPrice[], now: Date): RecipeRecommendation {
   const remaining=inventory.filter(i=>i.daysLeft>=0).map(i=>({...i,...measure(i.quantity??0,i.unit||'')}));
@@ -47,7 +30,7 @@ export function recommend(recipes: RecipePackage[], context: MealPlanningContext
     const title=normalize(source.title);if(seen.has(title)||(!request.allowRepeat&&excludedTitles.map(normalize).includes(title)))continue;
     const factor=context.servings/source.servings;
     const recipe={...structuredClone(source),servings:context.servings,estimatedCost:Math.ceil(source.estimatedCost*factor),ingredients:source.ingredients.map(i=>({...i,quantity:i.quantity*factor}))};
-    if(!evaluateRecipe(recipe,{restrictions:context.restrictions,cookwareTypes:context.cookwareTypes,dailyBudget:context.perMealBudget*context.servings,energyLevel:request.energy||'normal'}).eligible)continue;
+    if(!evaluateRecipe(recipe,{restrictions:context.restrictions,cookwareTypes:context.cookwareTypes,dailyBudget:context.perMealBudget===null?null:context.perMealBudget*context.servings,energyLevel:request.energy||'normal'}).eligible)continue;
     const result=evaluatePurchase(recipe,context.inventory,prices,now);
     if(request.mode==='inventory_only'&&result.missing.length)continue;
     if(request.mode==='small_purchase'&&(new Set(result.missing.map(i=>normalize(i.ingredientKey))).size>2||(result.estimatedPurchaseCost!==null&&result.estimatedPurchaseCost>request.purchaseBudget)))continue;

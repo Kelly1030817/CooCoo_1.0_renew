@@ -1,6 +1,6 @@
 import { getSupabaseAdmin } from "../../shared/infrastructure/supabase";
 
-export type AiFeature="receipt_ocr"|"recipe_generation"|"shopping_analysis";
+export type AiFeature="receipt_ocr"|"recipe_generation"|"shopping_analysis"|"chef_chat";
 export class SupabaseAiUsageRepository {
   async hash(value:unknown){
     const bytes=value instanceof Uint8Array?value:new TextEncoder().encode(JSON.stringify(value));

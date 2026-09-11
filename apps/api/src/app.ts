@@ -3,8 +3,8 @@ import { CatalogRepository } from './modules/catalog/repository';
 import { catalogRoutes } from './modules/catalog/routes';
 import { recommend } from './modules/catalog/recommendations';
 import { Elysia } from "elysia";
-import { CooCooService, getRescuePlan, parseShoppingText } from "@coocoo/core";
-import type { GoalDraft, InventoryItem, RecipeGeneration } from "@coocoo/contracts";
+import { brandSafeRecipes, CooCooService, createMealTask, deriveGrowthProfile, getRescuePlan, parseShoppingText, searchRecipes } from "@coocoo/core";
+import type { InventoryItem, MealTask, RecipeGeneration, RecipePackage } from "@coocoo/contracts";
 import { ContractSchemas } from "@coocoo/contracts";
 import { MemoryStateRepository } from "./shared/infrastructure/memory-state.repository";
 import { authenticateRequest, getSupabaseAdmin } from "./shared/infrastructure/supabase";
@@ -21,13 +21,15 @@ import { SupabaseCookingRepository } from "./modules/cooking/supabase-cooking.re
 import { SupabaseAccountRepository } from "./modules/account/supabase-account.repository";
 import { SupabaseSettingsRepository } from "./modules/settings/supabase-settings.repository";
 import { analyzeShopping } from "./modules/shopping/openrouter-shopping.service";
-import { SupabaseGoalRepository } from "./modules/goals/supabase-goal.repository";
 import { planningRoutes } from "./modules/meal-plans/routes";
 import { cloudPlanningContext } from "./modules/meal-plans/context";
 import { SupabaseMealPlanRepository } from "./modules/meal-plans/supabase-meal-plan.repository";
 import { MemoryPlanningRepository } from "./modules/meal-plans/memory-planning.repository";
 import { weekOf, taipeiDate } from "./modules/meal-plans/meal-planning";
 import { runCatalogWorker } from "./modules/catalog/worker";
+import { answerChefChat } from "./modules/chef-chat/chef-chat.service";
+import { OpenRouterJsonClient } from "./modules/ai/openrouter-json-client";
+import { previewRecipeAdjustment } from "./modules/recipes/recipe-adjustment.service";
 
 function matchesSecret(value:string|undefined,expected:string|undefined){
   if(!value||!expected)return false;
@@ -42,7 +44,6 @@ const ok = <T>(data: T) => ({ data });
 const fail = (error: unknown) => {
   const code = error instanceof Error ? error.message : typeof error==="object"&&error&&"message" in error?String(error.message):"UNKNOWN_ERROR";
   const messages: Record<string, string> = {
-    GOAL_NOT_FOUND: "找不到主要目標",
     ITEM_NOT_FOUND: "找不到食材",
     UNSAFE_ACTION: "不安全食材只能丟棄",
     INGREDIENT_REQUIRED: "請至少選擇一項食材",
@@ -54,7 +55,6 @@ const fail = (error: unknown) => {
     AI_OPERATION_FAILED: "這筆 AI 請求未完成，請重新操作。",
     AUTH_REQUIRED: "請先登入再使用這項功能。",
     AUTH_INVALID: "登入狀態已失效，請重新登入。",
-    INVALID_GOAL_TARGET: "目標金額必須大於 0 元。",
     ONBOARDING_REQUIRED: "請先完成主廚相談室設定。",
     RECIPE_WITHDRAWN: "這份食譜已暫停提供，請改選其他料理。",
     PRICE_CONFIRMATION_REQUIRED: "參考價格或庫存尚待確認，暫不能加入這份補買方案。",
@@ -71,7 +71,6 @@ const fail = (error: unknown) => {
     INVALID_DATE: "日期格式不正確。",
     WEEK_START_MUST_BE_MONDAY: "一週餐單必須從星期一開始。",
     WEEKLY_TARGET_EXCEEDS_SLOTS: "預計自煮餐數超過本週可安排的餐期。",
-    SAVINGS_EXCEEDS_CALCULATED_AMOUNT: "圓夢入帳金額不可超過本餐省下金額。",
     INVALID_SERVING_COUNT: "食用份數不可大於烹煮份數。",
     duplicate: "這份料理已經記錄過，請勿重複結算。",
   };
@@ -95,21 +94,33 @@ const shoppingRepository = new SupabaseShoppingRepository();
 const cookingRepository = new SupabaseCookingRepository();
 const accountRepository = new SupabaseAccountRepository();
 const settingsRepository = new SupabaseSettingsRepository();
-const goalRepository = new SupabaseGoalRepository();
 const cloudDataEnabled = Boolean(process.env.SUPABASE_URL && (process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY));
 const catalogRepository=new CatalogRepository();
 const catalogContext:typeof cloudPlanningContext=async(user,week)=>{if(user==="00000000-0000-4000-8000-000000000001")return previewPlanningContext(user,week);const [c,recipes,prices,settings,excluded]=await Promise.all([cloudPlanningContext(user,week),catalogRepository.published(),catalogRepository.prices(),catalogRepository.settings(user),catalogRepository.excluded(user)]);const inventoryOnly=recommend(recipes,c,{mode:"inventory_only",purchaseBudget:settings.purchaseBudget},prices,excluded);const withPurchase=recommend(recipes,c,{mode:"small_purchase",purchaseBudget:settings.purchaseBudget},prices,excluded);return {...c,strictCatalog:true,recipes:inventoryOnly.eligible.map(r=>r.recipe),purchaseCandidates:[...withPurchase.eligible,...withPurchase.needsConfirmation].filter(item=>item.missing.length).slice(0,3)}};
 const mealPlanRepository=cloudDataEnabled?new SupabaseMealPlanRepository():new MemoryPlanningRepository();
-const previewPlanningContext=async(_userId:string,weekStart:string)=>{const state=service.state();const profile=state.onboardingProfile;if(!profile)throw new Error("ONBOARDING_REQUIRED");return{weekStart,weeklyTarget:profile.weeklyHomeCookTarget,mealSlots:profile.plannedMealSlots,servings:profile.householdServings,restrictions:profile.restrictions,cookware:profile.cookware.map(item=>({type:item.type,capacity:item.capacity||null,limitations:item.limitations})),cookwareTypes:profile.cookware.map(item=>item.type),perMealBudget:Math.floor(profile.dailyMealBudget/Math.max(1,profile.plannedMealSlots.length)),inventory:state.inventory.map(item=>({ingredientKey:item.name,name:item.name,quantity:item.qty,unit:item.unit,daysLeft:item.daysLeft})),ingredientIds:Object.fromEntries(state.inventory.map(item=>[item.id,item.name]))}};
+const previewPlanningContext=async(_userId:string,weekStart:string)=>{const state=service.state();const profile=state.onboardingProfile;if(!profile)throw new Error("ONBOARDING_REQUIRED");return{weekStart,weeklyTarget:profile.weeklyGoalTarget,mealSlots:profile.plannedMealSlots,servings:profile.householdServings,restrictions:profile.restrictions,cookware:profile.cookware.map(item=>({type:item.type,capacity:item.capacity||null,limitations:item.limitations})),cookwareTypes:profile.cookware.map(item=>item.type),perMealBudget:null,inventory:state.inventory.map(item=>({ingredientKey:item.ingredientKey,name:item.name,quantity:item.qty,unit:item.unit,daysLeft:item.daysLeft})),ingredientIds:Object.fromEntries(state.inventory.map(item=>[item.id,item.name]))}};
+
+function recipePackageFromRow(row:Record<string,unknown>):RecipePackage{
+  return {id:String(row.id),recipeId:String(row.id),title:String(row.title),servings:Number(row.servings),prepMinutes:Number(row.prep_minutes),totalMinutes:Number(row.total_minutes),estimatedCost:Number(row.estimated_cost??0),cookwareTypes:(row.cookware_types??[]) as string[],ingredients:(row.ingredients??[]) as RecipePackage["ingredients"],steps:(row.steps??[]) as RecipePackage["steps"],imageUrl:null,fallbackImageUrl:"/favicon.svg",downloadedAt:null,source:(row.source??"brand_safe") as RecipePackage["source"]};
+}
+
+function mealTaskFromRow(row:Record<string,unknown>):MealTask{
+  if(!row.recipes||Array.isArray(row.recipes))throw new Error("MEAL_TASK_RECIPE_MISSING");
+  return {id:String(row.id),operationId:String(row.operation_id),recipe:recipePackageFromRow(row.recipes as Record<string,unknown>),status:row.status as MealTask["status"],currentMeal:row.current_meal as MealTask["currentMeal"],nextMeal:row.next_meal as MealTask["nextMeal"],plannedTotalServings:Number(row.planned_total_servings),shortages:(row.shortages??[]) as MealTask["shortages"],revision:Number(row.revision),createdAt:String(row.created_at),updatedAt:String(row.updated_at)};
+}
 
 async function integratedState(authorization?:string){
   const user=await authenticateRequest(authorization);
   if(user.id==="00000000-0000-4000-8000-000000000001")return service.state();
   const base=service.state();
-  const [inventory,shopping,onboarding,goalState,servingsResult,savingsResult,fridge,mealPlan]=await Promise.all([inventoryRepository.list(user.id),shoppingRepository.list(user.id),onboardingRepository.read(user.id),goalRepository.read(user.id),getSupabaseAdmin().from("meal_servings").select("*").eq("user_id",user.id),getSupabaseAdmin().from("savings_events").select("*").eq("user_id",user.id).order("created_at"),settingsRepository.fridge(user.id),mealPlanRepository.current(user.id,weekOf(taipeiDate()))]);
-  if(servingsResult.error)throw servingsResult.error;if(savingsResult.error)throw savingsResult.error;
-  const mealServings=(servingsResult.data||[]).map(row=>({id:row.id,cookingSessionId:row.cooking_session_id,status:row.status,eatenAt:row.eaten_at,vegetableKeys:row.vegetable_keys||[]}));const eaten=mealServings.filter(item=>item.status==="eaten");const weeklyCompletions=eaten.reduce<Record<string,number>>((counts,item)=>{if(!item.eatenAt)return counts;const date=new Date(item.eatenAt);const day=date.getUTCDay()||7;date.setUTCDate(date.getUTCDate()-day+1);const key=date.toISOString().slice(0,10);counts[key]=(counts[key]||0)+1;return counts},{});const savingsEvents=(savingsResult.data||[]).map(row=>({id:row.id,cookingSessionId:row.cooking_session_id,outsideMealPrice:row.outside_meal_price,actualIngredientCost:row.actual_ingredient_cost,confirmedAmount:row.confirmed_amount,createdAt:row.created_at}));
-  return {...base,session:{user:{id:user.id,email:user.email,displayName:user.email.split("@")[0]}},inventory,shoppingItems:shopping,fridgeProfile:fridge,cookware:(onboarding.cookware||[]).map((item:{id:string;type:string;capacity:string|null})=>({id:item.id,type:item.type,name:item.type,brand:"",model:"",capacity:item.capacity||"",wattage:0})),activeGoal:goalState.goal,amountEvents:goalState.amountEvents,savingsEvents,mealServings,mealPlan:mealPlan?.plan,recipePackages:mealPlan?.packages,habitProgress:{totalMeals:eaten.length,weeklyCompletions,events:eaten.filter(item=>item.eatenAt).map(item=>({outcomeId:item.cookingSessionId,createdAt:item.eatenAt!,weekKey:Object.keys(weeklyCompletions).find(key=>item.eatenAt!.slice(0,10)>=key)||item.eatenAt!.slice(0,10)}))},cookingPlan:goalState.cookingPlan};
+  const client=getSupabaseAdmin();const currentWeek=weekOf(taipeiDate());
+  const [inventory,shopping,onboarding,servingsResult,fridge,mealPlan,weeklyResult,expResult,badgeResult,favoriteResult,sessionResult,taskResult,reminderResult]=await Promise.all([inventoryRepository.list(user.id),shoppingRepository.list(user.id),onboardingRepository.read(user.id),client.from("meal_servings").select("*").eq("user_id",user.id),settingsRepository.fridge(user.id),mealPlanRepository.current(user.id,currentWeek),client.from("weekly_goals_v2").select("*").eq("user_id",user.id).eq("week_start",currentWeek).maybeSingle(),client.from("exp_events").select("*").eq("user_id",user.id).order("created_at"),client.from("badge_awards").select("*").eq("user_id",user.id).order("awarded_at"),client.from("recipe_favorites").select("recipe_id").eq("user_id",user.id),client.from("cooking_sessions").select("*,recipes(title)").eq("user_id",user.id).eq("status","completed").order("completed_at"),client.from("meal_tasks").select("*,recipes(*)").eq("user_id",user.id).order("updated_at",{ascending:false}),client.from("notification_preferences").select("*").eq("user_id",user.id).maybeSingle()]);
+  for(const result of [servingsResult,weeklyResult,expResult,badgeResult,favoriteResult,sessionResult,taskResult,reminderResult])if(result.error)throw result.error;
+  const mealServings=(servingsResult.data||[]).map(row=>({id:row.id,cookingSessionId:row.cooking_session_id,status:row.status,eatenAt:row.eaten_at,vegetableKeys:row.vegetable_keys||[]}));const eaten=mealServings.filter(item=>item.status==="eaten");const weeklyCompletions=eaten.reduce<Record<string,number>>((counts,item)=>{if(!item.eatenAt)return counts;const date=new Date(item.eatenAt);const day=date.getUTCDay()||7;date.setUTCDate(date.getUTCDate()-day+1);const key=date.toISOString().slice(0,10);counts[key]=(counts[key]||0)+1;return counts},{});
+  const expEvents=(expResult.data||[]).map(row=>({id:row.id,operationId:row.operation_id,type:row.event_type,points:row.points,sourceId:row.source_id,createdAt:row.created_at}));const badgeAwards=(badgeResult.data||[]).map(row=>({id:row.id,badgeKey:row.badge_key,category:row.category,tier:row.tier,title:row.title,awardedAt:row.awarded_at}));const cookingOutcomes=(sessionResult.data||[]).map(row=>({id:row.id,completionKey:row.operation_id,mealName:(row.recipes as {title?:string}|null)?.title||"自煮料理",source:"recipe",ingredientCost:0,servingsCooked:row.servings_cooked,servingsEaten:mealServings.filter(item=>item.cookingSessionId===row.id&&item.status==="eaten").length,expAwarded:expEvents.filter(event=>event.sourceId===row.id).reduce((sum,event)=>sum+event.points,0),createdAt:row.completed_at||row.started_at}));const counters={cooking:cookingOutcomes.length,rhythm:expEvents.filter(event=>event.type==="weekly_goal_completed").length,wasteLess:expEvents.filter(event=>event.type==="expiring_ingredient_used"||event.type==="prepared_serving_eaten").length,exploration:new Set(cookingOutcomes.map(item=>item.mealName)).size};
+  const weeklyGoal=weeklyResult.data?{id:weeklyResult.data.id,weekStart:weeklyResult.data.week_start,metric:weeklyResult.data.metric,target:weeklyResult.data.target,progress:weeklyResult.data.progress,rewardGrantedAt:weeklyResult.data.reward_granted_at,updatedAt:weeklyResult.data.updated_at}:base.weeklyGoal;const reminder=reminderResult.data;const reminderPreferences=reminder?{expiringIngredients:reminder.expiring_ingredients,plannedMeals:reminder.planned_meals,weeklyRhythm:reminder.weekly_rhythm,pushEnabled:reminder.push_enabled,quietHoursStart:String(reminder.quiet_hours_start).slice(0,5),quietHoursEnd:String(reminder.quiet_hours_end).slice(0,5),weeklyLimit:3 as const}:base.reminderPreferences;
+  const profile=onboarding.profile;const onboardingProfile=profile?{status:profile.onboarding_status,currentStep:profile.onboarding_step,cookingExperience:profile.cooking_experience,currentWeeklyCookingFrequency:profile.current_weekly_cooking_frequency,habitBarriers:profile.habit_barriers??[],guidanceMode:profile.guidance_mode,householdServings:profile.household_servings,cookware:(onboarding.cookware||[]).map((item:{type:string;capacity:string|null;limitations:string[]})=>({type:item.type,capacity:item.capacity??undefined,limitations:item.limitations??[]})),restrictions:(onboarding.restrictions||[]).map((item:{id:string;label:string;kind:"allergy"|"avoid"|"preference";ingredient_keys:string[];is_hard_limit:boolean})=>({id:item.id,label:item.label,kind:item.kind,ingredientKeys:item.ingredient_keys,isHardLimit:item.is_hard_limit})),preferredFlavors:profile.preferred_flavors??[],availableMinutes:profile.available_minutes,inventoryReviewed:true,hasNoInventory:inventory.length===0,plannedMealSlots:profile.planned_meal_slots??[],primaryGoalMetric:profile.primary_goal_metric,weeklyGoalTarget:weeklyGoal.target,reminders:reminderPreferences,completedAt:profile.updated_at} as OnboardingProfile:undefined;
+  return {...base,session:{user:{id:user.id,email:user.email,displayName:user.email.split("@")[0]}},inventory,shoppingItems:shopping,fridgeProfile:fridge,cookware:(onboarding.cookware||[]).map((item:{id:string;type:string;capacity:string|null})=>({id:item.id,type:item.type,name:item.type,brand:"",model:"",capacity:item.capacity||"",wattage:0})),onboardingProfile,mealServings,mealPlan:mealPlan?.plan,recipePackages:mealPlan?.packages,weeklyGoal,expEvents,badgeAwards,growth:deriveGrowthProfile(expEvents,badgeAwards,counters),recipeFavoriteIds:(favoriteResult.data||[]).map(row=>row.recipe_id),cookingOutcomes,mealTasks:(taskResult.data||[]).map(row=>mealTaskFromRow(row as Record<string,unknown>)),reminderPreferences,habitProgress:{totalMeals:eaten.length,weeklyCompletions,events:eaten.filter(item=>item.eatenAt).map(item=>({outcomeId:item.cookingSessionId,createdAt:item.eatenAt!,weekKey:Object.keys(weeklyCompletions).find(key=>item.eatenAt!.slice(0,10)>=key)||item.eatenAt!.slice(0,10)}))}};
 }
 
 export const app = new Elysia({ name: "coocoo-api" })
@@ -141,64 +152,68 @@ export const app = new Elysia({ name: "coocoo-api" })
     body: ContractSchemas.LoginRequestSchema,
   })
   .post("/api/v1/auth/logout", () => ok(service.logout()))
-  .get("/api/v1/goals/current", async ({headers}) => {
-    if(cloudDataEnabled){const state=await integratedState(headers.authorization);return ok({goal:state.activeGoal,cookingPlan:state.cookingPlan,amountEvents:state.amountEvents,habitProgress:state.habitProgress,healthAssets:state.healthAssets})}
-    const s = service.state();
-    return ok({
-      goal: s.activeGoal,
-      cookingPlan: s.cookingPlan,
-      amountEvents: s.amountEvents,
-      habitProgress: s.habitProgress,
-      healthAssets: s.healthAssets,
-    });
-  })
-  .post(
-    "/api/v1/goals",
-    async ({ body, set,headers }) => {
-      if(cloudDataEnabled){try{return ok(await goalRepository.create((await authenticateRequest(headers.authorization)).id,body as GoalDraft))}catch(e){set.status=422;return fail(e)}}
-      const result = service.createGoal(body as GoalDraft);
-      if (!result.valid) {
-        set.status = 422;
-        return {
-          error: {
-            code: "VALIDATION_ERROR",
-            message: result.errors.join(" "),
-            requestId: requestId(),
-          },
-        };
+  .patch("/api/v1/weekly-goal", async ({body,headers}) => {
+    if(cloudDataEnabled){
+      const user=await authenticateRequest(headers.authorization);
+      const weekStart=weekOf(taipeiDate());
+      const {data,error}=await getSupabaseAdmin().from("weekly_goals_v2").upsert({user_id:user.id,week_start:weekStart,metric:body.metric,target:body.target,updated_at:new Date().toISOString()},{onConflict:"user_id,week_start"}).select().single();
+      if(error)throw error;return ok(data);
+    }
+    const state=service.state();state.weeklyGoal={...state.weeklyGoal,...body,updatedAt:new Date().toISOString()};repository.write(state);return ok(state.weeklyGoal);
+  },{body:ContractSchemas.WeeklyGoalPatchSchema})
+  .patch("/api/v1/settings/reminders", async ({body,headers}) => {
+    if(cloudDataEnabled){
+      const user=await authenticateRequest(headers.authorization);
+      const {data,error}=await getSupabaseAdmin().from("notification_preferences").upsert({user_id:user.id,expiring_ingredients:body.expiringIngredients,planned_meals:body.plannedMeals,weekly_rhythm:body.weeklyRhythm,weekly_limit:3,updated_at:new Date().toISOString()},{onConflict:"user_id"}).select().single();
+      if(error)throw error;
+      return ok(data);
+    }
+    const state=service.state();
+    state.reminderPreferences={...(state.reminderPreferences??{pushEnabled:false,quietHoursStart:"21:00",quietHoursEnd:"09:00",weeklyLimit:3}),...body};
+    repository.write(state);
+    return ok(state.reminderPreferences);
+  },{body:ContractSchemas.ReminderPreferencesPatchSchema})
+  .post("/api/v1/recipes/search",async({body,headers})=>{const state=cloudDataEnabled?await integratedState(headers.authorization):service.state();let favorites=new Set<string>();if(cloudDataEnabled){const user=await authenticateRequest(headers.authorization);const result=await getSupabaseAdmin().from("recipe_favorites").select("recipe_id").eq("user_id",user.id);if(result.error)throw result.error;favorites=new Set((result.data||[]).map((row)=>row.recipe_id));}return ok({items:searchRecipes(brandSafeRecipes,state.inventory,body.query,body.ingredientKeywords,favorites),notice:"可靠食譜庫優先；全符合排在部分符合之前。"})},{body:ContractSchemas.RecipeSearchRequestSchema})
+  .put("/api/v1/recipes/:id/favorite",async({params,headers})=>{if(cloudDataEnabled){const user=await authenticateRequest(headers.authorization);const {error}=await getSupabaseAdmin().from("recipe_favorites").upsert({user_id:user.id,recipe_id:params.id});if(error)throw error;}else{const state=service.state();state.recipeFavoriteIds=Array.from(new Set([...(state.recipeFavoriteIds??[]),params.id]));repository.write(state);}return ok({recipeId:params.id,favorite:true})})
+  .delete("/api/v1/recipes/:id/favorite",async({params,headers})=>{if(cloudDataEnabled){const user=await authenticateRequest(headers.authorization);const {error}=await getSupabaseAdmin().from("recipe_favorites").delete().eq("user_id",user.id).eq("recipe_id",params.id);if(error)throw error;}else{const state=service.state();state.recipeFavoriteIds=(state.recipeFavoriteIds??[]).filter((id)=>id!==params.id);repository.write(state);}return ok({recipeId:params.id,favorite:false})})
+  .post("/api/v1/recipes/:id/adjustments/preview",async({params,body,headers})=>{const state=cloudDataEnabled?await integratedState(headers.authorization):service.state();const recipe=brandSafeRecipes.find((item)=>item.id===params.id||item.recipeId===params.id);if(!recipe)throw new Error("RECIPE_NOT_FOUND");let reserved=false;let userId=state.session.user?.id??"00000000-0000-4000-8000-000000000001";if(cloudDataEnabled){userId=(await authenticateRequest(headers.authorization)).id;try{await aiUsageRepository.reserve(userId,body.operationId,"recipe_generation",await aiUsageRepository.hash({recipe:recipe.id,body}),process.env.OPENROUTER_MODEL||"google/gemini-3.7-flash",Number(process.env.RECIPE_AI_MAX_CALL_TWD||2));reserved=true;}catch(error){if(!(error instanceof Error&&(error.message.includes("AI_BUDGET_EXHAUSTED")||error.message.includes("AI_DAILY_LIMITED"))))throw error;}}const preview=await previewRecipeAdjustment(recipe,body,state.inventory,state.onboardingProfile?.restrictions??[],reserved?new OpenRouterJsonClient():undefined);if(reserved)await aiUsageRepository.settle(userId,body.operationId,preview.source==="openrouter"?"completed":"failed",preview.source==="openrouter"?(preview.costUsd??0)*Number(process.env.OPENROUTER_USD_TO_TWD_RATE||35):0,preview);if(cloudDataEnabled){const client=getSupabaseAdmin();const recipeWrite=await client.from("recipes").upsert({id:recipe.recipeId,user_id:userId,title:recipe.title,servings:recipe.servings,prep_minutes:recipe.prepMinutes,total_minutes:recipe.totalMinutes,cookware_types:recipe.cookwareTypes,ingredients:recipe.ingredients,steps:recipe.steps,safety_reviewed:true,source:"brand_safe"});if(recipeWrite.error)throw recipeWrite.error;const saved=await client.from("recipe_adjustment_previews").upsert({user_id:userId,operation_id:body.operationId,original_recipe_id:recipe.recipeId,adjusted_recipe:preview.adjustedRecipe,changes:preview.changes,missing:preview.missing,safety_checks:preview.safetyChecks,source:preview.source,expires_at:preview.expiresAt},{onConflict:"user_id,operation_id"});if(saved.error)throw saved.error;}else{const {costUsd:__,...storedPreview}=preview;state.recipeAdjustmentPreviews=[...(state.recipeAdjustmentPreviews??[]).filter((item)=>item.previewId!==storedPreview.previewId),storedPreview];repository.write(state);}const {costUsd:_,...publicPreview}=preview;return ok(publicPreview)},{body:ContractSchemas.RecipeAdjustmentRequestSchema})
+  .get("/api/v1/meal-tasks",async({headers})=>{if(cloudDataEnabled){const user=await authenticateRequest(headers.authorization);const {data,error}=await getSupabaseAdmin().from("meal_tasks").select("*,recipes(*)").eq("user_id",user.id).order("updated_at",{ascending:false});if(error)throw error;return ok((data??[]).map((row)=>mealTaskFromRow(row as Record<string,unknown>)));}return ok(service.state().mealTasks??[])})
+  .post("/api/v1/meal-tasks",async({body,headers,set})=>{
+    const state=cloudDataEnabled?await integratedState(headers.authorization):service.state();
+    const baseRecipe=brandSafeRecipes.find((item)=>item.id===body.recipePackageId||item.recipeId===body.recipePackageId);
+    if(!baseRecipe){set.status=404;return fail(new Error("RECIPE_NOT_FOUND"));}
+    let recipe=baseRecipe;
+    let cloudPreviewId:string|null=null;
+    if(body.adjustmentPreviewId){
+      if(cloudDataEnabled){
+        const user=await authenticateRequest(headers.authorization);const client=getSupabaseAdmin();
+        const {data:preview,error}=await client.from("recipe_adjustment_previews").select("*").eq("user_id",user.id).eq("operation_id",body.adjustmentPreviewId).maybeSingle();
+        if(error)throw error;
+        if(!preview||preview.original_recipe_id!==baseRecipe.recipeId||Date.parse(preview.expires_at)<=Date.now())throw new Error("ADJUSTMENT_PREVIEW_INVALID");
+        recipe=preview.adjusted_recipe as RecipePackage;cloudPreviewId=preview.id;
+      }else{
+        const preview=(state.recipeAdjustmentPreviews??[]).find((item)=>item.previewId===body.adjustmentPreviewId&&item.originalRecipeId===baseRecipe.recipeId&&Date.parse(item.expiresAt)>Date.now());
+        if(!preview)throw new Error("ADJUSTMENT_PREVIEW_INVALID");
+        recipe=preview.adjustedRecipe;
       }
-      return ok(result);
-    },
-    { body: ContractSchemas.GoalDraftSchema },
-  )
-  .patch(
-    "/api/v1/goals/:id",
-    async ({ body, set,headers,params }) => {
-      if(cloudDataEnabled){try{return ok(await goalRepository.update((await authenticateRequest(headers.authorization)).id,params.id,body as Record<string,unknown>))}catch(e){set.status=422;return fail(e)}}
-      try {
-        return ok(service.adjustGoal(body as never));
-      } catch (e) {
-        set.status = 404;
-        return fail(e);
-      }
-    },
-    { body: ContractSchemas.GoalPatchSchema },
-  )
-  .post(
-    "/api/v1/goals/:id/amount-events",
-    async ({ body, set,headers,params }) => {
-      if(cloudDataEnabled){try{return ok(await goalRepository.update((await authenticateRequest(headers.authorization)).id,params.id,{desiredSaved:Number(body.desiredSaved)}))}catch(e){set.status=422;return fail(e)}}
-      try {
-        return ok(
-          service.adjustGoal({ desiredSaved: Number(body.desiredSaved) }),
-        );
-      } catch (e) {
-        set.status = 404;
-        return fail(e);
-      }
-    },
-    { body: ContractSchemas.AmountEventCommandSchema },
-  )
+    }
+    const task=createMealTask(body,recipe,state.inventory,state.onboardingProfile?.restrictions??[]);
+    if(cloudDataEnabled){
+      const user=await authenticateRequest(headers.authorization);const client=getSupabaseAdmin();const storedRecipeId=body.adjustmentPreviewId?body.operationId:baseRecipe.recipeId;
+      const recipeWrite=await client.from("recipes").upsert({id:storedRecipeId,user_id:user.id,title:recipe.title,servings:recipe.servings,prep_minutes:recipe.prepMinutes,total_minutes:recipe.totalMinutes,cookware_types:recipe.cookwareTypes,ingredients:recipe.ingredients,steps:recipe.steps,safety_reviewed:true,source:recipe.source??"brand_safe"}).select().single();
+      if(recipeWrite.error)throw recipeWrite.error;
+      const result=await client.from("meal_tasks").upsert({id:task.id,user_id:user.id,operation_id:task.operationId,recipe_id:storedRecipeId,adjustment_preview_id:cloudPreviewId,status:task.status,current_meal:task.currentMeal,next_meal:task.nextMeal,planned_total_servings:task.plannedTotalServings,shortages:task.shortages,revision:task.revision},{onConflict:"user_id,operation_id"}).select("*,recipes(*)").single();
+      if(result.error)throw result.error;
+      if(cloudPreviewId){const confirmed=await client.from("recipe_adjustment_previews").update({confirmed_at:new Date().toISOString()}).eq("id",cloudPreviewId).eq("user_id",user.id);if(confirmed.error)throw confirmed.error;}
+      return ok(mealTaskFromRow(result.data as Record<string,unknown>));
+    }
+    state.mealTasks=[...(state.mealTasks??[]).filter((item)=>item.operationId!==task.operationId),task];repository.write(state);return ok(task);
+  },{body:ContractSchemas.MealTaskCreateSchema})
+  .get("/api/v1/chef-chat/sessions",async({headers})=>{if(cloudDataEnabled){const user=await authenticateRequest(headers.authorization);const {data,error}=await getSupabaseAdmin().from("chef_chat_sessions").select("*,chef_chat_messages(*)").eq("user_id",user.id).order("updated_at",{ascending:false}).limit(10);if(error)throw error;return ok((data??[]).map((session)=>({id:session.id,title:session.title,source:session.source,createdAt:session.created_at,updatedAt:session.updated_at,messages:(session.chef_chat_messages??[]).sort((a:{created_at:string},b:{created_at:string})=>a.created_at.localeCompare(b.created_at)).map((message:{id:string;role:"user"|"assistant"|"system";content:string;created_at:string})=>({id:message.id,role:message.role,content:message.content,createdAt:message.created_at}))})));}return ok((service.state().chefChatSessions??[]).slice(-10).reverse())})
+  .post("/api/v1/chef-chat/sessions",async({body,headers})=>{const state=cloudDataEnabled?await integratedState(headers.authorization):service.state();let reserved=false;let userId=state.session.user?.id??"00000000-0000-4000-8000-000000000001";if(cloudDataEnabled){userId=(await authenticateRequest(headers.authorization)).id;try{await aiUsageRepository.reserve(userId,body.operationId,"chef_chat",await aiUsageRepository.hash(body),process.env.OPENROUTER_MODEL||"google/gemini-3.7-flash",Number(process.env.CHEF_CHAT_AI_MAX_CALL_TWD||2));reserved=true;}catch(error){if(!(error instanceof Error&&(error.message.includes("AI_BUDGET_EXHAUSTED")||error.message.includes("AI_DAILY_LIMITED"))))throw error;}}const answer=await answerChefChat({inventory:state.inventory,restrictions:state.onboardingProfile?.restrictions??[],availableMinutes:state.onboardingProfile?.availableMinutes??30,message:body.message},reserved?new OpenRouterJsonClient():undefined);if(reserved)await aiUsageRepository.settle(userId,body.operationId,answer.source==="openrouter"?"completed":"failed",answer.source==="openrouter"?answer.costUsd*Number(process.env.CATALOG_USD_TO_TWD_RATE||35):0,answer);const now=new Date().toISOString();const session={id:crypto.randomUUID(),title:body.message.slice(0,24),source:answer.source,createdAt:now,updatedAt:now,messages:[{id:crypto.randomUUID(),role:"user" as const,content:body.message,createdAt:now},{id:crypto.randomUUID(),role:"assistant" as const,content:answer.reply,createdAt:now}]};if(cloudDataEnabled){const client=getSupabaseAdmin();const saved=await client.from("chef_chat_sessions").insert({id:session.id,user_id:userId,title:session.title,source:session.source}).select().single();if(saved.error)throw saved.error;const messages=await client.from("chef_chat_messages").insert(session.messages.map((message)=>({id:message.id,user_id:userId,session_id:session.id,role:message.role,content:message.content})));if(messages.error)throw messages.error;}else{state.chefChatSessions=[...(state.chefChatSessions??[]).slice(-9),session];repository.write(state);}return ok(session)},{body:ContractSchemas.ChefChatSendSchema})
+  .delete("/api/v1/chef-chat/sessions/:id",async({params,headers})=>{if(cloudDataEnabled){const user=await authenticateRequest(headers.authorization);const {error}=await getSupabaseAdmin().from("chef_chat_sessions").delete().eq("id",params.id).eq("user_id",user.id);if(error)throw error;}else{const state=service.state();state.chefChatSessions=(state.chefChatSessions??[]).filter((session)=>session.id!==params.id);repository.write(state);}return ok({id:params.id})})
+  .post("/api/v1/push-subscriptions",async({body,headers})=>{if(cloudDataEnabled){const user=await authenticateRequest(headers.authorization);const {data,error}=await getSupabaseAdmin().from("push_subscriptions").upsert({user_id:user.id,endpoint:body.endpoint,p256dh:body.p256dh,auth:body.auth},{onConflict:"user_id,endpoint"}).select("id,endpoint").single();if(error)throw error;return ok(data);}return ok({id:"preview",endpoint:body.endpoint})},{body:ContractSchemas.PushSubscriptionWriteSchema})
+  .delete("/api/v1/push-subscriptions",async({body,headers})=>{if(cloudDataEnabled){const user=await authenticateRequest(headers.authorization);const {error}=await getSupabaseAdmin().from("push_subscriptions").delete().eq("user_id",user.id).eq("endpoint",body.endpoint);if(error)throw error;}return ok({endpoint:body.endpoint,deleted:true})},{body:ContractSchemas.PushSubscriptionDeleteSchema})
   .get("/api/v1/inventory", async ({headers}) => cloudDataEnabled?ok(await inventoryRepository.list((await authenticateRequest(headers.authorization)).id)):ok(service.state().inventory))
   .post(
     "/api/v1/inventory",
@@ -245,6 +260,7 @@ export const app = new Elysia({ name: "coocoo-api" })
     },
     { body: ContractSchemas.CookingOutcomeCommandSchema },
   )
+  .post("/api/v1/meal-servings/:id/eat",async({params,body,headers})=>{if(cloudDataEnabled){const user=await authenticateRequest(headers.authorization);const {data,error}=await getSupabaseAdmin().rpc("eat_prepared_serving_v2",{p_user_id:user.id,p_serving_id:params.id,p_operation_id:body.operationId});if(error)throw error;return ok(data);}return ok(service.eatPreparedServing(params.id,body.operationId))},{body:ContractSchemas.PreparedServingEatSchema})
   .get("/api/v1/shopping-items", async ({headers}) => cloudDataEnabled?ok(await shoppingRepository.list((await authenticateRequest(headers.authorization)).id)):ok(service.state().shoppingItems))
   .post(
     "/api/v1/shopping-items",
@@ -276,12 +292,12 @@ export const app = new Elysia({ name: "coocoo-api" })
           inventoryRepository.list(user.id),
           onboardingRepository.read(user.id),
         ]);
-        const profile=onboarding.profile as null|{daily_meal_budget:number;planned_meal_slots:string[];weekly_home_cook_target:number};
+        const profile=onboarding.profile as null|{planned_meal_slots:string[];weekly_home_cook_target:number};
         const restrictions=(onboarding.restrictions||[]).map((item:{id:string;label:string;kind:"allergy"|"avoid"|"preference";ingredient_keys:string[];is_hard_limit:boolean})=>({id:item.id,label:item.label,kind:item.kind,ingredientKeys:item.ingredient_keys,isHardLimit:item.is_hard_limit}));
         const model=process.env.OPENROUTER_MODEL||"google/gemini-3.7-flash";
         const operationId=(body as {operationId:string}).operationId;
         const inputHash=await aiUsageRepository.hash({shoppingItems,inventory,restrictions,profile});
-        const context={shoppingItems,inventory,restrictions,dailyMealBudget:profile?.daily_meal_budget??null,plannedMealSlots:profile?.planned_meal_slots??[],weeklyHomeCookTarget:profile?.weekly_home_cook_target??null};
+        const context={shoppingItems,inventory,restrictions,dailyMealBudget:null,plannedMealSlots:profile?.planned_meal_slots??[],weeklyHomeCookTarget:profile?.weekly_home_cook_target??null};
         let cached:unknown;
         try{cached=await aiUsageRepository.reserve(user.id,operationId,"shopping_analysis",inputHash,model,Number(process.env.SHOPPING_AI_MAX_CALL_TWD||1));}
         catch(error){
@@ -302,9 +318,9 @@ export const app = new Elysia({ name: "coocoo-api" })
         shoppingItems:state.shoppingItems,
         inventory:state.inventory,
         restrictions:state.onboardingProfile?.restrictions??[],
-        dailyMealBudget:state.onboardingProfile?.dailyMealBudget??null,
+        dailyMealBudget:null,
         plannedMealSlots:state.onboardingProfile?.plannedMealSlots??[],
-        weeklyHomeCookTarget:state.cookingPlan?.weeklyCookingMeals??null,
+        weeklyHomeCookTarget:state.weeklyGoal.target,
       }));
     } catch(error) {
       set.status=error instanceof Error&&error.message==="AI_RATE_LIMITED"?429:422;

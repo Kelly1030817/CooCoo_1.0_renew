@@ -2,6 +2,7 @@ import { useContext, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { InventoryItem } from "@coocoo/contracts";
 import { UiContext } from "@/app/ui-context";
+import { useAppRoute } from "@/app/routing/useAppRoute";
 import { useAppState, stateQueryKey } from "@/entities/app-state/model";
 import { api, json } from "@/shared/api/client";
 import {
@@ -17,7 +18,8 @@ export function FridgePage() {
   const { data } = useAppState();
   const ui = useContext(UiContext);
   const query = useQueryClient();
-  const { isInTray, toggleInTray, addMultipleToTray } = usePrepTray();
+  const { navigate } = useAppRoute();
+  const { isInTray, addToTray, addMultipleToTray } = usePrepTray();
 
   if (!data) return null;
 
@@ -61,7 +63,15 @@ export function FridgePage() {
   const handleSendAllUrgent = () => {
     if (urgent.length === 0) return;
     addMultipleToTray(urgent.map((i) => i.id));
-    ui.toast(`已將 ${urgent.length} 件即期食材加入小廚房備料盤！`);
+    ui.toast(`已將 ${urgent.length} 件即期食材加入自由搭配備料盤！`);
+    navigate("recipes");
+    window.history.replaceState(window.history.state, "", "/recipes?tab=compose");
+  };
+
+  const openInCompose = (itemId: string) => {
+    addToTray(itemId);
+    navigate("recipes");
+    window.history.replaceState(window.history.state, "", "/recipes?tab=compose");
   };
 
   return (
@@ -140,18 +150,18 @@ export function FridgePage() {
               </h3>
             </div>
             <span className="text-[10px] font-bold" style={{ color: "var(--urgent-title)" }}>
-              預估挽回 NT$ {urgent.reduce((sum, i) => sum + (i.roi?.savings || 50), 0)}
+              優先使用可減少浪費
             </span>
           </div>
           <p className="text-[10px] text-stone-700 leading-relaxed">
-            {urgent.map((i) => `${i.name}(剩${i.daysLeft}天)`).join("、")} 即將過期，建議優先帶入小廚房備料盤！
+            {urgent.map((i) => `${i.name}(剩${i.daysLeft}天)`).join("、")} 即將過期，建議優先帶入自由搭配備料盤！
           </p>
           <button
             type="button"
             onClick={handleSendAllUrgent}
             className="urgent-btn flex w-full items-center justify-center gap-1.5 rounded-xl py-2 text-xs shadow-xs"
           >
-            <span>一鍵將即期品帶入小廚房備料盤</span>
+            <span>一鍵將即期品帶入自由搭配備料盤</span>
             <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <line x1="5" y1="12" x2="19" y2="12" />
               <polyline points="12 5 19 12 12 19" />
@@ -205,12 +215,12 @@ export function FridgePage() {
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => toggleInTray(item.id)}
+                      onClick={() => openInCompose(item.id)}
                       className={`rounded-lg px-2.5 py-1 text-[11px] font-black transition-all ${
                         inTray ? "btn-in-tray" : "btn-add-tray"
                       }`}
                     >
-                      {inTray ? "✓ 已在備料盤" : "帶入廚房 →"}
+                      {inTray ? "打開自由搭配 →" : "帶入自由搭配 →"}
                     </button>
                     <button
                       type="button"
@@ -274,12 +284,12 @@ export function FridgePage() {
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => toggleInTray(item.id)}
+                      onClick={() => openInCompose(item.id)}
                       className={`rounded-lg px-2.5 py-1 text-[11px] font-black transition-all ${
                         inTray ? "btn-in-tray" : "btn-add-tray"
                       }`}
                     >
-                      {inTray ? "✓ 已在備料盤" : "帶入廚房 →"}
+                      {inTray ? "打開自由搭配 →" : "帶入自由搭配 →"}
                     </button>
                     <button
                       type="button"

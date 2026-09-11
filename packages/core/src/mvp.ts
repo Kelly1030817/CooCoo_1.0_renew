@@ -4,13 +4,14 @@ import type {
   MealServing,
   PlannedMeal,
   RecipePackage,
-  SavingsEvent,
+  CookingCostRecord,
 } from "@coocoo/contracts";
+import { sameIngredient } from "./ingredient";
 
 export interface RecommendationContext {
   restrictions: DietaryRestriction[];
   cookwareTypes: string[];
-  dailyBudget: number;
+  dailyBudget: number | null;
   energyLevel: "low" | "normal";
 }
 
@@ -90,10 +91,14 @@ export function evaluateRecipe(
   recipe: RecipePackage,
   context: RecommendationContext,
 ): RecipeEligibility {
-  const ingredientKeys = new Set(recipe.ingredients.map((item) => normalize(item.ingredientKey)));
   const hardRestrictions = context.restrictions.filter((item) => item.isHardLimit);
   const blocked = hardRestrictions.filter((restriction) =>
-    restriction.ingredientKeys.some((key) => ingredientKeys.has(normalize(key))),
+    [restriction.label, ...restriction.ingredientKeys].some((key) =>
+      recipe.ingredients.some((ingredient) => sameIngredient(
+        { ingredientKey: key, name: restriction.label },
+        ingredient,
+      )),
+    ),
   );
   const availableCookware = new Set(context.cookwareTypes.map(normalize));
   const missingCookware = recipe.cookwareTypes.filter((item) => !isCookwareSufficient(item, availableCookware));
@@ -101,7 +106,7 @@ export function evaluateRecipe(
   const reasons: string[] = [];
   if (blocked.length) reasons.push(`含有禁用食材：${blocked.map((item) => item.label).join("、")}`);
   if (missingCookware.length) reasons.push(`缺少廚具：${missingCookware.join("、")}`);
-  if (cost > context.dailyBudget) reasons.push("超出本餐可用預算");
+  if (context.dailyBudget !== null && cost > context.dailyBudget) reasons.push("超出本餐可用預算");
   const lowEnergyMeal = recipe.totalMinutes <= 30 && recipe.steps.length <= 6 && recipe.cookwareTypes.length <= 2;
   if (context.energyLevel === "low" && !lowEnergyMeal) reasons.push("不符合低體力餐條件");
   return {
@@ -188,15 +193,15 @@ export interface CookingCompletionInput {
   sessionId: string;
   servingsCooked: number;
   servingsEaten: number;
-  outsideMealPrice: number;
   ingredientCost: number;
-  confirmedSavings: number;
+  comparisonMealPrice?: number;
+  trackCost: boolean;
 }
 
 export interface CookingCompletionState {
   completedOperationIds: string[];
   servings: MealServing[];
-  savingsEvents: SavingsEvent[];
+  cookingCosts: CookingCostRecord[];
 }
 
 export function completeCookingSession(
@@ -210,8 +215,6 @@ export function completeCookingSession(
   if (input.servingsEaten > input.servingsCooked || input.servingsEaten < 0) {
     throw new Error("INVALID_SERVING_COUNT");
   }
-  const maximumSaving = Math.max(0, input.outsideMealPrice * input.servingsEaten - input.ingredientCost);
-  if (input.confirmedSavings > maximumSaving) throw new Error("SAVINGS_EXCEEDS_CALCULATED_AMOUNT");
   const servings = Array.from({ length: input.servingsCooked }, (_, index): MealServing => ({
     id: `${input.sessionId}:serving:${index + 1}`,
     cookingSessionId: input.sessionId,
@@ -219,18 +222,18 @@ export function completeCookingSession(
     eatenAt: index < input.servingsEaten ? now : null,
     vegetableKeys: [],
   }));
-  const savingsEvents = input.confirmedSavings > 0 ? [...state.savingsEvents, {
-    id: `${input.operationId}:savings`,
+  const cookingCosts = input.trackCost ? [...state.cookingCosts, {
+    id: `${input.operationId}:cost`,
     cookingSessionId: input.sessionId,
-    outsideMealPrice: input.outsideMealPrice,
+    comparisonMealPrice: Math.max(0, input.comparisonMealPrice ?? 0),
     actualIngredientCost: input.ingredientCost,
-    confirmedAmount: input.confirmedSavings,
+    difference: Math.max(0, (input.comparisonMealPrice ?? 0) - input.ingredientCost),
     createdAt: now,
-  }] : state.savingsEvents;
+  }] : state.cookingCosts;
   return {
     completedOperationIds: [...state.completedOperationIds, input.operationId],
     servings: [...state.servings, ...servings],
-    savingsEvents,
+    cookingCosts,
     accepted: true,
     homeCookedMealsAdded: input.servingsEaten,
   };

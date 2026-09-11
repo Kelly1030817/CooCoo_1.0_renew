@@ -1,5 +1,5 @@
 import { describe, it, expect } from "bun:test";
-import { detectIngredientCategory } from "./IngredientIcon";
+import { detectIngredientCategory } from "./ingredient-category";
 
 describe("Scheme 1 Ingredient Category Detection", () => {
   it("detects melons and gourds correctly", () => {

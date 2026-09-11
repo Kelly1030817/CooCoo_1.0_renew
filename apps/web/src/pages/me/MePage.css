@@ -1,0 +1,219 @@
+.me-page {
+  display: grid;
+  width: min(100%, 760px);
+  gap: 12px;
+  margin: 0 auto;
+  padding-bottom: 7rem;
+  color: #1c1c11;
+}
+
+.me-page > header h2 {
+  margin: 0;
+  color: #293c4e;
+  font-family: Georgia, "Noto Serif TC", serif;
+  font-size: clamp(32px, 7vw, 48px);
+  line-height: 1.08;
+  letter-spacing: -0.04em;
+}
+
+.me-page > header > p:last-child {
+  margin: 10px 0 8px;
+  color: #817a6e;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.me-page section {
+  border: 1px solid #ded3c2;
+  border-radius: 22px;
+  background: #fff;
+  padding: 18px;
+  box-shadow: 0 8px 26px rgb(84 63 39 / 0.06);
+}
+
+.weekly-card {
+  display: grid !important;
+  grid-template-columns: 1fr auto;
+  gap: 14px;
+}
+
+.weekly-card span,
+.rank-card span,
+.badge-card > span {
+  color: #9a442d;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.weekly-card h3,
+.rank-card h3,
+.badge-card h3 {
+  margin: 5px 0;
+  color: #293c4e;
+  font-family: Georgia, "Noto Serif TC", serif;
+  font-size: 22px;
+}
+
+.weekly-card strong,
+.rank-card strong {
+  color: #9a442d;
+  font-size: 13px;
+}
+
+.goal-ring {
+  display: grid;
+  width: 76px;
+  height: 76px;
+  place-items: center;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, #fff 76%, transparent 78% 100%), conic-gradient(#9a442d var(--progress), #eee5d6 0);
+  color: #293c4e;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.weekly-card label {
+  display: flex;
+  grid-column: 1 / -1;
+  align-items: center;
+  gap: 8px;
+  color: #6f685e;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.weekly-card input {
+  width: 68px;
+  min-height: 40px;
+  border: 1px solid #d9cbb2;
+  border-radius: 10px;
+  padding: 7px;
+  color: #293c4e;
+}
+
+.weekly-card button {
+  min-height: 40px;
+  border: 0;
+  border-radius: 10px;
+  background: #55755b;
+  padding: 8px 12px;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.rank-track {
+  display: flex;
+  gap: 6px;
+  margin: 16px 0;
+}
+
+.rank-track i {
+  height: 7px;
+  flex: 1;
+  border-radius: 9px;
+  background: #e8e3da;
+}
+
+.rank-track i.reached {
+  background: #d88b43;
+}
+
+.rank-card p,
+.badge-card p {
+  color: #817a6e;
+  font-size: 11px;
+}
+
+.badge-card summary {
+  margin-top: 12px;
+  color: #9a442d;
+  font-size: 11px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.badge-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+  margin-top: 12px;
+}
+
+.badge-grid div {
+  min-width: 0;
+  border-radius: 12px;
+  background: #f3eddf;
+  padding: 10px;
+  color: #8d877c;
+}
+
+.badge-grid div.earned {
+  background: #fff0d8;
+  color: #914b28;
+}
+
+.badge-grid b {
+  display: block;
+  overflow-wrap: anywhere;
+  font-size: 10px;
+}
+
+.badge-grid small {
+  display: block;
+  margin-top: 3px;
+  font-size: 9px;
+}
+
+.me-settings {
+  display: grid;
+  gap: 1px;
+  padding-bottom: 8px !important;
+}
+
+.me-settings h3 {
+  margin: 0 0 5px;
+  color: #293c4e;
+  font-family: Georgia, "Noto Serif TC", serif;
+  font-size: 19px;
+}
+
+.me-settings button {
+  min-height: 46px;
+  border: 0;
+  border-bottom: 1px solid #eee5d6;
+  background: transparent;
+  padding: 11px 2px;
+  color: #34465b;
+  font-size: 12px;
+  font-weight: 800;
+  text-align: left;
+}
+
+.me-settings button:last-child {
+  border-bottom: 0;
+}
+
+.me-settings small {
+  float: right;
+  color: #817a6e;
+  font-size: 9px;
+}
+
+.me-page button:focus-visible,
+.me-page input:focus-visible,
+.badge-card summary:focus-visible {
+  outline: 3px solid rgb(154 68 45 / 0.24);
+  outline-offset: 2px;
+}
+
+@media (max-width: 420px) {
+  .weekly-card label {
+    flex-wrap: wrap;
+  }
+
+  .badge-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

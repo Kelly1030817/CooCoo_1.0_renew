@@ -1,6 +1,6 @@
 import { getSupabaseAdmin } from "../../shared/infrastructure/supabase";
 
-const exportTables=["profiles","cookware","fridge_profiles","dietary_restrictions","goals","inventory_batches","shopping_items","meal_plans","planned_meals","recipes","receipts","receipt_items","cooking_sessions","meal_servings","savings_events","offline_operations","sync_conflicts"] as const;
+const exportTables=["profiles","cookware","fridge_profiles","dietary_restrictions","inventory_batches","shopping_items","meal_plans","planned_meals","recipes","receipts","receipt_items","cooking_sessions","meal_servings","weekly_goals_v2","exp_events","badge_awards","cooking_cost_records","recipe_favorites","meal_tasks","notification_preferences","chef_chat_sessions","chef_chat_messages","offline_operations","sync_conflicts"] as const;
 export class SupabaseAccountRepository {
   async export(userId:string){const client=getSupabaseAdmin();const entries=await Promise.all(exportTables.map(async table=>{const {data,error}=await client.from(table).select("*").eq("user_id",userId);if(error)throw error;return [table,data] as const}));return {exportedAt:new Date().toISOString(),version:1,data:Object.fromEntries(entries)}}
   toCsv(value:Awaited<ReturnType<SupabaseAccountRepository["export"]>>){const lines=["table,row_json"];for(const [table,rows] of Object.entries(value.data))for(const row of rows as unknown[])lines.push(`${table},"${JSON.stringify(row).replaceAll('"','""')}"`);return lines.join("\n")}
