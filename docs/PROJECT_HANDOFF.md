@@ -3,7 +3,7 @@
 - 更新：2026-09-11
 - 現行產品依據：[`../CONTEXT.md`](../CONTEXT.md)、[`product-decisions/2026-09-11-coocoo-v1-brand-product-reset.md`](product-decisions/2026-09-11-coocoo-v1-brand-product-reset.md)
 - 工作分支：`codex/coocoo-v1-visual-lock-preview`（由 `main@d9bdec9` 建立）
-- 狀態：本機獨立 Preview 實作；尚未提交、推送、部署或套用 Supabase migration
+- 狀態：已發布至 GitHub `main`、Supabase 正式資料庫與 Vercel Production
 
 ## 唯一產品方向
 
@@ -26,7 +26,7 @@
 - 「我的」可逐類開關提醒，並提供料理歷程、可選成本、廚具、帳號與主廚檔案入口。
 - 冰箱即期食材可直接帶入食譜頁的自由搭配備料盤。
 - 主廚相談室最近 10 次可刪除；每日 30 則與月 NT$100 由預算閘門控制，失敗時明示規則型備援。
-- 未套用 migration：`supabase/migrations/20260911090000_coocoo_v2_growth_and_meal_tasks.sql`。
+- 已於 2026-09-11 套用並登錄 migration：`supabase/migrations/20260911090000_coocoo_v2_growth_and_meal_tasks.sql`。
 
 ## 正式站合併矛盾修正
 
@@ -55,16 +55,18 @@
 
 - 2026-09-11 本機 `bun run verify`：145 tests、Web build、API typecheck 與 PGlite migration 全數通過。
 - Playwright 以 390 × 844 viewport 檢查五步 Onboarding、Today、採買、找食譜、自由搭配與我的；無瀏覽器 console error。這是模擬 viewport，不是真機驗收。
+- GitHub `main` 已包含 CooCoo 1.0 重整程式；Supabase migration history 已登錄 `20260911090000`。
+- Supabase 正式資料庫已確認 11 張新版資料表存在且全部啟用 RLS；舊 goals／savings tables 已移除，料理完成 RPC 存在。
+- Vercel Production 已更新至 `https://coocoo-marketing.vercel.app`；瀏覽器可見新版五步 Onboarding，且正式 API 新端點回傳預期的登入保護回應。
 - `bun run verify` 只證明本機 lint、測試、Web build、API typecheck 與 PGlite migration。
 - 發票 OCR、OpenRouter、Google OAuth、Push、離線重播與衝突處理仍需在核准的 Preview 網域接真實服務驗收。
 - iPhone Safari 與 Android Chrome 真機驗收未完成；viewport 模擬不能替代真機。
 - GitHub、Supabase 正式資料庫與 Production 必須在人工確認後另行核准。
 
-## 下一個核准關卡
+## 發布後待驗證
 
-1. 人工檢視本機五頁與五步 Onboarding。
-2. 在 iPhone Safari、Android Chrome 驗證 OCR、料理、Push、離線與返回流程。
-3. 通過後另行盤點 migration、GitHub 與部署差異，再請求套用或發布核准。
+1. 使用正式測試帳號驗證 OCR、OpenRouter、Push、離線重播與衝突處理。
+2. 在 iPhone Safari、Android Chrome 驗證五頁、料理與返回流程。
 
 ## 本機操作
 
