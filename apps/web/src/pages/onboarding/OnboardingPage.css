@@ -353,6 +353,38 @@
   text-align: center;
 }
 
+.onboarding-card .custom-cookware {
+  display: block;
+  margin-top: 14px;
+}
+
+.onboarding-card .custom-cookware-input {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 76px;
+  gap: 9px;
+  margin-top: 9px;
+}
+
+.onboarding-card .custom-cookware-input button {
+  justify-content: center;
+  padding: 0;
+}
+
+.onboarding-card .selected-cookware {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.onboarding-card .selected-cookware button {
+  justify-content: center;
+  min-height: 36px;
+  border-color: #a2492f;
+  background: #fdf1e2;
+  color: #a2492f;
+}
+
 .inventory-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
