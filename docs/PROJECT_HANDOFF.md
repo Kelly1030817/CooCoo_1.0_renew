@@ -59,9 +59,8 @@
 - Supabase 正式資料庫已確認 11 張新版資料表存在且全部啟用 RLS；舊 goals／savings tables 已移除，料理完成 RPC 存在。
 - Vercel Production 已更新至 `https://coocoo-marketing.vercel.app`；瀏覽器可見新版五步 Onboarding，且正式 API 新端點回傳預期的登入保護回應。
 - `bun run verify` 只證明本機 lint、測試、Web build、API typecheck 與 PGlite migration。
-- 發票 OCR、OpenRouter、Google OAuth、Push、離線重播與衝突處理仍需在核准的 Preview 網域接真實服務驗收。
+- 發票 OCR、OpenRouter、Google OAuth、Push、離線重播與衝突處理仍需以正式測試帳號接真實服務驗收。
 - iPhone Safari 與 Android Chrome 真機驗收未完成；viewport 模擬不能替代真機。
-- GitHub、Supabase 正式資料庫與 Production 必須在人工確認後另行核准。
 
 ## 發布後待驗證
 
