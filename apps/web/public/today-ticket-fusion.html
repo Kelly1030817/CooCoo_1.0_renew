@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CooCoo 今日頁 · 票券 × 任務板 融合版</title>
+
+<style>
+*{box-sizing:border-box}
+.ms{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle}
+:root{
+  --bg:#fdfae7;--card:#fffdf8;--ink:#293c4e;--muted:#716b60;--line:#d9cab2;
+  --primary:#9a442d;--primary-ink:#8f3d28;--primary-soft:#fdf1e2;
+  --stub:#34465b;--stub-ink:#f4ce8d;--stub-strong:#fef08a;
+  --safe:#386753;--safe-bg:#e7f3ec;--danger:#a3342a;--danger-bg:#fdeceb;
+  --gold:#b8862f;--gold-bg:#fdf3dc;
+}
+html,body{margin:0}
+body{background:radial-gradient(circle at 88% 2%, rgba(243,204,140,.34) 0 12%, transparent 34%), #fdf8ea;color:var(--ink);font-family:"Plus Jakarta Sans","Noto Sans TC",-apple-system,"PingFang TC",sans-serif;min-height:100vh}
+.wrap{max-width:1180px;margin:0 auto;padding:18px 20px 44px;display:flex;gap:26px;align-items:flex-start;flex-wrap:wrap}
+.side{flex:1 1 340px;min-width:300px;display:grid;gap:13px}
+.eyebrow{margin:0 0 6px;color:var(--primary);font-size:11px;font-weight:900;letter-spacing:.16em;text-transform:uppercase}
+h1{margin:0 0 8px;font-family:Georgia,"Noto Serif TC",serif;font-size:clamp(21px,3.1vw,29px);letter-spacing:-.02em}
+.lead{margin:0;color:var(--muted);font-size:12.5px;line-height:1.7}
+.flag{display:inline-flex;margin-top:11px;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:5px 12px;font-size:11px;font-weight:800;color:var(--primary-ink)}
+.box{border:1px solid var(--line);background:var(--card);border-radius:18px;padding:15px;box-shadow:0 8px 26px rgba(84,63,39,.06)}
+.box h3{margin:0 0 9px;font-size:11.5px;font-weight:900;letter-spacing:.06em;color:var(--primary-ink);text-transform:uppercase}
+.box p,.box li{color:var(--muted);font-size:12px;line-height:1.66}
+.box ul{margin:0;padding-left:16px}
+.box code{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:11px;background:#f4ebe0;color:var(--primary-ink);border-radius:5px;padding:1px 5px}
+table.map{width:100%;border-collapse:collapse;font-size:11px}
+table.map th,table.map td{text-align:left;padding:6px 5px;border-bottom:1px solid var(--line);color:var(--muted);vertical-align:top;line-height:1.5}
+table.map th{color:var(--primary-ink);font-weight:900;font-size:10px}
+table.map td:first-child{color:var(--ink);font-weight:800;white-space:nowrap}
+.keep{color:var(--safe);font-weight:900}
+.change{color:var(--gold);font-weight:900}
+.drop{color:var(--muted);font-weight:900}
+.device{flex:0 0 auto;margin:0 auto;position:sticky;top:10px}
+.phone{display:flex;width:390px;max-width:92vw;height:min(844px,calc(100vh - 24px));min-height:580px;background:#1c1917;border-radius:46px;padding:10px;box-shadow:0 30px 70px rgba(28,25,23,.32)}
+.screen{position:relative;display:flex;flex:1;min-height:0;flex-direction:column;background:var(--bg);border-radius:34px;overflow:hidden}
+.statusbar{display:flex;align-items:center;justify-content:space-between;padding:9px 22px 3px;background:color-mix(in srgb,var(--card) 94%,transparent);position:relative;z-index:31;font-size:11px;font-weight:800}
+.statusbar .island{position:absolute;left:50%;top:7px;transform:translateX(-50%);width:76px;height:20px;border-radius:999px;background:#1c1917}
+.statusbar .icons{display:flex;gap:4px;align-items:center}
+.statusbar .icons svg{width:14px;height:14px}
+.hud{background:color-mix(in srgb,var(--card) 95%,transparent);border-bottom:1px solid #ebd9c6;padding:6px 16px 10px;position:relative;z-index:30}
+.hudrow{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.chef{display:flex;align-items:center;gap:9px}
+.avatar{width:34px;height:34px;border-radius:999px;background:var(--primary);color:#fff;display:grid;place-items:center;flex-shrink:0}
+.avatar svg{width:18px;height:18px}
+.rankname{font-size:12px;font-weight:900}
+.ranksub{font-size:10px;color:var(--muted);font-weight:700;margin-top:1px}
+.xpchip{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:11px;font-weight:800;color:var(--gold);background:var(--gold-bg);border:1px solid color-mix(in srgb,var(--gold) 30%,transparent);border-radius:9px;padding:4px 9px}
+.srcreset{border:1px solid var(--line);background:#efe9d8;color:var(--muted);border-radius:999px;padding:2px 7px;font-size:8.5px;font-weight:800;cursor:pointer;font-family:inherit}
+.srcreset:hover{color:var(--primary)}
+.srcchip{font-size:8.5px;font-weight:800;border-radius:999px;padding:2px 7px;border:1px solid}
+.srcchip.sample{color:var(--muted);background:#efe9d8;border-color:var(--line)}
+.srcchip.live{color:var(--safe);background:var(--safe-bg);border-color:color-mix(in srgb,var(--safe) 28%,transparent)}
+.xpbar{margin-top:8px;height:6px;border-radius:999px;background:#ebe4d6;overflow:hidden}
+.xpbar span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#d9a441,#b8862f);transition:width .5s cubic-bezier(.16,1,.3,1)}
+.xpmeta{display:flex;justify-content:space-between;margin-top:5px;font-size:9.5px;color:var(--muted);font-weight:700}
+.content{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:14px 15px 18px;display:flex;flex-direction:column}
+.stack{display:grid;gap:12px;flex:1 0 auto}
+@keyframes slideIn{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
+.enter{animation:slideIn .32s cubic-bezier(.16,1,.3,1) both}
+@keyframes pop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
+.pop{animation:pop .42s cubic-bezier(.175,.885,.32,1.275) both}
+@keyframes floatup{0%{opacity:0;transform:translateY(6px)}25%{opacity:1}100%{opacity:0;transform:translateY(-34px)}}
+.floatxp.badge{color:var(--safe)}
+.floatxp{position:absolute;right:22px;top:100px;font-family:"JetBrains Mono",ui-monospace,monospace;font-weight:900;font-size:15px;color:var(--gold);pointer-events:none;animation:floatup 1.5s ease-out forwards;z-index:40}
+
+/* ---------- Ticket ---------- */
+.ticket{position:relative;display:grid;grid-template-columns:66px 1fr;overflow:hidden;border:1px solid var(--line);border-radius:20px;background:var(--card);box-shadow:0 16px 44px -12px rgba(154,68,45,.14),0 4px 16px -2px rgba(41,60,78,.05)}
+.notch{position:absolute;width:18px;height:18px;background:var(--bg);border-radius:50%;z-index:5}
+.notch.top{top:-9px;left:57px;border-bottom:1px solid var(--line)}
+.notch.bottom{bottom:-9px;left:57px;border-top:1px solid var(--line)}
+.stub{display:flex;align-items:center;justify-content:space-between;flex-direction:column;border-right:2px dashed #bba98d;background:var(--stub);padding:20px 6px;color:var(--stub-ink);user-select:none}
+.stub .vtext{writing-mode:vertical-rl;font-size:10px;font-weight:900;letter-spacing:.26em;color:rgba(244,206,141,.85)}
+.stubcenter{text-align:center;margin:auto 0}
+.stubcenter .mealno{display:block;font-size:8.5px;font-weight:900;letter-spacing:.1em;color:rgba(244,206,141,.72)}
+.stubcenter .prog{display:block;font-family:"JetBrains Mono",ui-monospace,monospace;font-size:25px;font-weight:900;line-height:1.05;color:var(--stub-strong);margin:2px 0}
+.stubcenter .pips{display:flex;gap:3px;justify-content:center;margin-top:3px}
+.stubcenter .pips i{width:6px;height:6px;border-radius:999px;background:rgba(244,206,141,.34)}
+.stubcenter .pips i.on{background:var(--stub-strong)}
+.stub .sicon svg{width:16px;height:16px;display:block}
+.body{padding:16px 16px 18px;min-width:0}
+.modrow{margin-bottom:11px;padding-bottom:9px;border-bottom:1px solid #ebd9c6}
+.modlabel{font-size:9.5px;font-weight:800;color:#8c8275;letter-spacing:.05em}
+.seg{display:flex;width:100%;background:#ebe4d6;border:1px solid #ddd3c0;border-radius:9999px;padding:3px;gap:3px}
+.segbtn{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:5px;border:0;background:transparent;padding:6px 8px;white-space:nowrap;font-size:10.5px;font-weight:800;border-radius:9999px;color:#716e66;cursor:pointer;font-family:inherit;transition:all .2s cubic-bezier(.16,1,.3,1)}
+.segbtn .ms svg{width:13px;height:13px;display:block}
+.segbtn.active{background:#fff;color:var(--primary);box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.tags{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.tag{display:inline-flex;align-items:center;gap:3px;border-radius:9999px;padding:4px 9px;font-size:10.5px;font-weight:800}
+.tag .ms svg{width:13px;height:13px;display:block}
+.tag.time{background:#f4ebe0;color:var(--primary)}
+.tag.covered{background:var(--safe-bg);color:var(--safe)}
+.tag.buy{background:var(--gold-bg);color:var(--gold)}
+.tag.cost{background:#efe9d8;color:var(--ink);margin-left:auto}
+.ticket h3{margin:12px 0 0;font-size:23px;font-weight:900;letter-spacing:-.02em;line-height:1.2}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0;border:1px solid #ede3cf;border-radius:14px;background:#fbf7ee;padding:9px 8px;text-align:center}
+.stat .ico{color:var(--primary);display:block}
+.stat .ico .ms svg{width:17px;height:17px;display:block}
+.stat .ico svg{width:17px;height:17px;vertical-align:middle}
+.stat b{display:block;margin-top:2px;font-size:12.5px;font-weight:900}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.chip{display:inline-flex;align-items:center;gap:4px;border-radius:9999px;background:#f1eedb;padding:3px 9px;font-size:10.5px;font-weight:800;color:var(--ink)}
+.chip .dot{width:7px;height:7px;border-radius:999px;background:#c9bfa8}
+.chip.have{background:var(--safe-bg);color:var(--safe)}
+.chip.have .dot{background:var(--safe)}
+.chip.need{background:var(--gold-bg);color:var(--gold)}
+.chip.need .dot{background:var(--gold)}
+.chip .ms svg{width:12px;height:12px;display:block}
+.rewards{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.rchip{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:800;border-radius:9999px;padding:5px 10px;border:1px solid}
+.rchip .ms svg{width:13px;height:13px;display:block}
+.rchip.xp{color:var(--gold);background:var(--gold-bg);border-color:color-mix(in srgb,var(--gold) 30%,transparent)}
+.rchip.badge{color:var(--safe);background:var(--safe-bg);border-color:color-mix(in srgb,var(--safe) 28%,transparent)}
+.cta{display:flex;gap:8px;align-items:center}
+.main{flex:1;border:0;border-radius:9999px;background:var(--primary);color:#fff;font-family:inherit;font-size:13px;font-weight:900;padding:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:transform .16s ease}
+.main:active{transform:scale(.96)}
+.main:disabled{opacity:.55;pointer-events:none}
+.main .ms svg{width:17px;height:17px;display:block}
+.more{width:46px;height:46px;flex-shrink:0;border:1px solid var(--line);border-radius:9999px;background:var(--card);color:var(--muted);cursor:pointer;display:grid;place-items:center}
+.more .ms svg{width:19px;height:19px;display:block}
+
+/* ---------- Alternatives as mini stubs ---------- */
+.altblock h4{margin:0 0 8px;font-size:11px;font-weight:900;color:var(--primary-ink);display:flex;align-items:center;gap:6px}
+.altblock h4 .ms svg{width:15px;height:15px;display:block}
+.ministub{width:100%;display:grid;grid-template-columns:38px 1fr auto;align-items:stretch;border:1px solid var(--line);border-radius:14px;background:var(--card);overflow:hidden;cursor:pointer;text-align:left;font-family:inherit;padding:0;margin-bottom:8px;transition:transform .16s ease,border-color .16s ease}
+.ministub:active{transform:scale(.985)}
+.ministub.on{border-color:var(--primary);box-shadow:inset 0 0 0 1px var(--primary)}
+.mstub{background:var(--stub);color:var(--stub-ink);display:grid;place-items:center;font-family:"JetBrains Mono",ui-monospace,monospace;font-weight:900;font-size:13px;border-right:2px dashed #bba98d}
+.mbody{padding:9px 10px;min-width:0}
+.mbody strong{display:block;font-size:12.5px;font-weight:900;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mmeta{display:flex;align-items:center;gap:8px;margin-top:3px;font-size:10px;color:var(--muted);font-weight:800}
+.mmeta .ms svg{width:12px;height:12px;display:block}
+.mmeta span{display:inline-flex;align-items:center;gap:3px}
+.mside{display:grid;place-items:center;padding:0 11px;color:var(--muted)}
+.mside .ms svg{width:17px;height:17px;display:block}
+
+/* ---------- Mission list ---------- */
+.missions{border:1px solid var(--line);background:var(--card);border-radius:16px;padding:12px}
+.missions h4{margin:0 0 8px;font-size:11px;font-weight:900;color:var(--primary-ink);display:flex;align-items:center;gap:6px}
+.missions h4 .ms svg{width:15px;height:15px;display:block}
+.mrow{display:flex;align-items:center;gap:9px;padding:8px 0;border-top:1px dashed #e7dac2;font-size:11.5px;font-weight:700}
+.mrow:first-of-type{border-top:0}
+.mlabel{display:flex;flex-direction:column;min-width:0}
+.mlabel small{font-size:9.5px;font-weight:700;color:#8c8275;margin-top:2px}
+.mrow.done .mlabel small{color:var(--safe)}
+.mgo{color:var(--primary);display:grid;place-items:center}
+.mgo .ms svg{width:15px;height:15px;display:block}
+.mrow .rw + .mgo{margin-left:2px}
+.mmark{width:19px;height:19px;flex-shrink:0;border-radius:999px;border:1.6px solid var(--line);display:grid;place-items:center;color:#fff}
+.mmark .ms svg{width:12px;height:12px;display:block;opacity:0}
+.mrow.done .mmark{background:var(--safe);border-color:var(--safe)}
+.mrow.done .mmark .ms{opacity:1}
+.mrow.done .mlabel{color:var(--muted);text-decoration:line-through}
+.mrow .mlabel{flex:1}
+.mrow .rw{margin-left:auto;font-family:"JetBrains Mono",ui-monospace,monospace;font-size:10px;font-weight:800;color:var(--gold)}
+.mrow:not(.done) .rw{margin-left:0}
+
+/* ---------- Week strip ---------- */
+.weekstrip{display:flex;align-items:center;gap:10px;border:1px solid var(--line);background:var(--card);border-radius:14px;padding:10px 12px}
+.weekstrip .wk{color:var(--primary);flex-shrink:0}
+.weekstrip .wk .ms svg{width:18px;height:18px;display:block}
+.weekstrip .wtxt{flex:1;min-width:0}
+.weekstrip b{display:block;font-size:12px;font-weight:900}
+.weekstrip .wbar{margin-top:5px;height:5px;border-radius:999px;background:#ebe4d6;overflow:hidden}
+.weekstrip .wbar span{display:block;height:100%;border-radius:inherit;background:var(--primary);transition:width .5s cubic-bezier(.16,1,.3,1)}
+.weekstrip .wgo{border:0;background:transparent;color:var(--muted);cursor:pointer}
+.weekstrip .wgo .ms svg{width:19px;height:19px;display:block}
+
+.tabbar{display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid #ebd9c6;background:color-mix(in srgb,var(--card) 96%,transparent);padding:8px 6px 12px}
+.tab{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:9.5px;font-weight:800;color:var(--muted);border:0;background:transparent;font-family:inherit;cursor:pointer;position:relative;padding:2px 0}
+.tab .ms svg{width:20px;height:20px;display:block}
+.tab.on{color:var(--primary)}
+.tab.on svg{stroke-width:2.4}
+.tab b{position:absolute;top:-2px;right:13px;background:var(--primary);color:#fff;font-size:8px;border-radius:999px;padding:1px 5px;font-weight:900}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:50;background:var(--card);border-top:1px solid var(--line);border-radius:22px 22px 0 0;padding:16px 16px 20px;box-shadow:0 -14px 40px rgba(28,25,23,.16);transform:translateY(104%);transition:transform .34s cubic-bezier(.16,1,.3,1);max-height:78%;overflow-y:auto}
+.sheet.open{transform:translateY(0)}
+.sheet h4{margin:0 0 4px;font-size:13px;font-weight:900}
+.sheet .sect{margin-top:12px;border-top:1px dashed #e7dac2;padding-top:10px}
+.sheet .sect h5{margin:0 0 5px;font-size:10.5px;font-weight:900;color:var(--primary-ink);display:flex;align-items:center;gap:5px}
+.sheet .sect h5 .ms svg{width:14px;height:14px;display:block}
+.sheet p{margin:0;font-size:11px;color:var(--muted);line-height:1.7}
+.sheet .wklist{margin:6px 0 0;padding-left:15px}
+.sheet .wklist li{font-size:11px;color:var(--muted);line-height:1.8}
+.sheet .wklist li.today{color:var(--primary-ink);font-weight:900}
+.sheet-close{position:absolute;right:14px;top:14px;border:0;background:transparent;color:var(--muted);cursor:pointer;display:grid;place-items:center}
+.sheet-close .ms svg{width:19px;height:19px;display:block}
+.scrim{position:absolute;inset:0;background:rgba(28,25,23,.32);backdrop-filter:blur(3px);z-index:49;opacity:0;pointer-events:none;transition:opacity .3s ease}
+.scrim.on{opacity:1;pointer-events:auto}
+/* ---------- Me page（本週節奏詳細清單的落點） ---------- */
+.page{display:none;flex-direction:column}
+.page.on{display:flex;flex:1}
+.me{display:grid;gap:12px}
+.mecard{border:1px solid var(--line);background:var(--card);border-radius:18px;padding:14px}
+.mecard .kicker{font-size:9.5px;font-weight:900;letter-spacing:.14em;color:var(--primary);text-transform:uppercase}
+.mecard h2{margin:3px 0 0;font-size:17px;font-weight:900;letter-spacing:-.01em}
+.mecard .sub{margin:3px 0 0;font-size:11px;color:var(--muted);line-height:1.6}
+.goalrow{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:11px}
+.goalnum{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:22px;font-weight:900;color:var(--primary)}
+.goalnum small{font-size:11px;color:var(--muted);font-weight:800}
+.ring{width:56px;height:56px;border-radius:999px;display:grid;place-items:center;font-size:11px;font-weight:900;color:var(--primary-ink);background:conic-gradient(var(--primary) calc(var(--p)*1%),#ece4d8 0)}
+.ring i{width:44px;height:44px;border-radius:999px;background:var(--card);display:grid;place-items:center;font-style:normal}
+.goalbar{height:6px;border-radius:999px;background:#ebe4d6;overflow:hidden;margin-top:9px}
+.goalbar span{display:block;height:100%;background:var(--primary);border-radius:inherit;transition:width .5s cubic-bezier(.16,1,.3,1)}
+.tally{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:12px}
+.tal{border:1px solid #ede3cf;border-radius:12px;background:#fbf7ee;padding:8px 6px;text-align:center}
+.tal b{display:block;font-family:"JetBrains Mono",ui-monospace,monospace;font-size:15px;font-weight:900;color:var(--primary-ink)}
+.tal span{display:block;font-size:9px;color:var(--muted);font-weight:800;margin-top:2px}
+.wkday{font-size:9.5px;font-weight:900;letter-spacing:.06em;color:var(--muted);text-transform:uppercase;margin:14px 0 6px}
+.meal{display:grid;grid-template-columns:26px 1fr auto;align-items:center;gap:9px;padding:8px 0;border-top:1px dashed #e7dac2}
+.meal:first-of-type{border-top:0}
+.mno{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:10.5px;font-weight:900;color:var(--muted)}
+.mtitle{font-size:12px;font-weight:900;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mtitle.empty{color:#a9a093;font-weight:700}
+.mmeta{font-size:9.5px;color:var(--muted);font-weight:700;margin-top:2px}
+.pill{font-size:9.5px;font-weight:900;border-radius:999px;padding:3px 8px;border:1px solid;white-space:nowrap}
+.pill.cooked{color:var(--safe);background:var(--safe-bg);border-color:color-mix(in srgb,var(--safe) 28%,transparent)}
+.pill.planned{color:var(--primary);background:var(--primary-soft);border-color:color-mix(in srgb,var(--primary) 24%,transparent)}
+.pill.postponed{color:var(--gold);background:var(--gold-bg);border-color:color-mix(in srgb,var(--gold) 28%,transparent)}
+.pill.cancelled{color:var(--muted);background:#efe9d8;border-color:var(--line)}
+.meal.today{background:linear-gradient(90deg,color-mix(in srgb,var(--primary) 7%,transparent),transparent);border-radius:10px;padding-left:6px;margin-left:-6px}
+.meal.done .mtitle{color:var(--muted)}
+.rankrow{display:flex;align-items:center;gap:10px;margin-top:11px}
+.rankdot{width:9px;height:9px;border-radius:999px;background:#e2dbcc;flex:1}
+.rankdot.on{background:var(--gold)}
+.badgerow{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:11px}
+.bdg{border:1px solid #ede3cf;border-radius:11px;padding:7px 4px;text-align:center;background:#f1ede7;color:#8d918c}
+.bdg.earned{background:var(--gold-bg);color:var(--primary-ink);border-color:color-mix(in srgb,var(--gold) 30%,transparent)}
+.bdg b{display:block;font-size:9px;font-weight:900;line-height:1.3}
+.more-list button{display:flex;width:100%;align-items:center;gap:9px;text-align:left;border:0;border-top:1px solid #eee8dd;background:transparent;padding:11px 2px;font-family:inherit;font-size:12px;font-weight:800;color:var(--ink);cursor:pointer}
+.more-list button:first-of-type{border-top:0}
+.more-list .ms{color:var(--muted)}
+.more-list small{margin-left:auto;font-size:9.5px;color:var(--muted);font-weight:700}
+.note{font-size:10px;color:var(--muted);line-height:1.6;margin-top:10px;padding-top:9px;border-top:1px dashed #e7dac2}
+.fade{position:absolute;left:0;right:0;bottom:0;height:22px;background:linear-gradient(to top,var(--bg),transparent);pointer-events:none;opacity:0;transition:opacity .2s ease;z-index:29}
+.fade.on{opacity:1}
+@media (max-width:920px){.wrap{flex-direction:column;align-items:center}.device{position:static}.side{width:100%}}
+@media (prefers-reduced-motion:reduce){.enter,.pop,.floatxp{animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="side">
+    <div class="box">
+      <p class="eyebrow">CooCoo 1.0 · 今日頁</p>
+      <h1>票券 × 任務板 · 融合版</h1>
+      <p class="lead">保留舊版票券造型（票根、缺口、撕線、大數字），把票身文字換成圖示與數字，並在票券下方接上任務板的三個可行方向、今日任務與 EXP 進度。</p>
+      <span class="flag">提案預覽 · 非正式站 · 模擬後端（記憶體，不寫任何資料庫）</span>
+    </div>
+    <div class="box">
+      <h3>你的三個決定</h3>
+      <table class="map">
+        <tr><th>項目</th><th>處理</th></tr>
+        <tr><td>三個可行方向</td><td>保留，做成票券下方的小票根列，點擊可與主任務互換</td></tr>
+        <tr><td>票根大數字</td><td>主數字＝任務進度 N/3，上方小字＝今日第 N 餐（與正式站 plannedDayNumber 同定義）</td></tr>
+        <tr><td>週節奏</td><td>拆兩半：今日頁留單行進度條，詳細餐次清單移到「我的」</td></tr>
+      </table>
+    </div>
+    <div class="box">
+      <h3>逐項處置</h3>
+      <table class="map">
+        <tr><th>票券元素</th><th>處置</th></tr>
+        <tr><td>票根、缺口、撕線</td><td><span class="keep">保留</span></td></tr>
+        <tr><td>模式切換（冰箱／補買）</td><td><span class="keep">保留</span></td></tr>
+        <tr><td>三欄數據</td><td><span class="change">改</span> 只留圖示＋數字</td></tr>
+        <tr><td>食材路徑 chips</td><td><span class="change">改</span> 狀態改成圓點與圖示</td></tr>
+        <tr><td>獎勵說明句</td><td><span class="change">改</span> 改成 EXP 徽章</td></tr>
+        <tr><td>副標一句</td><td><span class="drop">捨</span> 收進第二層</td></tr>
+        <tr><td>後端診斷框</td><td><span class="drop">捨</span> 收進第二層</td></tr>
+        <tr><td>「點選卡片即可置換」</td><td><span class="drop">捨</span></td></tr>
+      </table>
+    </div>
+    <div class="box">
+      <h3>模擬後端（選項 A 的沙盒）</h3>
+      <p>未登入時不再用寫死的樣本，而是跑一份<b>照 migration 規則實作</b>的記憶體後端：<code>complete_cooking_v2_transaction</code> 與 <code>eat_prepared_serving_v2</code>。動作只寫事件，畫面一律由重新讀回的 <code>/state</code> 形狀推得，所以票根大數字會真的從 0/3 走到 3/3。</p>
+      <ul>
+        <li>防重複：同一 <code>operationId</code> 再送一次會被擋（duplicate），EXP 不變。</li>
+        <li>即期判定沿用 <code>daysLeft &lt;= 3</code>；只有用到即期食材才發 <code>expiring_ingredient_used</code>。</li>
+        <li>料理會扣庫存、產生餐份、推進週目標，達標當週只發一次 +40。</li>
+        <li>徽章依四個計數器達成時才取得，與正式站同式。</li>
+        <li>右上「重置」把模擬資料還原，方便重跑流程。</li>
+      </ul>
+    </div>
+    <div class="box">
+      <h3>可試的互動</h3>
+      <ul>
+        <li>點「三個可行方向」的小票根，主任務票券會換成該道。</li>
+        <li>按「就煮這道」→ 寫入事件 → 任務、EXP、週進度、徽章全部重算。</li>
+        <li>本餐煮過後按鈕變「本餐已煮」且<b>換菜也不解鎖</b>（一餐只一筆料理事件）。</li>
+        <li>熟食列出現時點它 → 吃掉 1 份，熟食任務才會亮。</li>
+        <li>按「⋯」開啟第二層，看被捨掉的文字與真實安全提醒收到哪裡。</li>
+        <li>今日任務為<b>唯讀</b>：點擊只做跳轉，不會切換完成、也不會加減 EXP。</li>
+      </ul>
+    </div>
+    <div class="box">
+      <h3>2026-09-12 決議已落地</h3>
+      <ul>
+        <li>任務固定 <b>3 項</b>；<code>weekly_rhythm</code> 不進清單，改由本週節奏單行進度條承擔。</li>
+        <li>即期門檻沿用全站既有定義 <code>daysLeft &lt;= 3</code>，且只作為提示，不参与完成判定。</li>
+        <li>熟食任務改為只讀今日 <code>prepared_serving_eaten</code> 事件，修正原本永遠點不亮的反向邏輯。</li>
+        <li>詳細餐次清單取自 <code>mealPlan.meals</code> 真實狀態，並規劃放進「我的」（本期範圍）。</li>
+      </ul>
+    </div>
+    <div class="box">
+      <h3>「我的」頁（本期範圍）</h3>
+      <p>底部切到<b>我的</b>可看完整版位。本週節奏的詳細餐次清單落在這裡，資料與今日頁同一份 state：在今日煮一道，回「我的」已煮數、待煮數、逐餐明細與那條進度條會同步更新，不需要重新整理。</p>
+      <ul>
+        <li>四格計數（已煮／待煮／延後／已取消）直接來自 <code>mealPlan.meals[].status</code>，不另開資料路徑。</li>
+        <li>煮完今日那餐時，該筆排程會轉為 <code>cooked</code> 並補上食譜名，票根小字改標「本週第 N 餐 · 已煮」（不再謊稱今日）。</li>
+        <li>今日頁那條單行進度條的箭頭，現在會直接跳到「我的」。</li>
+        <li>成長卡沿用正式站語彙：職階、12 枚徽章、四個計數器。</li>
+      </ul>
+    </div>
+    <div class="box">
+      <h3>移植前需拍板的一處</h3>
+      <p>我讓模擬後端在煮完時把該筆 <code>planned</code> 餐次改成 <code>cooked</code>，但<b>現行後端其實沒有任何路徑會這樣做</b>：<code>complete_cooking_v2_transaction</code> 只寫事件與庫存，<code>PlannedMeal.status</code> 的 <code>cooked</code> 從沒有人寫入（只有 <code>reschedule_planned_meal</code> 能改 status）。所以「已煮 3 道」這種數字在正式站目前無法由 <code>mealPlan</code> 取得，只能靠 <code>cookingOutcomes</code> 推。移植時要選：(a) 請後端在煮完時真的把餐次結案，或 (b) 「我的」的逐餐明細改用 <code>cookingOutcomes</code>＋排程合併顯示。我傾向 (b)，不必動 migration。</p>
+    </div>
+    <div class="box">
+      <h3>週節奏的建議理由</h3>
+      <p>週節奏原本是三段式手風琴（重疊率、覆蓋率、餐次清單），屬於「回顧型」資訊，放在今日頁會跟主任務搶注意力。建議今日頁只留一行進度條（本週 2/4 餐），完整清單移到「我的」，符合你「今日頁只做一件事」的目標。</p>
+    </div>
+  </div>
+
+  <div class="device"><div class="phone"><div class="screen">
+    <div class="statusbar"><span>9:41</span><span class="island"></span><span class="icons">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M2 20h3v-6H2v6zm5 0h3V9H7v11zm5 0h3V5h-3v15zm5 0h3V2h-3v18z"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="7" width="17" height="10" rx="3"/><rect x="4" y="9" width="11" height="6" rx="1.6" fill="currentColor" stroke="none"/><path d="M21 10.5v3"/></svg>
+    </span></div>
+
+    <div class="hud">
+      <div class="hudrow">
+        <div class="chef">
+          <span class="avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/><line x1="6" y1="17" x2="18" y2="17"/></svg></span>
+          <div><div class="rankname" id="rankname">初火學徒</div><div class="ranksub">距下一職階還有 100 EXP</div></div>
+        </div>
+        <span style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><span class="xpchip" id="xpchip">0 EXP</span><span style="display:flex;gap:5px;align-items:center"><span class="srcchip sample" id="datasrc">模擬後端</span><button class="srcreset" id="mockreset" type="button" title="重置模擬資料">重置</button></span></span>
+      </div>
+      <div class="xpbar"><span id="xpfill" style="width:0%"></span></div>
+      <div class="xpmeta"><span id="xpfrom">0</span><span id="xpnext">下一目標 100 EXP</span></div>
+    </div>
+
+    <div class="content" id="content">
+      <div class="page on" id="page-today"><div class="stack enter" id="stack"></div></div>
+      <div class="page" id="page-me"><div class="me" id="mepage"></div></div>
+      <div class="fade" id="fade"></div>
+    </div>
+
+    <div class="tabbar">
+      <button class="tab on" type="button" data-page="today"><span class="ms" data-icon="today"></span>今日</button>
+      <button class="tab" type="button"><span class="ms" data-icon="shopping_bag"></span>採買<b>2</b></button>
+      <button class="tab" type="button"><span class="ms" data-icon="kitchen"></span>冰箱<b>2</b></button>
+      <button class="tab" type="button"><span class="ms" data-icon="menu_book"></span>食譜</button>
+      <button class="tab" type="button" data-page="me"><span class="ms" data-icon="person"></span>我的</button>
+    </div>
+
+    <div class="scrim" id="scrim"></div>
+    <div class="sheet" id="sheet">
+      <button class="sheet-close" id="sheetclose" type="button"><span class="ms" data-icon="close"></span></button>
+      <h4 id="sheettitle">番茄滑蛋飯 · 第二層</h4>
+      <div class="sect" id="sectwhy">
+        <h5><span class="ms" data-icon="info"></span>這道為什麼適合你</h5>
+        <p id="sheetwhy">符合你的廚具與飲食設定。</p>
+      </div>
+      <div class="sect" id="sectsafety">
+        <h5><span class="ms" data-icon="health_and_safety"></span>安全提醒</h5>
+        <p id="sheetsafety">過敏與食安資訊不會只以圖示呈現。</p>
+      </div>
+      <div class="sect">
+        <h5><span class="ms" data-icon="calendar_month"></span>本週節奏</h5>
+        <ul class="wklist" id="wklist"></ul>
+      </div>
+    </div>
+  </div></div></div>
+</div>
+
+<script>
+// 圖示一律用內嵌 SVG：不依賴 Google Icons 字型（該字型為 3.9MB 且僅以 fallback 形式提供，
+// 離線或載入失敗時會把 check、schedule 這類名字直接顯示成文字）。
+const SVG_PATHS = {
+  "alt_route": '<circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="18" r="2.5"/><path d="M6.5 15.5V10A3.5 3.5 0 0 1 10 6.5h4.5"/><path d="M12.5 4 15 6.5 12.5 9"/><path d="M17.5 15.5v-2"/>',
+  "calendar_month": '<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3.5V7M16 3.5V7"/><rect x="7" y="12.5" width="3.4" height="3.4" rx="1" fill="currentColor" stroke="none"/>',
+  "check": '<polyline points="4.5 12.5 9.5 17.5 19.5 6.5"/>',
+  "check_circle": '<circle cx="12" cy="12" r="9"/><polyline points="8.5 12.2 11 14.7 15.8 9.4"/>',
+  "chevron_right": '<polyline points="9.5 6 15.5 12 9.5 18"/>',
+  "close": '<path d="M6 6l12 12M18 6L6 18"/>',
+  "flag": '<path d="M5 21V4"/><path d="M5 4.5h11.5L14 8.5l2.5 4H5"/>',
+  "health_and_safety": '<path d="M12 3.2 4.8 6v5.4c0 4.3 3 8.1 7.2 9.4 4.2-1.3 7.2-5.1 7.2-9.4V6Z"/><path d="M12 9.2v5.6M9.2 12h5.6"/>',
+  "info": '<circle cx="12" cy="12" r="9"/><path d="M12 11v5.5"/><circle cx="12" cy="8" r="1.1" fill="currentColor" stroke="none"/>',
+  "kitchen": '<path d="M4 10h12a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4Z"/><path d="M18 11h3"/><path d="M6.5 6.5c0-1.4 1-2.5 1-2.5M10 6.2c0-1.6 1.2-2.7 1.2-2.7M13.5 6.5c0-1.4 1-2.5 1-2.5"/>',
+  "local_fire_department": '<path d="M12 3s4.5 3.6 4.5 7.6c0 1.3-.6 2.3-1.4 2.9.3-1.5-.4-3.1-1.6-3.9.2 2.2-1.3 3-2.3 4.1-.9 1-1.2 2.6-.3 3.7-1.1-.3-2.4-1.3-2.9-2.9C6.9 11.4 9.2 8.6 12 3Z"/><path d="M12 21c3.3 0 5.5-2 5.5-4.6 0-1-.3-1.9-.8-2.6"/>',
+  "menu_book": '<path d="M12 6.5C10.5 5 8.5 4.5 4.5 4.5v13c4 0 6 .5 7.5 2 1.5-1.5 3.5-2 7.5-2v-13c-4 0-6 .5-7.5 2Z"/><path d="M12 6.5v13"/>',
+  "military_tech": '<circle cx="12" cy="9" r="5"/><path d="M12 6.4l1 2 2.2.3-1.6 1.5.4 2.2-2-1-2 1 .4-2.2L8.8 8.7l2.2-.3Z"/><path d="M8 14.5 6.5 21l5.5-2.8L17.5 21 16 14.5"/>',
+  "more_horiz": '<circle cx="5.5" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="18.5" cy="12" r="1.5" fill="currentColor" stroke="none"/>',
+  "payments": '<rect x="2.5" y="6" width="19" height="12" rx="2.5"/><circle cx="12" cy="12" r="2.6"/><path d="M6 10.5v3M18 10.5v3"/>',
+  "person": '<circle cx="12" cy="8" r="3.6"/><path d="M5 20c.6-3.8 3.4-5.6 7-5.6s6.4 1.8 7 5.6"/>',
+  "play_circle": '<circle cx="12" cy="12" r="9"/><polygon points="10,8.2 15.6,12 10,15.8" fill="currentColor" stroke="none"/>',
+  "ramen_dining": '<path d="M3.5 11h17a8.5 8.5 0 0 1-8.5 8 8.5 8.5 0 0 1-8.5-8Z"/><path d="M8 8c0-2 1.5-2 1.5-4M12.5 8c0-2 1.5-2 1.5-4"/><path d="M14 15.5h6"/>',
+  "schedule": '<circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12.5 16 14.2"/>',
+  "shopping_bag": '<path d="M6 8.5h12l1.2 11a1.6 1.6 0 0 1-1.6 1.8H6.4A1.6 1.6 0 0 1 4.8 19.5Z"/><path d="M9 8.5V7a3 3 0 0 1 6 0v1.5"/>',
+  "shopping_cart": '<circle cx="9.5" cy="19.5" r="1.6"/><circle cx="17.5" cy="19.5" r="1.6"/><path d="M2.5 3.5h3l2.4 11.2a1.6 1.6 0 0 0 1.6 1.3h8.1a1.6 1.6 0 0 0 1.6-1.3L21.5 8H6.2"/>',
+  "swap_horiz": '<polyline points="7.5 7 4 10.5 7.5 14"/><path d="M4 10.5h13"/><polyline points="16.5 10 20 13.5 16.5 17"/><path d="M20 13.5H7"/>',
+  "today": '<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3.5V7M16 3.5V7"/>',
+  "trending_up": '<polyline points="3 16.5 9 10.5 13 14.5 21 6.5"/><polyline points="15.5 6.5 21 6.5 21 12"/>',
+  "edit_calendar": '<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3.5V7M16 3.5V7"/><path d="M8.5 16.5h4"/>',
+  "history": '<path d="M4.5 12a7.5 7.5 0 1 0 2.3-5.4L3.5 8.5"/><path d="M3.5 4v4.5H8"/><path d="M12 8.5v4l2.8 1.7"/>',
+  "receipt_long": '<path d="M6 3.5h12v17l-3-2-3 2-3-2-3 2Z"/><path d="M9 8h6M9 12h6"/>',
+  "notifications": '<path d="M18 15.5V11a6 6 0 1 0-12 0v4.5L4.5 18h15Z"/><path d="M10 20.5a2.2 2.2 0 0 0 4 0"/>',
+  "settings": '<circle cx="12" cy="12" r="3.2"/><path d="M12 3.5v2.2M12 18.3v2.2M4.6 7.8l1.9 1.1M17.5 15.1l1.9 1.1M4.6 16.2l1.9-1.1M17.5 8.9l1.9-1.1"/>',
+  "forum": '<path d="M4 6.5h11v8H8.5L4 18.5Z"/><path d="M9 18v.5h9.5L22 22v-8h-3"/>'
+};
+const MS = n => {
+  const path = SVG_PATHS[n];
+  if (!path) return '';
+  return '<span class="ms"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + path + '</svg></span>';
+};
+const ICO = {
+  clock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+  pan:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10h12a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4Z"/><path d="M18 11h3"/></svg>',
+  coin:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5h5M9.5 14.5h5"/></svg>',
+  list:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>'
+};
+// ============================================================
+// 真實 API 欄位對接層
+// 來源契約：packages/contracts/src/index.ts
+//   AppState / GrowthProfile / WeeklyGoal / MealServing / InventoryItem
+//   TodayDecision / RecipePackage
+// 這層只做欄位映射與覆蓋率推導，畫面 render() 完全不變。
+// ============================================================
+
+// 與 packages/core/src/growth.ts 的 EXP_POINTS 一致（僅用於本地樂觀更新顯示）
+// 即期門檻：與正式站既有定義一致（RecipeModal.tsx 決定是否發 expiring_ingredient_used 用的就是 daysLeft <= 3）
+const EXPIRING_DAYS_LEFT = 3;
+const EXP_POINTS = { cooking_completed:30, prepared_serving_eaten:10, expiring_ingredient_used:10, double_meal_completed:20, weekly_goal_completed:40 };
+// 與 packages/core/src/growth.ts 的 CHEF_RANKS 一致（伺服器仍會回傳 growth.rank，這裡只用於即時預覽）
+const CHEF_RANKS = [{name:'初火學徒',threshold:0},{name:'赤銅助廚',threshold:100},{name:'銀焰掌勺官',threshold:250},{name:'星鑽副主廚',threshold:500},{name:'傳奇總主廚',threshold:900}];
+const RANKS = CHEF_RANKS.map(r => ({ n:r.name, t:r.threshold }));
+// 與 packages/core/src/growth.ts 的 BADGE_DEFINITIONS 一致（12 枚，四類各三階）
+const BADGE_DEFINITIONS = [
+  ...[1,10,30].map((target,i)=>({ badgeKey:'cooking-'+target, category:'cooking', tier:i+1, title:['第一道火光','十餐上桌','料理成習'][i], target, metric:'cooking' })),
+  ...[1,4,12].map((target,i)=>({ badgeKey:'rhythm-'+target, category:'rhythm', tier:i+1, title:['第一週節奏','穩穩一個月','一季同行'][i], target, metric:'rhythm' })),
+  ...[1,5,15].map((target,i)=>({ badgeKey:'waste-less-'+target, category:'waste_less', tier:i+1, title:['惜食初芽','冰箱守護者','惜食達人'][i], target, metric:'wasteLess' })),
+  ...[3,10,25].map((target,i)=>({ badgeKey:'exploration-'+target, category:'exploration', tier:i+1, title:['三味探索','十道風景','百味前奏'][i], target, metric:'exploration' }))
+];
+
+// 範例 payload：欄位與 /api/v1/state、/api/v1/meal-decisions/today 的回應完全相同。
+// 有登入 token 時會改抓即時資料；沒有時用這份，但欄位形狀不變。
+const SAMPLE_STATE = {
+  version: 2,
+  session: { user: { id: '00000000-0000-4000-8000-000000000001', email: 'preview@coocoo.app', displayName: 'preview' } },
+  growth: {
+    totalExp: 20,
+    rank: { level: 1, name: '初火學徒', threshold: 0, nextThreshold: 100 },
+    nextBadge: { badgeKey: 'cooking-1', title: '第一道火光', current: 0, target: 1 }
+  },
+  weeklyGoal: { id: 'goal-1', weekStart: '2026-09-07', metric: 'cooking_sessions', target: 4, progress: 2, rewardGrantedAt: null, updatedAt: '2026-09-12T00:00:00.000Z' },
+  expEvents: [],
+  badgeAwards: [],
+  cookingOutcomes: [],
+  inventory: [
+    { id:'inv-1', name:'番茄', ingredientKey:'番茄', chamber:'cold', qty:250, unit:'克', daysLeft:2, expiresOn:'2026-09-14', lastConfirmedAt:'2026-09-12T00:00:00.000Z', image:'/favicon.svg', addedDate:'2026-09-10', estimatedValue:0 },
+    { id:'inv-2', name:'雞蛋', ingredientKey:'蛋', chamber:'cold', qty:6, unit:'顆', daysLeft:9, expiresOn:'2026-09-21', lastConfirmedAt:'2026-09-12T00:00:00.000Z', image:'/favicon.svg', addedDate:'2026-09-10', estimatedValue:0 },
+    { id:'inv-3', name:'白飯', ingredientKey:'白飯', chamber:'cold', qty:2, unit:'碗', daysLeft:1, expiresOn:'2026-09-13', lastConfirmedAt:'2026-09-12T00:00:00.000Z', image:'/favicon.svg', addedDate:'2026-09-11', estimatedValue:0 }
+  ],
+  mealServings: [{ id:'serv-1', cookingSessionId:'session-1', status:'prepared_inventory', eatenAt:null, vegetableKeys:[] }],
+  mealPlan: { id:'plan-1', weekStart:'2026-09-07', meals:[
+    { id:'meal-1', date:'2026-09-08', slot:'dinner', recipeId:'r1', title:'番茄滑蛋飯', status:'cooked', servings:1, ingredients:[], estimatedCost:72, totalMinutes:20, cookwareTypes:['電磁爐'], energyLevel:'normal' },
+    { id:'meal-2', date:'2026-09-10', slot:'dinner', recipeId:'r2', title:'味噌蔬菜烏龍麵', status:'cooked', servings:1, ingredients:[], estimatedCost:65, totalMinutes:15, cookwareTypes:['電磁爐'], energyLevel:'normal' },
+    { id:'meal-3', date:'2026-09-12', slot:'dinner', recipeId:'r3', title:'', status:'planned', servings:1, ingredients:[], estimatedCost:0, totalMinutes:0, cookwareTypes:[], energyLevel:'normal' },
+    { id:'meal-4', date:'2026-09-13', slot:'dinner', recipeId:'r4', title:'', status:'planned', servings:1, ingredients:[], estimatedCost:0, totalMinutes:0, cookwareTypes:[], energyLevel:'normal' }
+  ], overlapRate:0.5, inventoryCoverageRate:0.66, updatedAt:'2026-09-12T00:00:00.000Z' },
+  mealTasks: [],
+  shoppingItems: [{ id:'shop-1' }, { id:'shop-2' }]
+};
+
+const SAMPLE_DECISION = {
+  date: '2026-09-12', slot: 'dinner', source: 'brand_safe',
+  notice: '依你的飲食限制、廚具、預算與庫存挑選品牌食譜。',
+  primary: {
+    id:'brand-tomato-egg-v1', recipeId:'11111111-1111-4111-8111-111111111111', title:'番茄滑蛋飯',
+    servings:1, prepMinutes:7, totalMinutes:20, estimatedCost:72, cookwareTypes:['電磁爐'],
+    ingredients:[
+      { ingredientKey:'蛋', name:'雞蛋', quantity:2, unit:'顆', isPantryStaple:false, isVegetable:false, coveredByInventory:false },
+      { ingredientKey:'番茄', name:'番茄', quantity:250, unit:'克', isPantryStaple:false, isVegetable:true, coveredByInventory:false },
+      { ingredientKey:'白飯', name:'白飯', quantity:1, unit:'碗', isPantryStaple:false, isVegetable:false, coveredByInventory:false },
+      { ingredientKey:'油', name:'食用油', quantity:5, unit:'毫升', isPantryStaple:true, isVegetable:false, coveredByInventory:false }
+    ],
+    steps:[
+      { id:'te-1', order:1, instruction:'將 250 克番茄切成小塊，雞蛋打散。', voiceText:'', timerSeconds:null, safetyNote:'切菜時讓指尖向內收。' },
+      { id:'te-2', order:2, instruction:'鍋中少量油，中火炒蛋到半熟後先盛起。', voiceText:'', timerSeconds:90, safetyNote:null },
+      { id:'te-3', order:3, instruction:'同鍋炒番茄至出汁，放回雞蛋拌勻。', voiceText:'', timerSeconds:180, safetyNote:'蛋液需完全凝固。' }
+    ],
+    imageUrl:null, fallbackImageUrl:'/favicon.svg', downloadedAt:null
+  },
+  alternatives: [
+    {
+      id:'brand-miso-udon-v1', recipeId:'22222222-2222-4222-8222-222222222222', title:'味噌蔬菜烏龍麵',
+      servings:1, prepMinutes:5, totalMinutes:15, estimatedCost:65, cookwareTypes:['電磁爐'],
+      ingredients:[
+        { ingredientKey:'烏龍麵', name:'冷凍烏龍麵', quantity:1, unit:'包', isPantryStaple:false, isVegetable:false, coveredByInventory:false },
+        { ingredientKey:'青花菜', name:'青花菜', quantity:100, unit:'克', isPantryStaple:false, isVegetable:true, coveredByInventory:false },
+        { ingredientKey:'蛋', name:'雞蛋', quantity:1, unit:'顆', isPantryStaple:false, isVegetable:false, coveredByInventory:false }
+      ],
+      steps:[
+        { id:'mu-1', order:1, instruction:'一鍋水煮滾，放入烏龍麵與青花菜。', voiceText:'', timerSeconds:180, safetyNote:'避免蒸氣燙傷。' },
+        { id:'mu-2', order:2, instruction:'打入雞蛋，煮到蛋白完全凝固。', voiceText:'', timerSeconds:150, safetyNote:'雞蛋需完全熟透。' },
+        { id:'mu-3', order:3, instruction:'關火後再拌入味噌。', voiceText:'', timerSeconds:null, safetyNote:null }
+      ],
+      imageUrl:null, fallbackImageUrl:'/favicon.svg', downloadedAt:null
+    },
+    {
+      id:'brand-sesame-chicken-v1', recipeId:'33333333-3333-4333-8333-333333333333', title:'胡麻雞絲拌麵',
+      servings:1, prepMinutes:8, totalMinutes:25, estimatedCost:88, cookwareTypes:['電磁爐'],
+      ingredients:[
+        { ingredientKey:'雞肉', name:'雞胸肉', quantity:120, unit:'克', isPantryStaple:false, isVegetable:false, coveredByInventory:false },
+        { ingredientKey:'麵條', name:'麵條', quantity:100, unit:'克', isPantryStaple:false, isVegetable:false, coveredByInventory:false },
+        { ingredientKey:'青花菜', name:'青花菜', quantity:100, unit:'克', isPantryStaple:false, isVegetable:true, coveredByInventory:false }
+      ],
+      steps:[
+        { id:'sc-1', order:1, instruction:'雞胸肉煮熟，中心至少 74°C 後撕成絲。', voiceText:'', timerSeconds:600, safetyNote:'使用食物溫度計確認中心至少 74°C。' },
+        { id:'sc-2', order:2, instruction:'同鍋煮麵條與青花菜，撈起瀝乾。', voiceText:'', timerSeconds:300, safetyNote:'撈麵時小心熱水。' },
+        { id:'sc-3', order:3, instruction:'拌入雞絲與胡麻醬。', voiceText:'', timerSeconds:null, safetyNote:'芝麻過敏者不可食用。' }
+      ],
+      imageUrl:null, fallbackImageUrl:'/favicon.svg', downloadedAt:null
+    }
+  ]
+};
+
+// ---------- 映射：真實欄位 → 畫面資料 ----------
+// 庫存覆蓋率：與 packages/core 的 coveredByInventory 語意一致（ingredientKey 比對、qty > 0）
+function hasInventory(inventory, ingredient){
+  const key = String(ingredient.ingredientKey || '').trim();
+  const name = String(ingredient.name || '').trim();
+  return inventory.some(item => item.qty > 0 && (item.ingredientKey === key || item.name === key || item.ingredientKey === name || item.name === name));
+}
+function toMealCard(recipe, inventory){
+  const items = (recipe.ingredients || []).filter(i => !i.isPantryStaple);
+  const ingredients = items.map(i => ({ n: i.name, s: hasInventory(inventory, i) ? 'have' : 'need' }));
+  const missing = ingredients.filter(i => i.s === 'need').length;
+  return {
+    id: recipe.recipeId,
+    title: recipe.title,
+    time: recipe.totalMinutes,
+    cost: recipe.estimatedCost,
+    steps: (recipe.steps || []).length,
+    cookware: (recipe.cookwareTypes || []).join('、'),
+    mode: missing > 0 ? 'purchase' : 'fridge',
+    missing: missing,
+    exp: EXP_POINTS.cooking_completed,
+    ingredients: ingredients
+  };
+}
+// 決策日：與正式站 apps/api/src/modules/meal-plans/meal-planning.ts 的 taipeiDate() 一致
+function taipeiToday(){ return new Date(Date.now() + 8 * 3600000).toISOString().slice(0, 10); }
+// 任務推導（規格：docs/product-decisions/2026-09-12-mission-backend-definition.md 選項 A）
+// 完成判定只讀既有欄位，不寫入任何資料；今日頁固定 3 項，週節奏走獨立進度條。
+function deriveMissions(apiState){
+  const today = taipeiToday();
+  const events = apiState.expEvents || [];
+  const todays = events.filter(e => String(e.createdAt || '').slice(0, 10) === today);
+  const has = type => todays.some(e => e.type === type);
+  const expiring = (apiState.inventory || []).filter(i => i.daysLeft <= EXPIRING_DAYS_LEFT).length;
+  const srcOf = type => { const e = todays.find(x => x.type === type); return e ? { event: e.type, operationId: e.operationId, at: e.createdAt } : null; };
+  return [
+    { id:'cook_today',     label:'完成今天的料理', reward:EXP_POINTS.cooking_completed,      done: has('cooking_completed'), source: srcOf('cooking_completed') },
+    { id:'eat_prepared',   label:'吃掉 1 份熟食',   reward:EXP_POINTS.prepared_serving_eaten, done: has('prepared_serving_eaten'), source: srcOf('prepared_serving_eaten') },
+    // 「庫存有即期批次」只是可完成的機會，不作為完成判定，避免顯示已完成但料理完不發點
+    { id:'use_expiring',   label:'用掉即期食材',     reward:EXP_POINTS.expiring_ingredient_used, done: has('expiring_ingredient_used'), hint: expiring, source: srcOf('expiring_ingredient_used') }
+  ];
+}
+// 伺服器 /state 的 growth.rank 為真實來源；本地加減 EXP 時才用 CHEF_RANKS 重算顯示
+function renderHUD(){
+  const {rank, next} = expInfo();
+  document.getElementById('rankname').textContent = state.rankName || rank.n;
+  document.getElementById('xpchip').textContent = state.exp + ' EXP';
+  const sub = document.querySelector('.ranksub');
+  const span = next ? (next.t - rank.t) : 1;
+  const done = next ? (state.exp - rank.t) : 1;
+  sub.textContent = next ? ('距下一職階還有 ' + (next.t - state.exp) + ' EXP') : '已達最高職階';
+  document.getElementById('xpfill').style.width = Math.min(100, Math.round(done/span*100)) + '%';
+  document.getElementById('xpfrom').textContent = String(state.exp);
+  document.getElementById('xpnext').textContent = next ? ('下一目標 ' + next.t + ' EXP') : '最高職階 900 EXP';
+}
+function expInfo(){
+  let i = 0;
+  for (let k = 0; k < RANKS.length; k++) if (state.exp >= RANKS[k].t) i = k;
+  return { rank: RANKS[i], next: RANKS[i + 1] || null };
+}
+
+let MEALS = [];
+let state = {
+  active: 0, mode: 'fridge', exp: 0, cooked: false, prepared: 0,
+  missions: [], weekDone: 0, weekTarget: 1,
+  rankName: '', nextBadge: null, slot: 'dinner', notice: '', tasks: [], plan: null, dataSource: 'sample',
+  goalMetric: 'cooking_sessions', log: []
+};
+let MEAL_RECIPES = [];
+
+// ============================================================
+// 模擬後端（選項 A 的本地沙盒）
+// 目的：讓預覽能真實重算任務進度，而不是前端自己標記 done。
+// 規則完全照 supabase/migrations/20260911090000_coocoo_v2_growth_and_meal_tasks.sql
+// 的 complete_cooking_v2_transaction / eat_prepared_serving_v2：
+//   - 每個動作產生一個 operationId；(operationId, eventType) 重複即被拒（duplicate）
+//   - cooking_completed 必發；usedExpiringIngredient 才發 expiring_ingredient_used
+//   - 週目標 progress 增加，達標當週最多發一次 weekly_goal_completed
+//   - 徽章依四個計數器達成時才發
+//   - EXP 一律由事件總和推得，前端不自備加減
+// 這層只在「模擬後端」模式下存在；有登入 token 走即時 /state 時不會用到。
+// ============================================================
+const clone = v => JSON.parse(JSON.stringify(v));
+let MOCK = null;
+function resetMock(){ MOCK = clone(SAMPLE_STATE); }
+
+function uuid(seed){
+  const h = String(seed).padStart(32, '0');
+  return h.slice(0,8)+'-'+h.slice(8,12)+'-4'+h.slice(13,16)+'-8'+h.slice(17,20)+'-'+h.slice(20,32);
+}
+function hash(str){ let x = 2166136261; for (let i=0;i<str.length;i++){ x ^= str.charCodeAt(i); x = Math.imul(x, 16777619); } return (x>>>0).toString(16).padStart(8,'0').repeat(4); }
+function taipeiNowIso(){ return new Date(Date.now() + 8*3600000).toISOString().replace(/\.\d{3}Z$/, '+08:00'); }
+
+function mockGrantBadges(now){
+  const counters = mockCounters();
+  const awarded = new Set((MOCK.badgeAwards||[]).map(a=>a.badgeKey));
+  const granted = [];
+  BADGE_DEFINITIONS.forEach(b => {
+    if (awarded.has(b.badgeKey)) return;
+    if (counters[b.metric] >= b.target){
+      const row = { id: uuid(hash('badge:'+b.badgeKey)), badgeKey:b.badgeKey, category:b.category, tier:b.tier, title:b.title, awardedAt: now };
+      MOCK.badgeAwards.push(row); awarded.add(b.badgeKey); granted.push(row.title);
+    }
+  });
+  return granted;
+}
+function mockCounters(){
+  const eaten = (MOCK.mealServings||[]).filter(s=>s.status==='eaten');
+  const titles = (MOCK.cookingOutcomes||[]).map(o=>o.mealName);
+  return {
+    cooking: (MOCK.cookingOutcomes||[]).length,
+    rhythm: (MOCK.expEvents||[]).filter(e=>e.type==='weekly_goal_completed').length,
+    wasteLess: (MOCK.expEvents||[]).filter(e=>e.type==='expiring_ingredient_used'||e.type==='prepared_serving_eaten').length,
+    exploration: new Set(titles).size
+  };
+}
+function mockBumpWeeklyGoal(step, metric, now){
+  const goal = MOCK.weeklyGoal;
+  if (!goal || (metric && goal.metric !== metric)) return false;
+  goal.progress += step; goal.updatedAt = now;
+  if (goal.progress >= goal.target && !goal.rewardGrantedAt){
+    goal.rewardGrantedAt = now;
+    pushExpEvent(uuid(hash('weekly:'+goal.id+':'+goal.weekStart)), 'weekly_goal_completed', goal.id, now);
+    return true;
+  }
+  return false;
+}
+function pushExpEvent(operationId, type, sourceId, now){
+  MOCK.expEvents.push({ id: uuid(hash(type+operationId)), operationId, type, points: EXP_POINTS[type], sourceId, createdAt: now });
+}
+// 唯一防重複點：與 exp_events 的 unique(user_id, operation_id, event_type) 相同
+function alreadyAwarded(operationId, type){ return (MOCK.expEvents||[]).some(e => e.operationId === operationId && e.type === type); }
+
+function mockCompleteCooking(input){
+  const now = taipeiNowIso();
+  if (alreadyAwarded(input.operationId, 'cooking_completed')) return { accepted:false, reason:'duplicate' };
+  const sessionId = uuid(hash('session:'+input.operationId));
+  MOCK.expEvents.push({ id: uuid(hash('cooking_completed'+input.operationId)), operationId: input.operationId, type:'cooking_completed', points: EXP_POINTS.cooking_completed, sourceId: sessionId, createdAt: now });
+  const events = ['cooking_completed'];
+  if (input.usedExpiring){
+    MOCK.expEvents.push({ id: uuid(hash('expiring'+input.operationId)), operationId: input.operationId, type:'expiring_ingredient_used', points: EXP_POINTS.expiring_ingredient_used, sourceId: sessionId, createdAt: now });
+    events.push('expiring_ingredient_used');
+  }
+  // 庫存扣除：依 ingredientKey 先進先出（對齊 expires_on nulls last, id）
+  const shortages = [];
+  (input.requirements||[]).forEach(req => {
+    if (req.isPantryStaple) return;
+    let need = Number(req.quantity) * (input.servingsCooked||1);
+    const hits = (MOCK.inventory||[]).filter(i => i.qty > 0 && (i.ingredientKey === req.ingredientKey || i.name === req.ingredientKey || i.name === req.name))
+      .sort((a,b)=>(a.expiresOn||'9999').localeCompare(b.expiresOn||'9999'));
+    hits.forEach(item => { if (need <= 0) return; const take = Math.min(need, item.qty); item.qty -= take; need -= take; });
+    MOCK.inventory = (MOCK.inventory||[]).filter(i => i.qty > 0);
+    if (need > 0) shortages.push(req.name || req.ingredientKey);
+  });
+  // 餐份：前 servingsEaten 為 eaten，其餘進熟食庫存
+  for (let i=0;i<(input.servingsCooked||1);i++){
+    MOCK.mealServings.push({ id: uuid(hash('serving:'+input.operationId+':'+i)), cookingSessionId: sessionId, status: i < (input.servingsEaten||0) ? 'eaten' : 'prepared_inventory', eatenAt: i < (input.servingsEaten||0) ? now : null, vegetableKeys: [] });
+  }
+  MOCK.cookingOutcomes.push({ id: sessionId, completionKey: input.operationId, mealName: input.title, source:'recipe', ingredientCost:0, servingsCooked: input.servingsCooked||1, servingsEaten: input.servingsEaten||0, expAwarded: events.reduce((t,e)=>t+EXP_POINTS[e],0), createdAt: now });
+  // 排程那餐隨之結案：把今天待安排的餐次標成 cooked，並補上食譜資訊
+  const slot = mockClosePlannedMeal(input.title, now);
+  const goalHit = mockBumpWeeklyGoal(1, 'cooking_sessions', now);
+  const badges = mockGrantBadges(now);
+  return { accepted:true, sessionId, events, badges, goalHit, slotClosed: !!slot, hasConflict: shortages.length > 0, shortages };
+}
+function mockEatPrepared(){
+  const now = taipeiNowIso();
+  const serving = (MOCK.mealServings||[]).find(s => s.status === 'prepared_inventory');
+  if (!serving) return { accepted:false, reason:'no_prepared_serving' };
+  if (alreadyAwarded(serving.id, 'prepared_serving_eaten')) return { accepted:false, reason:'duplicate' };
+  serving.status = 'eaten'; serving.eatenAt = now;
+  MOCK.expEvents.push({ id: uuid(hash('prepared'+serving.id)), operationId: serving.id, type:'prepared_serving_eaten', points: EXP_POINTS.prepared_serving_eaten, sourceId: serving.id, createdAt: now });
+  const goalHit = mockBumpWeeklyGoal(1, 'self_cooked_servings', now);
+  const badges = mockGrantBadges(now);
+  return { accepted:true, servingId: serving.id, events:['prepared_serving_eaten'], badges, goalHit };
+}
+// 今日那一筆 planned 餐次 → cooked（對齊正式站「煮完就從待安排消失」的期待）
+function mockClosePlannedMeal(title, now){
+  const plan = MOCK.mealPlan;
+  if (!plan || !plan.meals) return null;
+  const today = taipeiToday();
+  const meal = plan.meals.find(m => m.date === today && m.status === 'planned');
+  if (!meal) return null;
+  meal.status = 'cooked';
+  if (title) meal.title = title;
+  meal.updatedAt = now;
+  return meal;
+}
+// 重新讀取：成長檔一律由事件重算（與正式站 deriveGrowthProfile 同式），證明 done 可重複讀取而不變
+function mockReadState(){
+  const counters = mockCounters();
+  MOCK.growth = deriveGrowthLocal(MOCK.expEvents, MOCK.badgeAwards, counters);
+  return clone(MOCK);
+}
+function deriveGrowthLocal(events, awards, counters){
+  const totalExp = events.reduce((sum, e) => sum + e.points, 0);
+  const awarded = new Set(awards.map(a => a.badgeKey));
+  const next = BADGE_DEFINITIONS.find(b => !awarded.has(b.badgeKey));
+  let idx = 0;
+  for (let k=0;k<CHEF_RANKS.length;k++) if (totalExp >= CHEF_RANKS[k].threshold) idx = k;
+  return { totalExp, rank: { ...CHEF_RANKS[idx], nextThreshold: CHEF_RANKS[idx+1] ? CHEF_RANKS[idx+1].threshold : null }, nextBadge: next ? { badgeKey: next.badgeKey, title: next.title, current: counters[next.metric], target: next.target } : null };
+}
+
+
+function applyState(apiState, apiDecision, keepSelection){
+  const prevRecipeId = keepSelection && MEAL_RECIPES[state.active] ? MEAL_RECIPES[state.active].recipeId : null;
+  const meals = [apiDecision.primary, ...(apiDecision.alternatives || [])].filter(Boolean);
+  MEAL_RECIPES = meals;
+  MEALS = meals.map(r => toMealCard(r, apiState.inventory || []));
+  state.exp = apiState.growth.totalExp;
+  state.rankName = apiState.growth.rank.name;
+  state.nextBadge = apiState.growth.nextBadge;
+  state.prepared = (apiState.mealServings || []).filter(s => s.status === 'prepared_inventory').length;
+  state.weekDone = apiState.weeklyGoal.progress;
+  state.weekTarget = apiState.weeklyGoal.target;
+  state.goalMetric = apiState.weeklyGoal.metric;
+  state.missions = deriveMissions(apiState);
+  state.tasks = (apiState.mealTasks || []);
+  state.slot = apiDecision.slot;
+  state.notice = apiDecision.notice;
+  state.plan = apiState.mealPlan || null;
+  if (keepSelection){
+    const idx = MEAL_RECIPES.findIndex(r => r && r.recipeId === prevRecipeId);
+    state.active = idx >= 0 ? idx : 0;
+  } else {
+    state.active = 0;
+  }
+  state.mode = MEALS[state.active] ? MEALS[state.active].mode : 'fridge';
+  // 「本餐已煮」是餐期層級（一個餐期一筆 cooking_completed），不是食譜層級：
+  // 換一道菜不該讓按鈕又變可按，否則同一餐會落進第二筆料理事件。
+  const cookedToday = (apiState.expEvents || []).some(e => e.type === 'cooking_completed' && String(e.createdAt||'').slice(0,10) === taipeiToday());
+  state.cooked = cookedToday;
+}
+
+
+function progressCount(){ return state.missions.filter(m => m.done).length; }
+function badgeLabel(){
+  const nb = state.nextBadge;
+  return nb ? (nb.title + ' ' + nb.current + '/' + nb.target) : '12 枚徽章全部收藏';
+}
+// 今日第 N 餐：與正式站 apps/web/src/pages/today/TodayPage.tsx 的 plannedDayNumber 同定義
+// （在 meals 陣列中找第一筆 status === 'planned' 且日期等於今天的，取其索引 + 1），不做重新排序
+function orderedMeals(plan){
+  return (plan && plan.meals ? plan.meals : []).slice().sort((a, b) => (a.date + a.slot).localeCompare(b.date + b.slot));
+}
+function mealNumberLabel(){
+  const plan = state.plan;
+  if (!plan || !plan.meals || !plan.meals.length) return '今日餐點';
+  const today = taipeiToday();
+  const idx = plan.meals.findIndex(m => m.date === today && m.status === 'planned');
+  if (idx >= 0) return '今日第 ' + (idx + 1) + ' 餐';
+  // 今日那餐已煮完／不存在：不再謊稱「今日」，改標本週序號或下一餐
+  const cookedIdx = plan.meals.findIndex(m => m.date === today && m.status === 'cooked');
+  if (cookedIdx >= 0) return '本週第 ' + (cookedIdx + 1) + ' 餐 · 已煮';
+  const ordered = orderedMeals(plan);
+  const upcoming = ordered.findIndex(m => m.date >= today && m.status !== 'cancelled');
+  if (upcoming >= 0) return '第 ' + (plan.meals.indexOf(ordered[upcoming]) + 1) + ' 餐 · 待安排';
+  return '本週餐點';
+}
+// 本週節奏詳細清單：資料來源為 mealPlan.meals，狀態文字取自 PlannedMealSchema
+const MEAL_STATUS_TEXT = { cooked:'已完成', planned:'待安排', postponed:'延後', cancelled:'已取消' };
+function weekListHtml(){
+  const plan = state.plan;
+  if (!plan || !plan.meals || !plan.meals.length) return '<li>尚未安排本週餐點</li>';
+  const today = taipeiToday();
+  return orderedMeals(plan).map((m, i) => {
+    const isToday = m.date === today && m.status === 'planned';
+    const label = '第 ' + (i + 1) + ' 餐 · ' + (m.title || '尚未選食譜') + ' · ' + (MEAL_STATUS_TEXT[m.status] || m.status);
+    return '<li class="' + (isToday ? 'today' : '') + '">' + label + '</li>';
+  }).join('');
+}
+function render(){
+  const m = MEALS[state.active];
+  const doneCount = progressCount();
+  const modeLabel = state.mode === 'purchase' ? 'buy' : 'covered';
+  const missing = m.ingredients.filter(i => i.s === 'need').length;
+
+  const chips = m.ingredients.map(i => {
+    const cls = i.s === 'need' ? 'need' : 'have';
+    const ico = i.s === 'need' ? MS('shopping_cart') : MS('check');
+    return '<span class="chip ' + cls + '">' + ico + i.n + '</span>';
+  }).join('');
+
+  const alts = MEALS.map((x, idx) => {
+    if (idx === state.active) return '';
+    return '<button class="ministub" data-alt="' + idx + '" type="button">' +
+        '<span class="mstub">0' + (idx+1) + '</span>' +
+        '<span class="mbody"><strong>' + x.title + '</strong>' +
+          '<span class="mmeta"><span>' + MS('schedule') + x.time + 'm</span><span>' + MS('payments') + '$' + x.cost + '</span>' +
+          (x.missing > 0 ? '<span>' + MS('shopping_cart') + x.missing + '</span>' : '<span>' + MS('check_circle') + '</span>') +
+          '</span>' +
+        '</span>' +
+        '<span class="mside">' + MS('swap_horiz') + '</span>' +
+      '</button>';
+  }).join('');
+
+  // 任務列為唯讀：完成狀態由後端推導，前端不得切換、不得加減 EXP。
+  const MISSION_ACTION = { cook_today:'就煮這道', eat_prepared:'到冰箱加熱', use_expiring:'用即期食材煮' };
+  const MISSION_ICON = { cook_today:'local_fire_department', eat_prepared:'ramen_dining', use_expiring:'schedule' };
+  const rows = state.missions.map(t => {
+    const hint = t.id === 'use_expiring' && t.hint ? ' · 庫存 ' + t.hint + ' 項即期' : '';
+    return '<div class="mrow ' + (t.done ? 'done' : '') + '" data-mission="' + t.id + '" role="listitem">' +
+      '<span class="mmark">' + MS('check') + '</span>' +
+      '<span class="mlabel">' + t.label + '<small>' + (t.done ? '已完成' : (MISSION_ACTION[t.id] || '') + hint) + '</small></span>' +
+      '<span class="rw">' + (t.done ? '已入帳' : '+' + t.reward) + '</span>' +
+      (t.done ? '' : '<span class="mgo">' + MS(MISSION_ICON[t.id] || 'chevron_right') + '</span>') +
+    '</div>';
+  }).join('');
+
+  const pips = state.missions.map((t,i) => '<i class="' + (i < doneCount ? 'on' : '') + '"></i>').join('');
+
+  document.getElementById('stack').innerHTML =
+    '<section class="ticket">' +
+      '<div class="notch top"></div><div class="notch bottom"></div>' +
+      '<div class="stub">' +
+        '<span class="vtext">TODAY</span>' +
+        '<div class="stubcenter">' +
+          '<span class="mealno">' + mealNumberLabel() + '</span>' +
+          '<span class="prog">' + doneCount + '/' + state.missions.length + '</span>' +
+          '<span class="pips">' + pips + '</span>' +
+        '</div>' +
+        '<span class="sicon">' + ICO.pan + '</span>' +
+      '</div>' +
+      '<div class="body">' +
+        '<div class="modrow">' +
+          '<span class="seg">' +
+            '<button class="segbtn ' + (state.mode==='fridge'?'active':'') + '" data-mode="fridge" type="button">' + MS('kitchen') + '冰箱就能煮</button>' +
+            '<button class="segbtn ' + (state.mode==='purchase'?'active':'') + '" data-mode="purchase" type="button">' + MS('shopping_cart') + '少量補買</button>' +
+          '</span>' +
+        '</div>' +
+        '<div class="tags">' +
+          '<span class="tag time">' + MS('schedule') + (m.time <= 15 ? '15 分快手' : m.time + ' 分鐘') + '</span>' +
+          '<span class="tag ' + modeLabel + '">' + (missing ? MS('shopping_cart') + '需補 ' + missing + ' 樣' : MS('check_circle') + '庫存足夠') + '</span>' +
+          '<span class="tag cost">' + MS('payments') + 'NT$ ' + m.cost + '</span>' +
+        '</div>' +
+        '<h3>' + m.title + '</h3>' +
+        '<div class="stats">' +
+          '<div class="stat"><span class="ico">' + ICO.pan + '</span><b>' + m.cookware + '</b></div>' +
+          '<div class="stat"><span class="ico">' + ICO.list + '</span><b>' + m.steps + '</b></div>' +
+          '<div class="stat"><span class="ico">' + ICO.clock + '</span><b>' + m.time + 'm</b></div>' +
+        '</div>' +
+        '<div class="chips">' + chips + '</div>' +
+        '<div class="rewards">' +
+          '<span class="rchip xp">' + MS('local_fire_department') + '+' + m.exp + ' EXP</span>' +
+          '<span class="rchip badge" id="badgechip">' + MS('military_tech') + badgeLabel() + '</span>' +
+        '</div>' +
+        '<div class="cta">' +
+          '<button class="main" id="mainbtn" ' + (state.cooked ? 'disabled' : '') + '>' + (state.cooked ? MS('check') + '本餐已煮' : MS('local_fire_department') + '就煮這道') + '</button>' +
+          '<button class="more" id="morebtn" aria-label="更多">' + MS('more_horiz') + '</button>' +
+        '</div>' +
+      '</div>' +
+    '</section>' +
+    (alts ? '<section class="altblock"><h4>' + MS('alt_route') + '三個可行方向</h4>' + alts + '</section>' : '') +
+    (state.prepared > 0
+      ? '<div class="weekstrip"><span class="wk">' + MS('ramen_dining') + '</span><div class="wtxt"><b>熟食庫存 ' + state.prepared + ' 份 · 點擊吃掉 1 份（+' + EXP_POINTS.prepared_serving_eaten + ' EXP）</b><div class="wbar"><span style="width:' + Math.min(100, state.prepared * 50) + '%"></span></div></div><button class="wgo" id="eatbtn" aria-label="吃掉 1 份熟食">' + MS('play_circle') + '</button></div>'
+      : '') +
+    '<section class="missions"><h4>' + MS('flag') + '今日任務</h4>' + rows + '</section>' +
+    '<div class="weekstrip"><span class="wk">' + MS('calendar_month') + '</span><div class="wtxt"><b>本週 ' + state.weekDone + ' / ' + state.weekTarget + ' 餐</b><div class="wbar"><span style="width:' + Math.round(state.weekDone/state.weekTarget*100) + '%"></span></div></div><button class="wgo" id="weekbtn" aria-label="本週節奏">' + MS('chevron_right') + '</button></div>';
+
+  flushToasts();
+  document.getElementById('wklist').innerHTML = weekListHtml();
+}
+// ============================================================
+// 「我的」頁：本週節奏的詳細落點（今日頁只留單行進度條）
+// 資料來源與今日頁同一份 state，不另開資料路徑。
+// ============================================================
+const SLOT_TEXT = { breakfast:'早餐', lunch:'午餐', dinner:'晚餐' };
+const WEEK_LABEL = ['週日','週一','週二','週三','週四','週五','週六'];
+function mealDateLabel(dateStr){
+  const d = new Date(String(dateStr) + 'T12:00:00Z');
+  return (d.getMonth()+1) + '/' + d.getDate() + ' ' + WEEK_LABEL[d.getUTCDay()];
+}
+function renderMe(){
+  const box = document.getElementById('mepage');
+  if (!box) return;
+  const plan = state.plan;
+  const meals = orderedMeals(plan);
+  const today = taipeiToday();
+  const pct = Math.min(100, Math.round(state.weekDone / state.weekTarget * 100));
+  const counters = mockCounters();
+  const cookedCount = meals.filter(m => m.status === 'cooked').length;
+  const plannedCount = meals.filter(m => m.status === 'planned').length;
+  const postponedCount = meals.filter(m => m.status === 'postponed').length;
+  const cancelledCount = meals.filter(m => m.status === 'cancelled').length;
+
+  // 依日期分組，保留「第 N 餐」全域編號（與票根小字同一套索引）
+  const groups = [];
+  meals.forEach((m, i) => {
+    let g = groups.find(x => x.date === m.date);
+    if (!g){ g = { date:m.date, items:[] }; groups.push(g); }
+    g.items.push({ meal:m, no:i + 1 });
+  });
+  if (!groups.length) groups.push({ date:null, items:[] });
+
+  const rowsFor = g => g.items.map(({ meal, no }) => {
+    const isToday = meal.date === today && meal.status === 'planned';
+    const st = MEAL_STATUS_TEXT[meal.status] || meal.status;
+    const bits = [SLOT_TEXT[meal.slot] || meal.slot];
+    if (meal.totalMinutes) bits.push(meal.totalMinutes + ' 分鐘');
+    if (meal.estimatedCost) bits.push('NT$ ' + meal.estimatedCost);
+    return '<div class="meal ' + meal.status + ' ' + (isToday ? 'today' : '') + '">' +
+      '<span class="mno">' + String(no).padStart(2,'0') + '</span>' +
+      '<span><span class="mtitle ' + (meal.title ? '' : 'empty') + '">' + (meal.title || '尚未選食譜') + '</span>' +
+        '<span class="mmeta">' + bits.join(' · ') + '</span></span>' +
+      '<span class="pill ' + meal.status + '">' + st + '</span>' +
+    '</div>';
+  }).join('');
+
+  const listHtml = groups.map(g =>
+    '<div class="wkday">' + (g.date ? mealDateLabel(g.date) : '本週尚未安排餐點') + '</div>' + (g.items.length ? rowsFor(g) : '<div class="sub" style="font-size:11px;color:var(--muted)">這天沒有排定的餐點。</div>')
+  ).join('');
+
+  const rankDots = CHEF_RANKS.map(r => '<i class="rankdot ' + (state.exp >= r.threshold ? 'on' : '') + '" title="' + r.name + '"></i>').join('');
+  const badges = BADGE_DEFINITIONS.map(b => {
+    const earned = ((MOCK || SAMPLE_STATE).badgeAwards || []).some(a => a.badgeKey === b.badgeKey);
+    return '<div class="bdg ' + (earned ? 'earned' : '') + '"><b>' + b.title + '</b></div>';
+  }).join('');
+  const nb = state.nextBadge;
+
+  box.innerHTML =
+    '<section class="mecard">' +
+      '<span class="kicker">本週節奏</span><h2>' + (state.goalMetric === 'cooking_sessions' ? '料理次數' : '自煮餐份') + '</h2>' +
+      '<p class="sub">每一次回來都算數；沒達標不扣分、不歸零。</p>' +
+      '<div class="goalrow"><span class="goalnum">' + state.weekDone + '<small> / ' + state.weekTarget + '</small></span>' +
+        '<div class="ring" style="--p:' + pct + '"><i>' + pct + '%</i></div></div>' +
+      '<div class="goalbar"><span style="width:' + pct + '%"></span></div>' +
+      '<div class="tally">' +
+        '<div class="tal"><b>' + cookedCount + '</b><span>已煮</span></div>' +
+        '<div class="tal"><b>' + plannedCount + '</b><span>待煮</span></div>' +
+        '<div class="tal"><b>' + postponedCount + '</b><span>延後</span></div>' +
+        '<div class="tal"><b>' + cancelledCount + '</b><span>已取消</span></div>' +
+      '</div>' +
+      '<div class="note">這裡就是今日頁那條單行進度條的完整清單。今日頁只留一行，詳細移到這邊。</div>' +
+    '</section>' +
+    '<section class="mecard">' +
+      '<span class="kicker">本週餐次</span><h2>逐餐明細</h2>' + listHtml +
+    '</section>' +
+    '<section class="mecard">' +
+      '<span class="kicker">成長</span><h2 id="merankname">' + (state.rankName || MOCK.growth.rank.name) + '</h2>' +
+      '<p class="sub">' + state.exp + ' EXP · ' + (MOCK.growth.rank.nextThreshold ? ('距下一職階還有 ' + (MOCK.growth.rank.nextThreshold - state.exp) + ' EXP') : '已達最高職階') + '</p>' +
+      '<div class="rankrow">' + rankDots + '</div>' +
+      '<p class="sub" style="margin-top:10px">' + (nb ? ('下一枚徽章：' + nb.title + ' ' + nb.current + '/' + nb.target) : '12 枚徽章全部收藏') + '</p>' +
+      '<div class="badgerow">' + badges + '</div>' +
+      '<div class="tally">' +
+        '<div class="tal"><b>' + counters.cooking + '</b><span>料理</span></div>' +
+        '<div class="tal"><b>' + counters.rhythm + '</b><span>節奏</span></div>' +
+        '<div class="tal"><b>' + counters.wasteLess + '</b><span>惜食</span></div>' +
+        '<div class="tal"><b>' + counters.exploration + '</b><span>探索</span></div>' +
+      '</div>' +
+    '</section>' +
+    '<section class="mecard more-list">' +
+      '<span class="kicker">更多</span>' +
+      '<button type="button">' + MS('history') + '料理歷程<small>本週 ' + cookedCount + ' 道</small></button>' +
+      '<button type="button">' + MS('receipt_long') + '成本統計<small>選用</small></button>' +
+      '<button type="button">' + MS('notifications') + '提醒設定<small>每日 3 則上限</small></button>' +
+      '<button type="button">' + MS('settings') + '廚具與帳號</button>' +
+      '<button type="button">' + MS('forum') + '主廚相談室<small>每日 30 則</small></button>' +
+    '</section>';
+  hydrateNewIcons(box);
+}
+// EXP 一律由事件推得（mockReadState → deriveGrowthProfile 同式），前端不再自行加減
+let TOASTS = [];
+function pushToast(text, kind){ TOASTS.push({ text, kind: kind || 'xp' }); }
+function flushToasts(){
+  const screen = document.querySelector('.screen');
+  if (!screen) return;
+  TOASTS = TOASTS.slice(0, 4);
+  TOASTS.forEach(function(t, i){
+    const f = document.createElement('div');
+    f.className = 'floatxp' + (t.kind === 'badge' ? ' badge' : '');
+    f.textContent = t.text;
+    f.style.top = (150 + i * 24) + 'px';   // 避開 HUD，並在票券上方區域堆疊
+    screen.appendChild(f);
+    setTimeout(function(){ f.remove(); }, 1600 + i * 250);
+  });
+  TOASTS = [];
+}
+// 讀取 → 套用的唯一路徑：動作只寫事件，畫面永遠由重新讀回的 state 推得
+function refresh(keepSelection){
+  const next = MOCK ? mockReadState() : SAMPLE_STATE;
+  applyState(next, SAMPLE_DECISION, keepSelection);
+  renderHUD(); render(); renderMe(); requestAnimationFrame(syncFade);
+}
+function describeResult(res){
+  if (!res.accepted){
+    pushToast(res.reason === 'duplicate' ? '這筆已入帳過' : '目前沒有可吃的熟食', 'badge');
+    return;
+  }
+  const gained = res.events.reduce((sum, e) => sum + EXP_POINTS[e], 0);
+  pushToast('+' + gained + ' EXP');
+  if (res.goalHit) pushToast('本週目標達標 +40', 'badge');
+  (res.badges || []).forEach(b => pushToast('取得徽章「' + b + '」', 'badge'));
+  if (res.hasConflict) pushToast('庫存不足：' + res.shortages.join('、'), 'badge');
+}
+function closeSheet(){ document.getElementById('scrim').classList.remove('on'); document.getElementById('sheet').classList.remove('open'); }
+function scrollToSelector(sel){
+  const box = document.getElementById('content');
+  const el = box && box.querySelector(sel);
+  if (!box || !el) return false;
+  box.scrollTo({ top: Math.max(0, el.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop - 12), behavior: 'smooth' });
+  return true;
+}
+function scrollTicketIntoView(){
+  const ticket = document.querySelector('.ticket');
+  const box = document.getElementById('content');
+  if (ticket && box) box.scrollTo({ top: 0, behavior: 'smooth' });
+}
+// title 為「本週節奏」時只顯示回顧區，不出食譜專屬的說明與安全提醒
+function openSheet(title){
+  const m = MEALS[state.active];
+  const recipeMode = !title;
+  const weekOnly = title === '本週節奏';
+  document.getElementById('sheettitle').textContent = recipeMode ? (m.title + ' · 第二層') : title;
+  document.getElementById('sectwhy').style.display = recipeMode ? '' : 'none';
+  document.getElementById('sectsafety').style.display = recipeMode ? '' : 'none';
+  if (recipeMode){
+    document.getElementById('sheetwhy').textContent = state.notice || '依你的飲食限制、廚具、預算與庫存挑選。';
+    const notes = ((MEAL_RECIPES[state.active] || {}).steps || []).map(s => s.safetyNote).filter(Boolean);
+    document.getElementById('sheetsafety').textContent = notes.length ? [...new Set(notes)].join(' ') : '依步驟操作即可，無額外食安提醒。';
+  }
+  if (weekOnly) document.getElementById('wklist').innerHTML = weekListHtml();
+  document.getElementById('scrim').classList.add('on');
+  document.getElementById('sheet').classList.add('open');
+}
+document.getElementById('sheetclose').addEventListener('click', closeSheet);
+document.getElementById('scrim').addEventListener('click', closeSheet);
+document.getElementById('stack').addEventListener('click', function(e){
+  const alt = e.target.closest('[data-alt]');
+  if (alt){
+    state.active = Number(alt.dataset.alt);
+    state.mode = MEALS[state.active].mode;
+    render(); return;   // 不動 state.cooked：本餐是否已煮由事件決定
+  }
+  const mode = e.target.closest('[data-mode]');
+  if (mode){ state.mode = mode.dataset.mode; render(); return; }
+  // 點任務列不再切換完成狀態，也不改 EXP；只帶到對應的真實動作入口。
+  const miss = e.target.closest('[data-mission]');
+  if (miss){
+    const id = miss.dataset.mission;
+    if (id === 'cook_today'){ scrollTicketIntoView(); }
+    else if (id === 'eat_prepared'){ if (!scrollToSelector('#eatbtn')) showPage('me'); }
+    else if (id === 'use_expiring'){ openSheet(); }
+    return;
+  }
+  if (e.target.closest('#mainbtn')){
+    if (state.cooked) return;
+    // 動作只送出「意圖」；事件、EXP、徽章一律由模擬後端決定，畫面再重新讀回
+    const meal = MEAL_RECIPES[state.active];
+    const inv = (MOCK || SAMPLE_STATE).inventory || [];
+    const usedExpiring = (meal.ingredients || []).some(i => !i.isPantryStaple &&
+      inv.some(x => x.qty > 0 && (x.ingredientKey === i.ingredientKey || x.name === i.ingredientKey || x.name === i.name) && x.daysLeft <= EXPIRING_DAYS_LEFT));
+    const res = MOCK ? mockCompleteCooking({
+      operationId: uuid(hash('cook:' + meal.recipeId + ':' + taipeiToday())),
+      title: meal.title,
+      servingsCooked: meal.servings || 1,
+      servingsEaten: meal.servings || 1,
+      usedExpiring,
+      requirements: (meal.ingredients || []).map(i => ({ ingredientKey:i.ingredientKey, name:i.name, quantity:i.quantity, unit:i.unit, isPantryStaple:i.isPantryStaple }))
+    }) : { accepted:false, reason:'no_backend' };
+    describeResult(res);
+    refresh(true);
+    return;
+  }
+  if (e.target.closest('#eatbtn')){
+    if (!MOCK){ showPage('me'); return; }
+    const res = mockEatPrepared();
+    describeResult(res);
+    refresh(true);
+    return;
+  }
+  if (e.target.closest('#morebtn')){ openSheet(); return; }
+  if (e.target.closest('#weekbtn')){ showPage('me'); return; }   // 詳細清單的落點在「我的」
+});
+document.getElementById('mockreset').addEventListener('click', function(){
+  if (!MOCK) return;
+  resetMock();
+  refresh(false);
+  markSource('mock');
+});
+function showPage(name){
+  document.querySelectorAll('.page').forEach(p => p.classList.toggle('on', p.id === 'page-' + name));
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x.dataset.page === name));
+  const box = document.getElementById('content');
+  if (box) box.scrollTop = 0;
+  syncFade();
+}
+document.querySelectorAll('.tab').forEach(function(t){
+  t.addEventListener('click', function(){
+    if (!t.dataset.page){ flashTabHint(); return; }
+    showPage(t.dataset.page);
+  });
+});
+// 採買／冰箱／食谱 不在本次範圍，點了要給明確反應而不是假裝能進
+function flashTabHint(){
+  const screen = document.querySelector('.screen');
+  if (!screen) return;
+  const f = document.createElement('div');
+  f.className = 'floatxp badge';
+  f.style.top = '150px';
+  f.textContent = '本預覽只實作今日與我的兩頁';
+  screen.appendChild(f);
+  setTimeout(function(){ f.remove(); }, 1600);
+}
+const contentEl = document.getElementById('content'), fadeEl = document.getElementById('fade');
+function syncFade(){
+  const r = contentEl.scrollHeight - contentEl.scrollTop - contentEl.clientHeight;
+  fadeEl.classList.toggle('on', r > 14);
+}
+contentEl.addEventListener('scroll', syncFade, {passive:true});
+window.addEventListener('resize', syncFade);
+// ---------- 啟動：有登入 token 就用即時 /state，否則用同結構樣本 ----------
+const API_BASE = '/api/v1';
+async function loadLiveState(){
+  const token = new URLSearchParams(location.hash.replace(/^#/, '')).get('token') || window.__COOCOO_TOKEN__ || '';
+  if (!token) return null;
+  try {
+    const headers = { authorization: 'Bearer ' + token };
+    const [stateRes, decisionRes] = await Promise.all([
+      fetch(API_BASE + '/state', { headers }),
+      fetch(API_BASE + '/meal-decisions/today?date=' + new Date().toISOString().slice(0,10) + '&energy=normal', { headers })
+    ]);
+    if (!stateRes.ok || !decisionRes.ok) return null;
+    const stateBody = await stateRes.json();
+    const decisionBody = await decisionRes.json();
+    if (!stateBody.data || !decisionBody.data) return null;
+    return { state: stateBody.data, decision: decisionBody.data };
+  } catch (e) { return null; }
+}
+const SOURCE_TEXT = {
+  live: '即時 API（/state）',
+  mock: '模擬後端 · 寫入會重算任務',
+  sample: '同結構樣本（唯讀）'
+};
+function markSource(kind){
+  const el = document.getElementById('datasrc');
+  if (!el) return;
+  el.textContent = SOURCE_TEXT[kind] || SOURCE_TEXT.sample;
+  el.className = 'srcchip ' + (kind === 'live' ? 'live' : 'sample');
+  const reset = document.getElementById('mockreset');
+  if (reset) reset.style.display = kind === 'mock' ? '' : 'none';
+}
+// 靜態 HTML 裡的 data-icon 佔位，啟動時一次換成 SVG
+function hydrateNewIcons(scope){
+  scope.querySelectorAll('[data-icon]').forEach(el => { el.outerHTML = MS(el.dataset.icon); });
+}
+function hydrateStaticIcons(){
+  document.querySelectorAll('[data-icon]').forEach(el => { el.outerHTML = MS(el.dataset.icon); });
+}
+const LIVE_CACHE = {};
+(async function boot(){
+  hydrateStaticIcons();
+  if (!LIVE_CACHE.state){
+    const live = await loadLiveState();
+    if (live){ LIVE_CACHE.state = live.state; LIVE_CACHE.decision = live.decision; }
+  }
+  if (LIVE_CACHE.state){
+    applyState(LIVE_CACHE.state, LIVE_CACHE.decision);
+    state.dataSource = 'live';
+    markSource('live');
+  } else {
+    resetMock();
+    refresh(false);
+    state.dataSource = 'mock';
+    markSource(state.dataSource);
+  }
+  requestAnimationFrame(syncFade);
+})();
+</script>
+</body>
+</html>
