@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CooCoo 全站圖示清單 · 提案預覽</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+<style>
+*{box-sizing:border-box}
+:root{
+  --bg:#fdf8ea;--card:#fffdf6;--ink:#293c4e;--muted:#716b60;--line:#e7dac2;
+  --primary:#9a442d;--primary-ink:#8f3d28;--primary-soft:#fdf1e2;
+  --safe:#3f6b53;--safe-bg:#f2f5ed;--danger:#a3342a;--danger-bg:#fdeceb;
+  --gold:#b8862f;--gold-bg:#fdf3dc;
+}
+html,body{margin:0}
+body{background:radial-gradient(circle at 88% 2%, rgba(243,204,140,.34) 0 12%, transparent 34%), var(--bg);color:var(--ink);font-family:"Plus Jakarta Sans","Noto Sans TC",-apple-system,"PingFang TC",sans-serif;min-height:100vh}
+.page{max-width:1180px;margin:0 auto;padding:22px 20px 56px}
+.eyebrow{margin:0 0 6px;color:var(--primary);font-size:11px;font-weight:900;letter-spacing:.16em;text-transform:uppercase}
+h1{margin:0 0 8px;font-family:Georgia,"Noto Serif TC",serif;font-size:clamp(22px,3.2vw,30px);letter-spacing:-.02em}
+.lead{margin:0;color:var(--muted);font-size:13px;line-height:1.7;max-width:800px}
+.flag{display:inline-flex;margin-top:12px;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:5px 12px;font-size:11px;font-weight:800;color:var(--primary-ink)}
+.statline{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0 6px}
+.stat{border:1px solid var(--line);background:var(--card);border-radius:14px;padding:10px 14px;min-width:120px}
+.stat b{display:block;font-family:"JetBrains Mono",ui-monospace,monospace;font-size:20px;font-weight:900;line-height:1.1}
+.stat small{font-size:10px;color:var(--muted);font-weight:700}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:22px 0 14px}
+.tab{border:1px solid var(--line);background:var(--card);color:var(--muted);border-radius:999px;padding:8px 16px;font-size:12px;font-weight:900;cursor:pointer;font-family:inherit;transition:all .18s ease}
+.tab.on{background:var(--primary);border-color:var(--primary);color:#fff}
+.section{display:none}
+.section.on{display:block}
+.grouphead{display:flex;align-items:center;gap:9px;margin:22px 0 11px}
+.grouphead h2{margin:0;font-size:14px;font-weight:900}
+.grouphead .count{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:11px;font-weight:800;color:var(--muted);border:1px solid var(--line);background:var(--card);border-radius:999px;padding:2px 9px}
+.grouphead .note{font-size:11px;color:var(--muted);font-weight:700}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:10px}
+.ic{border:1px solid var(--line);background:var(--card);border-radius:16px;padding:13px 11px;text-align:center;transition:border-color .16s ease,transform .16s ease}
+.ic:hover{border-color:color-mix(in srgb,var(--primary) 45%,transparent);transform:translateY(-2px)}
+.ic .glyph{width:40px;height:40px;margin:0 auto 8px;display:grid;place-items:center;border-radius:12px;background:var(--primary-soft);color:var(--primary-ink)}
+.ic .glyph svg{width:23px;height:23px}
+.ic .glyph .ms{font-family:"Material Symbols Outlined";font-size:23px;line-height:1;font-variation-settings:"FILL" 0,"wght" 400,"GRAD" 0,"opsz" 24}
+.ic b{display:block;font-size:11.5px;font-weight:900;line-height:1.35}
+.ic code{display:block;font-size:9px;color:var(--muted);font-family:"JetBrains Mono",ui-monospace,monospace;margin-top:3px;word-break:break-all}
+.ic .src{display:inline-block;margin-top:6px;font-size:8.5px;font-weight:800;border-radius:999px;padding:1px 7px;border:1px solid}
+.src.live{color:var(--safe);background:var(--safe-bg);border-color:color-mix(in srgb,var(--safe) 28%,transparent)}
+.src.new{color:var(--gold);background:var(--gold-bg);border-color:color-mix(in srgb,var(--gold) 30%,transparent)}
+.src.prop{color:var(--muted);background:color-mix(in srgb,var(--line) 30%,var(--card));border-color:var(--line)}
+table.rules{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px}
+table.rules th,table.rules td{text-align:left;padding:8px 8px;border-bottom:1px solid var(--line);color:var(--muted);vertical-align:top;line-height:1.55}
+table.rules th{color:var(--primary-ink);font-weight:900;font-size:10.5px}
+table.rules td:first-child{color:var(--ink);font-weight:800;white-space:nowrap}
+@media (max-width:600px){.grid{grid-template-columns:repeat(auto-fill,minmax(108px,1fr))}}
+</style>
+</head>
+<body>
+<div class="page">
+  <p class="eyebrow">CooCoo 1.0 · 設計系統</p>
+  <h1>全站圖示清單 · 提案預覽</h1>
+  <p class="lead">分「現有」與「建議新增」兩區，並標示每個圖示目前在正式站的角色。現有圖示逐一點出原始出處（元件檔或 Material Symbols 名稱），建議新增則標為提案，尚未實作。</p>
+  <span class="flag">提案預覽 · 非正式站 · 未更動程式碼</span>
+
+  <div class="statline">
+    <div class="stat"><b>22</b><small>Material Symbols 在用</small></div>
+    <div class="stat"><b>4 + 8</b><small>食材圖示（專屬＋分類）</small></div>
+    <div class="stat"><b id="newsug">0</b><small>建議新增</small></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab on" data-sec="existing" type="button">現有圖示</button>
+    <button class="tab" data-sec="proposed" type="button">建議新增</button>
+    <button class="tab" data-sec="rules" type="button">使用規則</button>
+  </div>
+
+  <section class="section on" id="existing">
+    <div class="grouphead"><h2>食材圖示</h2><span class="count">12</span><span class="note">來源：shared/ui/IngredientIcon.tsx，100% 向量、0 emoji</span></div>
+    <div class="grid" id="g-ingredient"></div>
+
+    <div class="grouphead"><h2>導航與頁面</h2><span class="count">5</span><span class="note">來源：widgets/app-shell/BottomNav.tsx</span></div>
+    <div class="grid" id="g-nav"></div>
+
+    <div class="grouphead"><h2>功能與狀態</h2><span class="count">17</span><span class="note">來源：各頁 Material Symbols 實際使用</span></div>
+    <div class="grid" id="g-func"></div>
+
+    <div class="grouphead"><h2>品牌與角色</h2><span class="count">2</span><span class="note">來源：onboarding/ChefAvatar.tsx、public/favicon.svg</span></div>
+    <div class="grid" id="g-brand"></div>
+  </section>
+
+  <section class="section" id="proposed">
+    <div class="grouphead"><h2>任務與關卡</h2><span class="count" data-count></span><span class="note">支撐「像破任務」的核心語彙</span></div>
+    <div class="grid" id="p-quest"></div>
+
+    <div class="grouphead"><h2>獎勵與成長</h2><span class="count" data-count></span><span class="note">對應 EXP、徽章、五職階</span></div>
+    <div class="grid" id="p-growth"></div>
+
+    <div class="grouphead"><h2>狀態徽章</h2><span class="count" data-count></span><span class="note">全站統一形狀，可一眼掃描</span></div>
+    <div class="grid" id="p-status"></div>
+
+    <div class="grouphead"><h2>動作</h2><span class="count" data-count></span><span class="note">每張卡只留一個主動作</span></div>
+    <div class="grid" id="p-action"></div>
+  </section>
+
+  <section class="section" id="rules">
+    <div class="grouphead"><h2>圖示使用規則（草案）</h2></div>
+    <table class="rules">
+      <tr><th>規則</th><th>內容</th></tr>
+      <tr><td>一律向量</td><td>只用 SVG，不使用 emoji；沿用 CONTEXT.md 的零 emoji 原則。</td></tr>
+      <tr><td>兩層尺寸</td><td>卡片主圖 40–64px；行內小圖 16–20px。同一層級不得混用不同線寬。</td></tr>
+      <tr><td>線寬統一</td><td>全站 stroke-width 2；狀態徽章可用 3 加強辨識。</td></tr>
+      <tr><td>圖示＋數字優先</td><td>能用「圖示＋數字」表達就不要寫句子，例如「2 樣 · NT$180」。</td></tr>
+      <tr><td>顏色語意</td><td>赭紅＝主要動作；綠＝安全／完成；紅＝硬限制／警示；金＝獎勵。不得混用。</td></tr>
+      <tr><td>安全不得圖示化</td><td>過敏、食安提醒、EXP 防重規則必須保留文字，不可只用圖示。</td></tr>
+      <tr><td>命名規則</td><td>建議以 <code>類別-名稱</code>（如 <code>quest-cook</code>、<code>reward-badge</code>）統一命名，避免同名不同畫法。</td></tr>
+    </table>
+  </section>
+</div>
+<script>
+const S = p => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+const D = p => `<svg viewBox="0 0 24 24" fill="currentColor">${p}</svg>`;
+
+// --- 現有：食材（IngredientIcon）---
+const ingredient = [
+  ["番茄","tomato","專屬 SVG"],
+  ["蛋","egg","專屬 SVG"],
+  ["豆腐","tofu","專屬 SVG"],
+  ["皮蛋／鹹蛋","preserved-egg","專屬 SVG"],
+  ["瓜類","melon","分類 SVG"],
+  ["菇類","mushroom","分類 SVG"],
+  ["根莖類","root","分類 SVG"],
+  ["葉菜類","leafy","分類 SVG"],
+  ["肉／海鮮","protein","分類 SVG"],
+  ["豆／乳製品","bean","分類 SVG"],
+  ["米／穀物","grain","分類 SVG"],
+  ["調味料","condiment","分類 SVG"]
+];
+// --- 現有：導航 ---
+const nav = [
+  ["今日","today","Material: today"],
+  ["採買","shopping_bag","Material: shopping_bag"],
+  ["冰箱","kitchen","Material: kitchen"],
+  ["食譜","menu_book","Material: menu_book"],
+  ["我的","person","Material: person"]
+];
+// --- 現有：功能與狀態 ---
+const func = [
+  ["鍋具","skillet","Material: skillet"],
+  ["警示","warning","Material: warning"],
+  ["調整","tune","Material: tune"],
+  ["同步","sync","Material: sync"],
+  ["購物車","shopping_cart","Material: shopping_cart"],
+  ["餐廳","restaurant","Material: restaurant"],
+  ["重新整理","refresh","Material: refresh"],
+  ["麥克風","mic","Material: mic"],
+  ["火力","local_fire_department","Material: local_fire_department"],
+  ["資訊","info","Material: info"],
+  ["時段衝突","event_busy","Material: event_busy"],
+  ["發票掃描","document_scanner","Material: document_scanner"],
+  ["檯面","countertops","Material: countertops"],
+  ["關閉","close","Material: close"],
+  ["料理書","auto_stories","Material: auto_stories"],
+  ["AI 生成","auto_awesome","Material: auto_awesome"]
+];
+const brand = [
+  ["主廚頭像","chef-avatar","ChefAvatar.tsx"],
+  ["App 圖示","favicon","public/favicon.svg"]
+];
+// --- 建議新增 ---
+const pQuest = [
+  ["今日任務","quest-daily",'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'],
+  ["完成","quest-done",'<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>'],
+  ["關卡鎖","quest-lock",'<rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>'],
+  ["下一關","quest-next",'<path d="M4 12h14"/><path d="m13 7 5 5-5 5"/>'],
+  ["清單","quest-list",'<path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6h1M4 12h1M4 18h1"/>'],
+  ["計時任務","quest-timer",'<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 3h6"/>'],
+  ["補給","quest-supply",'<path d="M12 3v10"/><path d="m8 9 4 4 4-4"/><rect x="4" y="15" width="16" height="6" rx="2"/>'],
+  ["連續紀錄","quest-streak",'<path d="M12 3c1 3 4 4 4 8a4 4 0 0 1-8 0c0-1.6.8-2.7 1.6-3.7"/><path d="M11 21h2"/>']
+];
+const pGrowth = [
+  ["EXP 火種","reward-exp",'<path d="M12 3c1 3 4 4 4 8a4 4 0 0 1-8 0c0-1.6.8-2.7 1.6-3.7"/>'],
+  ["徽章","reward-badge",'<circle cx="12" cy="9" r="5"/><path d="M9 13.5 7.5 21 12 18.6 16.5 21 15 13.5"/>'],
+  ["職階","reward-rank",'<path d="M4 8l4 3 4-6 4 6 4-3v10H4Z"/>'],
+  ["週目標","reward-weekly",'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>'],
+  ["惜食","reward-wasteless",'<path d="M12 21s8-4 8-10V5l-8-3-8 3v6c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/>'],
+  ["探索","reward-explore",'<circle cx="12" cy="12" r="9"/><path d="m16 8-2.5 5.5L8 16l2.5-5.5Z"/>']
+];
+const pStatus = [
+  ["即期","status-expiring",'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'],
+  ["低體力","status-lowenergy",'<path d="M6 20c0-4 3-6 6-6s6 2 6 6"/><path d="M12 11V4"/>'],
+  ["缺廚具","status-nocookware",'<path d="M4 10h12a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4Z"/><path d="m4 4 16 16"/>'],
+  ["硬限制","status-hardlimit",'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4M12 15h.01"/>'],
+  ["庫存足夠","status-ok",'<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>'],
+  ["需補買","status-buy",'<circle cx="9" cy="20" r="1.4"/><circle cx="17" cy="20" r="1.4"/><path d="M3 4h2l2.4 10h9.2L19 7H6"/>'],
+  ["熟食","status-prepared",'<path d="M4 11h16a8 8 0 0 1-16 0Z"/><path d="M9 7c0-1.5 1-2 1-3"/>'],
+  ["離線可料理","status-offline",'<path d="M12 3v8"/><path d="m8 7 4 4 4-4"/><rect x="5" y="14" width="14" height="7" rx="2"/>']
+];
+const pAction = [
+  ["開始料理","act-cook",'<path d="M4 10h12a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4Z"/><path d="M18 11h3"/>'],
+  ["加熱即食","act-heat",'<path d="M12 4c1 3 3 4 3 7a3 3 0 0 1-6 0c0-1.3.6-2.2 1.2-3"/><path d="M5 20h14"/>'],
+  ["加入採買","act-buy",'<path d="M12 5v14M5 12h14"/>'],
+  ["完成","act-done",'<path d="m5 12 5 5L20 7"/>'],
+  ["諮詢主廚","act-chat",'<path d="M4 5h16v11H9l-5 4Z"/>'],
+  ["設定","act-tune",'<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h8M16 18h4"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="14" cy="18" r="2"/>']
+];
+const propGlyphs = Object.fromEntries([...pQuest, ...pGrowth, ...pStatus, ...pAction].map(([n,k,g]) => [k, g]));
+
+function card(name, key, srcLabel, kind, glyphHtml){
+  const isProp = kind === "prop";
+  return `<div class="ic">
+    <span class="glyph">${glyphHtml}</span>
+    <b>${name}</b>
+    <code>${key}</code>
+    <span class="src ${isProp ? "new" : "live"}">${isProp ? "建議新增" : "現有"}</span>
+    ${isProp ? "" : `<span class="src prop" style="margin-left:3px">${srcLabel}</span>`}
+  </div>`;
+}
+// 現有：Material Symbols 真實字型
+const MS = lig => `<span class="ms">${lig}</span>`;
+// 現有：食材 SVG（依 IngredientIcon 的畫法重建）
+const INGW = {
+  tomato:'<circle cx="12" cy="14" r="7" fill="#fef2f2" stroke="#e07a5f"/><path d="M12 7V3.5" stroke="#386753" stroke-width="2"/><path d="M9.5 5c1 .8 2.5.8 2.5.8s1.5 0 2.5-.8" stroke="#386753" stroke-width="2"/>',
+  egg:'<ellipse cx="12" cy="13" rx="7" ry="8" fill="#fdf3dc" stroke="#d9a441"/><ellipse cx="12" cy="14" rx="3.4" ry="3.8" fill="#f0b429"/>',
+  tofu:'<rect x="4" y="7" width="16" height="10" rx="2" fill="#fffdf6" stroke="#d9cbb2"/><path d="M8 10h3M8 14h6" stroke="#d9cbb2"/>',
+  "preserved-egg":'<ellipse cx="12" cy="13" rx="7" ry="8" fill="#e7e2d8" stroke="#7b756a"/><ellipse cx="12" cy="14" rx="3" ry="3.4" fill="#4a5560"/>',
+  melon:'<ellipse cx="12" cy="13" rx="7" ry="6" fill="#e9f5e4" stroke="#6f9a63"/><path d="M12 7V4"/>',
+  mushroom:'<path d="M5 11a7 7 0 0 1 14 0Z" fill="#f2ece0" stroke="#9a8b74"/><path d="M10 11v6h4v-6"/>',
+  root:'<path d="M12 4 8 20h8Z" fill="#fdf1e2" stroke="#c98c4e"/><path d="M12 8 10 13h4Z" fill="#7fa96b"/>',
+  leafy:'<path d="M12 20V8"/><path d="M12 12c-4 0-6-3-6-6 4 0 6 2 6 6Z" fill="#e9f5e4" stroke="#6f9a63"/><path d="M12 14c4 0 6-3 6-6-4 0-6 2-6 6Z" fill="#e9f5e4" stroke="#6f9a63"/>',
+  protein:'<path d="M4 12c0-3 3-5 8-5s8 2 8 5-3 5-8 5-8-2-8-5Z" fill="#fdeceb" stroke="#c98c8c"/><circle cx="10" cy="12" r="1"/>',
+  bean:'<circle cx="9" cy="13" r="4" fill="#f2ece0" stroke="#c9b98a"/><circle cx="15" cy="13" r="4" fill="#f2ece0" stroke="#c9b98a"/>',
+  grain:'<path d="M4 13h16a8 8 0 0 1-16 0Z" fill="#fffdf6" stroke="#d9cbb2"/><path d="M8 10h8"/>',
+  condiment:'<path d="M9 8h6v11a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2Z" fill="#fdf1e2" stroke="#c98c4e"/><path d="M10 8V5h4v3"/>'
+};
+function fill(id, arr, kind, glyphFor){
+  const el = document.getElementById(id);
+  el.innerHTML = arr.map(([n,k,s]) => card(n,k,s,kind,glyphFor(k,s))).join("");
+}
+fill("g-ingredient", ingredient, "live", k => S(INGW[k]));
+fill("g-nav", nav, "live", (k,src) => MS(src.replace("Material: ","")));
+fill("g-func", func, "live", (k,src) => MS(src.replace("Material: ","")));
+fill("g-brand", brand, "live", k => k === "chef-avatar"
+  ? S('<path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/><path d="M6 17h12"/>')
+  : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><path d="M12 8v8M8 12h8"/></svg>');
+fill("p-quest", pQuest, "prop", k => S(propGlyphs[k]));
+fill("p-growth", pGrowth, "prop", k => S(propGlyphs[k]));
+fill("p-status", pStatus, "prop", k => S(propGlyphs[k]));
+fill("p-action", pAction, "prop", k => S(propGlyphs[k]));
+
+document.getElementById("newsug").textContent = pQuest.length + pGrowth.length + pStatus.length + pAction.length;
+document.querySelectorAll("#proposed .grouphead .count").forEach(el => {
+  const grid = el.parentElement.nextElementSibling;
+  el.textContent = grid ? grid.children.length : "";
+});
+
+document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
+  document.querySelectorAll(".tab").forEach(x => x.classList.remove("on"));
+  document.querySelectorAll(".section").forEach(x => x.classList.remove("on"));
+  t.classList.add("on");
+  document.getElementById(t.dataset.sec).classList.add("on");
+}));
+</script>
+</body>
+</html>

@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CooCoo 五步 Onboarding · 新版畫面提案預覽</title>
+<style>
+*{box-sizing:border-box}
+:root{
+  --bg:#fdf8ea;--card:#fffdf6;--ink:#293c4e;--muted:#716b60;--line:#e7dac2;
+  --primary:#9a442d;--primary-ink:#8f3d28;--primary-soft:#fdf1e2;
+  --safe:#3f6b53;--safe-bg:#f2f5ed;--danger:#a3342a;--danger-bg:#fdeceb;
+  --shadow:0 18px 50px rgba(84,63,39,.10);
+  --radius:24px;--radius-sm:14px;
+}
+
+html,body{margin:0}
+body{
+  background:radial-gradient(circle at 88% 2%, rgba(243,204,140,.34) 0 12%, transparent 34%), var(--bg);
+  color:var(--ink);font-family:"Plus Jakarta Sans","Noto Sans TC",-apple-system,"PingFang TC",sans-serif;
+  min-height:100vh;transition:background .25s ease;
+}
+.page-head{margin:0;padding:0 0 4px}
+.page-head .eyebrow{margin:0 0 6px;color:var(--primary);font-size:11px;font-weight:900;letter-spacing:.16em;text-transform:uppercase}
+.page-head h1{margin:0 0 8px;font-family:Georgia,"Noto Serif TC",serif;font-size:clamp(22px,3.4vw,32px);letter-spacing:-.02em}
+.page-head p{margin:0;color:var(--muted);font-size:13px;line-height:1.7;max-width:760px}
+.flag{display:inline-flex;align-items:center;gap:6px;margin-top:12px;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:5px 12px;font-size:11px;font-weight:800;color:var(--primary-ink)}
+.stage{max-width:1120px;margin:0 auto;padding:12px 20px 16px;display:flex;gap:26px;align-items:flex-start;flex-wrap:wrap}
+.panel{flex:1 1 330px;min-width:300px;display:grid;gap:14px}
+.panel .box{border:1px solid var(--line);background:var(--card);border-radius:18px;padding:16px;box-shadow:0 8px 26px rgba(84,63,39,.06)}
+.panel h3{margin:0 0 10px;font-size:12px;font-weight:900;letter-spacing:.06em;color:var(--primary-ink);text-transform:uppercase}
+.panel p,.panel li{color:var(--muted);font-size:12px;line-height:1.65}
+.panel ul{margin:0;padding-left:16px}
+.toggle-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.toggle{border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:999px;padding:6px 13px;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;transition:all .18s ease}
+.toggle.on{background:var(--primary);border-color:var(--primary);color:#fff}
+table.map{width:100%;border-collapse:collapse;font-size:11px}
+table.map th,table.map td{text-align:left;padding:7px 6px;border-bottom:1px solid var(--line);color:var(--muted);vertical-align:top;line-height:1.5}
+table.map th{color:var(--primary-ink);font-weight:900;font-size:10px;letter-spacing:.05em}
+table.map td:first-child{color:var(--ink);font-weight:800;white-space:nowrap}
+.device{flex:0 0 auto;margin:0 auto;position:sticky;top:10px}
+.phone{display:flex;width:390px;max-width:92vw;height:min(844px,calc(100vh - 24px));min-height:540px;background:#1c1917;border-radius:46px;padding:10px;box-shadow:0 30px 70px rgba(28,25,23,.32)}
+.screen{position:relative;display:flex;flex:1;min-height:0;flex-direction:column;background:var(--bg);border-radius:34px;overflow:hidden;transition:background .25s ease}
+.statusbar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 22px 3px;background:color-mix(in srgb,var(--card) 94%,transparent);position:relative;z-index:31;font-size:11px;font-weight:800;color:var(--ink)}
+.statusbar .island{position:absolute;left:50%;top:7px;transform:translateX(-50%);width:76px;height:20px;border-radius:999px;background:#1c1917}
+.statusbar .icons{display:flex;align-items:center;gap:4px}
+.statusbar .icons svg{width:14px;height:14px;color:var(--ink)}
+.topbar{background:color-mix(in srgb,var(--card) 94%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:8px 16px 10px;position:sticky;top:0;z-index:30}
+.topbar-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.chef-id{display:flex;align-items:center;gap:10px;min-width:0}
+.chef-avatar{width:34px;height:34px;flex-shrink:0;border-radius:999px;background:var(--primary);color:#fff;display:grid;place-items:center;border:0;cursor:pointer;transition:transform .16s ease}
+.chef-avatar:active{transform:scale(.92)}
+.chef-avatar svg{width:18px;height:18px}
+.chef-name{font-size:12px;font-weight:900;color:var(--ink);display:flex;align-items:center;gap:6px;flex-wrap:wrap;line-height:1.3}
+.dot-live{width:6px;height:6px;border-radius:999px;background:#22c55e;flex-shrink:0}
+.mood{font-size:9.5px;font-weight:800;padding:2px 7px;border-radius:999px;border:1px solid transparent;transition:all .2s ease}
+.mood.listen{color:var(--primary-ink);background:var(--primary-soft);border-color:color-mix(in srgb,var(--primary) 26%,transparent)}
+.mood.applause{color:var(--safe);background:var(--safe-bg);border-color:color-mix(in srgb,var(--safe) 26%,transparent)}
+.mood.care{color:var(--danger);background:var(--danger-bg);border-color:color-mix(in srgb,var(--danger) 26%,transparent)}
+.mood.sealed{color:var(--primary-ink);background:color-mix(in srgb,var(--primary) 18%,transparent);border-color:color-mix(in srgb,var(--primary) 34%,transparent)}
+.chef-sub{font-size:10px;color:var(--muted);font-weight:600;margin-top:2px}
+.step-chip{flex-shrink:0;font-family:"JetBrains Mono",ui-monospace,monospace;font-weight:800;font-size:11px;color:var(--primary-ink);background:var(--primary-soft);border:1px solid color-mix(in srgb,var(--primary) 22%,transparent);border-radius:9px;padding:4px 9px}
+.progress{height:4px;background:color-mix(in srgb,var(--line) 60%,transparent);overflow:hidden}
+.progress span{display:block;height:100%;background:var(--primary);transition:width .32s cubic-bezier(.16,1,.3,1)}
+.content{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:16px 16px 0;display:flex;flex-direction:column}
+.stack{display:grid;gap:13px}
+.step-enter{animation:slideInDown .32s cubic-bezier(.16,1,.3,1) both}
+#stack{flex:1 0 auto}
+@keyframes slideInDown{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes chefBlink{0%,88%,100%{transform:scaleY(1)}94%{transform:scaleY(.12)}}
+.chef-eyes{animation:chefBlink 4.2s infinite;transform-origin:center}
+@keyframes chefNod{0%,100%{transform:rotate(0)}30%{transform:rotate(-8deg) translateY(-2px)}60%{transform:rotate(5deg) translateY(1px)}}
+.chef-nodding{animation:chefNod .55s ease-in-out}
+.chef-card{display:flex;gap:10px;border:1px solid color-mix(in srgb,var(--primary) 24%,transparent);background:color-mix(in srgb,var(--primary) 8%,var(--card));border-radius:18px;padding:14px}
+.chef-card .ic{width:30px;height:30px;flex-shrink:0;border-radius:10px;display:grid;place-items:center;color:var(--primary-ink);background:color-mix(in srgb,var(--primary) 14%,var(--card))}
+.chef-card .ic svg{width:16px;height:16px}
+.chef-card strong{display:block;font-size:13px;color:var(--ink);margin-bottom:4px;line-height:1.45}
+.chef-card p{margin:0;font-size:11.5px;line-height:1.66;color:var(--muted)}
+.card{border:1px solid var(--line);background:var(--card);border-radius:18px;padding:14px;box-shadow:0 3px 14px rgba(84,63,39,.05)}
+.card-head{margin-bottom:10px}
+.card-head h2{margin:0;font-size:13px;font-weight:900;color:var(--ink)}
+.card-head p{margin:4px 0 0;font-size:11px;line-height:1.6;color:var(--muted)}
+.field-label{display:block;font-size:11px;font-weight:900;color:var(--muted);margin:0 0 7px}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.choices.one{grid-template-columns:1fr}
+.choices.three{grid-template-columns:repeat(3,1fr)}
+.choice{display:flex;align-items:center;justify-content:space-between;gap:8px;text-align:left;min-height:46px;border:1px solid var(--line);background:var(--card);border-radius:13px;padding:10px 12px;font-family:inherit;font-size:12px;font-weight:800;color:var(--ink);cursor:pointer;transition:all .16s ease}
+.choice:active{transform:scale(.97)}
+.choice small{display:block;font-size:10px;font-weight:600;color:var(--muted);margin-top:2px}
+.choice .tick{width:17px;height:17px;flex-shrink:0;border-radius:999px;border:1.6px solid var(--line);display:grid;place-items:center;color:#fff}
+.choice .tick svg{width:9px;height:9px;opacity:0}
+.choice.on{border-color:var(--primary);background:var(--primary-soft);box-shadow:inset 0 0 0 1px var(--primary)}
+.choice.on .tick{background:var(--primary);border-color:var(--primary)}
+.choice.on .tick svg{opacity:1}
+.choice.danger.on{border-color:var(--danger);background:var(--danger-bg);box-shadow:inset 0 0 0 1px var(--danger)}
+.choice.danger.on .tick{background:var(--danger);border-color:var(--danger)}
+.counter{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.counter .controls{display:flex;align-items:center;gap:12px}
+.counter button{width:34px;height:34px;border-radius:11px;border:1px solid var(--line);background:color-mix(in srgb,var(--line) 24%,var(--card));color:var(--primary-ink);font-size:17px;font-weight:800;cursor:pointer;display:grid;place-items:center;font-family:inherit;transition:all .16s ease}
+.counter button:active{transform:scale(.94)}
+.counter .val{min-width:34px;text-align:center;font-family:"JetBrains Mono",ui-monospace,monospace;font-size:19px;font-weight:800}
+.counter .unit{font-size:11px;color:var(--muted);font-weight:700}
+.tag-input{display:flex;gap:8px}
+.tag-input input{flex:1;min-height:42px;border:1px solid var(--line);border-radius:12px;background:var(--card);padding:9px 12px;font-size:12px;font-family:inherit;color:var(--ink);outline:none}
+.tag-input input:focus{border-color:var(--primary);box-shadow:0 0 0 3px color-mix(in srgb,var(--primary) 16%,transparent)}
+.tag-input button{width:42px;flex-shrink:0;border:0;border-radius:12px;background:var(--primary);color:#fff;font-size:17px;font-weight:800;cursor:pointer}
+.tag-list{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+.tag{display:inline-flex;align-items:center;gap:6px;border:1px solid color-mix(in srgb,var(--primary) 30%,transparent);background:var(--primary-soft);color:var(--primary-ink);border-radius:999px;padding:5px 11px;font-size:11px;font-weight:800}
+.tag button{border:0;background:transparent;color:inherit;cursor:pointer;font-size:13px;line-height:1;padding:0}
+.slider-row{display:flex;align-items:center;gap:12px}
+.slider-row input[type=range]{flex:1;accent-color:var(--primary)}
+.slider-row .val{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:13px;font-weight:800;min-width:56px;text-align:right}
+.text-field{width:100%;min-height:44px;border:1px solid var(--line);border-radius:12px;background:var(--card);padding:10px 12px;font-size:12px;font-family:inherit;color:var(--ink);outline:none}
+.text-field:focus{border-color:var(--primary);box-shadow:0 0 0 3px color-mix(in srgb,var(--primary) 16%,transparent)}
+.inv-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.inv-grid .full{grid-column:1/-1}
+.note{display:flex;gap:8px;border-left:3px solid var(--safe);background:var(--safe-bg);border-radius:0 12px 12px 0;padding:10px 12px;font-size:11px;font-weight:700;color:var(--safe);line-height:1.55}
+.note.warn{border-left-color:var(--primary);background:var(--primary-soft);color:var(--primary-ink)}
+.check-row{display:flex;align-items:center;gap:10px;min-height:44px;border:1px solid var(--line);border-radius:12px;background:var(--card);padding:10px 12px;font-size:12px;font-weight:800;color:var(--ink);cursor:pointer;margin-top:8px}
+.check-row input{width:17px;height:17px;accent-color:var(--safe)}
+.helper{font-size:10.5px;color:var(--muted);line-height:1.6;margin:9px 0 0}
+.legal{border:2px solid color-mix(in srgb,var(--primary) 30%,transparent);background:var(--card);border-radius:16px;padding:14px;position:relative;overflow:hidden}
+.legal .lg-head{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:8px;margin-bottom:10px}
+.legal .lg-head span{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:9.5px;font-weight:800;letter-spacing:.1em;color:var(--muted)}
+.legal h4{margin:0;font-size:15px;font-weight:900}
+.legal .dl{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;font-size:11px}
+.legal .dl dt{color:var(--muted);font-size:9.5px;font-weight:800}
+.legal .dl dd{margin:2px 0 0;font-weight:900;color:var(--ink)}
+.legal .dl .wide{grid-column:1/-1}
+.sign-zone{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;border-top:1px dashed var(--line);margin-top:12px;padding-top:10px}
+.verify{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:9.5px;font-weight:800;border:1px solid var(--line);color:var(--muted);background:color-mix(in srgb,var(--line) 26%,var(--card));border-radius:7px;padding:3px 8px}
+.verify.ok{color:var(--safe);background:var(--safe-bg);border-color:color-mix(in srgb,var(--safe) 32%,transparent)}
+.seal{position:absolute;right:12px;bottom:10px;width:74px;height:74px;border-radius:999px;border:2px solid var(--danger);color:var(--danger);background:color-mix(in srgb,var(--card) 94%,transparent);display:flex;flex-direction:column;align-items:center;justify-content:center;transform:rotate(-9deg);pointer-events:none}
+.seal .ring{width:64px;height:64px;border-radius:999px;border:1px dashed color-mix(in srgb,var(--danger) 60%,transparent);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.seal .top{font-size:6px;font-weight:900;letter-spacing:.16em;color:var(--danger)}
+.seal .mid{background:var(--danger);color:#fff;font-size:7px;font-weight:900;letter-spacing:.1em;padding:1px 6px;border-radius:3px}
+.seal .bot{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:6px;font-weight:800;color:var(--danger)}
+@keyframes stampDrop{0%{transform:scale(3.2) rotate(-28deg);opacity:0}65%{transform:scale(.9) rotate(-12deg);opacity:1}85%{transform:scale(1.04) rotate(-7deg)}100%{transform:scale(1) rotate(-9deg);opacity:1}}
+.seal.drop{animation:stampDrop .42s cubic-bezier(.175,.885,.32,1.275) both}
+@keyframes shockwave{from{transform:scale(.4);opacity:.85}to{transform:scale(2.6);opacity:0}}
+.wave{position:absolute;right:20px;bottom:16px;width:64px;height:64px;border-radius:999px;border:4px solid color-mix(in srgb,var(--danger) 55%,transparent);pointer-events:none}
+.wave.go{animation:shockwave .5s cubic-bezier(.1,.8,.3,1) both}
+.sig-mask-anim{stroke-dasharray:620;stroke-dashoffset:620;animation:sigDraw 1.05s cubic-bezier(.3,.05,.25,1) forwards}
+@keyframes sigDraw{to{stroke-dashoffset:0}}
+.sig-underline{stroke-dasharray:180;stroke-dashoffset:180;animation:sigUnder .42s cubic-bezier(.2,.1,.25,1) 1.05s forwards}
+@keyframes sigUnder{to{stroke-dashoffset:0}}
+.scroll-fade{position:absolute;left:0;right:0;bottom:0;height:26px;background:linear-gradient(to top,var(--bg),transparent);pointer-events:none;opacity:0;transition:opacity .2s ease;z-index:29}
+.scroll-fade.on{opacity:1}
+.bottombar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:16px -16px 0;padding:12px 16px 18px;background:color-mix(in srgb,var(--card) 92%,transparent);border-top:1px solid var(--line)}
+.btn-ghost{border:0;background:transparent;color:var(--muted);font-family:inherit;font-size:12px;font-weight:800;padding:9px 10px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;border-radius:11px}
+.btn-ghost:disabled{opacity:.32;pointer-events:none}
+.btn-ghost svg{width:13px;height:13px}
+.hint{font-size:10px;color:var(--muted);font-weight:700;text-align:center;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.btn-primary{border:0;border-radius:999px;background:var(--primary);color:#fff;font-family:inherit;font-size:12.5px;font-weight:900;padding:11px 20px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:transform .16s ease,filter .18s ease}
+.btn-primary:active{transform:scale(.95)}
+.btn-primary:disabled{opacity:.5;pointer-events:none}
+.btn-primary.ready{background:var(--ink);color:var(--primary-soft)}
+.btn-primary svg{width:13px;height:13px}
+@media (max-width:920px){
+  .stage{flex-direction:column;align-items:center}
+  .panel{width:100%;order:2}
+  .device{position:static;order:1}
+  .phone{width:min(390px,94vw);height:min(844px,76vh)}
+}
+@media (prefers-reduced-motion:reduce){
+  .step-enter,.chef-eyes,.chef-nodding,.seal.drop,.wave.go,.sig-mask-anim,.sig-underline{animation:none!important}
+  .progress span,.choice,.btn-primary{transition:none}
+}
+</style>
+</head>
+<body>
+
+
+<main class="stage">
+  <div class="panel">
+    <header class="page-head">
+  <p class="eyebrow">CooCoo 1.0 · 主廚相談室</p>
+  <h1>五步 Onboarding 新版畫面提案</h1>
+  <p>把沙盒版主廚相談室可沿用的動態與介面語彙，套用到正式站現行五步（節奏與卡點／人數與廚具／口味餐期時間／登入與精確冰箱／主廚檔案）。此頁僅為工作樹內提案預覽，未更動正式站程式碼。</p>
+  <span class="flag">提案預覽 · 非正式站 · 資料為示意值</span>
+</header>
+    <div class="box">
+      <h3>視覺語彙（方案 A · 已定案）</h3>
+      <p>沿用正式站暖米色底與赭紅主色，只借沙盒版的元件結構與動態。B／C 已移除，後續討動都在這個方案裡改。</p>
+    </div>
+    <div class="box">
+      <h3>五步沿用對照</h3>
+      <table class="map">
+        <tr><th>正式站步驟</th><th>借用沙盒元素</th></tr>
+        <tr><td>1 節奏與卡點</td><td>主廚開場卡、心情標籤、點頭微互動</td></tr>
+        <tr><td>2 人數／廚具／硬限制</td><td>份量步進器、勾選卡、自訂廚具 chip、硬限制複選</td></tr>
+        <tr><td>3 口味／餐期／時間</td><td>標籤輸入、時間滑桿、餐期卡</td></tr>
+        <tr><td>4 登入＋精確冰箱</td><td>登入卡、空箱二分、精確欄位、安全提示</td></tr>
+        <tr><td>5 主廚檔案</td><td>通行證卡、親簽墨流、衝擊波蓋章、VERIFIED</td></tr>
+      </table>
+    </div>
+    <div class="box">
+      <h3>可試的互動</h3>
+      <ul>
+        <li>點步驟列或下方「繼續／上一步」切換 1–5 步。</li>
+        <li>點主廚頭像可觸發點頭與心情標籤變化。</li>
+        <li>第 2 步加減人數、勾廚具，自訂廚具可按 ＋ 或 Enter 新增。</li>
+        <li>第 5 步按「蓋章」可看親簽墨流與衝擊波。</li>
+      </ul>
+    </div>
+    <div class="box">
+      <h3>尚未處理</h3>
+      <ul>
+        <li>未接真實資料與 Supabase；數值皆示意。</li>
+        <li>音效、震動、離線快取未納入本預覽。</li>
+        <li>舊版圓夢／金額敘事已不採，未帶入。</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="device">
+    <div class="phone"><div class="screen">
+      <div class="statusbar">
+        <span>9:41</span>
+        <span class="island" aria-hidden="true"></span>
+        <span class="icons" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M2 20h3v-6H2v6zm5 0h3V9H7v11zm5 0h3V5h-3v15zm5 0h3V2h-3v18z"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12.5a10 10 0 0 1 14 0"/><path d="M8.5 16a5.5 5.5 0 0 1 7 0"/><circle cx="12" cy="19.5" r="1" fill="currentColor" stroke="none"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="7" width="17" height="10" rx="3"/><rect x="4" y="9" width="11" height="6" rx="1.6" fill="currentColor" stroke="none"/><path d="M21 10.5v3"/></svg>
+        </span>
+      </div>
+      <div class="topbar">
+        <div class="topbar-row">
+          <div class="chef-id">
+            <button class="chef-avatar" id="chef-btn" type="button" aria-label="主廚 CooCoo">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/>
+                <line class="chef-eyes" x1="9" y1="12" x2="9.01" y2="12"/>
+                <line class="chef-eyes" x1="15" y1="12" x2="15.01" y2="12"/>
+                <line x1="6" y1="17" x2="18" y2="17"/>
+              </svg>
+            </button>
+            <div>
+              <div class="chef-name"><span>主廚 CooCoo</span><span class="dot-live"></span><span class="mood listen" id="mood">聆聽日常</span></div>
+              <div class="chef-sub" id="eyebrow">首次設定 · 01 自煮節奏</div>
+            </div>
+          </div>
+          <div class="step-chip" id="chip">01 / 05</div>
+        </div>
+        <div class="progress" style="margin-top:10px"><span id="fill" style="width:20%"></span></div>
+      </div>
+      <div class="scroll-fade" id="scrollfade" aria-hidden="true"></div>
+      <div class="content" id="content"><div class="stack step-enter" id="stack"></div>
+      <div class="bottombar">
+        <button class="btn-ghost" id="prev" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg><span>上一步</span></button>
+        <div class="hint">草稿已自動暫存</div>
+        <button class="btn-primary" id="next" type="button"><span id="nextlabel">繼續</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+      </div></div>
+      
+    </div></div>
+  </div>
+</main>
+<script>
+const stepTitles = ["自煮節奏","餐桌與廚具","料理條件","精確冰箱","主廚檔案"];
+const profile = {
+  experience:"comfortable", freq:3, barriers:["no_ideas"],
+  servings:2, cookware:["電鍋","氣炸鍋"], restrictions:["花生"], custom:"",
+  flavors:["清爽","微辣"], minutes:30, slots:["dinner"], guidance:"detailed",
+  hasNoInventory:false, inv:{name:"",qty:1,unit:"份",chamber:"cold",expiry:""},
+  metric:"cooking_sessions", target:4, reminders:{expiring:true,planned:true,rhythm:true},
+  sealed:false
+};
+let step = 1, lastRenderedStep = 0;
+
+const tick = '<span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg></span>';
+const chefIco = svg => `<span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${svg}</svg></span>`;
+const ICON = {
+  pan:'<path d="M18 2v6a3 3 0 0 1-3 3 3 3 0 0 1-3-3V2"/><path d="M15 2v19"/><path d="M5 2v4a3 3 0 0 0 3 3 3 3 0 0 0 3-3V2"/><path d="M8 2v19"/>',
+  clock:'<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+  shield:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+  fridge:'<rect width="18" height="20" x="3" y="2" rx="2"/><path d="M3 10h18"/><path d="M7 6v2"/><path d="M7 14v3"/>',
+  info:'<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>',
+  medal:'<circle cx="12" cy="9" r="6"/><path d="M9 15l-2 7 5-3 5 3-2-7"/>'
+};
+const CARD = (title, sub, body) => `<section class="card"><div class="card-head"><h2>${title}</h2>${sub?`<p>${sub}</p>`:""}</div>${body}</section>`;
+const CHEF = (title, body) => `<div class="chef-card">${chefIco(ICON.pan)}<div><strong>${title}</strong><p>${body}</p></div></div>`;
+
+function setMood(mood){
+  const map = {applause:["applause","CooCoo 給讚！"], care:["care","最高防線確認"], sealed:["sealed","立約見證完成"], listen:["listen","聆聽日常"]};
+  const [cls, label] = map[mood] || map.listen;
+  const el = document.getElementById("mood");
+  el.className = "mood " + cls;
+  el.textContent = label;
+}
+function cheer(){
+  const av = document.getElementById("chef-btn");
+  av.classList.remove("chef-nodding"); void av.offsetWidth; av.classList.add("chef-nodding");
+}
+function chefSay(mood){ setMood(mood); cheer(); }
+
+function render(){
+  const isStepChange = lastRenderedStep !== step;
+  lastRenderedStep = step;
+  document.getElementById("eyebrow").textContent = `首次設定 · 0${step} ${stepTitles[step-1]}`;
+  document.getElementById("chip").textContent = `0${step} / 05`;
+  document.getElementById("fill").style.width = `${step*20}%`;
+  document.getElementById("prev").disabled = step === 1;
+  if (isStepChange && !(step === 5 && profile.sealed)) setMood("listen");
+  const nextLabel = document.getElementById("nextlabel");
+  const nextBtn = document.getElementById("next");
+  nextBtn.className = "btn-primary" + (step===5 && profile.sealed ? " ready" : "");
+  nextLabel.textContent = step===5 ? (profile.sealed ? "啟程！進入今日" : "蓋章，成立主廚檔案") : "繼續";
+
+  let html = "";
+  if (step === 1){
+    html = CHEF("下班辛苦了！我是你的專屬主廚 CooCoo。","沒有標準答案，我們只想讓第一次推薦更可行。你的回答會決定我怎麼挑菜、怎麼排餐。") +
+      CARD("目前料理熟練度", null, `<div class="choices one">
+        ${["剛開始","能完成幾道家常菜","熟悉料理與調整"].map((t,i)=>{const v=["beginner","comfortable","advanced"][i];return `<button class="choice ${profile.experience===v?"on":""}" data-act="exp" data-v="${v}" type="button"><span>${t}</span>${tick}</button>`}).join("")}
+      </div>`) +
+      CARD("目前每週料理幾次？", "用來推估第一步可行的週目標，不用勉強。", `<div class="counter"><span class="unit">次 / 週</span><div class="controls">
+        <button data-act="freq" data-d="-1" type="button">−</button><span class="val">${profile.freq}</span><button data-act="freq" data-d="1" type="button">+</button></div></div>`) +
+      CARD("最常卡在哪裡？", "可多選。這會決定我第一則提醒的方式。", `<div class="choices">
+        ${[["no_ideas","常常沒想法"],["low_energy","下班沒力氣"],["no_time","時間不固定"],["ingredients_waste","食材容易放壞"],["cleanup","不想收拾"]].map(([v,t])=>`<button class="choice ${profile.barriers.includes(v)?"on":""}" data-act="barrier" data-v="${v}" type="button"><span>${t}</span>${tick}</button>`).join("")}
+      </div>`);
+  } else if (step === 2){
+    html = CARD("你通常一次煮幾人份？", "多煮的份數會進熟食庫存，不會先算成已吃。", `<div class="counter"><span class="unit">人份</span><div class="controls">
+        <button data-act="serv" data-d="-1" type="button">−</button><span class="val">${profile.servings}</span><button data-act="serv" data-d="1" type="button">+</button></div></div>`) +
+      CARD("可用廚具（至少一項）", "找不到的可以自行輸入，我只會保守判斷適合的料理方式。", `<div class="choices">
+        ${["電磁爐","瓦斯爐","電鍋","快煮鍋","氣炸鍋","微波爐"].map(t=>`<button class="choice ${profile.cookware.includes(t)?"on":""}" data-act="ware" data-v="${t}" type="button"><span>${t}</span>${tick}</button>`).join("")}
+      </div>
+      <label class="field-label" style="margin-top:12px">其他廚具（選填）</label>
+      <div class="tag-input"><input id="customware" placeholder="輸入後按 ＋ 或 Enter，例如：電子壓力鍋" value="${profile.custom}"><button data-act="ware-add" type="button">+</button></div>
+      ${profile.cookware.some(t=>!["電磁爐","瓦斯爐","電鍋","快煮鍋","氣炸鍋","微波爐"].includes(t)) ? `<div class="tag-list">${profile.cookware.filter(t=>!["電磁爐","瓦斯爐","電鍋","快煮鍋","氣炸鍋","微波爐"].includes(t)).map(t=>`<span class="tag">${t}<button data-act="ware-del" data-v="${t}" type="button" aria-label="移除">×</button></span>`).join("")}</div>` : ""}`) +
+      CARD("過敏或絕對不吃（硬限制）", "這是全站最高防線，我絕不會用偏好或省錢當理由放寬。", `<div class="choices three">
+        ${["花生","堅果","蛋","牛奶","甲殼類","魚","麩質","不吃牛","全素"].map(t=>`<button class="choice danger ${profile.restrictions.includes(t)?"on":""}" data-act="restrict" data-v="${t}" type="button"><span>${t}</span>${tick}</button>`).join("")}
+      </div>
+      <p class="helper">找不到的過敏原可先選最接近的，之後在「我的」再補精確名稱。</p>`);
+  } else if (step === 3){
+    html = CARD("喜歡的口味", "只影響推薦排序，不會覆蓋任何硬限制。", `<div class="tag-input"><input id="flavor" placeholder="清爽、台式、微辣…"><button data-act="flavor-add" type="button">+</button></div>
+      <div class="tag-list">${profile.flavors.map(f=>`<span class="tag">${f}<button data-act="flavor-del" data-v="${f}" type="button" aria-label="移除">×</button></span>`).join("")}</div>`) +
+      CARD("平常可用時間", "我會優先挑在這個時間內真的做得完的料理。", `<div class="slider-row"><input type="range" min="5" max="180" step="5" value="${profile.minutes}" data-act="minutes"><span class="val" id="minval">${profile.minutes} 分</span></div>`) +
+      CARD("常用餐期", "至少一個。之後可隨時調整。", `<div class="choices three">
+        ${[["breakfast","早餐"],["lunch","午餐"],["dinner","晚餐"]].map(([v,t])=>`<button class="choice ${profile.slots.includes(v)?"on":""}" data-act="slot" data-v="${v}" type="button"><span>${t}</span>${tick}</button>`).join("")}
+      </div>`) +
+      CARD("料理時預設指引", null, `<div class="choices">
+        ${[["detailed","詳細陪做","逐步提示與時間提醒"],["compact","精簡步驟","熟悉後只看關鍵步驟"]].map(([v,t,s])=>`<button class="choice ${profile.guidance===v?"on":""}" data-act="guide" data-v="${v}" type="button"><span>${t}<small>${s}</small></span>${tick}</button>`).join("")}
+      </div>`);
+  } else if (step === 4){
+    html = CARD("登入後，建立精確冰箱", "資料跟著帳號。發票 OCR 只建立待確認草稿，不會假裝辨識成功。", `<button class="choice" data-act="auth" type="button"><span>使用 Google 登入<small>登入後草稿會同步到帳號</small></span><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+      <div class="choices one" style="margin-top:10px"><button class="choice" data-act="ocr" type="button"><span>用發票 OCR 建立冰箱<small>逐項確認後才入庫</small></span></button></div>`) +
+      CARD("目前冰箱狀態", null, `<div class="choices">
+        <button class="choice ${!profile.hasNoInventory?"on":""}" data-act="box" data-v="some" type="button"><span>手動新增一項</span>${tick}</button>
+        <button class="choice ${profile.hasNoInventory?"on":""}" data-act="box" data-v="none" type="button"><span>確認目前空箱</span>${tick}</button>
+      </div>`) +
+      (!profile.hasNoInventory ? CARD("新增第一項食材", "期限必填，我會用它排即期提醒。", `<div class="inv-grid">
+        <div class="full"><label class="field-label">食材名稱</label><input class="text-field" id="invname" placeholder="例如：雞蛋" value="${profile.inv.name}"></div>
+        <div><label class="field-label">數量</label><input class="text-field" type="number" min="0.01" step="0.01" id="invqty" value="${profile.inv.qty}"></div>
+        <div><label class="field-label">單位</label><input class="text-field" id="invunit" value="${profile.inv.unit}"></div>
+        <div><label class="field-label">位置</label><select class="text-field" id="invchamber"><option value="cold" ${profile.inv.chamber==="cold"?"selected":""}>冷藏</option><option value="frozen" ${profile.inv.chamber==="frozen"?"selected":""}>冷凍</option><option value="pantry" ${profile.inv.chamber==="pantry"?"selected":""}>常溫</option></select></div>
+        <div><label class="field-label">期限</label><input class="text-field" type="date" id="invexp" value="${profile.inv.expiry}"></div>
+      </div>`) : `<div class="note">${chefIco(ICON.fridge)}<span>空冰箱也能開始。我會用在「從零也能開始」的路徑，先從少量補買帶你走一次。</span></div>`) +
+      `<div class="note warn" style="margin-top:2px"><span>OCR 只會在你逐項確認數量、單位、位置與期限後入庫。</span></div>`;
+  } else if (step === 5){
+    const cookware = profile.cookware.join("、") || "基本鍋具";
+    const restr = profile.restrictions.join("、") || "無特殊禁忌";
+    html = CARD("成立你的主廚檔案", `依目前每週 ${profile.freq} 次，建議先多一次：${profile.freq+1}。`, `<div class="choices">
+        ${[["cooking_sessions","料理次數"],["self_cooked_servings","自煮餐份"]].map(([v,t])=>`<button class="choice ${profile.metric===v?"on":""}" data-act="metric" data-v="${v}" type="button"><span>${t}</span>${tick}</button>`).join("")}
+      </div>
+      <label class="field-label" style="margin-top:12px">本週目標</label>
+      <div class="counter"><span class="unit">${profile.metric==="cooking_sessions"?"次 / 週":"份 / 週"}</span><div class="controls">
+        <button data-act="target" data-d="-1" type="button">−</button><span class="val">${profile.target}</span><button data-act="target" data-d="1" type="button">+</button></div></div>`) +
+      CARD("每週最多三則智慧提醒", "每類最多一次，21:00–09:00 不推播。", `
+        ${[["expiring","即期食材"],["planned","已安排料理"],["rhythm","本週節奏"]].map(([k,t])=>`<label class="check-row"><input type="checkbox" data-act="remind" data-v="${k}" ${profile.reminders[k]?"checked":""}>${t}</label>`).join("")}
+        <p class="helper">Push 權限會在首次料理完成後才詢問。</p>`) +
+      `<div class="legal">
+        <div class="lg-head"><span>COOCOO CHEF PROFILE</span><span>NO. 88209</span></div>
+        <h4>初火學徒 · 從 0 EXP 開始</h4>
+        <dl class="dl">
+          <div><dt>每週自煮</dt><dd>${profile.target} ${profile.metric==="cooking_sessions"?"次":"份"} / 週</dd></div>
+          <div><dt>料理指引</dt><dd>${profile.guidance==="detailed"?"詳細":"精簡"}</dd></div>
+          <div><dt>常用份量</dt><dd>${profile.servings} 人份</dd></div>
+          <div><dt>不能吃</dt><dd>${restr}</dd></div>
+          <div class="wide"><dt>烹飪裝備</dt><dd>${cookware}</dd></div>
+        </dl>
+        <div class="sign-zone">
+          <div>
+            <span class="field-label" style="margin-bottom:2px">主廚 CooCoo 親筆見證</span>
+            <svg width="170" height="66" viewBox="0 0 200 95" style="overflow:visible;display:block" aria-label="CooCoo 親筆簽名">
+              <defs>
+                <mask id="sigMask" maskUnits="userSpaceOnUse" x="0" y="0" width="300" height="150">
+                  <path id="sigPath" class="${profile.sealed?"sig-mask-anim":""}" d="M 28 32 C 30 20, 36 15, 36 15 C 30 18, 22 36, 22 48 C 22 62, 28 72, 36 71 C 42 70, 46 60, 48 55 C 52 48, 58 46, 62 50 C 66 54, 66 66, 58 70 C 50 72, 48 64, 52 56 C 56 50, 62 50, 68 53 C 72 48, 78 46, 82 50 C 86 54, 86 66, 78 70 C 70 72, 68 64, 72 56 C 76 50, 82 50, 90 53 C 96 35, 102 15, 104 15 C 98 18, 90 36, 90 48 C 90 62, 96 72, 104 71 C 110 70, 114 60, 116 55 C 120 48, 126 46, 130 50 C 134 54, 134 66, 126 70 C 118 72, 116 64, 120 56 C 124 50, 130 50, 136 53 C 140 48, 146 46, 150 50 C 154 54, 154 66, 146 70 C 138 72, 136 64, 140 56 C 144 50, 152 50, 166 56 C 172 58, 178 56, 184 52" fill="none" stroke="white" stroke-width="32" stroke-linecap="round" style="${profile.sealed?"":"stroke-dasharray:620;stroke-dashoffset:620"}"/>
+                </mask>
+                <linearGradient id="inkGrad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#d97706"/><stop offset="50%" stop-color="#f59e0b"/><stop offset="100%" stop-color="#b45309"/></linearGradient>
+              </defs>
+              <text x="20" y="70" font-family="'Cedarville Cursive',cursive" font-size="44" fill="var(--ink)" mask="url(#sigMask)">CooCoo</text>
+              <path class="${profile.sealed?"sig-underline":""}" d="M 18 86 Q 95 93, 168 83 Q 174 81, 178 78" fill="none" stroke="url(#inkGrad)" stroke-width="3.2" stroke-linecap="round" style="${profile.sealed?"":"stroke-dasharray:180;stroke-dashoffset:180"}"/>
+            </svg>
+          </div>
+          <span class="verify ${profile.sealed?"ok":""}">${profile.sealed?"VERIFIED":"PENDING"}</span>
+        </div>
+        ${profile.sealed?'<div class="seal drop" aria-label="COOCOO SEALED"><span class="ring"><span class="top">★ COOCOO ★</span><span class="mid">SEALED</span><span class="bot">NO. 88209 · 立約</span></span></div><div class="wave go"></div>':""}
+      </div>`;
+  }
+
+  const stack = document.getElementById("stack");
+  stack.innerHTML = html;
+  if (isStepChange){ stack.classList.remove("step-enter"); void stack.offsetWidth; stack.classList.add("step-enter"); }
+}
+// Optional deep link: ?step=5&sealed=1 (handy for sharing a specific frame)
+(function applyUrlState(){
+  const q = new URLSearchParams(location.search);
+  const st = Number(q.get("step"));
+  if (st >= 1 && st <= 5) step = st;
+  if (q.get("sealed") === "1") profile.sealed = true;
+})();
+render();
+
+document.addEventListener("click", e => {
+  const el = e.target.closest("[data-act]");
+  if (!el) return;
+  const act = el.dataset.act, v = el.dataset.v, d = Number(el.dataset.d || 0);
+  if (act === "exp"){ profile.experience = v; chefSay("listen"); }
+  else if (act === "freq"){ profile.freq = Math.max(0, Math.min(21, profile.freq + d)); }
+  else if (act === "barrier"){ profile.barriers = profile.barriers.includes(v) ? profile.barriers.filter(x=>x!==v) : [...profile.barriers, v]; }
+  else if (act === "serv"){ profile.servings = Math.max(1, Math.min(12, profile.servings + d)); }
+  else if (act === "ware"){ profile.cookware = profile.cookware.includes(v) ? profile.cookware.filter(x=>x!==v) : [...profile.cookware, v]; chefSay("applause"); }
+  else if (act === "ware-del"){ profile.cookware = profile.cookware.filter(x=>x!==v); }
+  else if (act === "ware-add"){ const i = document.getElementById("customware"); const val = i.value.trim(); if (val && !profile.cookware.includes(val)){ profile.cookware = [...profile.cookware, val]; chefSay("applause"); } profile.custom = ""; }
+  else if (act === "restrict"){ profile.restrictions = profile.restrictions.includes(v) ? profile.restrictions.filter(x=>x!==v) : [...profile.restrictions, v]; chefSay("care"); }
+  else if (act === "flavor-add"){ const i = document.getElementById("flavor"); const val = i.value.trim(); if (val && !profile.flavors.includes(val)) profile.flavors = [...profile.flavors, val]; }
+  else if (act === "flavor-del"){ profile.flavors = profile.flavors.filter(x=>x!==v); }
+  else if (act === "slot"){ profile.slots = profile.slots.includes(v) ? profile.slots.filter(x=>x!==v) : [...profile.slots, v]; }
+  else if (act === "guide"){ profile.guidance = v; }
+  else if (act === "auth"){ chefSay("applause"); }
+  else if (act === "ocr"){ chefSay("listen"); }
+  else if (act === "box"){ profile.hasNoInventory = v === "none"; }
+  else if (act === "metric"){ profile.metric = v; }
+  else if (act === "target"){ profile.target = Math.max(1, Math.min(21, profile.target + d)); }
+  else if (act === "remind"){ profile.reminders = { ...profile.reminders, [v]: !profile.reminders[v] }; }
+  else return;
+  if (["freq","serv","target","flavor-del","flavor-add","minutes","box","metric","remind","guide","slot","ware","ware-add","ware-del","exp","barrier","restrict","auth","ocr"].includes(act)) render();
+});
+document.addEventListener("keydown", e => {
+  if (e.target && e.target.id === "customware" && e.key === "Enter"){
+    e.preventDefault();
+    const val = e.target.value.trim();
+    if (val && !profile.cookware.includes(val)){ profile.cookware = [...profile.cookware, val]; chefSay("applause"); }
+    profile.custom = "";
+    render();
+  }
+});
+document.addEventListener("input", e => {
+  const el = e.target.closest("[data-act]");
+  if (el && el.dataset.act === "minutes"){ profile.minutes = Number(el.value); document.getElementById("minval").textContent = `${profile.minutes} 分`; }
+});
+const contentEl = document.getElementById("content");
+const fadeEl = document.getElementById("scrollfade");
+function syncScrollFade(){
+  const remaining = contentEl.scrollHeight - contentEl.scrollTop - contentEl.clientHeight;
+  fadeEl.classList.toggle("on", remaining > 14);
+}
+contentEl.addEventListener("scroll", syncScrollFade, { passive: true });
+contentEl.addEventListener("scrollend", syncScrollFade, { passive: true });
+contentEl.addEventListener("scroll", syncScrollFade, { passive: true });
+window.addEventListener("resize", syncScrollFade);
+const baseRender = render;
+render = function(){ baseRender(); requestAnimationFrame(syncScrollFade); };
+syncScrollFade();
+
+document.getElementById("chef-btn").addEventListener("click", () => chefSay("listen"));
+document.getElementById("prev").addEventListener("click", () => { if (step > 1){ step--; render(); document.getElementById("content").scrollTop = 0; } });
+document.getElementById("next").addEventListener("click", () => {
+  if (step < 5){ step++; render(); document.getElementById("content").scrollTop = 0; }
+  else if (!profile.sealed){ profile.sealed = true; chefSay("sealed"); render(); document.getElementById("content").scrollTop = 9999; }
+  else { chefSay("sealed"); }
+});
+
+</script>
+</body>
+</html>
