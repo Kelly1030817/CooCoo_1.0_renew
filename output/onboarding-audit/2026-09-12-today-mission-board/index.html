@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CooCoo 今日頁任務板 · 提案預覽</title>
+<style>
+*{box-sizing:border-box}
+:root{
+  --bg:#fdf8ea;--card:#fffdf6;--ink:#293c4e;--muted:#716b60;--line:#e7dac2;
+  --primary:#9a442d;--primary-ink:#8f3d28;--primary-soft:#fdf1e2;
+  --safe:#3f6b53;--safe-bg:#f2f5ed;--danger:#a3342a;--danger-bg:#fdeceb;
+  --gold:#b8862f;--gold-bg:#fdf3dc;
+  --shadow:0 18px 50px rgba(84,63,39,.10);
+}
+html,body{margin:0}
+body{
+  background:radial-gradient(circle at 88% 2%, rgba(243,204,140,.34) 0 12%, transparent 34%), var(--bg);
+  color:var(--ink);font-family:"Plus Jakarta Sans","Noto Sans TC",-apple-system,"PingFang TC",sans-serif;min-height:100vh;
+}
+.wrap{max-width:1160px;margin:0 auto;padding:18px 20px 40px;display:flex;gap:26px;align-items:flex-start;flex-wrap:wrap}
+.side{flex:1 1 340px;min-width:300px;display:grid;gap:13px}
+.eyebrow{margin:0 0 6px;color:var(--primary);font-size:11px;font-weight:900;letter-spacing:.16em;text-transform:uppercase}
+h1{margin:0 0 8px;font-family:Georgia,"Noto Serif TC",serif;font-size:clamp(21px,3.1vw,29px);letter-spacing:-.02em}
+.lead{margin:0;color:var(--muted);font-size:12.5px;line-height:1.7}
+.flag{display:inline-flex;margin-top:11px;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:5px 12px;font-size:11px;font-weight:800;color:var(--primary-ink)}
+.box{border:1px solid var(--line);background:var(--card);border-radius:18px;padding:15px;box-shadow:0 8px 26px rgba(84,63,39,.06)}
+.box h3{margin:0 0 9px;font-size:11.5px;font-weight:900;letter-spacing:.06em;color:var(--primary-ink);text-transform:uppercase}
+.box p,.box li{color:var(--muted);font-size:12px;line-height:1.66}
+.box ul{margin:0;padding-left:16px}
+table.map{width:100%;border-collapse:collapse;font-size:11px}
+table.map th,table.map td{text-align:left;padding:6px 5px;border-bottom:1px solid var(--line);color:var(--muted);vertical-align:top;line-height:1.5}
+table.map th{color:var(--primary-ink);font-weight:900;font-size:10px}
+table.map td:first-child{color:var(--ink);font-weight:800;white-space:nowrap}
+.btnrow{display:flex;gap:7px;flex-wrap:wrap;margin-top:4px}
+.pillbtn{border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:999px;padding:6px 13px;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;transition:all .18s ease}
+.pillbtn.on{background:var(--primary);border-color:var(--primary);color:#fff}
+.device{flex:0 0 auto;margin:0 auto;position:sticky;top:10px}
+.phone{display:flex;width:390px;max-width:92vw;height:min(844px,calc(100vh - 24px));min-height:560px;background:#1c1917;border-radius:46px;padding:10px;box-shadow:0 30px 70px rgba(28,25,23,.32)}
+.screen{position:relative;display:flex;flex:1;min-height:0;flex-direction:column;background:var(--bg);border-radius:34px;overflow:hidden}
+.statusbar{display:flex;align-items:center;justify-content:space-between;padding:9px 22px 3px;background:color-mix(in srgb,var(--card) 94%,transparent);position:relative;z-index:31;font-size:11px;font-weight:800}
+.statusbar .island{position:absolute;left:50%;top:7px;transform:translateX(-50%);width:76px;height:20px;border-radius:999px;background:#1c1917}
+.statusbar .icons{display:flex;gap:4px;align-items:center}
+.statusbar .icons svg{width:14px;height:14px}
+.hud{background:color-mix(in srgb,var(--card) 95%,transparent);border-bottom:1px solid var(--line);padding:6px 16px 10px;position:relative;z-index:30}
+.hudrow{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.chef{display:flex;align-items:center;gap:9px}
+.avatar{width:34px;height:34px;border-radius:999px;background:var(--primary);color:#fff;display:grid;place-items:center;flex-shrink:0}
+.avatar svg{width:18px;height:18px}
+.rankname{font-size:12px;font-weight:900}
+.ranksub{font-size:10px;color:var(--muted);font-weight:700;margin-top:1px}
+.xpchip{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:11px;font-weight:800;color:var(--gold);background:var(--gold-bg);border:1px solid color-mix(in srgb,var(--gold) 30%,transparent);border-radius:9px;padding:4px 9px}
+.xpbar{margin-top:8px;height:6px;border-radius:999px;background:color-mix(in srgb,var(--line) 62%,transparent);overflow:hidden;position:relative}
+.xpbar span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#d9a441,#b8862f);transition:width .5s cubic-bezier(.16,1,.3,1)}
+.xpmeta{display:flex;justify-content:space-between;margin-top:5px;font-size:9.5px;color:var(--muted);font-weight:700}
+.content{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:14px 16px 18px;display:flex;flex-direction:column}
+.stack{display:grid;gap:12px;flex:1 0 auto}
+@keyframes slideInDown{from{opacity:0;transform:translateY(-14px)}to{opacity:1;transform:translateY(0)}}
+.enter{animation:slideInDown .32s cubic-bezier(.16,1,.3,1) both}
+@keyframes pop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
+.pop{animation:pop .42s cubic-bezier(.175,.885,.32,1.275) both}
+@keyframes floatup{0%{opacity:0;transform:translateY(6px)}25%{opacity:1}100%{opacity:0;transform:translateY(-34px)}}
+.floatxp{position:absolute;right:20px;top:96px;font-family:"JetBrains Mono",ui-monospace,monospace;font-weight:900;font-size:15px;color:var(--gold);pointer-events:none;animation:floatup 1.5s ease-out forwards;z-index:40}
+.quest{border:1.5px solid color-mix(in srgb,var(--primary) 34%,transparent);background:linear-gradient(180deg,color-mix(in srgb,var(--primary) 7%,var(--card)),var(--card));border-radius:22px;padding:15px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.quest .qhead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:11px}
+.qtag{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:900;letter-spacing:.08em;color:var(--primary-ink);background:var(--primary-soft);border-radius:999px;padding:4px 10px}
+.qtag i{width:6px;height:6px;border-radius:999px;background:var(--primary);display:block}
+.qnum{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:10px;font-weight:800;color:var(--muted)}
+.hero{display:flex;gap:12px;align-items:center}
+.heroicon{width:64px;height:64px;flex-shrink:0;border-radius:18px;display:grid;place-items:center;background:var(--primary-soft);color:var(--primary-ink)}
+.heroicon svg{width:34px;height:34px}
+.herotitle{margin:0;font-family:Georgia,"Noto Serif TC",serif;font-size:19px;line-height:1.25}
+.herosub{margin:4px 0 0;font-size:11px;color:var(--muted);line-height:1.5}
+.statrow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.stat{border:1px solid var(--line);background:var(--card);border-radius:13px;padding:9px;text-align:center}
+.stat svg{width:16px;height:16px;color:var(--primary);display:block;margin:0 auto 4px}
+.stat b{display:block;font-size:13px;font-weight:900;font-family:"JetBrains Mono",ui-monospace,monospace}
+.stat small{font-size:9px;color:var(--muted);font-weight:700}
+.rewards{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
+.rchip{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:800;border-radius:999px;padding:5px 10px;border:1px solid}
+.rchip.xp{color:var(--gold);background:var(--gold-bg);border-color:color-mix(in srgb,var(--gold) 30%,transparent)}
+.rchip.badge{color:var(--safe);background:var(--safe-bg);border-color:color-mix(in srgb,var(--safe) 28%,transparent)}
+.rchip svg{width:12px;height:12px}
+.cta{margin-top:13px;display:flex;gap:9px}
+.btn-main{flex:1;border:0;border-radius:999px;background:var(--primary);color:#fff;font-family:inherit;font-size:13px;font-weight:900;padding:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:transform .16s ease}
+.btn-main:active{transform:scale(.96)}
+.btn-main:disabled{opacity:.55;pointer-events:none}
+.btn-main svg{width:15px;height:15px}
+.btn-more{width:46px;border:1px solid var(--line);border-radius:999px;background:var(--card);color:var(--muted);cursor:pointer;display:grid;place-items:center}
+.btn-more svg{width:17px;height:17px}
+.mini{display:flex;align-items:center;gap:10px;border:1px solid var(--line);background:var(--card);border-radius:16px;padding:12px}
+.mini .mic{width:34px;height:34px;flex-shrink:0;border-radius:11px;display:grid;place-items:center;background:var(--safe-bg);color:var(--safe)}
+.mini .mic svg{width:17px;height:17px}
+.mini .txt{flex:1;min-width:0}
+.mini .txt b{display:block;font-size:12.5px;font-weight:900}
+.mini .txt small{display:block;font-size:10.5px;color:var(--muted);margin-top:2px}
+.mini .go{border:0;border-radius:999px;background:var(--primary-soft);color:var(--primary-ink);font-family:inherit;font-size:11px;font-weight:900;padding:8px 13px;cursor:pointer;white-space:nowrap}
+.questlist{border:1px solid var(--line);background:var(--card);border-radius:16px;padding:13px}
+.questlist h4{margin:0 0 9px;font-size:11.5px;font-weight:900;color:var(--primary-ink);display:flex;align-items:center;gap:6px}
+.questlist h4 svg{width:15px;height:15px;flex-shrink:0}
+.questlist .qitem svg{width:10px;height:10px}
+.qitem{display:flex;align-items:center;gap:9px;padding:8px 0;border-top:1px dashed var(--line);font-size:11.5px}
+.qitem:first-of-type{border-top:0}
+.qmark{width:19px;height:19px;flex-shrink:0;border-radius:999px;border:1.6px solid var(--line);display:grid;place-items:center;color:#fff}
+.qmark svg{width:10px;height:10px;opacity:0}
+.qitem.done .qmark{background:var(--safe);border-color:var(--safe)}
+.qitem.done .qmark svg{opacity:1}
+.qitem.done span{color:var(--muted);text-decoration:line-through}
+.qitem .rw{margin-left:auto;font-family:"JetBrains Mono",ui-monospace,monospace;font-size:10px;font-weight:800;color:var(--gold)}
+.tabbar{display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid var(--line);background:color-mix(in srgb,var(--card) 96%,transparent);padding:8px 6px 12px}
+.tab{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:9.5px;font-weight:800;color:var(--muted);border:0;background:transparent;font-family:inherit;cursor:pointer;position:relative;padding:2px 0}
+.tab svg{width:20px;height:20px}
+.tab.on{color:var(--primary)}
+.tab b{position:absolute;top:-3px;right:14px;background:var(--primary);color:#fff;font-size:8px;border-radius:999px;padding:1px 5px;font-weight:900}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:50;background:var(--card);border-top:1px solid var(--line);border-radius:22px 22px 0 0;padding:16px 16px 20px;box-shadow:0 -14px 40px rgba(28,25,23,.16);transform:translateY(104%);transition:transform .34s cubic-bezier(.16,1,.3,1)}
+.sheet.open{transform:translateY(0)}
+.sheet h4{margin:0 0 4px;font-size:13px;font-weight:900}
+.sheet p{margin:0 0 12px;font-size:11px;color:var(--muted);line-height:1.6}
+.sheet-close{position:absolute;right:14px;top:14px;border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:16px;line-height:1}
+.scrim{position:absolute;inset:0;background:rgba(28,25,23,.32);backdrop-filter:blur(3px);z-index:49;opacity:0;pointer-events:none;transition:opacity .3s ease}
+.scrim.on{opacity:1;pointer-events:auto}
+.fade{position:absolute;left:0;right:0;bottom:0;height:22px;background:linear-gradient(to top,var(--bg),transparent);pointer-events:none;opacity:0;transition:opacity .2s ease;z-index:29}
+.fade.on{opacity:1}
+@media (max-width:920px){.wrap{flex-direction:column;align-items:center}.device{position:static}.side{width:100%}}
+@media (prefers-reduced-motion:reduce){.enter,.pop,.floatxp{animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="side">
+    <div class="box">
+      <p class="eyebrow">CooCoo 1.0 · 今日頁</p>
+      <h1>今日頁任務板 · 提案預覽</h1>
+      <p class="lead">把今日頁從「資訊頁」改成「任務板」：一屏只有一個主要任務、一條獎勵進度、一個主動作，其餘收進第二層。此頁為工作樹內提案，未更動正式站程式碼。</p>
+      <span class="flag">提案預覽 · 非正式站 · 示意資料</span>
+    </div>
+    <div class="box">
+      <h3>可試的互動</h3>
+      <ul>
+        <li>按「完成任務」→ 任務打勾、EXP 條前進、獎勵浮動。</li>
+        <li>按右上「⋯」→ 開啟第二層（缺料、廚具、步驟）。</li>
+        <li>下方任務列點任一項可切換該項完成狀態。</li>
+        <li>底部五個分頁可點，切換選中樣式。</li>
+      </ul>
+    </div>
+    <div class="box">
+      <h3>與現行今日頁的差別</h3>
+      <table class="map">
+        <tr><th>現行</th><th>任務板提案</th></tr>
+        <tr><td>7 個區塊並列</td><td>主任務＋獎勵＋第二層</td></tr>
+        <tr><td>長句說明</td><td>數字＋圖示</td></tr>
+        <tr><td>多個同等按鈕</td><td>一個主按鈕＋⋯</td></tr>
+        <tr><td>EXP 只在完成提示</td><td>EXP 條常駐在頂部</td></tr>
+      </table>
+    </div>
+    <div class="box">
+      <h3>真實資料來源</h3>
+      <p>EXP 分值（料理 30／熟食 10／即期 10／雙餐 20／週目標 40）、五職階（初火學徒 0 → 傳奇總主廚 900）、12 枚徽章，皆取自 <code>packages/core/src/growth.ts</code>；食譜取自 <code>brandSafeRecipes</code>。</p>
+    </div>
+    <div class="box">
+      <h3>尚未處理</h3>
+      <ul>
+        <li>只做視覺提案，未接 API 或狀態管理。</li>
+        <li>安全與 EXP 防重規則仍以文字保留，未圖示化。</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="device"><div class="phone"><div class="screen">
+    <div class="statusbar"><span>9:41</span><span class="island"></span><span class="icons">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M2 20h3v-6H2v6zm5 0h3V9H7v11zm5 0h3V5h-3v15zm5 0h3V2h-3v18z"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="7" width="17" height="10" rx="3"/><rect x="4" y="9" width="11" height="6" rx="1.6" fill="currentColor" stroke="none"/><path d="M21 10.5v3"/></svg>
+    </span></div>
+    <div class="hud">
+      <div class="hudrow">
+        <div class="chef">
+          <span class="avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/><line x1="6" y1="17" x2="18" y2="17"/></svg></span>
+          <div><div class="rankname" id="rankname">初火學徒</div><div class="ranksub">距下一職階還有 100 EXP</div></div>
+        </div>
+        <span class="xpchip" id="xpchip">0 EXP</span>
+      </div>
+      <div class="xpbar"><span id="xpfill" style="width:0%"></span></div>
+      <div class="xpmeta"><span>0</span><span id="xpnext">下一目標 100 EXP</span></div>
+    </div>
+    <div class="content" id="content"><div class="stack enter" id="stack"></div>
+      <div class="fade" id="fade"></div>
+    </div>
+    <div class="tabbar">
+      <button class="tab on" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>今日</button>
+      <button class="tab" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 7h12l-1 13H7Z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>採買<b>2</b></button>
+      <button class="tab" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M4 10h16"/></svg>冰箱<b>2</b></button>
+      <button class="tab" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h7a3 3 0 0 1 3 3v11a2 2 0 0 0-2-2H4Z"/><path d="M20 5h-7a3 3 0 0 0-3 3v11a2 2 0 0 1 2-2h8Z"/></svg>食譜</button>
+      <button class="tab" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>我的</button>
+    </div>
+    <div class="scrim" id="scrim"></div>
+    <div class="sheet" id="sheet">
+      <button class="sheet-close" id="sheetclose" type="button">✕</button>
+      <h4 id="sheettitle">這道菜的細節</h4>
+      <p id="sheetsub">收進第二層的資訊：缺料、廚具、步驟數與安全提醒。</p>
+      <div id="sheetbody"></div>
+    </div>
+  </div></div></div>
+</div>
+<script>
+const RANKS = [{n:"初火學徒",t:0},{n:"赤銅助廚",t:100},{n:"銀焰掌勺官",t:250},{n:"星鑽副主廚",t:500},{n:"傳奇總主廚",t:900}];
+const EXP = {cooking:30, prepared:10, expiring:10, double:20, weekly:40};
+let state = {
+  exp: 20,
+  quest: { title:"番茄滑蛋飯", time:20, cost:72, cookware:"電磁爐", missing:0, steps:3, exp:EXP.cooking },
+  done: false,
+  prepared: 1,
+  shopping: 2,
+  urgent: 2,
+  tasks: [
+    { id:"cook", label:"完成今天的料理", reward:30, done:false },
+    { id:"eat", label:"吃掉 1 份熟食", reward:10, done:false },
+    { id:"expiring", label:"用掉即期食材", reward:10, done:false }
+  ],
+  sheet: false
+};
+const I = {
+  clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  coin:'<circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5h5M9.5 14.5h5"/>',
+  pan:'<path d="M4 10h12a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4Z"/><path d="M18 11h3"/>',
+  flame:'<path d="M12 3c1 3 4 4 4 8a4 4 0 0 1-8 0c0-1.5.7-2.6 1.5-3.6"/>',
+  badge:'<circle cx="12" cy="9" r="5"/><path d="M9 13.5 7.5 21 12 18.6 16.5 21 15 13.5"/>',
+  bowl:'<path d="M4 11h16a8 8 0 0 1-16 0Z"/><path d="M9 7c0-1.5 1-2 1-3M14 7c0-1.5 1-2 1-3"/>',
+  cart:'<circle cx="9" cy="20" r="1.4"/><circle cx="17" cy="20" r="1.4"/><path d="M3 4h2l2.4 10h9.2L19 7H6"/>',
+  chat:'<path d="M4 5h16v11H9l-5 4Z"/>',
+  check:'<path d="m5 12 5 5L20 7"/>',
+  dots:'<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>'
+};
+const SVG = (p, cls="") => `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+
+function expInfo(){ let i=0; for(let k=0;k<RANKS.length;k++) if(state.exp>=RANKS[k].t) i=k; return {rank:RANKS[i], next:RANKS[i+1]||null}; }
+function renderHUD(){
+  const {rank,next} = expInfo();
+  document.getElementById("rankname").textContent = rank.n;
+  document.getElementById("xpchip").textContent = state.exp + " EXP";
+  const sub = document.querySelector(".ranksub");
+  const span = next ? (next.t - rank.t) : 1;
+  const done = next ? (state.exp - rank.t) : 1;
+  sub.textContent = next ? `距下一職階還有 ${next.t - state.exp} EXP` : "已達最高職階";
+  document.getElementById("xpfill").style.width = Math.min(100, Math.round(done/span*100)) + "%";
+  document.getElementById("xpnext").textContent = next ? `下一目標 ${next.t} EXP` : "最高職階 900 EXP";
+}
+function render(){
+  const q = state.quest;
+  const tasksHtml = state.tasks.map(t => `
+    <div class="qitem ${t.done?"done":""}" data-task="${t.id}">
+      <span class="qmark">${SVG(I.check)}</span>
+      <span>${t.label}</span>
+      <span class="rw">+${t.reward}</span>
+    </div>`).join("");
+  document.getElementById("stack").innerHTML = `
+    <section class="quest">
+      <div class="qhead">
+        <span class="qtag"><i></i>今日主要任務</span>
+        <span class="qnum">${state.done ? "已完成" : "1 / 1"}</span>
+      </div>
+      <div class="hero">
+        <span class="heroicon">${SVG(I.bowl)}</span>
+        <div>
+          <h2 class="herotitle">${q.title}</h2>
+          <p class="herosub">${state.done ? "已完成，獎勵已入帳" : "冰箱食材足夠，不需要補買"}</p>
+        </div>
+      </div>
+      <div class="statrow">
+        <div class="stat">${SVG(I.clock)}<b>${q.time}m</b><small>料理時間</small></div>
+        <div class="stat">${SVG(I.pan)}<b>${q.steps}</b><small>步驟</small></div>
+        <div class="stat">${SVG(I.coin)}<b>$${q.cost}</b><small>食材</small></div>
+      </div>
+      <div class="rewards">
+        <span class="rchip xp">${SVG(I.flame)}+${q.exp} EXP</span>
+        <span class="rchip badge">${SVG(I.badge)}第一道火光 0/1</span>
+      </div>
+      <div class="cta">
+        <button class="btn-main" id="mainbtn" ${state.done?"disabled":""}>${state.done? SVG(I.check)+"任務完成" : SVG(I.flame)+"完成任務"}</button>
+        <button class="btn-more" id="morebtn" aria-label="更多">${SVG(I.dots)}</button>
+      </div>
+    </section>
+    ${state.prepared>0 ? `<div class="mini">
+      <span class="mic">${SVG(I.bowl)}</span>
+      <div class="txt"><b>熟食庫存 ${state.prepared} 份</b><small>加熱 5 分鐘即可</small></div>
+      <button class="go" id="eatbtn">加熱即食</button>
+    </div>` : ""}
+    <div class="questlist">
+      <h4>${SVG(I.badge)}今日任務</h4>
+      ${tasksHtml}
+    </div>`;
+  if (state.done && !document.querySelector(".floatxp")){
+    const f = document.createElement("div");
+    f.className = "floatxp"; f.textContent = "+" + EXP.cooking + " EXP";
+    document.querySelector(".screen").appendChild(f);
+    setTimeout(()=>f.remove(), 1600);
+  }
+}
+function addExp(n){
+  state.exp += n;
+  renderHUD();
+  const {rank} = expInfo();
+  if (rank.t) {}
+}
+document.getElementById("stack").addEventListener("click", e => {
+  const task = e.target.closest("[data-task]");
+  if (task){
+    const t = state.tasks.find(x => x.id === task.dataset.task);
+    t.done = !t.done;
+    if (t.done) addExp(t.reward); else state.exp = Math.max(0, state.exp - t.reward);
+    render(); return;
+  }
+  if (e.target.closest("#mainbtn")){
+    state.done = true;
+    state.tasks[0].done = true;
+    addExp(EXP.cooking);
+    render(); return;
+  }
+  if (e.target.closest("#morebtn")){ openSheet(); return; }
+  if (e.target.closest("#eatbtn")){
+    if (state.prepared > 0){ state.prepared -= 1; state.tasks[1].done = true; addExp(EXP.prepared); render(); }
+    return;
+  }
+});
+document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
+  document.querySelectorAll(".tab").forEach(x => x.classList.remove("on"));
+  t.classList.add("on");
+}));
+const scrim = document.getElementById("scrim"), sheet = document.getElementById("sheet");
+function openSheet(){
+  document.getElementById("sheettitle").textContent = "番茄滑蛋飯 · 細節";
+  document.getElementById("sheetsub").textContent = "收進第二層：缺料、廚具、步驟與安全提醒。";
+  document.getElementById("sheetbody").innerHTML = `
+    <div class="statrow" style="margin-top:0">
+      <div class="stat">${SVG(I.pan)}<b>電磁爐</b><small>需求廚具</small></div>
+      <div class="stat">${SVG(I.cart)}<b>0 樣</b><small>需補買</small></div>
+      <div class="stat">${SVG(I.clock)}<b>3</b><small>步驟數</small></div>
+    </div>
+    <p style="margin-top:12px;font-size:11px;color:var(--muted);line-height:1.7">安全提醒：蛋液需完全凝固；切菜時讓指尖向內收。這一類資訊不會被圖示化取代。</p>`;
+  scrim.classList.add("on"); sheet.classList.add("open");
+}
+function closeSheet(){ scrim.classList.remove("on"); sheet.classList.remove("open"); }
+document.getElementById("sheetclose").addEventListener("click", closeSheet);
+scrim.addEventListener("click", closeSheet);
+const contentEl = document.getElementById("content"), fadeEl = document.getElementById("fade");
+function syncFade(){
+  const r = contentEl.scrollHeight - contentEl.scrollTop - contentEl.clientHeight;
+  fadeEl.classList.toggle("on", r > 14);
+}
+contentEl.addEventListener("scroll", syncFade, {passive:true});
+window.addEventListener("resize", syncFade);
+renderHUD(); render(); requestAnimationFrame(syncFade);
+</script>
+</body>
+</html>
