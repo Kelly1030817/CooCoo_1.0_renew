@@ -1214,3 +1214,400 @@
     min-height: unset;
   }
 }
+
+/* ============================================================
+   今日頁任務板融合版：HUD、票根任務進度、圖示化票身、小票根列、任務清單
+   ============================================================ */
+
+.today-page .today-hud {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border: 1px solid #e7dac2;
+  border-radius: 18px;
+  background: #fffdf8;
+  box-shadow: 0 8px 24px -14px rgba(84, 63, 39, 0.28);
+}
+.today-page .hud-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.today-page .hud-chef {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.today-page .hud-avatar {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: #9a442d;
+  color: #fff;
+}
+.today-page .hud-avatar svg { width: 18px; height: 18px; }
+.today-page .hud-chef-text strong { display: block; font-size: 12.5px; font-weight: 900; color: #293c4e; }
+.today-page .hud-chef-text small { display: block; margin-top: 1px; font-size: 10px; font-weight: 700; color: #716b60; }
+.today-page .hud-xp {
+  flex-shrink: 0;
+  border: 1px solid rgba(184, 134, 47, 0.3);
+  border-radius: 9px;
+  background: #fdf3dc;
+  padding: 5px 10px;
+  color: #b8862f;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.today-page .hud-bar {
+  margin-top: 9px;
+  height: 6px;
+  border-radius: 999px;
+  background: #ebe4d6;
+  overflow: hidden;
+}
+.today-page .hud-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #d9a441, #b8862f);
+  transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.today-page .hud-meta {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 5px;
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #8c8275;
+}
+
+/* 票根：任務進度 */
+.today-page .stub-center .stub-mealno {
+  display: block;
+  font-size: 8.5px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: rgba(244, 206, 141, 0.75);
+}
+.today-page .stub-pips {
+  display: flex;
+  gap: 3px;
+  justify-content: center;
+  margin-top: 4px;
+}
+.today-page .stub-pips i {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(244, 206, 141, 0.32);
+}
+.today-page .stub-pips i.on { background: #fef08a; }
+
+/* 票身：圖示化數據列 */
+.today-page .ticket-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 12px 0;
+  border: 1px solid #ede3cf;
+  border-radius: 14px;
+  background: #fbf7ee;
+  padding: 9px 8px;
+  text-align: center;
+}
+.today-page .ticket-stats .tstat { display: grid; gap: 3px; justify-items: center; }
+.today-page .ticket-stats .material-symbols-outlined { font-size: 17px; color: #9a442d; }
+.today-page .ticket-stats b { font-size: 12.5px; font-weight: 900; color: #293c4e; }
+
+/* 票身：食材 chips 圖示化 */
+.today-page .ingredient-route .route-chip .material-symbols-outlined {
+  font-size: 12px;
+  margin-right: 2px;
+}
+.today-page .ingredient-route .route-chip.missing {
+  background: #fdf3dc;
+  color: #b8862f;
+}
+
+/* 票身：獎勵徽章 */
+.today-page .ticket-rewards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.today-page .ticket-rewards .reward-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 9999px;
+  border: 1px solid;
+  padding: 5px 10px;
+  font-size: 10.5px;
+  font-weight: 800;
+}
+.today-page .ticket-rewards .reward-chip .material-symbols-outlined { font-size: 13px; }
+.today-page .ticket-rewards .reward-chip.xp {
+  color: #b8862f;
+  background: #fdf3dc;
+  border-color: rgba(184, 134, 47, 0.3);
+}
+.today-page .ticket-rewards .reward-chip.badge {
+  color: #386753;
+  background: #e7f3ec;
+  border-color: rgba(56, 103, 83, 0.28);
+}
+
+/* 票身：CTA 與第二層 */
+.today-page .ticket-cta { display: flex; gap: 8px; align-items: stretch; }
+.today-page .ticket-cta .cook-choice { flex: 1; }
+.today-page .ticket-cta .cook-choice:disabled { opacity: 0.65; }
+.today-page .ticket-more {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  flex-shrink: 0;
+  border: 1px solid #d9cab2;
+  border-radius: 9999px;
+  background: #fffdf8;
+  color: #716b60;
+  cursor: pointer;
+}
+.today-page .ticket-more .material-symbols-outlined { font-size: 19px; }
+
+.today-page .ticket-detail {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 12;
+  border-top: 1px solid #e7dac2;
+  border-radius: 0 0 20px 20px;
+  background: #fffdf8;
+  padding: 14px 16px 16px;
+  box-shadow: 0 -12px 30px -18px rgba(28, 25, 23, 0.4);
+}
+.today-page .ticket-detail .detail-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.today-page .ticket-detail .detail-head strong { font-size: 13px; font-weight: 900; color: #293c4e; }
+.today-page .ticket-detail .detail-close {
+  border: 0;
+  background: transparent;
+  color: #716b60;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+.today-page .ticket-detail .detail-why { margin: 8px 0 0; font-size: 11.5px; color: #55423e; line-height: 1.6; }
+.today-page .ticket-detail .detail-missing { margin: 8px 0 0; font-size: 11.5px; font-weight: 800; color: #b8862f; line-height: 1.6; }
+.today-page .ticket-detail .detail-note { margin: 8px 0 0; font-size: 10.5px; color: #716b60; line-height: 1.6; }
+
+/* 小票根列（三個可行方向 / 補買候選） */
+.today-page .alt-stubs { margin-top: 14px; }
+.today-page .alt-stubs h4 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 8px;
+  font-size: 11px;
+  font-weight: 900;
+  color: #8f3d28;
+}
+.today-page .alt-stubs h4 .material-symbols-outlined { font-size: 15px; }
+.today-page .ministub {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  align-items: stretch;
+  width: 100%;
+  margin-bottom: 8px;
+  border: 1px solid #d9cab2;
+  border-radius: 14px;
+  background: #fffdf8;
+  overflow: hidden;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  transition: transform 0.16s ease, border-color 0.16s ease;
+}
+.today-page .ministub:active { transform: scale(0.985); }
+.today-page .ministub:hover { border-color: #9a442d; }
+.today-page .ministub .mstub {
+  display: grid;
+  place-items: center;
+  border-right: 2px dashed #bba98d;
+  background: #34465b;
+  color: #f4ce8d;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 12px;
+  font-weight: 900;
+}
+.today-page .ministub .mbody { padding: 9px 10px; min-width: 0; }
+.today-page .ministub .mbody strong {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 900;
+  color: #293c4e;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.today-page .ministub .mmeta {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 3px;
+  font-size: 10px;
+  font-weight: 800;
+  color: #716b60;
+}
+.today-page .ministub .mmeta > span { display: inline-flex; align-items: center; gap: 3px; }
+.today-page .ministub .mmeta .material-symbols-outlined { font-size: 12px; }
+.today-page .ministub .mside { display: grid; place-items: center; padding: 0 11px; color: #88726d; }
+.today-page .ministub .mside .material-symbols-outlined { font-size: 17px; }
+
+/* 今日任務清單 */
+.today-page .mission-list {
+  margin-top: 14px;
+  border: 1px solid #e7dac2;
+  border-radius: 16px;
+  background: #fffdf8;
+  padding: 12px;
+}
+.today-page .mission-list h4 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 8px;
+  font-size: 11px;
+  font-weight: 900;
+  color: #8f3d28;
+}
+.today-page .mission-list h4 .material-symbols-outlined { font-size: 15px; }
+.today-page .mrow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 0;
+  border-top: 1px dashed #e7dac2;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #293c4e;
+}
+.today-page .mrow:first-of-type { border-top: 0; }
+.today-page .mmark {
+  display: grid;
+  place-items: center;
+  width: 19px;
+  height: 19px;
+  flex-shrink: 0;
+  border: 1.6px solid #d9cab2;
+  border-radius: 999px;
+  color: #fff;
+}
+.today-page .mmark .material-symbols-outlined { font-size: 12px; opacity: 0; }
+.today-page .mrow.done .mmark { background: #386753; border-color: #386753; }
+.today-page .mrow.done .mmark .material-symbols-outlined { opacity: 1; }
+.today-page .mrow.done .mlabel { color: #88726d; text-decoration: line-through; }
+.today-page .mrow .rw {
+  margin-left: auto;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 800;
+  color: #b8862f;
+}
+
+/* 本週節奏（單行） */
+.today-page .weekstrip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  border: 1px solid #e7dac2;
+  border-radius: 14px;
+  background: #fffdf8;
+  padding: 10px 12px;
+}
+.today-page .weekstrip .wk { color: #9a442d; flex-shrink: 0; }
+.today-page .weekstrip .wk .material-symbols-outlined { font-size: 18px; }
+.today-page .weekstrip .wtxt { flex: 1; min-width: 0; }
+.today-page .weekstrip b { display: block; font-size: 12px; font-weight: 900; color: #293c4e; }
+.today-page .weekstrip .wbar {
+  margin-top: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: #ebe4d6;
+  overflow: hidden;
+}
+.today-page .weekstrip .wbar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #9a442d;
+  transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.today-page .weekstrip .wgo {
+  border: 0;
+  background: transparent;
+  color: #88726d;
+  cursor: pointer;
+  text-decoration: none;
+  display: grid;
+  place-items: center;
+}
+.today-page .weekstrip .wgo .material-symbols-outlined { font-size: 19px; }
+
+/* 相談室入口 */
+.today-page .chef-entry {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  border: 1px solid #e7dac2;
+  border-radius: 16px;
+  background: #fffdf8;
+  padding: 11px 12px;
+  cursor: pointer;
+  text-align: left;
+}
+.today-page .chef-entry-avatar {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: #9a442d;
+  color: #fff;
+}
+.today-page .chef-entry-avatar .material-symbols-outlined { font-size: 17px; }
+.today-page .chef-entry-text { flex: 1; min-width: 0; }
+.today-page .chef-entry-text strong { display: block; font-size: 12.5px; font-weight: 900; color: #293c4e; }
+.today-page .chef-entry-text small { display: block; margin-top: 2px; font-size: 10.5px; font-weight: 700; color: #716b60; }
+.today-page .chef-entry-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  background: #fdf1e2;
+  padding: 7px 11px;
+  color: #8f3d28;
+  font-size: 11px;
+  font-weight: 900;
+}
+.today-page .chef-entry-go .material-symbols-outlined { font-size: 14px; }
+
+@media (max-width: 520px) {
+  .today-page .ticket-stats { gap: 6px; }
+  .today-page .ministub { grid-template-columns: 40px minmax(0, 1fr) auto; }
+}

@@ -484,3 +484,75 @@
     font-size: 11px;
   }
 }
+
+/* ============================================================
+   五步 Onboarding：方案 A 融合語彙（主廚心情、開場卡）
+   ============================================================ */
+.onboarding-card > .step-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.onboarding-card > .step-head .eyebrow { margin: 0; }
+.onboarding-card .chef-mood {
+  flex-shrink: 0;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 3px 9px;
+  font-size: 10px;
+  font-weight: 900;
+  transition: all 0.2s ease;
+}
+.onboarding-card .chef-mood.listen {
+  color: #8f3d28;
+  background: #fdf1e2;
+  border-color: rgba(154, 68, 45, 0.26);
+}
+.onboarding-card .chef-mood.applause {
+  color: #386753;
+  background: #e7f3ec;
+  border-color: rgba(56, 103, 83, 0.28);
+}
+.onboarding-card .chef-mood.care {
+  color: #a3342a;
+  background: #fdeceb;
+  border-color: rgba(163, 52, 42, 0.28);
+}
+.onboarding-card .chef-mood.sealed {
+  color: #8f3d28;
+  background: #fbe6cf;
+  border-color: rgba(154, 68, 45, 0.34);
+}
+
+.onboarding-card .chef-open {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  margin-bottom: 16px;
+  border: 1px solid rgba(154, 68, 45, 0.24);
+  border-radius: 18px;
+  background: #fdf6ec;
+  padding: 14px;
+}
+.onboarding-card .chef-open-icon {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  background: #f5e2ce;
+  color: #8f3d28;
+}
+.onboarding-card .chef-open-icon svg { width: 17px; height: 17px; }
+.onboarding-card .chef-open strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 900;
+  color: #293c4e;
+  line-height: 1.45;
+  margin-bottom: 4px;
+}
+.onboarding-card .chef-open p { margin: 0; font-size: 11.5px; line-height: 1.66; color: #716b60; }

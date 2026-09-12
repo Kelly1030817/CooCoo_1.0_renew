@@ -1,6 +1,7 @@
 import { useContext, useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import type { MealSlot, RecipePackage, RecipePreferences, RecipeRecommendations, TodayDecision } from "@coocoo/contracts";
+import type { RecipePackage, RecipePreferences, RecipeRecommendations, TodayDecision } from "@coocoo/contracts";
+import { CHEF_RANKS, EXP_POINTS } from "@coocoo/core";
 import { useAppState, stateQueryKey } from "@/entities/app-state/model";
 import { UiContext } from "@/app/ui-context";
 import { RecipePackageModal } from "@/features/cooking/RecipeModal";
@@ -24,20 +25,6 @@ const subtitles: Record<string, string> = {
   "蒜炒鮮蔬里肌": "高纖清爽，下班快速補充蛋白質",
 };
 
-const renderSubtitle = (title: string) => {
-  const text = subtitles[title] || "符合你的廚具與飲食設定";
-  const [first, ...rest] = text.split(/[，,]/);
-  if (rest.length > 0) {
-    return (
-      <>
-        <span className="sub-line">{first}</span>
-        <span className="sub-line">{rest.join("，")}</span>
-      </>
-    );
-  }
-  return <span className="sub-line">{text}</span>;
-};
-
 const taipeiDateParts = (value: Date) =>
   Object.fromEntries(
     new Intl.DateTimeFormat("en-US", {
@@ -54,7 +41,24 @@ const dateOnly = () => {
   const parts = taipeiDateParts(new Date());
   return `${parts.year}-${parts.month}-${parts.day}`;
 };
-const slotName: Record<MealSlot, string> = { breakfast: "早餐", lunch: "午餐", dinner: "晚餐" };
+
+// 任務推導：只讀既有欄位，不寫入資料（規格 docs/product-decisions/2026-09-12-mission-backend-definition.md 選項 A）
+function deriveMissions(input: {
+  today: string;
+  cookedToday: number;
+  eatenPreparedToday: boolean;
+  usedExpiringToday: boolean;
+  weekProgress: number;
+  weekTarget: number;
+  preparedCount: number;
+}) {
+  return [
+    { key: "cook_today", label: "完成今天的料理", reward: EXP_POINTS.cooking_completed, done: input.cookedToday > 0 },
+    { key: "eat_prepared", label: "吃掉 1 份熟食", reward: EXP_POINTS.prepared_serving_eaten, done: input.eatenPreparedToday },
+    { key: "use_expiring", label: "用掉即期食材", reward: EXP_POINTS.expiring_ingredient_used, done: input.usedExpiringToday },
+    { key: "weekly_rhythm", label: "本週節奏", reward: EXP_POINTS.weekly_goal_completed, done: input.weekProgress >= input.weekTarget },
+  ];
+}
 
 export function TodayPage() {
   const { data } = useAppState();
@@ -66,6 +70,7 @@ export function TodayPage() {
   const [decision, setDecision] = useState<TodayDecision | null>(null);
   const [primaryId, setPrimaryId] = useState("");
   const [decisionError, setDecisionError] = useState("");
+  const [detailOpen, setDetailOpen] = useState(false);
 
   // Purchase recommendations state
   const [purchaseResult, setPurchaseResult] = useState<RecipeRecommendations | null>(null);
@@ -164,57 +169,11 @@ export function TodayPage() {
     })) {
       setTicketMode("purchase");
       setHasAutoSwitched(true);
-      ui.toast("冰箱食材不足以成菜，已切換顯示需要少量補買的候選；加入清單前仍會再次確認。");
     }
-  }, [decision, choices.length, purchaseChoices.length, hasAutoSwitched, ticketMode, ui]);
+  }, [decision, choices.length, purchaseChoices.length, hasAutoSwitched, ticketMode]);
 
   const recommended = ticketMode === "purchase" ? (activePurchaseItem?.recipe || recommendedFridge) : recommendedFridge;
-
   const activeMissing = ticketMode === "purchase" ? (activePurchaseItem?.missing || []) : [];
-
-  const renderModeSwitcher = () => (
-    <div className="ticket-mode-row">
-      <span className="mode-row-label">今日推薦模式</span>
-      <div className="segmented-switch" role="tablist" aria-label="今日推薦模式切換">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={ticketMode === "fridge"}
-          className={`segmented-btn ${ticketMode === "fridge" ? "active" : ""}`}
-          onClick={() => {setTicketMode("fridge");setEnergyLow(false);}}
-        >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-            <path d="M12 22c4-2 7-6 7-11V3l-7 4-7-4v8c0 5 3 9 7 11Z" />
-            <path d="M8 13c3 0 5-2 8-5" />
-          </svg>
-          冰箱就能煮 {choices.length > 0 ? `（${choices.length} 道）` : "（0 道）"}
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={ticketMode === "low"}
-          className={`segmented-btn ${ticketMode === "low" ? "active" : ""}`}
-          onClick={() => {setTicketMode("low");setEnergyLow(true);}}
-        >
-          <span className="material-symbols-outlined">bolt</span>
-          最低體力／時間
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={ticketMode === "purchase"}
-          className={`segmented-btn ${ticketMode === "purchase" ? "active" : ""}`}
-          onClick={() => {setTicketMode("purchase");setEnergyLow(false);}}
-        >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-            <circle cx="9" cy="20" r="1" /><circle cx="18" cy="20" r="1" />
-            <path d="M3 4h2l2.4 10.2a2 2 0 0 0 2 1.6h7.8a2 2 0 0 0 2-1.6L21 7H6" />
-          </svg>
-          少量補買 {purchaseLoading ? "…" : `（${purchaseChoices.length} 道）`}
-        </button>
-      </div>
-    </div>
-  );
 
   const choose = (meal: RecipePackage) => {
     if (ticketMode !== "purchase") {
@@ -222,7 +181,6 @@ export function TodayPage() {
     } else {
       setSelectedPurchaseRecipeId(meal.id);
     }
-    ui.toast("今天就煮「" + meal.title + "」");
   };
 
   const startCooking = (customRecipe?: RecipePackage) => {
@@ -262,19 +220,6 @@ export function TodayPage() {
   if (loading) {
     return (
       <div className="today-page">
-        <section className="today-intro">
-          <div>
-            <p className="eyebrow">
-              <span className="eyebrow-dot" />
-              今天 · 安排中
-            </p>
-            <h2>
-              先別想一整週，
-              <br />
-              決定下一餐就好。
-            </h2>
-          </div>
-        </section>
         <div className="today-loading-card" role="status">
           <span className="material-symbols-outlined spinning">sync</span>
           <p>正在依你的廚具、時間與庫存檢核今日餐點…</p>
@@ -283,23 +228,59 @@ export function TodayPage() {
     );
   }
 
-  const todaySlotText = decision?.slot ? slotName[decision.slot] : "晚餐";
   const preparedServings = (data?.mealServings || []).filter(
     (item) => item.status === "prepared_inventory",
   );
-  const showPreparedCapsule = preparedServings.length > 0;
   const preparedCount = preparedServings.length;
-  const eatPreparedServing = async () => { const serving = preparedServings[0]; if (!serving) return; await api(`/meal-servings/${serving.id}/eat`, json("POST", { operationId: crypto.randomUUID() })); await queryClient.invalidateQueries({ queryKey: stateQueryKey }); ui.toast("熟食已記為吃完，獲得 10 EXP"); };
+  const eatPreparedServing = async () => {
+    const serving = preparedServings[0];
+    if (!serving) return;
+    await api(`/meal-servings/${serving.id}/eat`, json("POST", { operationId: crypto.randomUUID() }));
+    await queryClient.invalidateQueries({ queryKey: stateQueryKey });
+    ui.toast("熟食已記為吃完，獲得 10 EXP");
+  };
 
-  const cookwareLabel =
-    recommended && recommended.cookwareTypes.length > 0
-      ? recommended.cookwareTypes.join("、")
-      : "單平底鍋";
-  const prepTimeLabel =
-    recommended && recommended.prepMinutes > 0 ? `備料 ${recommended.prepMinutes} 分鐘` : "備料 5 分鐘";
-  const stepCountLabel =
-    recommended && recommended.steps.length > 0 ? `${recommended.steps.length} 大步驟` : "4 大步驟";
+  const growth = data?.growth;
+  const weeklyGoal = data?.weeklyGoal;
+  const totalExp = growth?.totalExp ?? 0;
+  let rankIndex = 0;
+  for (let i = 0; i < CHEF_RANKS.length; i += 1) if (totalExp >= CHEF_RANKS[i].threshold) rankIndex = i;
+  const rank = CHEF_RANKS[rankIndex];
+  const nextRank = CHEF_RANKS[rankIndex + 1];
+  const xpSpan = nextRank ? nextRank.threshold - rank.threshold : 1;
+  const xpDone = nextRank ? totalExp - rank.threshold : 1;
+  const xpPercent = Math.min(100, Math.round((xpDone / xpSpan) * 100));
 
+  const eventsToday = (data?.expEvents || []).filter((event) => String(event.createdAt).slice(0, 10) === today);
+  const cookedToday = (data?.cookingOutcomes || []).filter(
+    (item) => String(item.createdAt).slice(0, 10) === today,
+  ).length;
+  const missions = deriveMissions({
+    today,
+    cookedToday,
+    eatenPreparedToday: eventsToday.some((event) => event.type === "prepared_serving_eaten"),
+    usedExpiringToday: eventsToday.some((event) => event.type === "expiring_ingredient_used"),
+    weekProgress: weeklyGoal?.progress ?? 0,
+    weekTarget: weeklyGoal?.target ?? 1,
+    preparedCount,
+  });
+  const missionsDone = missions.filter((mission) => mission.done).length;
+
+  const planMeals = (data?.mealPlan?.meals || []).filter((meal) => meal.status !== "cancelled");
+  const mealNumber = (() => {
+    if (planMeals.length === 0) return "今日餐點";
+    const sorted = [...planMeals].sort((a, b) => (a.date + a.slot).localeCompare(b.date + b.slot));
+    const idx = sorted.findIndex((meal) => meal.date === today);
+    if (idx >= 0) return `今日第 ${idx + 1} 餐`;
+    const upcoming = sorted.findIndex((meal) => meal.date >= today);
+    return upcoming >= 0 ? `第 ${upcoming + 1} 餐` : "本週餐點";
+  })();
+
+  const cookwareLabel = recommended && recommended.cookwareTypes.length > 0 ? recommended.cookwareTypes.join("、") : "單平底鍋";
+  const stepCount = recommended?.steps.length ?? 0;
+  const totalMinutes = recommended?.totalMinutes ?? 0;
+  const missingCount = activeMissing.length;
+  const nextBadge = growth?.nextBadge ?? null;
   const generalError = decisionError;
 
   const openPurchaseReminder = () => {
@@ -324,131 +305,46 @@ export function TodayPage() {
     );
   };
 
+  const alternativeMeals = recommended
+    ? choices.filter((meal) => meal.id !== recommended.id)
+    : [];
+  const purchaseAlternatives = recommended
+    ? purchaseChoices.filter((item) => item.recipe.id !== recommended.id).slice(0, 2)
+    : [];
+
   return (
     <div className="today-page">
-      {generalError && recommended && (
-        <p className="today-warning" role="alert">
-          {generalError}
-        </p>
-      )}
-      {ticketMode === "purchase" && purchaseError && (
-        <p className="today-warning" role="alert">
-          {purchaseError}
-        </p>
-      )}
+      {generalError && <p className="today-warning" role="alert">{generalError}</p>}
+      {ticketMode === "purchase" && purchaseError && <p className="today-warning" role="alert">{purchaseError}</p>}
 
-      {/* 1. Header greeting */}
-      <section className="today-intro">
-        <div>
-          <p className="eyebrow">
-            <span className="eyebrow-dot" />
-            今天 · {todaySlotText}
-          </p>
-          <h2>
-            先別想一整週，
-            <br />
-            決定下一餐就好。
-          </h2>
-        </div>
-      </section>
-
-      {/* Pocket Chef CooCoo Consultation Entry Capsule */}
-      <section className="chef-consultation-capsule" aria-label="主廚 CooCoo 相談室">
-        <button
-          type="button"
-          onClick={openChefConsultation}
-          className="w-full bg-amber-50/90 hover:bg-amber-100/90 border border-amber-200/90 rounded-2xl p-3 flex items-center justify-between shadow-2xs transition-all text-left group"
-        >
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full bg-amber-600 text-white flex items-center justify-center shadow-xs shrink-0 group-hover:scale-105 transition-transform">
-              <svg
-                className="w-4 h-4"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
+      {/* HUD：主廚職階與 EXP 進度 */}
+      <section className="today-hud" aria-label="主廚職階與 EXP">
+        <div className="hud-row">
+          <div className="hud-chef">
+            <span className="hud-avatar" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z" />
                 <line className="chef-eyes" x1="9" y1="12" x2="9.01" y2="12" />
                 <line className="chef-eyes" x1="15" y1="12" x2="15.01" y2="12" />
                 <line x1="6" y1="17" x2="18" y2="17" />
               </svg>
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="font-black text-xs text-amber-950">主廚 CooCoo 相談室</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                <span className="text-[9px] font-bold text-amber-900 bg-amber-100 px-1.5 py-0.2 rounded">
-                  隨行速決
-                </span>
-                {energyLow && (
-                  <span className="text-[9px] font-bold text-amber-950 bg-amber-200 px-1.5 py-0.2 rounded">
-                    <svg className="mr-0.5 inline h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                      <path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z" />
-                    </svg>
-                    低體力模式中
-                  </span>
-                )}
-              </div>
-              <p className="text-[11px] text-stone-600 mt-0.5 font-medium">
-                太累想煮快手菜、臨時聚餐要順延？點此向主廚諮詢
-              </p>
+            </span>
+            <div className="hud-chef-text">
+              <strong>{rank.name}</strong>
+              <small>{nextRank ? `距下一職階還有 ${nextRank.threshold - totalExp} EXP` : "已達最高職階"}</small>
             </div>
           </div>
-          <span className="text-[11px] font-black text-amber-800 bg-white border border-amber-200/80 px-2.5 py-1 rounded-xl shadow-2xs group-hover:bg-amber-600 group-hover:text-white transition-all flex items-center gap-1 shrink-0 ml-2">
-            <span>諮詢主廚</span>
-            <svg
-              className="w-3 h-3"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              aria-hidden="true"
-            >
-              <path d="m9 18 6-6-6-6" />
-            </svg>
-          </span>
-        </button>
+          <button type="button" className="hud-xp" onClick={openChefConsultation}>{totalExp} EXP</button>
+        </div>
+        <div className="hud-bar" aria-hidden="true"><span style={{ width: `${xpPercent}%` }} /></div>
+        <div className="hud-meta"><span>{rank.threshold}</span><span>{nextRank ? `下一目標 ${nextRank.threshold} EXP` : "最高職階 900 EXP"}</span></div>
       </section>
 
-      {/* 2. Notification capsule: 熟食庫存 (溫和綠色提醒) */}
-      {showPreparedCapsule && (
-        <div className="cooked-inventory-capsule" role="status">
-          <div className="cooked-capsule-info">
-            <span className="cooked-capsule-icon" aria-hidden="true">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M4 11h16a1 1 0 0 1 1 1 8 8 0 0 1-18 0 1 1 0 0 1 1-1Z"/>
-                <path d="M6 8V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2"/>
-                <line x1="2" y1="11" x2="22" y2="11"/>
-              </svg>
-            </span>
-            <div className="cooked-capsule-text">
-              <div className="cooked-capsule-header">
-                <span className="cooked-capsule-label">熟食庫存可用</span>
-                <span className="cooked-capsule-count">· 剩 {preparedCount} 份</span>
-              </div>
-              <p className="cooked-capsule-desc">冰箱尚有已備妥的熟食，加熱 5 分鐘即可享用</p>
-            </div>
-          </div>
-          <button
-            type="button"
-            className="cooked-capsule-btn"
-            onClick={() => void eatPreparedServing()}
-          >
-            加熱即食 5m
-          </button>
-        </div>
-      )}
-
-      {/* 3. Hero Ticket Card: 風格 B */}
+      {/* 主任務票券 */}
       {!recommended ? (
         <article className="meal-ticket ticket-mismatch">
           <div className="ticket-notch ticket-notch-top" aria-hidden="true" />
           <div className="ticket-notch ticket-notch-bottom" aria-hidden="true" />
-
           <div className="ticket-stub stub-mismatch">
             <span className="stub-vertical-text">STATUS</span>
             <div className="stub-center">
@@ -457,72 +353,22 @@ export function TodayPage() {
             </div>
             <span className="material-symbols-outlined stub-icon">tune</span>
           </div>
-
           <div className="ticket-body">
-            {renderModeSwitcher()}
-
             <div className="meal-tags">
               <span className="tag-warning">
                 <span className="material-symbols-outlined">info</span>
                 {ticketMode === "purchase" ? "少量補買條件檢核" : ticketMode === "low" ? "最低體力／時間檢核" : "冰箱現有庫存檢核"}
               </span>
             </div>
-
-            <h3>
-              {ticketMode !== "purchase"
-                ? "目前冰箱現有食材暫無完全匹配的料理"
-                : "目前條件暫無完全匹配的料理"}
-            </h3>
+            <h3>{ticketMode !== "purchase" ? "目前冰箱現有食材暫無完全匹配的料理" : "目前條件暫無完全匹配的料理"}</h3>
             <p className="meal-subtitle">
               {ticketMode !== "purchase"
-                ? purchaseChoices.length > 0
-                  ? `後端檢核目前登記的庫存（${(data?.inventory || []).map((item) => item.name).join("、") || "尚無在庫食材"}），尚無可完全覆蓋的食譜。可切換至「少量補買」查看候選；加入清單前仍需確認。`
-                  : decision?.notice || decisionError || "後台檢核您的可用廚具、時間與飲食限制，尚未找到同時符合全部條件的食譜。"
+                ? decision?.notice || decisionError || "後台檢核您的可用廚具、時間與飲食限制，尚未找到同時符合全部條件的食譜。"
                 : purchaseError || purchaseResult?.notice || "目前沒有符合預算且補買不超過 2 項食材的候選食譜。"}
             </p>
-
-            <div className="backend-diagnostics-box">
-              <div className="diag-header">後端目前讀取的偏好設定：</div>
-              <div className="diag-grid">
-                <div className="diag-item">
-                  <span className="diag-label">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline-icon" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
-                    現有冰箱食材
-                  </span>
-                  <strong className="diag-val">
-                    {(data?.inventory || []).map((item) => item.name).join("、") || "尚無在庫食材"}
-                  </strong>
-                </div>
-                <div className="diag-item">
-                  <span className="diag-label">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline-icon" aria-hidden="true"><ellipse cx="9" cy="12" rx="7" ry="5"/><path d="M16 12h6"/></svg>
-                    可用廚具
-                  </span>
-                  <strong className="diag-val">
-                    {(data?.cookware || []).map((c) => c.name || c.type).join("、") || "尚未登記廚具"}
-                  </strong>
-                </div>
-                <div className="diag-item">
-                  <span className="diag-label">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline-icon" aria-hidden="true"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
-                    飲食限制
-                  </span>
-                  <strong className="diag-val">
-                    {data?.onboardingProfile?.restrictions && data.onboardingProfile.restrictions.length > 0
-                      ? data.onboardingProfile.restrictions.map((r) => r.label).join("、")
-                      : "無特殊飲食限制"}
-                  </strong>
-                </div>
-              </div>
-            </div>
-
             <div className="ticket-actions-group">
               {ticketMode !== "purchase" && purchaseChoices.length > 0 && (
-                <button
-                  type="button"
-                  className="diag-action-btn primary highlight-switch"
-                  onClick={() => setTicketMode("purchase")}
-                >
+                <button type="button" className="diag-action-btn primary highlight-switch" onClick={() => setTicketMode("purchase")}>
                   <span className="material-symbols-outlined">shopping_cart</span>
                   查看「少量補買」候選（{purchaseChoices.length} 道）
                 </button>
@@ -535,14 +381,6 @@ export function TodayPage() {
                 <span className="material-symbols-outlined">skillet</span>
                 前往「我的」新增或調整廚具
               </a>
-              <button
-                type="button"
-                className="diag-action-btn text"
-                onClick={() => location.reload()}
-              >
-                <span className="material-symbols-outlined">refresh</span>
-                重新檢核後端推薦
-              </button>
             </div>
           </div>
         </article>
@@ -550,111 +388,116 @@ export function TodayPage() {
         <article className="meal-ticket primary-meal">
           <div className="ticket-notch ticket-notch-top" aria-hidden="true" />
           <div className="ticket-notch ticket-notch-bottom" aria-hidden="true" />
-
-          {/* Ticket Stub (Left) */}
           <div className="ticket-stub">
             <span className="stub-vertical-text">TODAY</span>
             <div className="stub-center">
-              <small>{data?.inventory.length ? "冰箱就能煮" : "從零也能開始"}</small>
-              <strong>01</strong>
+              <small className="stub-mealno">{mealNumber}</small>
+              <strong>{missionsDone}/{missions.length}</strong>
+              <span className="stub-pips" aria-hidden="true">
+                {missions.map((mission, index) => (
+                  <i key={mission.key} className={index < missionsDone ? "on" : ""} />
+                ))}
+              </span>
             </div>
             <span className="material-symbols-outlined stub-icon">restaurant</span>
           </div>
 
-          {/* Ticket Body (Right) */}
           <div className="ticket-body">
-            {renderModeSwitcher()}
+            <div className="ticket-mode-row">
+              <div className="segmented-switch" role="tablist" aria-label="今日推薦模式切換">
+                <button
+                  type="button" role="tab" aria-selected={ticketMode === "fridge"}
+                  className={`segmented-btn ${ticketMode === "fridge" ? "active" : ""}`}
+                  onClick={() => { setTicketMode("fridge"); setEnergyLow(false); }}
+                >
+                  <span className="material-symbols-outlined">kitchen</span>
+                  冰箱就能煮{choices.length > 0 ? `（${choices.length}）` : "（0）"}
+                </button>
+                <button
+                  type="button" role="tab" aria-selected={ticketMode === "low"}
+                  className={`segmented-btn ${ticketMode === "low" ? "active" : ""}`}
+                  onClick={() => { setTicketMode("low"); setEnergyLow(true); }}
+                >
+                  <span className="material-symbols-outlined">bolt</span>
+                  低體力
+                </button>
+                <button
+                  type="button" role="tab" aria-selected={ticketMode === "purchase"}
+                  className={`segmented-btn ${ticketMode === "purchase" ? "active" : ""}`}
+                  onClick={() => { setTicketMode("purchase"); setEnergyLow(false); }}
+                >
+                  <span className="material-symbols-outlined">shopping_cart</span>
+                  補買{purchaseLoading ? "…" : `（${purchaseChoices.length}）`}
+                </button>
+              </div>
+            </div>
 
             <div className="meal-tags">
               <span className="tag-time">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <circle cx="12" cy="12" r="10" />
-                  <polyline points="12 6 12 12 16 14" />
-                </svg>
-                {recommended.totalMinutes <= 15 ? "15 分快手" : `${recommended.totalMinutes} 分鐘`}
+                <span className="material-symbols-outlined">schedule</span>
+                {totalMinutes <= 15 ? "15 分快手" : `${totalMinutes} 分鐘`}
               </span>
-              <span className="tag-cost">食材 NT$ {recommended.estimatedCost}</span>
               <span className={`tag-coverage ${ticketMode !== "purchase" ? "tag-covered" : "tag-purchase"}`}>
-                {ticketMode !== "purchase" ? "庫存覆蓋 100%" : (activeMissing.length > 0 ? `需補買 ${activeMissing.length} 種` : "庫存充足")}
+                <span className="material-symbols-outlined">{missingCount > 0 ? "shopping_cart" : "check_circle"}</span>
+                {missingCount > 0 ? `需補 ${missingCount} 樣` : "庫存足夠"}
+              </span>
+              <span className="tag-cost">
+                <span className="material-symbols-outlined">payments</span>
+                NT$ {recommended.estimatedCost}
               </span>
             </div>
 
             <h3>{recommended.title}</h3>
-            <p className="meal-subtitle">
-              {subtitles[recommended.title] || (ticketMode === "purchase" ? "精選補買 1~2 項食材，在預算內兼顧多樣性" : decision?.notice || "符合你的廚具與飲食設定")}
-            </p>
 
-            <div className="cook-prep-row">
-              <div>
-                <small>廚具需求</small>
-                <strong>{cookwareLabel}</strong>
+            <div className="ticket-stats">
+              <div className="tstat">
+                <span className="material-symbols-outlined">skillet</span>
+                <b>{cookwareLabel}</b>
               </div>
-              <div className="prep-divider" />
-              <div>
-                <small>備料負擔</small>
-                <strong>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline-icon" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                  {prepTimeLabel}
-                </strong>
+              <div className="tstat">
+                <span className="material-symbols-outlined">format_list_numbered</span>
+                <b>{stepCount}</b>
               </div>
-              <div className="prep-divider" />
-              <div>
-                <small>步驟數量</small>
-                <strong>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="inline-icon" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-                  {stepCountLabel}
-                </strong>
+              <div className="tstat">
+                <span className="material-symbols-outlined">schedule</span>
+                <b>{totalMinutes}m</b>
               </div>
             </div>
 
-            {/* In Purchase Mode: Missing items notice banner */}
-            {ticketMode === "purchase" && activeMissing.length > 0 && (
-              <div className="purchase-tip-banner">
-                <div className="purchase-tip-content">
-                  <span className="material-symbols-outlined purchase-tip-icon">shopping_bag</span>
-                  <span>
-                    需補買 <strong>{activeMissing.map((m) => `${m.name} ${m.quantity} ${m.unit}`).join("、")}</strong>
-                    {activePurchaseItem?.estimatedPurchaseCost ? ` (約 NT$ ${activePurchaseItem.estimatedPurchaseCost})` : ""}
-                  </span>
-                </div>
-              </div>
-            )}
-
-            <div className="ingredient-route-wrapper">
-              <span className="route-title">食材路徑</span>
-              <div className="ingredient-route">
-                {recommended.ingredients
-                  .filter((item) => !item.isPantryStaple)
-                  .map((item) => {
-                    const isMissing = ticketMode === "purchase" && activeMissing.some((m) => m.ingredientKey === item.ingredientKey || m.name === item.name);
-                    return (
-                      <span
-                        key={item.ingredientKey}
-                        className={`route-chip ${isMissing ? "missing" : (item.coveredByInventory ? "covered" : "")}`}
-                      >
-                        {item.name}
-                        {isMissing ? <small>（需買）</small> : (item.coveredByInventory && <small>（已有）</small>)}
-                      </span>
-                    );
-                  })}
-              </div>
+            <div className="ingredient-route">
+              {recommended.ingredients
+                .filter((item) => !item.isPantryStaple)
+                .map((item) => {
+                  const isMissing = ticketMode === "purchase" && activeMissing.some((m) => m.ingredientKey === item.ingredientKey || m.name === item.name);
+                  return (
+                    <span key={item.ingredientKey} className={`route-chip ${isMissing ? "missing" : (item.coveredByInventory ? "covered" : "")}`}>
+                      <span className="material-symbols-outlined">{isMissing ? "shopping_cart" : "check"}</span>
+                      {item.name}
+                    </span>
+                  );
+                })}
             </div>
 
-            <div className="roi-motivation-banner">
-              <span className="roi-icon" aria-hidden="true">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+            <div className="ticket-rewards">
+              <span className="reward-chip xp">
+                <span className="material-symbols-outlined">local_fire_department</span>
+                +{EXP_POINTS.cooking_completed} EXP
               </span>
-              <p>
-                完成可獲得 <strong>+30 EXP</strong>；使用即期食材再加 +10 EXP
-              </p>
+              {nextBadge && (
+                <span className="reward-chip badge">
+                  <span className="material-symbols-outlined">military_tech</span>
+                  {nextBadge.title} {nextBadge.current}/{nextBadge.target}
+                </span>
+              )}
             </div>
 
-            <div className="cook-choice-row">
+            <div className="ticket-cta">
               <button
                 type="button"
                 className="cook-choice"
+                disabled={ticketMode === "purchase" && missingCount > 0}
                 onClick={() => {
-                  if (ticketMode === "purchase" && activePurchaseItem && activeMissing.length > 0) {
+                  if (ticketMode === "purchase" && missingCount > 0) {
                     openPurchaseReminder();
                   } else {
                     startCooking(recommended);
@@ -662,118 +505,148 @@ export function TodayPage() {
                 }}
               >
                 <span className="cook-choice-label">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>
-                  </svg>
-                  就煮這道
+                  <span className="material-symbols-outlined">local_fire_department</span>
+                  {ticketMode === "purchase" && missingCount > 0 ? "補買前確認" : "就煮這道"}
                 </span>
-                <span className="cook-choice-arrow">→</span>
               </button>
-
-              {ticketMode === "purchase" && activeMissing.length > 0 && (
-                <button
-                  type="button"
-                  className="quick-add-shopping-btn"
-                  onClick={openPurchaseReminder}
-                >
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <circle cx="8" cy="21" r="1"/>
-                    <circle cx="19" cy="21" r="1"/>
-                    <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
-                  </svg>
-                  <span>補買前確認</span>
-                </button>
-              )}
+              <button type="button" className="ticket-more" aria-label="更多細節" onClick={() => setDetailOpen(true)}>
+                <span className="material-symbols-outlined">more_horiz</span>
+              </button>
             </div>
           </div>
+
+          {detailOpen && (
+            <div className="ticket-detail" role="dialog" aria-label="餐點細節">
+              <div className="detail-head">
+                <strong>{recommended.title}</strong>
+                <button type="button" className="detail-close" onClick={() => setDetailOpen(false)} aria-label="關閉">
+                  <span className="material-symbols-outlined">close</span>
+                </button>
+              </div>
+              <p className="detail-why">{subtitles[recommended.title] || decision?.notice || "符合你的廚具與飲食設定。"}</p>
+              {ticketMode === "purchase" && missingCount > 0 && (
+                <p className="detail-missing">
+                  需補買 {activeMissing.map((m) => `${m.name} ${m.quantity} ${m.unit}`).join("、")}
+                  {activePurchaseItem?.estimatedPurchaseCost ? `（約 NT$ ${activePurchaseItem.estimatedPurchaseCost}）` : ""}
+                </p>
+              )}
+              <p className="detail-note">安全與過敏資訊仍以文字完整呈現；完成料理可獲得 +{EXP_POINTS.cooking_completed} EXP，使用即期食材再加 +{EXP_POINTS.expiring_ingredient_used} EXP。</p>
+            </div>
+          )}
         </article>
       )}
 
-      {/* 4. Alternatives: based on current mode */}
-      {ticketMode !== "purchase" && recommended && choices.filter((meal) => meal.id !== recommended.id).length > 0 && (
-        <section className="alternatives">
-          <div className="section-heading">
-            <h3>三個可行方向</h3>
-            <span className="alternatives-hint">點選卡片即可置換</span>
-          </div>
-
-          <div className="alternative-grid">
-            {choices
-              .filter((meal) => meal.id !== recommended.id)
-              .map((meal, index) => (
-                <button
-                  type="button"
-                  className="alternative-card"
-                  key={meal.id}
-                  onClick={() => choose(meal)}
-                >
-                  <span className="alt-badge">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
-                      <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" />
-                    </svg>
-                    <span>{index === 0 ? "最低體力／時間" : "少量補買或新口味"}</span>
-                  </span>
-                  <strong>{meal.title}</strong>
-                  <small>{renderSubtitle(meal.title)}</small>
-                  <footer>
-                    <span>{meal.totalMinutes} 分</span>
-                    <span>NT$ {meal.estimatedCost}</span>
-                  </footer>
-                </button>
-              ))}
-          </div>
+      {/* 三個可行方向（小票根列） */}
+      {ticketMode !== "purchase" && alternativeMeals.length > 0 && (
+        <section className="alt-stubs" aria-label="三個可行方向">
+          <h4><span className="material-symbols-outlined">alt_route</span>三個可行方向</h4>
+          {alternativeMeals.map((meal) => (
+            <button type="button" className="ministub" key={meal.id} onClick={() => choose(meal)}>
+              <span className="mstub">{meal.totalMinutes}m</span>
+              <span className="mbody">
+                <strong>{meal.title}</strong>
+                <span className="mmeta">
+                  <span><span className="material-symbols-outlined">payments</span>NT$ {meal.estimatedCost}</span>
+                  {meal.ingredients.some((i) => !i.isPantryStaple && !i.coveredByInventory) ? (
+                    <span><span className="material-symbols-outlined">shopping_cart</span>需補</span>
+                  ) : (
+                    <span><span className="material-symbols-outlined">check_circle</span>現有</span>
+                  )}
+                </span>
+              </span>
+              <span className="mside"><span className="material-symbols-outlined">swap_horiz</span></span>
+            </button>
+          ))}
         </section>
       )}
 
-      {ticketMode === "purchase" && purchaseChoices.filter((p) => p.recipe.id !== recommended?.id).length > 0 && (
-        <section className="alternatives">
-          <div className="section-heading">
-            <h3>其他補買候選</h3>
-            <span className="alternatives-hint">點選卡片即可置換</span>
-          </div>
-
-          <div className="alternative-grid">
-            {purchaseChoices
-              .filter((p) => p.recipe.id !== recommended?.id)
-              .slice(0, 2)
-              .map((p) => (
-                <button
-                  type="button"
-                  className="alternative-card"
-                  key={p.recipe.id}
-                  onClick={() => {
-                    setSelectedPurchaseRecipeId(p.recipe.id);
-                    ui.toast("已切換為「" + p.recipe.title + "」");
-                  }}
-                >
-                  <span className="alt-badge">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/>
-                      <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
-                    </svg>
-                    <span>少量補買</span>
-                  </span>
-                  <strong>{p.recipe.title}</strong>
-                  <small>
-                    {p.missing.length > 0
-                      ? `需買 ${p.missing.map((m) => m.name).join("、")}（約 NT$ ${p.estimatedPurchaseCost}）`
-                      : "食材已備妥"}
-                  </small>
-                  <footer>
-                    <span>{p.recipe.totalMinutes} 分</span>
-                    <span>NT$ {p.recipe.estimatedCost}</span>
-                  </footer>
-                </button>
-              ))}
-          </div>
+      {/* 少量補買候選（小票根列） */}
+      {ticketMode === "purchase" && purchaseAlternatives.length > 0 && (
+        <section className="alt-stubs" aria-label="其他補買候選">
+          <h4><span className="material-symbols-outlined">shopping_cart</span>其他補買候選</h4>
+          {purchaseAlternatives.map((item) => (
+            <button
+              type="button" className="ministub" key={item.recipe.id}
+              onClick={() => setSelectedPurchaseRecipeId(item.recipe.id)}
+            >
+              <span className="mstub">{item.recipe.totalMinutes}m</span>
+              <span className="mbody">
+                <strong>{item.recipe.title}</strong>
+                <span className="mmeta">
+                  <span><span className="material-symbols-outlined">payments</span>NT$ {item.recipe.estimatedCost}</span>
+                  {item.missing.length > 0 && (
+                    <span><span className="material-symbols-outlined">shopping_cart</span>{item.missing.length}</span>
+                  )}
+                </span>
+              </span>
+              <span className="mside"><span className="material-symbols-outlined">swap_horiz</span></span>
+            </button>
+          ))}
         </section>
       )}
+
+      {/* 熟食庫存 */}
+      {preparedCount > 0 && (
+        <div className="cooked-inventory-capsule" role="status">
+          <div className="cooked-capsule-info">
+            <span className="cooked-capsule-icon" aria-hidden="true">
+              <span className="material-symbols-outlined">ramen_dining</span>
+            </span>
+            <div className="cooked-capsule-text">
+              <div className="cooked-capsule-header">
+                <span className="cooked-capsule-label">熟食庫存</span>
+                <span className="cooked-capsule-count">· 剩 {preparedCount} 份</span>
+              </div>
+              <p className="cooked-capsule-desc">加熱 5 分鐘即可享用</p>
+            </div>
+          </div>
+          <button type="button" className="cooked-capsule-btn" onClick={() => void eatPreparedServing()}>
+            加熱即食 5m
+          </button>
+        </div>
+      )}
+
+      {/* 今日任務 */}
+      <section className="mission-list" aria-label="今日任務">
+        <h4><span className="material-symbols-outlined">flag</span>今日任務</h4>
+        {missions.map((mission) => (
+          <div className={`mrow ${mission.done ? "done" : ""}`} key={mission.key}>
+            <span className="mmark"><span className="material-symbols-outlined">check</span></span>
+            <span className="mlabel">{mission.label}</span>
+            <span className="rw">+{mission.reward}</span>
+          </div>
+        ))}
+      </section>
+
+      {/* 本週節奏（單行進度） */}
+      <div className="weekstrip">
+        <span className="wk"><span className="material-symbols-outlined">calendar_month</span></span>
+        <div className="wtxt">
+          <b>本週 {weeklyGoal?.progress ?? 0} / {weeklyGoal?.target ?? 1} 餐</b>
+          <div className="wbar"><span style={{ width: `${Math.min(100, Math.round(((weeklyGoal?.progress ?? 0) / Math.max(1, weeklyGoal?.target ?? 1)) * 100))}%` }} /></div>
+        </div>
+        <a className="wgo" href="/me" aria-label="前往我的">
+          <span className="material-symbols-outlined">chevron_right</span>
+        </a>
+      </div>
+
+      {/* 主廚相談室入口 */}
+      <section className="chef-consultation-capsule" aria-label="主廚 CooCoo 相談室">
+        <button type="button" onClick={openChefConsultation} className="chef-entry">
+          <span className="chef-entry-avatar">
+            <span className="material-symbols-outlined">restaurant</span>
+          </span>
+          <span className="chef-entry-text">
+            <strong>主廚 CooCoo 相談室{energyLow ? " · 低體力模式中" : ""}</strong>
+            <small>太累、要順延或想換口味，點此諮詢</small>
+          </span>
+          <span className="chef-entry-go">諮詢<span className="material-symbols-outlined">chevron_right</span></span>
+        </button>
+      </section>
 
       <div className="mt-8">
         <OfflineImportAndConflicts userId={data?.session.user?.id} />
       </div>
-
     </div>
   );
 }
