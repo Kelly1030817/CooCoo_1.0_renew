@@ -187,10 +187,6 @@ export function TodayPage() {
       <div className="today-page">
         <section className="today-intro">
           <div>
-            <p className="eyebrow">
-              <span className="eyebrow-dot" />
-              今天 · 安排中
-            </p>
             <h2>
               先別想一整週，
               <br />
@@ -270,8 +266,6 @@ export function TodayPage() {
     ? purchaseChoices.filter((item) => item.recipe.id !== recommended.id).slice(0, 2)
     : [];
 
-  const slotText = decision?.slot ? ({ breakfast: "早餐", lunch: "午餐", dinner: "晚餐" })[decision.slot] : "晚餐";
-
   return (
     <div className="today-page">
       {generalError && <p className="today-warning" role="alert">{generalError}</p>}
@@ -280,10 +274,6 @@ export function TodayPage() {
       {/* 1. 今日頁面 Header 問候與低體力切換 */}
       <section className="today-intro">
         <div>
-          <p className="eyebrow">
-            <span className="eyebrow-dot" />
-            今天 · {mealNumber ? `${mealNumber} · ` : ""}{slotText}
-          </p>
           <h2>
             先別想一整週，
             <br />
