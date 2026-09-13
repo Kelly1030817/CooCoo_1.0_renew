@@ -3,8 +3,8 @@ import { FormatRegistry } from "@sinclair/typebox";
 import { Value } from "@sinclair/typebox/value";
 import type { TSchema, Static } from "@sinclair/typebox";
 import { brandSafeRecipes, CooCooService, createMealTask, getRescuePlan, parseShoppingText, searchRecipes, withTodayMissions } from "@coocoo/core";
-import { ContractSchemas, type IngredientPrice, type MealPostpone, type MealSlot } from "@coocoo/contracts";
-import { createMealPlan, createTodayDecision, refreshAvailability, rescheduleMeal, weekOf, type MealPlanningContext } from "../../../../../api/src/modules/meal-plans/meal-planning";
+import { ContractSchemas, type IngredientPrice, type MealPlan, type MealPostpone, type MealSlot } from "@coocoo/contracts";
+import { buildWeeklyStockupDraft, createMealPlan, createTodayDecision, refreshAvailability, rescheduleMeal, weekOf, type MealPlanningContext } from "../../../../../api/src/modules/meal-plans/meal-planning";
 import { MemoryPlanningRepository } from "../../../../../api/src/modules/meal-plans/memory-planning.repository";
 import { recommend } from "../../../../../api/src/modules/catalog/recommendations";
 import { BrowserStateRepository } from "./repository";
@@ -63,6 +63,18 @@ const planningContext = (weekStart: string, energyLevel: "low" | "normal" = "nor
     inventory: state.inventory.map((item) => ({ ingredientKey: item.name, name: item.name, daysLeft: item.daysLeft, quantity: item.qty, unit: item.unit })),
     energyLevel,
   };
+};
+const syncMockWeeklyPlan = (plan: MealPlan, context: MealPlanningContext) => {
+  const draft = buildWeeklyStockupDraft(plan, context.inventory);
+  const state = service.state();
+  state.mealPlan = plan;
+  state.shoppingItems = state.shoppingItems.filter((item) => item.mealPlanId !== plan.id || item.checked);
+  new BrowserStateRepository().write(state);
+  for (const item of draft) {
+    if (state.shoppingItems.some((existing) => existing.mealPlanId === plan.id && existing.name === item.name && existing.unit === item.unit && existing.checked)) continue;
+    service.saveShopping({ name: item.name, category: item.category, qty: item.quantity, unit: item.unit, checked: false, status: "本週一次備齊", estCost: 0, mealPlanId: plan.id, source: "plan" });
+  }
+  return draft;
 };
 const ok = <T>(data: T, status = 200) =>
   HttpResponse.json({ data }, { status });
@@ -236,8 +248,20 @@ export const handlers = [
     try {
       const body = validated(ContractSchemas.MealPlanCreateSchema, await request.json());
       const context = planningContext(body.weekStart);
-      const saved = await planningRepository.current("preview", body.weekStart) || await planningRepository.save("preview", createMealPlan(context));
-      return ok({ ...saved, ...refreshAvailability(saved.plan, context.inventory) }, 201);
+      const saved = await planningRepository.current("preview", body.weekStart) || await planningRepository.save("preview", createMealPlan(context, { startDate: body.startDate, mealCount: body.mealCount }));
+      const refreshed = refreshAvailability(saved.plan, context.inventory);
+      return ok({ ...saved, ...refreshed, shoppingDraft: syncMockWeeklyPlan(refreshed.plan, context) }, 201);
+    } catch (e) {
+      return error(e);
+    }
+  }),
+  http.post("/api/v1/meal-plans/preview", async ({ request }) => {
+    try {
+      const body = validated(ContractSchemas.MealPlanCreateSchema, await request.json());
+      const context = planningContext(body.weekStart);
+      const plan = createMealPlan(context, { startDate: body.startDate, mealCount: body.mealCount });
+      const refreshed = refreshAvailability(plan, context.inventory);
+      return ok({ packages: [], ...refreshed, unfilledSlots: [], purchaseCandidates: [], shoppingDraft: buildWeeklyStockupDraft(refreshed.plan, context.inventory) });
     } catch (e) {
       return error(e);
     }
@@ -252,7 +276,8 @@ export const handlers = [
       await planningRepository.reschedule("preview", saved.plan, changed.meals.find((meal) => meal.id === params.id)!, body.expectedUpdatedAt);
       const updated = await planningRepository.current("preview", body.weekStart);
       if (!updated) throw new Error("PLANNED_MEAL_NOT_FOUND");
-      return ok({ ...updated, ...refreshAvailability(updated.plan, context.inventory) });
+      const refreshed = refreshAvailability(updated.plan, context.inventory);
+      return ok({ ...updated, ...refreshed, shoppingDraft: syncMockWeeklyPlan(refreshed.plan, context) });
     } catch (e) {
       return error(e, e instanceof Error && e.message === "MEAL_PLAN_CONFLICT" ? 409 : 422);
     }

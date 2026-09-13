@@ -171,9 +171,14 @@ describe("MSW contract adapter", () => {
       body: JSON.stringify({ weekStart: "2026-09-07" }),
     });
     const first = await (await create()).json() as { data: { plan: { id: string; meals: unknown[] } } };
+    const firstState = await (await api("/state")).json() as { data: { mealPlan?: { id: string }; shoppingItems: Array<{ source?: string }> } };
     const second = await (await create()).json() as { data: { plan: { id: string } } };
+    const secondState = await (await api("/state")).json() as { data: { shoppingItems: Array<{ source?: string }> } };
     expect(first.data.plan.meals).toHaveLength(1);
     expect(second.data.plan.id).toBe(first.data.plan.id);
+    expect(firstState.data.mealPlan?.id).toBe(first.data.plan.id);
+    expect(firstState.data.shoppingItems.filter(item=>item.source==="plan").length).toBeGreaterThan(0);
+    expect(secondState.data.shoppingItems.filter(item=>item.source==="plan")).toHaveLength(firstState.data.shoppingItems.filter(item=>item.source==="plan").length);
   });
 
   test("returns a rich safe recipe package in local preview", async () => {

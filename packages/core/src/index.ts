@@ -671,6 +671,8 @@ export class CooCooService {
       ? s.shoppingItems.find((i) => i.id === item.id)
       : item.shortageId
         ? s.shoppingItems.find((i) => i.shortageId === item.shortageId)
+        : item.mealPlanId
+          ? s.shoppingItems.find((i) => i.mealPlanId === item.mealPlanId && i.name === item.name && i.unit === item.unit)
         : null;
     const next: ShoppingItem = {
       id: existing?.id || this.runtime.id(),
@@ -682,6 +684,7 @@ export class CooCooService {
       status: item.status || existing?.status || "手動新增",
       estCost: nonNegative(item.estCost ?? existing?.estCost ?? 50),
       shortageId: item.shortageId ?? existing?.shortageId,
+      mealPlanId: item.mealPlanId ?? existing?.mealPlanId,
       source: item.source ?? existing?.source,
     };
     s.shoppingItems = existing

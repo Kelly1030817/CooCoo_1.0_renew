@@ -1,8 +1,8 @@
 import { Elysia, t } from "elysia";
 import { Value } from "@sinclair/typebox/value";
-import { MealPlanCreateSchema, MealPostponeSchema, RecipePackageSchema, RecipeGenerateSchema, type MealPlan, type PlannedMeal, type RecipePackage, type RecipeGeneration } from "@coocoo/contracts";
+import { MealPlanCreateSchema, MealPostponeSchema, RecipePackageSchema, RecipeGenerateSchema, type MealPlan, type MealPlanCreate, type PlannedMeal, type RecipePackage, type RecipeGeneration, type WeeklyStockupItem } from "@coocoo/contracts";
 import { brandSafeRecipes, evaluateRecipe } from "@coocoo/core";
-import { assertDate, createMealPlan, createTodayDecision, refreshAvailability, rescheduleMeal, scalePackage, taipeiDate, weekOf, packageForMeal, unfilledMealSlots, type MealPlanningContext } from "./meal-planning";
+import { assertDate, buildWeeklyStockupDraft, createMealPlan, createTodayDecision, refreshAvailability, rescheduleMeal, scalePackage, taipeiDate, weekOf, packageForMeal, unfilledMealSlots, type MealPlanningContext } from "./meal-planning";
 import { generateRecipe, type RecipeGenerationWithUsage, type RecipeRequestContext } from "../recipes/openrouter-recipe.service";
 
 export interface PlanningRepository {
@@ -20,21 +20,30 @@ export interface PlanningDependencies {
   generate?:(context:RecipeRequestContext,client?:undefined,allowAi?:boolean)=>Promise<RecipeGeneration & Partial<Pick<RecipeGenerationWithUsage,"aiAttempted"|"costUsd"|"model">>>;
   reserveGenerate?:(userId:string,operationId:string,input:unknown)=>Promise<RecipeGeneration|null>;
   settleGenerate?:(userId:string,operationId:string,status:"completed"|"failed",actualTwd:number,result:RecipeGeneration|null)=>Promise<void>;
+  onPlanSaved?:(userId:string,plan:MealPlan,shoppingDraft:WeeklyStockupItem[])=>Promise<void>|void;
 }
 export function planningRoutes(deps:PlanningDependencies){
-  const withAvailability=(saved:{plan:MealPlan;packages:RecipePackage[]},context:MealPlanningContext)=>({...saved,...refreshAvailability(saved.plan,context.inventory),unfilledSlots:unfilledMealSlots(context,saved.plan),purchaseCandidates:context.purchaseCandidates||[]});
+  const withAvailability=(saved:{plan:MealPlan;packages:RecipePackage[]},context:MealPlanningContext)=>{const refreshed=refreshAvailability(saved.plan,context.inventory);return {...saved,...refreshed,unfilledSlots:unfilledMealSlots(context,refreshed.plan),purchaseCandidates:context.purchaseCandidates||[],shoppingDraft:buildWeeklyStockupDraft(refreshed.plan,context.inventory)}};
+  const stockupContext=(context:MealPlanningContext,input:MealPlanCreate)=>({...context,weeklyTarget:input.mealCount??context.weeklyTarget,recipes:context.strictCatalog?[...(context.recipes??[]),...(context.purchaseCandidates??[]).map(item=>item.recipe).filter((recipe,index,items)=>items.findIndex(item=>item.recipeId===recipe.recipeId)===index)]:context.recipes});
   return new Elysia({name:"planning-routes"})
     .get("/api/v1/meal-plans",async({headers,query})=>{
       const user=await deps.authenticate(headers.authorization);const week=query.weekStart||weekOf(taipeiDate());assertDate(week);
       const [context,saved]=await Promise.all([deps.context(user.id,week),deps.repository.current(user.id,week)]);
       return {data:saved?withAvailability(saved,context):null};
     },{query:t.Object({weekStart:t.Optional(t.String())})})
+    .post("/api/v1/meal-plans/preview",async({headers,body})=>{
+      const user=await deps.authenticate(headers.authorization);const context=stockupContext(await deps.context(user.id,body.weekStart),body);
+      const plan=createMealPlan(context,{startDate:body.startDate,mealCount:body.mealCount});
+      return {data:withAvailability({plan,packages:plan.meals.map(meal=>packageForMeal(meal,context.recipes))},context)};
+    },{body:MealPlanCreateSchema})
     .post("/api/v1/meal-plans",async({headers,body})=>{
-      const user=await deps.authenticate(headers.authorization);const context=await deps.context(user.id,body.weekStart);
+      const user=await deps.authenticate(headers.authorization);const context=stockupContext(await deps.context(user.id,body.weekStart),body);
       const existing=await deps.repository.current(user.id,body.weekStart);
-      const plan=existing?.plan||createMealPlan(context);
+      const plan=existing?.plan||createMealPlan(context,{startDate:body.startDate,mealCount:body.mealCount});
       const saved=existing||await deps.repository.save(user.id,plan,context.recipes?plan.meals.map(m=>packageForMeal(m,context.recipes)):undefined);
-      return {data:withAvailability(saved,context)};
+      const result=withAvailability(saved,context);
+      await deps.onPlanSaved?.(user.id,result.plan,result.shoppingDraft);
+      return {data:result};
     },{body:MealPlanCreateSchema})
     .patch("/api/v1/meal-plans/meals/:id",async({headers,params,body})=>{
       const user=await deps.authenticate(headers.authorization);
@@ -43,7 +52,9 @@ export function planningRoutes(deps:PlanningDependencies){
       const changed=rescheduleMeal(saved.plan,params.id,body,context.mealSlots);
       await deps.repository.reschedule(user.id,saved.plan,changed.meals.find(meal=>meal.id===params.id)!,body.expectedUpdatedAt);
       const result=await deps.repository.current(user.id,body.weekStart);if(!result)throw new Error("PLANNED_MEAL_NOT_FOUND");
-      return {data:withAvailability(result,context)};
+      const refreshed=withAvailability(result,context);
+      await deps.onPlanSaved?.(user.id,refreshed.plan,refreshed.shoppingDraft);
+      return {data:refreshed};
     },{body:MealPostponeSchema})
     .get("/api/v1/meal-decisions/today",async({headers,query})=>{
       const user=await deps.authenticate(headers.authorization);const date=query.date||taipeiDate();assertDate(date);

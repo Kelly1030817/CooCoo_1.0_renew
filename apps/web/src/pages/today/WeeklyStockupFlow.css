@@ -1,0 +1,42 @@
+.weekly-stockup-invite {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 38px minmax(0, 1fr) 20px;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #d7c39f;
+  border-radius: 16px;
+  background: #fff8e8;
+  padding: 11px 12px;
+  color: #293c4e;
+  text-align: left;
+  box-shadow: 0 8px 22px rgb(88 60 31 / 7%);
+}
+.weekly-stockup-invite > .material-symbols-outlined:first-child { display: grid; width: 38px; height: 38px; place-items: center; border-radius: 12px; background: #9a442d; color: #fff8e8; }
+.weekly-stockup-invite strong,.weekly-stockup-invite small { display: block; }
+.weekly-stockup-invite strong { font-size: 12px; font-weight: 900; }
+.weekly-stockup-invite small { margin-top: 2px; color: #716b60; font-size: 9px; line-height: 1.45; }
+.weekly-stockup-invite > .material-symbols-outlined:last-child { color: #9a442d; font-size: 18px; }
+
+.weekly-stockup-overlay { position: fixed; inset: 0; z-index: 80; display: grid; align-items: end; background: rgb(28 28 17 / 48%); backdrop-filter: blur(3px); }
+.weekly-stockup-sheet { width: min(100%, 480px); max-height: min(92dvh, 760px); margin: 0 auto; overflow-y: auto; border-radius: 24px 24px 0 0; background: #fdfae7; padding: 20px 18px calc(18px + env(safe-area-inset-bottom)); color: #293c4e; box-shadow: 0 -20px 60px rgb(28 28 17 / 22%); }
+.weekly-stockup-sheet > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.weekly-stockup-sheet header p { margin: 0 0 4px; color: #9a442d; font-size: 10px; font-weight: 900; letter-spacing: .12em; }
+.weekly-stockup-sheet header h2 { margin: 0; font-size: 21px; font-weight: 900; line-height: 1.25; letter-spacing: -.025em; }
+.weekly-stockup-sheet header button { width: 34px; height: 34px; flex: 0 0 auto; border: 1px solid #ddd0ba; border-radius: 50%; background: #fffdf8; color: #716b60; font-size: 22px; }
+.weekly-stockup-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin: 18px 0; }
+.weekly-stockup-days div { display: grid; min-width: 0; justify-items: center; gap: 3px; border-top: 2px solid #d9cab2; padding-top: 7px; color: #81796d; }
+.weekly-stockup-days span { font-size: 8px; font-weight: 800; }.weekly-stockup-days strong { font-size: 9px; }.weekly-stockup-days i { width: 6px; height: 6px; border-radius: 50%; background: #d9cab2; }
+.weekly-stockup-days .past { opacity: .36; }.weekly-stockup-days .planned { border-color: #9a442d; color: #9a442d; }.weekly-stockup-days .planned i { background: #9a442d; box-shadow: 0 0 0 3px #efdcc3; }
+.weekly-stockup-question { border: 1px solid #e2d4bd; border-radius: 18px; background: #fffdf8; padding: 16px; text-align: center; }
+.weekly-stockup-question > p { margin: 0; color: #716b60; font-size: 11px; line-height: 1.55; }.weekly-stockup-question > small { color: #8d8273; font-size: 9px; }
+.weekly-stockup-counter { display: flex; align-items: center; justify-content: center; gap: 22px; margin: 14px 0 10px; }
+.weekly-stockup-counter button { width: 42px; height: 42px; border: 1px solid #cdbb9e; border-radius: 50%; background: #fff; color: #9a442d; font-size: 24px; font-weight: 700; }.weekly-stockup-counter button:disabled { opacity: .3; }
+.weekly-stockup-counter span strong,.weekly-stockup-counter span small { display: block; }.weekly-stockup-counter span strong { color: #293c4e; font-size: 38px; line-height: .9; }.weekly-stockup-counter span small { margin-top: 7px; color: #716b60; font-size: 10px; font-weight: 800; }
+.weekly-stockup-summary { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }.weekly-stockup-summary strong { font-size: 14px; }.weekly-stockup-summary span { border-radius: 999px; background: #e9efe7; padding: 5px 8px; color: #55755b; font-size: 9px; font-weight: 900; }
+.weekly-stockup-meals { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 7px; }.weekly-stockup-meals article { min-width: 0; border: 1px solid #ddd0ba; border-radius: 13px; background: #fffdf8; padding: 10px; }.weekly-stockup-meals time,.weekly-stockup-meals strong,.weekly-stockup-meals small { display: block; }.weekly-stockup-meals time { color: #9a442d; font-size: 8px; font-weight: 900; }.weekly-stockup-meals strong { margin-top: 4px; overflow: hidden; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }.weekly-stockup-meals small { margin-top: 3px; color: #81796d; font-size: 8px; }
+.weekly-stockup-shopping { margin-top: 14px; border-top: 1px dashed #cdbb9e; padding-top: 12px; }.weekly-stockup-shopping h3 { margin: 0 0 7px; font-size: 12px; }.weekly-stockup-shopping div { display: grid; grid-template-columns: 48px 1fr auto; gap: 7px; padding: 6px 0; border-bottom: 1px solid #eee5d6; font-size: 10px; }.weekly-stockup-shopping div span { color: #9a442d; font-size: 8px; font-weight: 900; }.weekly-stockup-shopping div small { color: #716b60; }
+.weekly-stockup-note,.weekly-stockup-covered,.weekly-stockup-empty,.weekly-stockup-error { margin: 10px 0 0; border-radius: 10px; padding: 9px 10px; font-size: 10px; line-height: 1.5; }.weekly-stockup-note { background: #fff1d6; color: #7d4d20; }.weekly-stockup-covered { background: #e9efe7; color: #436147; }.weekly-stockup-empty,.weekly-stockup-error { background: #fbe9e5; color: #8a3828; }
+.weekly-stockup-sheet > footer { display: grid; grid-template-columns: 1fr 1.35fr; gap: 8px; margin-top: 16px; }.weekly-stockup-sheet > footer button { min-height: 46px; border-radius: 13px; padding: 10px; font-size: 11px; font-weight: 900; }.weekly-stockup-later { border: 1px solid #d7c9b2; background: transparent; color: #716b60; }.weekly-stockup-primary { border: 0; background: #9a442d; color: #fff; box-shadow: 0 8px 18px rgb(154 68 45 / 20%); }.weekly-stockup-primary:disabled { opacity: .55; }
+@media (min-width: 481px) { .weekly-stockup-overlay { align-items: center; padding: 24px; }.weekly-stockup-sheet { border-radius: 24px; } }
+@media (prefers-reduced-motion: reduce) { .weekly-stockup-overlay { backdrop-filter: none; } }

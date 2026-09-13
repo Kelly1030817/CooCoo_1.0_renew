@@ -20,13 +20,18 @@ const context = {
 describe("meal planning HTTP routes", () => {
   let repository: MemoryPlanningRepository;
   let app: { handle(request: Request): Response | Promise<Response> };
+  let savedPlanId: string | null;
+  let savedShoppingCount: number;
 
   beforeEach(() => {
     repository = new MemoryPlanningRepository();
+    savedPlanId = null;
+    savedShoppingCount = 0;
     app = new Elysia().use(planningRoutes({
       authenticate: async () => ({ id: "user-1" }),
       context: async (_userId, weekStart) => ({ ...context, weekStart }),
       repository,
+      onPlanSaved: (_userId, plan, shoppingDraft) => { savedPlanId = plan.id; savedShoppingCount = shoppingDraft.length; },
       generate: async () => ({ recipe: brandSafeRecipes[2], source: "brand_safe", notice: "安全備援" }),
     }));
   });
@@ -41,6 +46,20 @@ describe("meal planning HTTP routes", () => {
     const second = await (await request()).json() as { data: { plan: { id: string; meals: unknown[] } } };
     expect(first.data.plan.meals).toHaveLength(3);
     expect(second.data.plan.id).toBe(first.data.plan.id);
+    expect(savedPlanId).toBe(first.data.plan.id);
+    expect(savedShoppingCount).toBeGreaterThan(0);
+  });
+
+  test("previews a remaining-week stockup plan without persisting it", async () => {
+    const response = await app.handle(new Request("http://localhost/api/v1/meal-plans/preview", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ weekStart: "2026-09-07", startDate: "2026-09-10", mealCount: 2 }),
+    }));
+    const body = await response.json() as { data: { plan: { meals: Array<{ date: string }> }; shoppingDraft: unknown[] } };
+    expect(body.data.plan.meals.map(meal=>meal.date)).toEqual(["2026-09-10","2026-09-11"]);
+    expect(body.data.shoppingDraft.length).toBeGreaterThan(0);
+    expect(await repository.current("user-1","2026-09-07")).toBeNull();
   });
 
   test("returns a complete generated package instead of the legacy recipe shape", async () => {

@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { RecipePackage, RecipePreferences, RecipeRecommendations, TodayDecision } from "@coocoo/contracts";
-import { CHEF_RANKS, EXP_POINTS, dateInTimeZone, todayMealNumberLabel } from "@coocoo/core";
+import { CHEF_RANKS, EXP_POINTS, dateInTimeZone, getWeekStart, todayMealNumberLabel } from "@coocoo/core";
 import { useAppState, stateQueryKey } from "@/entities/app-state/model";
 import { UiContext } from "@/app/ui-context";
 import { RecipePackageModal } from "@/features/cooking/RecipeModal";
@@ -14,6 +14,7 @@ import {
 } from "@/features/cooking/emergencyRecipe";
 import { api, json } from "@/shared/api/client";
 import { shouldAutoSwitchToPurchase } from "./recommendationMode";
+import { WeeklyStockupFlow } from "./WeeklyStockupFlow";
 import "./TodayPage.css";
 
 const subtitles: Record<string, string> = {
@@ -49,6 +50,7 @@ export function TodayPage() {
   });
   const purchaseBudget = recipeSettings.data?.purchaseBudget ?? 100;
   const today = dateInTimeZone(new Date()) ?? "";
+  const weekStart = getWeekStart(`${today}T12:00:00Z`) ?? today;
 
   const openChefConsultation = () => {
     ui.open(
@@ -188,9 +190,9 @@ export function TodayPage() {
         <section className="today-intro">
           <div>
             <h2>
-              先別想一整週，
+              先看今天，
               <br />
-              決定下一餐就好。
+              再決定這週要不要一起備齊。
             </h2>
           </div>
         </section>
@@ -275,9 +277,9 @@ export function TodayPage() {
       <section className="today-intro">
         <div>
           <h2>
-            先別想一整週，
+            {data?.mealPlan ? "這週有安排，" : "先決定下一餐，"}
             <br />
-            決定下一餐就好。
+            {data?.mealPlan ? "現在看下一餐。" : "也能一次備齊。"}
           </h2>
         </div>
         <button
@@ -296,6 +298,17 @@ export function TodayPage() {
           <span>{energyLow ? "低體力中" : "今天有點累"}</span>
         </button>
       </section>
+
+      {!data?.mealPlan ? <WeeklyStockupFlow
+        today={today}
+        weekStart={weekStart}
+        mealSlots={data?.onboardingProfile?.plannedMealSlots ?? ["dinner"]}
+        suggestedCount={data?.weeklyGoal.target ?? 3}
+        onSaved={async () => {
+          await queryClient.invalidateQueries({ queryKey: stateQueryKey });
+          ui.toast("本週餐單已成立；合併食材已加入採買。");
+        }}
+      /> : null}
 
       {/* HUD：主廚職階與 EXP 進度 */}
       <section className="today-hud" aria-label="主廚職階與 EXP">

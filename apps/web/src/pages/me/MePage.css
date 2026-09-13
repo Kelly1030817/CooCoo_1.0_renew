@@ -215,11 +215,14 @@
 .weekly-meal-list article div { min-width: 0; }
 .weekly-meal-list article div strong { display: block; overflow: hidden; color: #293c4e; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
 .weekly-meal-list article div small { display: block; margin-top: 2px; color: #817a6e; font-size: 9px; }
-.weekly-meal-list article > b { border: 1px solid; border-radius: 999px; padding: 3px 7px; font-size: 9px; white-space: nowrap; }
-.weekly-meal-list article > b.cooked { border-color: #b8d5c5; background: #edf6f0; color: #386753; }
-.weekly-meal-list article > b.planned { border-color: #e2bcae; background: #fff1e8; color: #9a442d; }
-.weekly-meal-list article > b.postponed { border-color: #e7c88e; background: #fff6df; color: #94601d; }
-.weekly-meal-list article > b.cancelled { border-color: #ded7ca; background: #f2eee6; color: #817a6e; }
+.weekly-meal-list article > aside { display: grid; justify-items: end; gap: 5px; }
+.weekly-meal-list article > aside > b { border: 1px solid; border-radius: 999px; padding: 3px 7px; font-size: 9px; white-space: nowrap; }
+.weekly-meal-list article > aside > b.cooked { border-color: #b8d5c5; background: #edf6f0; color: #386753; }
+.weekly-meal-list article > aside > b.planned { border-color: #e2bcae; background: #fff1e8; color: #9a442d; }
+.weekly-meal-list article > aside > b.postponed { border-color: #e7c88e; background: #fff6df; color: #94601d; }
+.weekly-meal-list article > aside > b.cancelled { border-color: #ded7ca; background: #f2eee6; color: #817a6e; }
+.weekly-meal-list article > aside > span { display: flex; gap: 4px; }
+.weekly-meal-list article > aside button { border: 0; background: transparent; padding: 1px 2px; color: #817a6e; font-size: 8px; font-weight: 800; text-decoration: underline; text-underline-offset: 2px; }
 .empty-meals { margin: 12px 0 0; color: #817a6e; font-size: 11px; }
 
 .me-page button:focus-visible,
@@ -419,4 +422,3 @@
     text-align: center;
   }
 }
-

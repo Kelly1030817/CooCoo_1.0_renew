@@ -1,5 +1,5 @@
-import type { DietaryRestriction, MealPlan, MealSlot, PlannedMeal, RecipePackage, TodayDecision, MealPostpone, RecipeRecommendation } from "@coocoo/contracts";
-import { brandSafeRecipes, rankRecipes, refreshPlanRates } from "@coocoo/core";
+import type { DietaryRestriction, MealPlan, MealSlot, PlannedMeal, RecipePackage, TodayDecision, MealPostpone, RecipeRecommendation, WeeklyStockupItem } from "@coocoo/contracts";
+import { brandSafeRecipes, rankRecipes, refreshPlanRates, shoppingCategoryFor } from "@coocoo/core";
 
 export interface Stock { ingredientKey: string; name?: string; daysLeft: number; quantity?: number; unit?: string }
 export interface MealPlanningContext {
@@ -56,18 +56,54 @@ export function createTodayDecision(context: MealPlanningContext, input: { date:
   const recipes = eligiblePackages(context);
   return { date: input.date, slot: input.slot, primary: recipes[0] ?? null, alternatives: recipes.slice(1,3), source: context.strictCatalog ? "catalog" : "brand_safe", notice: recipes.length ? `依你的飲食限制、廚具、時間與庫存挑選${context.strictCatalog?'已發布':'品牌'}食譜。` : "目前沒有符合飲食限制、廚具與庫存的餐點，請調整設定後再試。" };
 }
-export function createMealPlan(context: MealPlanningContext, options: { now?: Date; id?: () => string } = {}): MealPlan {
+export function createMealPlan(context: MealPlanningContext, options: { now?: Date; id?: () => string; startDate?: string; mealCount?: number } = {}): MealPlan {
   if (weekOf(context.weekStart) !== context.weekStart) throw new Error("WEEK_START_MUST_BE_MONDAY");
+  const startDate = options.startDate ?? context.weekStart;
+  assertDate(startDate);
+  if (weekOf(startDate) !== context.weekStart) throw new Error("START_DATE_OUTSIDE_WEEK");
+  const mealCount = options.mealCount ?? context.weeklyTarget;
   const recipes = eligiblePackages(context);
   if (!recipes.length && !context.strictCatalog) throw new Error("NO_SAFE_RECIPE_AVAILABLE");
-  if (!context.mealSlots.length || context.weeklyTarget < 1 || context.weeklyTarget > context.mealSlots.length * 7) throw new Error("WEEKLY_TARGET_EXCEEDS_SLOTS");
+  if (!context.mealSlots.length || mealCount < 1 || mealCount > context.mealSlots.length * 7) throw new Error("WEEKLY_TARGET_EXCEEDS_SLOTS");
   const id = options.id || (() => crypto.randomUUID());
-  const slots = Array.from({ length: 7 }, (_, day) => context.mealSlots.map(slot => ({ date: dateAt(context.weekStart,day), slot }))).flat();
-  const meals: PlannedMeal[] = slots.slice(0, context.strictCatalog ? Math.min(context.weeklyTarget, recipes.length) : context.weeklyTarget).map((target,index) => {
+  const slots = Array.from({ length: 7 }, (_, day) => context.mealSlots.map(slot => ({ date: dateAt(context.weekStart,day), slot }))).flat().filter(slot => slot.date >= startDate);
+  if (mealCount > slots.length) throw new Error("WEEKLY_TARGET_EXCEEDS_REMAINING_SLOTS");
+  const meals: PlannedMeal[] = slots.slice(0, context.strictCatalog ? Math.min(mealCount, recipes.length) : mealCount).map((target,index) => {
     const recipe = recipes[index % recipes.length];
     return { id:id(), ...target, recipeId:id(), title:recipe.title, status:"planned", servings:recipe.servings, ingredients:recipe.ingredients, estimatedCost:recipe.estimatedCost, totalMinutes:recipe.totalMinutes, cookwareTypes:recipe.cookwareTypes, energyLevel:context.energyLevel || "normal" };
   });
   return refreshAvailability({ id:id(), weekStart:context.weekStart, meals, overlapRate:0, inventoryCoverageRate:0, updatedAt:(options.now || new Date()).toISOString() },context.inventory).plan;
+}
+
+export function buildWeeklyStockupDraft(plan: MealPlan, inventory: Stock[]): WeeklyStockupItem[] {
+  const grouped = new Map<string, WeeklyStockupItem>();
+  for (const meal of plan.meals) {
+    if (meal.status === "cancelled" || meal.status === "cooked") continue;
+    for (const ingredient of meal.ingredients) {
+      const key = `${normalize(ingredient.ingredientKey)}::${normalize(ingredient.unit)}`;
+      const current = grouped.get(key);
+      grouped.set(key, {
+        key,
+        ingredientKey: ingredient.ingredientKey,
+        name: ingredient.name,
+        quantity: (current?.quantity ?? 0) + ingredient.quantity,
+        unit: ingredient.unit,
+        category: shoppingCategoryFor(ingredient.name),
+        plannedMeals: (current?.plannedMeals ?? 0) + 1,
+      });
+    }
+  }
+  for (const stock of inventory) {
+    const stockName = normalize(stock.ingredientKey || stock.name || "");
+    const candidate = [...grouped.values()].find(item =>
+      normalize(item.unit) === normalize(stock.unit || "") &&
+      [item.ingredientKey, item.name].some(value => normalize(value) === stockName),
+    );
+    if (candidate) candidate.quantity = Math.max(0, candidate.quantity - (stock.quantity ?? 0));
+  }
+  return [...grouped.values()]
+    .filter(item => item.quantity > 0)
+    .sort((a, b) => a.category.localeCompare(b.category) || a.name.localeCompare(b.name, "zh-TW"));
 }
 export function unfilledMealSlots(context:MealPlanningContext,plan:MealPlan){
   const active=new Set(plan.meals.filter(meal=>meal.status!=="cancelled").map(meal=>`${meal.date}:${meal.slot}`));

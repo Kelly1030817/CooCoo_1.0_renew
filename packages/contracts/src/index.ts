@@ -217,7 +217,30 @@ export const TodayDecisionSchema = Type.Object({
   notice: Type.String(),
 });
 export type TodayDecision = Static<typeof TodayDecisionSchema>;
-export const MealPlanCreateSchema = Type.Object({ weekStart: DateOnlySchema });
+export const MealPlanCreateSchema = Type.Object({
+  weekStart: DateOnlySchema,
+  startDate: Type.Optional(DateOnlySchema),
+  mealCount: Type.Optional(Type.Integer({ minimum: 1, maximum: 21 })),
+});
+export type MealPlanCreate = Static<typeof MealPlanCreateSchema>;
+export const WeeklyStockupItemSchema = Type.Object({
+  key: Type.String({ minLength: 1 }),
+  ingredientKey: Type.String({ minLength: 1 }),
+  name: Type.String({ minLength: 1 }),
+  quantity: Type.Number({ exclusiveMinimum: 0 }),
+  unit: Type.String({ minLength: 1 }),
+  category: Type.Union([
+    Type.Literal("produce"),
+    Type.Literal("protein"),
+    Type.Literal("pantry"),
+    Type.Literal("other"),
+  ]),
+  plannedMeals: Type.Integer({ minimum: 1 }),
+});
+export type WeeklyStockupItem = Static<typeof WeeklyStockupItemSchema>;
+export interface WeeklyStockupResult extends MealPlanResult {
+  shoppingDraft: WeeklyStockupItem[];
+}
 export const MealPostponeSchema = Type.Object({
   weekStart: DateOnlySchema,
   kind: Type.Union([Type.Literal("next_slot"), Type.Literal("specific_date"), Type.Literal("cancel")]),
@@ -513,6 +536,7 @@ export const ShoppingSourceSchema = Type.Union([
   Type.Literal("assistant"),
   Type.Literal("task"),
   Type.Literal("receipt"),
+  Type.Literal("plan"),
 ]);
 export type ShoppingSource = Static<typeof ShoppingSourceSchema>;
 export const ShoppingItemSchema = Type.Object({
@@ -530,6 +554,7 @@ export const ShoppingItemSchema = Type.Object({
   status: Type.String(),
   estCost: MoneySchema,
   shortageId: Type.Optional(Type.String({ minLength: 1 })),
+  mealPlanId: Type.Optional(IdSchema),
   source: Type.Optional(ShoppingSourceSchema),
 });
 export type ShoppingItem = Static<typeof ShoppingItemSchema>;
@@ -631,6 +656,7 @@ export const ShoppingWriteSchema = Type.Object({
   status: Type.Optional(Type.String()),
   estCost: Type.Optional(MoneySchema),
   shortageId: Type.Optional(Type.String({ minLength: 1 })),
+  mealPlanId: Type.Optional(IdSchema),
   source: Type.Optional(ShoppingSourceSchema),
 });
 export const ShoppingParseSchema = Type.Object({
@@ -898,6 +924,7 @@ export const ContractSchemas = {
   RecipeGenerationSchema,
   TodayDecisionSchema,
   MealPlanCreateSchema,
+  WeeklyStockupItemSchema,
   MealPostponeSchema,
   CookingSessionSchema,
   CookingCostRecordSchema,

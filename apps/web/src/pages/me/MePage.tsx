@@ -4,6 +4,7 @@ import type {
   CookingCostRecord,
   CookingOutcome,
   ChefChatSession,
+  PlannedMeal,
   ReminderPreferences,
 } from "@coocoo/contracts";
 import { BADGE_DEFINITIONS, CHEF_RANKS, dateInTimeZone, mealsWithRecordedOutcomes } from "@coocoo/core";
@@ -41,6 +42,7 @@ export function MePage() {
   const [target, setTarget] = useState(data?.weeklyGoal.target ?? 1);
   const [authBusy, setAuthBusy] = useState(false);
   const [authError, setAuthError] = useState("");
+  const [adjustingMealId, setAdjustingMealId] = useState<string | null>(null);
 
   if (!data) return null;
 
@@ -83,6 +85,24 @@ export function MePage() {
     );
     await query.invalidateQueries({ queryKey: stateQueryKey });
     ui.toast("本週主目標已更新；本週獎勵仍最多一次。");
+  };
+
+  const adjustMeal = async (meal: PlannedMeal, kind: "next_slot" | "cancel") => {
+    if (!data.mealPlan) return;
+    setAdjustingMealId(meal.id);
+    try {
+      await api(`/meal-plans/meals/${meal.id}`, json("PATCH", {
+        weekStart: data.mealPlan.weekStart,
+        kind,
+        expectedUpdatedAt: data.mealPlan.updatedAt,
+      }));
+      await query.invalidateQueries({ queryKey: stateQueryKey });
+      ui.toast(kind === "cancel" ? "這餐已取消，未採買的合併食材已重新計算。" : "這餐已延到下一個可用餐期。");
+    } catch (reason) {
+      ui.toast(reason instanceof Error ? reason.message : "餐期尚未調整。", "error");
+    } finally {
+      setAdjustingMealId(null);
+    }
   };
 
   const replayOnboarding = () => {
@@ -219,7 +239,7 @@ export function MePage() {
               <article className={meal.date === today ? "today" : ""} key={meal.id}>
                 <span>{String(index + 1).padStart(2, "0")}</span>
                 <div><strong>{meal.title || "尚未選食譜"}</strong><small>{meal.date} · {({ breakfast: "早餐", lunch: "午餐", dinner: "晚餐" })[meal.slot]} · {meal.totalMinutes} 分鐘</small></div>
-                <b className={meal.status}>{({ cooked: "已完成", planned: "待安排", postponed: "延後", cancelled: "已取消" })[meal.status]}</b>
+                <aside><b className={meal.status}>{({ cooked: "已完成", planned: "待安排", postponed: "延後", cancelled: "已取消" })[meal.status]}</b>{meal.status === "planned" && (!today || meal.date >= today) ? <span><button type="button" disabled={adjustingMealId === meal.id} onClick={() => void adjustMeal(meal, "next_slot")}>延後</button><button type="button" disabled={adjustingMealId === meal.id} onClick={() => void adjustMeal(meal, "cancel")}>取消</button></span> : null}</aside>
               </article>
             ))}
           </div>
