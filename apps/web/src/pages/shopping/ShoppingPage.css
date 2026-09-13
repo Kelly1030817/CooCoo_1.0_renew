@@ -729,6 +729,7 @@
   }
 
   .shopping-mobile .shopping-hud,
+  .shopping-mobile .shopping-heading,
   .shopping-mobile .task-strip,
   .shopping-mobile .meal-task-ticket {
     grid-column: 1 / -1;

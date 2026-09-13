@@ -16,6 +16,7 @@
 
   .me-page > header,
   .me-page > .account-card,
+  .me-page > .weekly-card,
   .me-page > .weekly-meals-card,
   .me-page > .me-settings {
     grid-column: 1 / -1;
