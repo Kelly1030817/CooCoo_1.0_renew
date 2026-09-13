@@ -1,16 +1,14 @@
-import { useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { HabitBarrier, OnboardingProfile } from "@coocoo/contracts";
-import { dateInTimeZone } from "@coocoo/core";
 import { api, json } from "@/shared/api/client";
 import { stateQueryKey } from "@/entities/app-state/model";
 import { emptyOnboardingDraft, readOnboardingDraft, saveOnboardingDraft } from "@/shared/model/onboarding-draft";
 import { startGoogleAuth, supabase } from "@/shared/auth/supabase";
-import { UiContext } from "@/app/ui-context";
-import { InvoiceModal } from "@/features/shopping/ShoppingModals";
 import { ChefAvatar, type ChefMood } from "./ChefAvatar";
 import { PassportTicket } from "./PassportTicket";
 import { suggestWeeklyGoalTarget } from "./weekly-goal";
+import { completeOnboardingProfile, isOnboardingStepValid } from "./validation";
 import {
   addCustomRestriction,
   hasRestriction,
@@ -24,7 +22,7 @@ const barriers: Array<[HabitBarrier, string]> = [
   ["ingredients_waste", "食材容易放壞"], ["cleanup", "不想收拾"],
 ];
 const cookwareOptions = ["電磁爐", "瓦斯爐", "電鍋", "快煮鍋", "氣炸鍋", "微波爐"];
-const stepTitles = ["節奏與卡點", "餐桌與廚具", "口味與餐期", "登入與冰箱", "主廚檔案"];
+const stepTitles = ["節奏與卡點", "餐桌與廚具", "口味與餐期", "登入與同步", "主廚檔案"];
 
 function Tick() {
   return <span className="choice-tick" aria-hidden="true">✓</span>;
@@ -44,15 +42,12 @@ function Counter({ value, min, max, unit, onChange }: { value: number; min: numb
 
 export function OnboardingPage({ onComplete, onExit, canExit = false, initialStep }: { onComplete: () => void; onExit?: () => void; canExit?: boolean; initialStep?: number }) {
   const query = useQueryClient();
-  const ui = useContext(UiContext);
   const saved = readOnboardingDraft();
   const [profile, setProfile] = useState<OnboardingProfile>({ ...emptyOnboardingDraft, ...saved, currentStep: initialStep ?? saved.currentStep });
-  const [inventory, setInventory] = useState({ name: "", quantity: 1, unit: "份", chamber: "cold", expiresOn: "" });
   const [customCookware, setCustomCookware] = useState("");
   const [restrictionInput, setRestrictionInput] = useState("");
   const [flavorInput, setFlavorInput] = useState("");
-  const [ocrInventoryConfirmed, setOcrInventoryConfirmed] = useState(false);
-  const [authVerified, setAuthVerified] = useState(() => !supabase);
+  const [authStatus, setAuthStatus] = useState<"checking" | "signed-in" | "signed-out">(() => supabase ? "checking" : "signed-in");
   const [goalTargetEdited, setGoalTargetEdited] = useState(() => Boolean(saved.weeklyGoalTarget && saved.weeklyGoalTarget !== emptyOnboardingDraft.weeklyGoalTarget));
   const [busy, setBusy] = useState(false);
   const [mood, setMood] = useState<ChefMood>("listen");
@@ -73,22 +68,15 @@ export function OnboardingPage({ onComplete, onExit, canExit = false, initialSte
     setNodding(false);
     requestAnimationFrame(() => setNodding(true));
   };
-  const valid = useMemo(() => step === 1
-    ? profile.habitBarriers.length > 0
-    : step === 2
-      ? profile.cookware.length > 0
-      : step === 3
-        ? profile.plannedMealSlots.length > 0
-        : step === 4
-          ? authVerified && (profile.hasNoInventory || ocrInventoryConfirmed || Boolean(inventory.name.trim() && inventory.expiresOn))
-          : profile.weeklyGoalTarget > 0,
-  [authVerified, inventory, ocrInventoryConfirmed, profile, step]);
+  const valid = useMemo(() => isOnboardingStepValid(step, profile), [profile, step]);
 
   useEffect(() => {
     if (!supabase) return;
     let active = true;
-    void supabase.auth.getSession().then(({ data }) => { if (active) setAuthVerified(Boolean(data.session)); });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => { if (active) setAuthVerified(Boolean(session)); });
+    void supabase.auth.getSession()
+      .then(({ data }) => { if (active) setAuthStatus(data.session ? "signed-in" : "signed-out"); })
+      .catch(() => { if (active) setAuthStatus("signed-out"); });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => { if (active) setAuthStatus(session ? "signed-in" : "signed-out"); });
     return () => { active = false; subscription.unsubscribe(); };
   }, []);
 
@@ -102,19 +90,7 @@ export function OnboardingPage({ onComplete, onExit, canExit = false, initialSte
     setBusy(true);
     setError("");
     try {
-      if (!profile.hasNoInventory && !ocrInventoryConfirmed) {
-        const today = dateInTimeZone(new Date()) ?? new Date().toISOString().slice(0, 10);
-        const expiryTime = new Date(`${inventory.expiresOn}T00:00:00+08:00`).getTime();
-        const todayTime = new Date(`${today}T00:00:00+08:00`).getTime();
-        await api("/inventory", json("POST", {
-          ingredientKey: inventory.name.trim(), name: inventory.name.trim(), qty: inventory.quantity,
-          unit: inventory.unit, chamber: inventory.chamber, expiresOn: inventory.expiresOn,
-          daysLeft: Math.max(0, Math.ceil((expiryTime - todayTime) / 86_400_000)),
-          lastConfirmedAt: new Date().toISOString(), image: "/favicon.svg", addedDate: today,
-          estimatedValue: 0, storageProtocol: "先進先出，使用前再次確認。", boxSize: "M",
-        }));
-      }
-      const complete = { ...profile, status: "complete" as const, currentStep: 5, inventoryReviewed: true, completedAt: new Date().toISOString() };
+      const complete = completeOnboardingProfile(profile, new Date().toISOString());
       await api("/onboarding", json("PUT", complete));
       saveOnboardingDraft(complete);
       await query.invalidateQueries({ queryKey: stateQueryKey });
@@ -157,7 +133,25 @@ export function OnboardingPage({ onComplete, onExit, canExit = false, initialSte
     update({ preferredFlavors: [...profile.preferredFlavors, value] });
     setFlavorInput("");
   };
-  const next = () => {
+  const next = async () => {
+    if (step === 4 && supabase) {
+      setBusy(true);
+      setError("");
+      try {
+        const { data, error: authError } = await supabase.auth.getSession();
+        if (authError || !data.session) {
+          setAuthStatus("signed-out");
+          setError("主廚設定已保存在草稿；請先完成登入，再按一次繼續。");
+          return;
+        }
+        setAuthStatus("signed-in");
+      } catch {
+        setError("暫時無法確認登入狀態，請檢查網路後再按一次繼續。");
+        return;
+      } finally {
+        setBusy(false);
+      }
+    }
     cheer(step === 1 ? "applause" : step === 2 ? "care" : "listen");
     update({ currentStep: Math.min(5, step + 1), ...(step === 4 && !goalTargetEdited ? { weeklyGoalTarget: suggestedTarget } : {}) });
   };
@@ -185,7 +179,6 @@ export function OnboardingPage({ onComplete, onExit, canExit = false, initialSte
       <div className="onboarding-content"><div className={`onboarding-stack onboarding-step-${step} step-slide-down`} key={step}>
         {step === 1 && <>
           <div className="chef-open"><span className="chef-open-icon material-symbols-outlined" aria-hidden="true">restaurant</span><div><strong>下班辛苦了！我是你的專屬主廚 CooCoo。</strong><p>沒有標準答案，我們只想讓第一次推薦更可行。你的回答會決定我怎麼挑菜、怎麼排餐。</p></div></div>
-          <StepCard title="目前料理熟練度"><div className="choices one">{([['beginner','剛開始'],['comfortable','能完成幾道家常菜'],['advanced','熟悉料理與調整']] as const).map(([value,label]) => <Choice key={value} selected={profile.cookingExperience === value} onClick={() => update({ cookingExperience: value })}>{label}</Choice>)}</div></StepCard>
           <StepCard title="目前每週料理幾次？" description="用來推估第一步可行的週目標，不用勉強。"><Counter value={profile.currentWeeklyCookingFrequency} min={0} max={21} unit="次 / 週" onChange={(value) => update({ currentWeeklyCookingFrequency: value })} /></StepCard>
           <StepCard title="最常卡在哪裡？" description="可多選。這會決定我第一則提醒的方式。"><div className="choices">{barriers.map(([value,label]) => <Choice key={value} selected={profile.habitBarriers.includes(value)} onClick={() => toggleBarrier(value)}>{label}</Choice>)}</div></StepCard>
         </>}
@@ -202,28 +195,24 @@ export function OnboardingPage({ onComplete, onExit, canExit = false, initialSte
           <StepCard title="喜歡的口味"><div className="tag-input"><input value={flavorInput} placeholder="例如：清爽、台式、微辣" onChange={(event) => setFlavorInput(event.target.value)} /><button type="button" disabled={!flavorInput.trim()} onClick={addFlavor}>＋</button></div><div className="tag-list">{profile.preferredFlavors.map((flavor) => <span className="tag" key={flavor}>{flavor}<button type="button" aria-label={`移除 ${flavor}`} onClick={() => update({ preferredFlavors: profile.preferredFlavors.filter((item) => item !== flavor) })}>×</button></span>)}</div></StepCard>
           <StepCard title="平常可用時間"><div className="slider-row"><input name="available-minutes" type="range" min="5" max="180" step="5" value={profile.availableMinutes} onChange={(event) => update({ availableMinutes: Number(event.target.value) })} /><strong>{profile.availableMinutes} 分鐘</strong></div></StepCard>
           <StepCard title="常用餐期"><div className="choices three">{([['breakfast','早餐'],['lunch','午餐'],['dinner','晚餐']] as const).map(([value,label]) => <Choice key={value} selected={profile.plannedMealSlots.includes(value)} onClick={() => update({ plannedMealSlots: profile.plannedMealSlots.includes(value) ? profile.plannedMealSlots.filter((item) => item !== value) : [...profile.plannedMealSlots, value] })}>{label}</Choice>)}</div></StepCard>
-          <StepCard title="料理時預設指引"><div className="choices">{([['detailed','詳細陪做','逐步提示與時間提醒'],['compact','精簡步驟','熟悉後只看關鍵步驟']] as const).map(([value,label,sub]) => <Choice key={value} selected={profile.guidanceMode === value} onClick={() => update({ guidanceMode: value })}>{label}<small>{sub}</small></Choice>)}</div></StepCard>
         </>}
 
         {step === 4 && <>
-          <div className="chef-open"><span className="chef-open-icon material-symbols-outlined" aria-hidden="true">kitchen</span><div><strong>登入後，我才能安全保存你的精確冰箱。</strong><p>OCR 只建立待確認草稿；逐項確認後才會真的入庫。</p></div></div>
-          <StepCard title="登入後，建立精確冰箱" description="資料會跟著帳號，不會只留在這台裝置。">{supabase && !authVerified && <button type="button" className="wide-action" onClick={() => void startGoogleAuth()}>使用 Google 登入 <span>›</span></button>}{authVerified && <p className="safety-note safe">{supabase ? "登入完成，現在可以建立會跟著帳號的精確冰箱。" : "本機 Preview 使用測試資料；正式環境會先要求登入。"}</p>}<button type="button" className="wide-action secondary" onClick={() => ui.open(<InvoiceModal onClose={ui.close} onConfirmed={() => setOcrInventoryConfirmed(true)} />)}>用發票 OCR 建立冰箱 <small>逐項確認後才入庫</small></button></StepCard>
-          <StepCard title="目前冰箱狀態"><div className="choices"><Choice selected={!profile.hasNoInventory} onClick={() => update({ hasNoInventory: false })}>手動新增一項</Choice><Choice selected={profile.hasNoInventory} onClick={() => update({ hasNoInventory: true })}>確認目前空箱</Choice></div></StepCard>
-          {!profile.hasNoInventory && <StepCard title="新增一項精確食材"><div className="inventory-grid"><label className="full">食材名稱<input value={inventory.name} onChange={(event) => setInventory({ ...inventory, name: event.target.value })} /></label><label>數量<input type="number" min="0.01" step="0.01" value={inventory.quantity} onChange={(event) => setInventory({ ...inventory, quantity: Number(event.target.value) })} /></label><label>單位<input value={inventory.unit} onChange={(event) => setInventory({ ...inventory, unit: event.target.value })} /></label><label>位置<select value={inventory.chamber} onChange={(event) => setInventory({ ...inventory, chamber: event.target.value })}><option value="cold">冷藏</option><option value="frozen">冷凍</option><option value="pantry">常溫</option></select></label><label>期限<input type="date" value={inventory.expiresOn} onChange={(event) => setInventory({ ...inventory, expiresOn: event.target.value })} /></label></div></StepCard>}
-          <p className="safety-note">{ocrInventoryConfirmed ? "發票品項已確認入庫，可以繼續。" : "OCR 只會在你逐項確認數量、單位、位置與期限後入庫。"}</p>
+          <div className="chef-open"><span className="chef-open-icon material-symbols-outlined" aria-hidden="true">cloud_done</span><div><strong>登入後，我才能替你保存主廚檔案。</strong><p>這一步只確認帳號同步，不會建立、清空或修改冰箱庫存。</p></div></div>
+          <StepCard title="登入並同步主廚檔案" description="設定會跟著帳號，不會只留在這台裝置。">{supabase && authStatus === "checking" && <p className="safety-note">正在確認登入狀態…</p>}{supabase && authStatus === "signed-out" && <button type="button" className="wide-action" onClick={() => void startGoogleAuth()}><span>使用 Google 登入</span><span>›</span></button>}{authStatus === "signed-in" && <p className="safety-note safe">{supabase ? "登入完成，主廚設定可以安全同步。" : "本機 Preview 使用測試資料；正式環境會先要求登入。"}</p>}</StepCard>
+          <p className="safety-note safe">食材與保存期限請在完成設定後，前往「冰箱」頁新增或管理。</p>
         </>}
 
         {step === 5 && <>
           <div className="chef-open"><span className="chef-open-icon material-symbols-outlined" aria-hidden="true">military_tech</span><div><strong>最後一步，把可行的節奏寫進主廚檔案。</strong><p>未達標不扣 EXP、不歸零；目標之後仍能隨生活調整。</p></div></div>
-          <StepCard title="本週主指標"><div className="choices"><Choice selected={profile.primaryGoalMetric === "cooking_sessions"} onClick={() => update({ primaryGoalMetric: "cooking_sessions" })}>料理次數</Choice><Choice selected={profile.primaryGoalMetric === "self_cooked_servings"} onClick={() => update({ primaryGoalMetric: "self_cooked_servings" })}>自煮餐份</Choice></div></StepCard>
-          <StepCard title="本週目標" description={`依目前每週 ${profile.currentWeeklyCookingFrequency} 次，建議先多一次：${suggestedTarget}。`}><Counter value={profile.weeklyGoalTarget} min={1} max={21} unit={profile.primaryGoalMetric === "cooking_sessions" ? "次 / 週" : "份 / 週"} onChange={(value) => { setGoalTargetEdited(true); update({ weeklyGoalTarget: value }); }} /></StepCard>
+          <StepCard title="本週目標" description={`依目前每週 ${profile.currentWeeklyCookingFrequency} 次，建議先多一次：${suggestedTarget}。`}><Counter value={profile.weeklyGoalTarget} min={1} max={21} unit="次 / 週" onChange={(value) => { setGoalTargetEdited(true); update({ weeklyGoalTarget: value }); }} /></StepCard>
           <StepCard title="每週最多三則智慧提醒">{([['expiringIngredients','即期食材'],['plannedMeals','已安排料理'],['weeklyRhythm','本週節奏']] as const).map(([key,label]) => <label className="check-row" key={key}><input type="checkbox" checked={profile.reminders[key]} onChange={(event) => update({ reminders: { ...profile.reminders, [key]: event.target.checked } })} />{label}</label>)}<p className="helper">21:00–09:00 不推播；Push 權限會在首次料理完成後才詢問。</p></StepCard>
           <PassportTicket profile={profile} isStamped={stamped} isSealDropped={sealDropped} />
         </>}
         {error && <p role="alert" className="onboarding-error">{error}</p>}
       </div></div>
 
-      <footer className="onboarding-actions"><button type="button" className="ghost" disabled={step === 1} onClick={() => { setMood("listen"); update({ currentStep: Math.max(1, step - 1) }); }}>‹ 上一步</button><small>{valid ? "資料會先保存在草稿" : "請完成本步必要資料"}</small><button type="button" className={`primary ${step === 5 && stamped ? "ready" : ""}`} disabled={!valid || busy || (step === 5 && stamped && !sealDropped)} onClick={step === 5 ? stampOrFinish : next}>{busy ? "儲存中…" : step === 5 ? stamped ? "啟程！進入今日" : "蓋章，成立主廚檔案" : "繼續 ›"}</button></footer>
+      <footer className="onboarding-actions"><button type="button" className="ghost" disabled={step === 1} onClick={() => { setMood("listen"); update({ currentStep: Math.max(1, step - 1) }); }}>‹ 上一步</button><small>{valid ? step === 4 && authStatus !== "signed-in" ? "繼續時會再次確認登入" : "資料會先保存在草稿" : "請完成本步必要資料"}</small><button type="button" className={`primary ${step === 5 && stamped ? "ready" : ""}`} disabled={!valid || busy || (step === 5 && stamped && !sealDropped)} onClick={step === 5 ? stampOrFinish : () => { void next(); }}>{busy ? step === 5 ? "儲存中…" : "確認中…" : step === 5 ? stamped ? "啟程！進入今日" : "蓋章，成立主廚檔案" : "繼續 ›"}</button></footer>
     </section>
   </main>;
 }

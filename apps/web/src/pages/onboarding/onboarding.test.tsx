@@ -1,3 +1,4 @@
+import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, test } from "vitest";
 import { EquipmentRadar } from "./EquipmentRadar";
@@ -5,8 +6,30 @@ import { ChefAvatar } from "./ChefAvatar";
 import { PassportTicket } from "./PassportTicket";
 import { emptyOnboardingDraft } from "../../shared/model/onboarding-draft";
 import { suggestWeeklyGoalTarget } from "./weekly-goal";
+import { completeOnboardingProfile, isOnboardingStepValid } from "./validation";
 
 describe("Chef Consultation Components", () => {
+  test("step 4 only verifies sign-in and completing onboarding never changes inventory", () => {
+    expect(isOnboardingStepValid(4, { ...emptyOnboardingDraft, currentStep: 4 })).toBe(true);
+    expect(completeOnboardingProfile({
+      ...emptyOnboardingDraft,
+      currentStep: 5,
+      cookingExperience: "advanced",
+      guidanceMode: "compact",
+      primaryGoalMetric: "self_cooked_servings",
+      inventoryReviewed: true,
+      hasNoInventory: true,
+    }, "2026-09-14T00:00:00.000Z")).toMatchObject({
+      status: "complete",
+      currentStep: 5,
+      cookingExperience: "beginner",
+      guidanceMode: "detailed",
+      primaryGoalMetric: "cooking_sessions",
+      inventoryReviewed: false,
+      hasNoInventory: false,
+      completedAt: "2026-09-14T00:00:00.000Z",
+    });
+  });
   test("weekly goal suggestion is current frequency plus one within the supported range",()=>{
     expect(suggestWeeklyGoalTarget(0)).toBe(1);
     expect(suggestWeeklyGoalTarget(1)).toBe(2);
@@ -41,6 +64,8 @@ describe("Chef Consultation Components", () => {
     expect(unstampedHtml).toContain("COOCOO CHEF PROFILE");
     expect(unstampedHtml).toContain("初火學徒");
     expect(unstampedHtml).toContain("從 0 EXP 開始");
+    expect(unstampedHtml).toContain("3 次 / 週");
+    expect(unstampedHtml).not.toContain("料理指引");
     expect(unstampedHtml).toContain("Cedarville Cursive");
     expect(unstampedHtml).not.toContain("sig-mask-anim");
     expect(unstampedHtml).not.toContain("重播簽名");
