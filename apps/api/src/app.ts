@@ -3,8 +3,8 @@ import { CatalogRepository } from './modules/catalog/repository';
 import { catalogRoutes } from './modules/catalog/routes';
 import { recommend } from './modules/catalog/recommendations';
 import { Elysia } from "elysia";
-import { brandSafeRecipes, CooCooService, createMealTask, deriveGrowthProfile, getRescuePlan, parseShoppingText, searchRecipes, withTodayMissions } from "@coocoo/core";
-import type { InventoryItem, MealTask, RecipeGeneration, RecipePackage } from "@coocoo/contracts";
+import { brandSafeRecipes, CooCooService, createMealTask, deriveGrowthProfile, getRescuePlan, parseShoppingText, searchRecipes, resolveShoppingTask, withTodayMissions } from "@coocoo/core";
+import type { InventoryItem, MealTask, RecipeGeneration, RecipePackage, ShoppingResolutionCommand } from "@coocoo/contracts";
 import { ContractSchemas } from "@coocoo/contracts";
 import { MemoryStateRepository } from "./shared/infrastructure/memory-state.repository";
 import { authenticateRequest, getSupabaseAdmin } from "./shared/infrastructure/supabase";
@@ -123,6 +123,28 @@ async function integratedState(authorization?:string){
   return {...base,session:{user:{id:user.id,email:user.email,displayName:user.email.split("@")[0]}},inventory,shoppingItems:shopping,fridgeProfile:fridge,cookware:(onboarding.cookware||[]).map((item:{id:string;type:string;capacity:string|null})=>({id:item.id,type:item.type,name:item.type,brand:"",model:"",capacity:item.capacity||"",wattage:0})),onboardingProfile,mealServings,mealPlan:mealPlan?.plan,recipePackages:mealPlan?.packages,weeklyGoal,expEvents,badgeAwards,growth:deriveGrowthProfile(expEvents,badgeAwards,counters),recipeFavoriteIds:(favoriteResult.data||[]).map(row=>row.recipe_id),cookingOutcomes,mealTasks:(taskResult.data||[]).map(row=>mealTaskFromRow(row as Record<string,unknown>)),reminderPreferences,habitProgress:{totalMeals:eaten.length,weeklyCompletions,events:eaten.filter(item=>item.eatenAt).map(item=>({outcomeId:item.cookingSessionId,createdAt:item.eatenAt!,weekKey:Object.keys(weeklyCompletions).find(key=>item.eatenAt!.slice(0,10)>=key)||item.eatenAt!.slice(0,10)}))}};
 }
 
+async function resolveShopping(command:ShoppingResolutionCommand, authorization?:string){
+  if(!cloudDataEnabled)return service.resolveShortage(command);
+  const user=await authenticateRequest(authorization);const client=getSupabaseAdmin();
+  if(!command.mealTaskId||command.shortageRevision===undefined)throw new Error("MEAL_TASK_REVISION_REQUIRED");
+  const prior=await client.from("restock_operations").select("request,result").eq("user_id",user.id).eq("operation_id",command.operationId).maybeSingle();
+  if(prior.error)throw prior.error;
+  if(prior.data){
+    const stored=prior.data.request as Record<string,unknown>;
+    if(Object.keys({...stored,...command}).some(key=>JSON.stringify(stored[key])!==JSON.stringify((command as Record<string,unknown>)[key])))throw new Error("OPERATION_CONFLICT");
+    return prior.data.result;
+  }
+  const state=await integratedState(authorization);
+  if(command.action==='replace'){
+    const {data,error}=await client.from("recipe_adjustment_previews").select("*").eq("user_id",user.id).eq("operation_id",command.adjustmentPreviewId??'00000000-0000-4000-8000-000000000000').maybeSingle();
+    if(error)throw error;
+    state.recipeAdjustmentPreviews=data?[{previewId:data.operation_id,originalRecipeId:data.original_recipe_id,adjustedRecipe:data.adjusted_recipe,changes:data.changes,missing:data.missing,safetyChecks:data.safety_checks,source:data.source,expiresAt:data.expires_at}]:[];
+  }
+  const next=resolveShoppingTask(state,command);
+  const {data,error}=await client.rpc("resolve_shopping_shortage_v2",{p_user_id:user.id,p_task_id:next.id,p_revision:command.shortageRevision,p_operation_id:command.operationId,p_request:command,p_shortages:next.shortages,p_status:next.status,p_recipe:command.action==='replace'?next.recipe:null});
+  if(error)throw new Error(error.message);return data;
+}
+
 export const app = new Elysia({ name: "coocoo-api" })
   .post("/api/v1/internal/catalog/tick",async({headers,set})=>{
     const bearer=headers.authorization?.replace(/^Bearer\s+/i,'');
@@ -139,6 +161,7 @@ export const app = new Elysia({ name: "coocoo-api" })
     else if(errorCode === "OWNER_ROLE_REQUIRED")set.status=403;
     else if(errorCode === "SETTINGS_CONFLICT")set.status=409;
     else if(errorCode === "MEAL_PLAN_CONFLICT" || errorCode === "MEAL_SLOT_OCCUPIED")set.status=409;
+    else if(errorCode === "MEAL_TASK_REVISION_CONFLICT")set.status=409;
     else set.status=422;
     return fail(error);
   })
@@ -176,7 +199,7 @@ export const app = new Elysia({ name: "coocoo-api" })
   .post("/api/v1/recipes/search",async({body,headers})=>{const state=cloudDataEnabled?await integratedState(headers.authorization):service.state();let favorites=new Set<string>();if(cloudDataEnabled){const user=await authenticateRequest(headers.authorization);const result=await getSupabaseAdmin().from("recipe_favorites").select("recipe_id").eq("user_id",user.id);if(result.error)throw result.error;favorites=new Set((result.data||[]).map((row)=>row.recipe_id));}return ok({items:searchRecipes(brandSafeRecipes,state.inventory,body.query,body.ingredientKeywords,favorites),notice:"可靠食譜庫優先；全符合排在部分符合之前。"})},{body:ContractSchemas.RecipeSearchRequestSchema})
   .put("/api/v1/recipes/:id/favorite",async({params,headers})=>{if(cloudDataEnabled){const user=await authenticateRequest(headers.authorization);const {error}=await getSupabaseAdmin().from("recipe_favorites").upsert({user_id:user.id,recipe_id:params.id});if(error)throw error;}else{const state=service.state();state.recipeFavoriteIds=Array.from(new Set([...(state.recipeFavoriteIds??[]),params.id]));repository.write(state);}return ok({recipeId:params.id,favorite:true})})
   .delete("/api/v1/recipes/:id/favorite",async({params,headers})=>{if(cloudDataEnabled){const user=await authenticateRequest(headers.authorization);const {error}=await getSupabaseAdmin().from("recipe_favorites").delete().eq("user_id",user.id).eq("recipe_id",params.id);if(error)throw error;}else{const state=service.state();state.recipeFavoriteIds=(state.recipeFavoriteIds??[]).filter((id)=>id!==params.id);repository.write(state);}return ok({recipeId:params.id,favorite:false})})
-  .post("/api/v1/recipes/:id/adjustments/preview",async({params,body,headers})=>{const state=cloudDataEnabled?await integratedState(headers.authorization):service.state();const recipe=brandSafeRecipes.find((item)=>item.id===params.id||item.recipeId===params.id);if(!recipe)throw new Error("RECIPE_NOT_FOUND");let reserved=false;let userId=state.session.user?.id??"00000000-0000-4000-8000-000000000001";if(cloudDataEnabled){userId=(await authenticateRequest(headers.authorization)).id;try{await aiUsageRepository.reserve(userId,body.operationId,"recipe_generation",await aiUsageRepository.hash({recipe:recipe.id,body}),process.env.OPENROUTER_MODEL||"google/gemini-3.7-flash",Number(process.env.RECIPE_AI_MAX_CALL_TWD||2));reserved=true;}catch(error){if(!(error instanceof Error&&(error.message.includes("AI_BUDGET_EXHAUSTED")||error.message.includes("AI_DAILY_LIMITED"))))throw error;}}const preview=await previewRecipeAdjustment(recipe,body,state.inventory,state.onboardingProfile?.restrictions??[],reserved?new OpenRouterJsonClient():undefined);if(reserved)await aiUsageRepository.settle(userId,body.operationId,preview.source==="openrouter"?"completed":"failed",preview.source==="openrouter"?(preview.costUsd??0)*Number(process.env.OPENROUTER_USD_TO_TWD_RATE||35):0,preview);if(cloudDataEnabled){const client=getSupabaseAdmin();const recipeWrite=await client.from("recipes").upsert({id:recipe.recipeId,user_id:userId,title:recipe.title,servings:recipe.servings,prep_minutes:recipe.prepMinutes,total_minutes:recipe.totalMinutes,cookware_types:recipe.cookwareTypes,ingredients:recipe.ingredients,steps:recipe.steps,safety_reviewed:true,source:"brand_safe"});if(recipeWrite.error)throw recipeWrite.error;const saved=await client.from("recipe_adjustment_previews").upsert({user_id:userId,operation_id:body.operationId,original_recipe_id:recipe.recipeId,adjusted_recipe:preview.adjustedRecipe,changes:preview.changes,missing:preview.missing,safety_checks:preview.safetyChecks,source:preview.source,expires_at:preview.expiresAt},{onConflict:"user_id,operation_id"});if(saved.error)throw saved.error;}else{const {costUsd:__,...storedPreview}=preview;state.recipeAdjustmentPreviews=[...(state.recipeAdjustmentPreviews??[]).filter((item)=>item.previewId!==storedPreview.previewId),storedPreview];repository.write(state);}const {costUsd:_,...publicPreview}=preview;return ok(publicPreview)},{body:ContractSchemas.RecipeAdjustmentRequestSchema})
+  .post("/api/v1/recipes/:id/adjustments/preview",async({params,body,headers})=>{const state=cloudDataEnabled?await integratedState(headers.authorization):service.state();const recipe=(state.mealTasks??[]).map(t=>t.recipe).find(item=>item.id===params.id||item.recipeId===params.id)??brandSafeRecipes.find((item)=>item.id===params.id||item.recipeId===params.id);if(!recipe)throw new Error("RECIPE_NOT_FOUND");let reserved=false;let userId=state.session.user?.id??"00000000-0000-4000-8000-000000000001";if(cloudDataEnabled){userId=(await authenticateRequest(headers.authorization)).id;try{await aiUsageRepository.reserve(userId,body.operationId,"recipe_generation",await aiUsageRepository.hash({recipe:recipe.id,body}),process.env.OPENROUTER_MODEL||"google/gemini-3.7-flash",Number(process.env.RECIPE_AI_MAX_CALL_TWD||2));reserved=true;}catch(error){if(!(error instanceof Error&&(error.message.includes("AI_BUDGET_EXHAUSTED")||error.message.includes("AI_DAILY_LIMITED"))))throw error;}}const preview=await previewRecipeAdjustment(recipe,body,state.inventory,state.onboardingProfile?.restrictions??[],reserved?new OpenRouterJsonClient():undefined);if(reserved)await aiUsageRepository.settle(userId,body.operationId,preview.source==="openrouter"?"completed":"failed",preview.source==="openrouter"?(preview.costUsd??0)*Number(process.env.OPENROUTER_USD_TO_TWD_RATE||35):0,preview);if(cloudDataEnabled){const client=getSupabaseAdmin();const recipeWrite=await client.from("recipes").upsert({id:recipe.recipeId,user_id:userId,title:recipe.title,servings:recipe.servings,prep_minutes:recipe.prepMinutes,total_minutes:recipe.totalMinutes,cookware_types:recipe.cookwareTypes,ingredients:recipe.ingredients,steps:recipe.steps,safety_reviewed:true,source:"brand_safe"});if(recipeWrite.error)throw recipeWrite.error;const saved=await client.from("recipe_adjustment_previews").upsert({user_id:userId,operation_id:body.operationId,original_recipe_id:recipe.recipeId,adjusted_recipe:preview.adjustedRecipe,changes:preview.changes,missing:preview.missing,safety_checks:preview.safetyChecks,source:preview.source,expires_at:preview.expiresAt},{onConflict:"user_id,operation_id"});if(saved.error)throw saved.error;}else{const {costUsd:__,...storedPreview}=preview;state.recipeAdjustmentPreviews=[...(state.recipeAdjustmentPreviews??[]).filter((item)=>item.previewId!==storedPreview.previewId),storedPreview];repository.write(state);}const {costUsd:_,...publicPreview}=preview;return ok(publicPreview)},{body:ContractSchemas.RecipeAdjustmentRequestSchema})
   .get("/api/v1/meal-tasks",async({headers})=>{if(cloudDataEnabled){const user=await authenticateRequest(headers.authorization);const {data,error}=await getSupabaseAdmin().from("meal_tasks").select("*,recipes(*)").eq("user_id",user.id).order("updated_at",{ascending:false});if(error)throw error;return ok((data??[]).map((row)=>mealTaskFromRow(row as Record<string,unknown>)));}return ok(service.state().mealTasks??[])})
   .post("/api/v1/meal-tasks",async({body,headers,set})=>{
     const state=cloudDataEnabled?await integratedState(headers.authorization):service.state();
@@ -209,6 +232,14 @@ export const app = new Elysia({ name: "coocoo-api" })
     }
     state.mealTasks=[...(state.mealTasks??[]).filter((item)=>item.operationId!==task.operationId),task];repository.write(state);return ok(task);
   },{body:ContractSchemas.MealTaskCreateSchema})
+  .patch("/api/v1/meal-tasks/:id/shortages/:shortageId",async({params,body,headers,set})=>{
+    try{return ok(await resolveShopping({...body,mealTaskId:params.id,...(body.action!=="replan_meal"?{shortageId:params.shortageId}:{})} as ShoppingResolutionCommand,headers.authorization));}
+    catch(error){set.status=error instanceof Error&&/CONFLICT/.test(error.message)?409:422;return fail(error)}
+  },{body:ContractSchemas.ShoppingResolutionCommandSchema})
+  .post("/api/v1/meal-tasks/replan",async({body,headers,set})=>{
+    try{if(body.action!=="replan_meal")throw new Error("INVALID_ACTION");return ok(await resolveShopping(body,headers.authorization));}
+    catch(error){set.status=error instanceof Error&&/CONFLICT/.test(error.message)?409:422;return fail(error)}
+  },{body:ContractSchemas.ShoppingResolutionCommandSchema})
   .get("/api/v1/chef-chat/sessions",async({headers})=>{if(cloudDataEnabled){const user=await authenticateRequest(headers.authorization);const {data,error}=await getSupabaseAdmin().from("chef_chat_sessions").select("*,chef_chat_messages(*)").eq("user_id",user.id).order("updated_at",{ascending:false}).limit(10);if(error)throw error;return ok((data??[]).map((session)=>({id:session.id,title:session.title,source:session.source,createdAt:session.created_at,updatedAt:session.updated_at,messages:(session.chef_chat_messages??[]).sort((a:{created_at:string},b:{created_at:string})=>a.created_at.localeCompare(b.created_at)).map((message:{id:string;role:"user"|"assistant"|"system";content:string;created_at:string})=>({id:message.id,role:message.role,content:message.content,createdAt:message.created_at}))})));}return ok((service.state().chefChatSessions??[]).slice(-10).reverse())})
   .post("/api/v1/chef-chat/sessions",async({body,headers})=>{const state=cloudDataEnabled?await integratedState(headers.authorization):service.state();let reserved=false;let userId=state.session.user?.id??"00000000-0000-4000-8000-000000000001";if(cloudDataEnabled){userId=(await authenticateRequest(headers.authorization)).id;try{await aiUsageRepository.reserve(userId,body.operationId,"chef_chat",await aiUsageRepository.hash(body),process.env.OPENROUTER_MODEL||"google/gemini-3.7-flash",Number(process.env.CHEF_CHAT_AI_MAX_CALL_TWD||2));reserved=true;}catch(error){if(!(error instanceof Error&&(error.message.includes("AI_BUDGET_EXHAUSTED")||error.message.includes("AI_DAILY_LIMITED"))))throw error;}}const answer=await answerChefChat({inventory:state.inventory,restrictions:state.onboardingProfile?.restrictions??[],availableMinutes:state.onboardingProfile?.availableMinutes??30,message:body.message},reserved?new OpenRouterJsonClient():undefined);if(reserved)await aiUsageRepository.settle(userId,body.operationId,answer.source==="openrouter"?"completed":"failed",answer.source==="openrouter"?answer.costUsd*Number(process.env.CATALOG_USD_TO_TWD_RATE||35):0,answer);const now=new Date().toISOString();const session={id:crypto.randomUUID(),title:body.message.slice(0,24),source:answer.source,createdAt:now,updatedAt:now,messages:[{id:crypto.randomUUID(),role:"user" as const,content:body.message,createdAt:now},{id:crypto.randomUUID(),role:"assistant" as const,content:answer.reply,createdAt:now}]};if(cloudDataEnabled){const client=getSupabaseAdmin();const saved=await client.from("chef_chat_sessions").insert({id:session.id,user_id:userId,title:session.title,source:session.source}).select().single();if(saved.error)throw saved.error;const messages=await client.from("chef_chat_messages").insert(session.messages.map((message)=>({id:message.id,user_id:userId,session_id:session.id,role:message.role,content:message.content})));if(messages.error)throw messages.error;}else{state.chefChatSessions=[...(state.chefChatSessions??[]).slice(-9),session];repository.write(state);}return ok(session)},{body:ContractSchemas.ChefChatSendSchema})
   .delete("/api/v1/chef-chat/sessions/:id",async({params,headers})=>{if(cloudDataEnabled){const user=await authenticateRequest(headers.authorization);const {error}=await getSupabaseAdmin().from("chef_chat_sessions").delete().eq("id",params.id).eq("user_id",user.id);if(error)throw error;}else{const state=service.state();state.chefChatSessions=(state.chefChatSessions??[]).filter((session)=>session.id!==params.id);repository.write(state);}return ok({id:params.id})})
@@ -277,7 +308,15 @@ export const app = new Elysia({ name: "coocoo-api" })
     service.deleteShopping(params.id);
     return ok({ id: params.id });
   })
-  .post("/api/v1/shopping/restock", async ({headers}) => cloudDataEnabled?ok(await shoppingRepository.restock((await authenticateRequest(headers.authorization)).id)):ok(service.restock()))
+  .post("/api/v1/shopping/restock", async ({headers,body,set}) => {
+    if(body.purchasedItems.some((item)=>item.shortageId&&!item.expiresOn)){set.status=422;return fail(new Error("EXPIRY_REQUIRED"))}
+    if(cloudDataEnabled){
+      const user=await authenticateRequest(headers.authorization);
+      try{return ok(await shoppingRepository.restock(user.id,body))}
+      catch(error){set.status=error instanceof Error&&error.message.includes("MEAL_TASK_REVISION_CONFLICT")?409:422;return fail(error)}
+    }
+    return ok(service.restock(body));
+  },{body:ContractSchemas.MealTaskRestockCommandSchema})
   .post(
     "/api/v1/shopping/parse",
     ({ body }) => ok(parseShoppingText(body.text)),

@@ -207,6 +207,8 @@ export const handlers = [
   http.post("/api/v1/meal-tasks",async({request})=>{try{const body=validated(ContractSchemas.MealTaskCreateSchema,await request.json());const state=service.state();if(state.mealTasks?.some((task)=>task.operationId===body.operationId))return ok(state.mealTasks.find((task)=>task.operationId===body.operationId));const baseRecipe=brandSafeRecipes.find((item)=>item.id===body.recipePackageId||item.recipeId===body.recipePackageId);if(!baseRecipe)throw new Error("RECIPE_NOT_FOUND");const preview=body.adjustmentPreviewId?(state.recipeAdjustmentPreviews??[]).find((item)=>item.previewId===body.adjustmentPreviewId&&item.originalRecipeId===baseRecipe.recipeId&&Date.parse(item.expiresAt)>Date.now()):undefined;if(body.adjustmentPreviewId&&!preview)throw new Error("ADJUSTMENT_PREVIEW_INVALID");const task=createMealTask(body,preview?.adjustedRecipe??baseRecipe,state.inventory,state.onboardingProfile?.restrictions??[]);state.mealTasks=[...(state.mealTasks??[]),task];new BrowserStateRepository().write(state);return ok(task,201)}catch(e){return error(e)}}),
   http.post("/api/v1/meal-servings/:id/eat",async({params,request})=>{try{const body=validated(ContractSchemas.PreparedServingEatSchema,await request.json());return ok(service.eatPreparedServing(String(params.id),body.operationId));}catch(e){return error(e)}}),
   http.get("/api/v1/meal-tasks",()=>ok(service.state().mealTasks??[])),
+  http.patch("/api/v1/meal-tasks/:id/shortages/:shortageId",async({params,request})=>{try{const body=validated(ContractSchemas.ShoppingResolutionCommandSchema,await request.json());const task=service.resolveShortage({...body,shortageId:String(params.shortageId)} as never);if(!task)throw new Error("MEAL_TASK_NOT_FOUND");return ok(task);}catch(e){return error(e)}}),
+  http.post("/api/v1/meal-tasks/replan",async({request})=>{try{const body=validated(ContractSchemas.ShoppingResolutionCommandSchema,await request.json());const task=service.resolveShortage(body);if(!task)throw new Error("MEAL_TASK_NOT_FOUND");return ok(task);}catch(e){return error(e)}}),
   http.get("/api/v1/chef-chat/sessions",()=>ok((service.state().chefChatSessions??[]).slice(-10).reverse())),
   http.post("/api/v1/chef-chat/sessions",async({request})=>{try{const body=validated(ContractSchemas.ChefChatSendSchema,await request.json());const state=service.state();const today=new Date().toISOString().slice(0,10);const used=(state.chefChatSessions??[]).flatMap((session)=>session.messages).filter((message)=>message.role==="user"&&message.createdAt.startsWith(today)).length;if(used>=30)throw new Error("AI_DAILY_LIMITED");const now=new Date().toISOString();const session={id:crypto.randomUUID(),title:body.message.slice(0,24),source:"rules" as const,createdAt:now,updatedAt:now,messages:[{id:crypto.randomUUID(),role:"user" as const,content:body.message,createdAt:now},{id:crypto.randomUUID(),role:"assistant" as const,content:"AI 目前未連線，我先用規則型協助：從即期食材選一項，再挑 30 分鐘內、符合廚具與飲食限制的食譜。你也可以到食譜頁用多食材搜尋。",createdAt:now}]};state.chefChatSessions=[...(state.chefChatSessions??[]).slice(-9),session];new BrowserStateRepository().write(state);return ok(session,201)}catch(e){return error(e)}}),
   http.delete("/api/v1/chef-chat/sessions/:id",({params})=>{const state=service.state();state.chefChatSessions=(state.chefChatSessions??[]).filter((session)=>session.id!==params.id);new BrowserStateRepository().write(state);return ok({id:params.id})}),
@@ -298,7 +300,21 @@ export const handlers = [
     service.deleteShopping(String(params.id));
     return ok({ id: params.id });
   }),
-  http.post("/api/v1/shopping/restock", () => ok(service.restock())),
+  http.post("/api/v1/shopping/restock", async ({ request }) => {
+    try {
+      const raw = await request.text();
+      const body = raw ? (JSON.parse(raw) as { operationId?: string; purchasedItems?: unknown }) : null;
+      if (body?.operationId && Array.isArray(body.purchasedItems)) {
+        return ok(service.restock(validated(ContractSchemas.MealTaskRestockCommandSchema, body)));
+      }
+      return ok(service.restock());
+    } catch (e) {
+      if (e instanceof Error && e.message === "MEAL_TASK_REVISION_CONFLICT") {
+        return new Response(JSON.stringify({ error: { code: "MEAL_TASK_REVISION_CONFLICT", message: "任務已更新，請刷新後重試", requestId: crypto.randomUUID() } }), { status: 409, headers: { "content-type": "application/json" } });
+      }
+      return error(e);
+    }
+  }),
   http.post("/api/v1/shopping/parse", async ({ request }) => {
     try {
       return ok(

@@ -41,6 +41,7 @@ export async function previewRecipeAdjustment(recipe: RecipePackage, request: Re
       source = "rules";
     }
   }
+  if(request.replacementRequests.length&&source!=="openrouter")throw new Error("REPLACEMENT_PREVIEW_UNAVAILABLE");
   assertRecipeSafety(adjustedRecipe, restrictions);
   const stock = new Map(inventory.map((item) => [normalize(item.ingredientKey), item.qty]));
   const missing = adjustedRecipe.ingredients.filter((item) => !item.isPantryStaple).flatMap((item) => {

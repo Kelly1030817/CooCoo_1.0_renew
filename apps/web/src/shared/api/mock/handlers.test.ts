@@ -237,6 +237,38 @@ describe("MSW contract adapter", () => {
     tasks=(await (await api("/meal-tasks")).json()) as {data:Array<{id:string;status:string}>};
     expect(tasks.data.find((item)=>item.id===taskId)?.status).toBe("complete");
   });
+  test("shortage bridge is idempotent and command restock replays without double intake", async () => {
+    const recipeId = "11111111-1111-4111-8111-111111111111";
+    const taskResponse = await api("/meal-tasks", {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ operationId: crypto.randomUUID(), recipePackageId: recipeId, currentMeal: { date: "2026-09-13", slot: "dinner", servings: 1 }, nextMeal: { strategy: "skip" } }),
+    });
+    const task = (await taskResponse.json()) as { data: { id: string; revision: number; status: string; shortages: Array<{ id: string; name: string; quantity: number; unit: string }> } };
+    expect(task.data.status).toBe("needs_shopping");
+    const shortage = task.data.shortages[0];
+    const first = await api("/shopping-items", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: shortage.name, qty: shortage.quantity, unit: shortage.unit, checked: false, status: "MealTask 缺料", estCost: 40, shortageId: shortage.id, source: "task" }) });
+    const second = await api("/shopping-items", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: shortage.name, qty: shortage.quantity, unit: shortage.unit, checked: false, status: "MealTask 缺料", estCost: 40, shortageId: shortage.id, source: "task" }) });
+    const firstBody = (await first.json()) as { data: { id: string; shortageId: string } };
+    const secondBody = (await second.json()) as { data: { id: string; shortageId: string } };
+    expect(secondBody.data.id).toBe(firstBody.data.id);
+    const purchasedItems = [];
+    for (const item of task.data.shortages) {
+      const created = await api("/shopping-items", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: item.name, qty: item.quantity, unit: item.unit, checked: false, status: "MealTask 缺料", estCost: 40, shortageId: item.id, source: "task" }) });
+      const createdBody = (await created.json()) as { data: { id: string } };
+      await api(`/shopping-items/${createdBody.data.id}`, { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: item.name, qty: item.quantity, unit: item.unit, checked: true, status: "MealTask 缺料", estCost: 40, shortageId: item.id, source: "task" }) });
+      purchasedItems.push({ shoppingItemId: createdBody.data.id, shortageId: item.id, actualQuantity: item.quantity, actualUnit: item.unit, actualPrice: 40, storageLocation: "cold", expiresOn: "2026-09-20" });
+    }
+    const operationId = crypto.randomUUID();
+    const command = { operationId, mealTaskId: task.data.id, shortageRevision: task.data.revision, purchasedItems };
+    const restockResponse = await api("/shopping/restock", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(command) });
+    const restockBody = (await restockResponse.json()) as { data: { replayed: boolean; count: number; mealTaskStatus: string; nextActions: string[] } };
+    expect(restockBody.data).toMatchObject({ replayed: false, mealTaskStatus: "ready", nextActions: ["return_to_task", "start_cooking"] });
+    const replay = await api("/shopping/restock", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(command) });
+    const replayBody = (await replay.json()) as { data: { replayed: boolean; count: number } };
+    expect(replayBody.data).toMatchObject({ replayed: true, count: restockBody.data.count });
+    const conflict = await api("/shopping/restock", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...command, operationId: crypto.randomUUID(), shortageRevision: task.data.revision + 5 }) });
+    expect(conflict.status).toBe(409);
+  });
 
   test("lists only the latest ten chef chats and deletes one", async () => {
     for(let index=0;index<11;index+=1){

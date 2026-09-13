@@ -16,7 +16,8 @@ export function assertRecipeSafety(recipe:RecipePackage,restrictions:DietaryRest
 export function createMealTask(command:MealTaskCreate,recipe:RecipePackage,inventory:InventoryItem[],restrictions:DietaryRestriction[],now=new Date().toISOString()):MealTask{
   assertRecipeSafety(recipe,restrictions);
   const factor=command.currentMeal.servings/Math.max(1,recipe.servings)+(command.nextMeal.strategy==="cook_extra"?command.nextMeal.servings/Math.max(1,recipe.servings):0);
-  const remaining=inventory.map((item)=>({...item}));
+  const day=now.slice(0,10);
+  const remaining=inventory.filter(item=>item.qty>0&&item.expiresOn&&item.expiresOn>=day&&Number.isFinite(Date.parse(item.lastConfirmedAt))&&(Date.parse(now)-Date.parse(item.lastConfirmedAt))/86400000<(item.chamber==="cold"?7:30)).map((item)=>({...item}));
   const shortages=recipe.ingredients.filter((item)=>!item.isPantryStaple).flatMap((item)=>{
     const required=item.quantity*factor;
     let available=0;
