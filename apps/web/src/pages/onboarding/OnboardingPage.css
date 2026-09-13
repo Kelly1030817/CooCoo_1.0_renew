@@ -647,9 +647,9 @@
   .onboarding-actions small { display: none; }
 }
 
-@media (min-width: 700px) {
+@media (min-width: 600px) {
   .onboarding-shell {
-    width: min(100%, 760px);
+    width: min(calc(100% - 32px), 760px);
   }
 
   .onboarding-content {
@@ -667,8 +667,24 @@
   }
 
   .onboarding-actions {
-    max-width: 760px;
+    width: min(calc(100% - 32px), 760px);
+    max-width: none;
     padding-right: 22px;
     padding-left: 22px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .onboarding-shell,
+  .onboarding-actions {
+    width: min(calc(100% - 64px), 1080px);
+  }
+
+  .onboarding-content {
+    padding: 28px 28px 110px;
+  }
+
+  .onboarding-stack {
+    gap: 18px;
   }
 }
