@@ -42,7 +42,6 @@ export function applyOnboardingProfile(
 ) {
   const next = structuredClone(state);
   next.onboardingProfile = structuredClone(profile);
-  if (profile.status === "complete" && profile.inventoryReviewed && profile.hasNoInventory) next.inventory = [];
   const now = (options.now ?? new Date()).toISOString();
   next.weeklyGoal = {
     ...next.weeklyGoal,

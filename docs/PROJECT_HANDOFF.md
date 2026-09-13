@@ -48,7 +48,7 @@
 - `shopping_items.shortage_id/source`、`restock_operations` 與 `restock_checked_shopping_v2` 是採買票根的正式持久化邊界；`pantry` 類別入庫到常溫位置。
 - 冰箱頁只管理食材庫存；不再提供冰箱品牌、型號、總容量、容量佔比或冷藏／冷凍比例設定。
 - `fridge_profiles` 由 migration 移除；食材庫存仍由 `inventory_batches` 管理。
-- Onboarding 寫入既有 `profiles`、`cookware`、`dietary_restrictions`、`weekly_goals_v2`、`notification_preferences`；確認空箱時依既有 RPC 規則清除該帳號庫存。
+- Onboarding 寫入既有 `profiles`、`cookware`、`dietary_restrictions`、`weekly_goals_v2`、`notification_preferences`，不得新增、修改或刪除 `inventory_batches`。`hasNoInventory` 只表示當下沒有要登錄的食材，不是清空既有庫存的指令；詳見 [`product-decisions/2026-09-13-onboarding-inventory-preservation.md`](product-decisions/2026-09-13-onboarding-inventory-preservation.md)。
 - OCR 仍先建立草稿，使用者逐項確認數量、單位、位置與期限後才入庫。
 - 任務為 `/state` 回應的衍生資料，不可由前端切換，也不直接寫入資料庫。
 
