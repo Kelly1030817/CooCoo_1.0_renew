@@ -271,9 +271,25 @@ export function TodayPage() {
       {generalError && <p className="today-warning" role="alert">{generalError}</p>}
       {ticketMode === "purchase" && purchaseError && <p className="today-warning" role="alert">{purchaseError}</p>}
 
-      {/* 1. 今日頁面 Header 問候與低體力切換 */}
+      {/* HUD：主廚職階與 EXP 進度（置於標題上方，對齊採買頁樣式） */}
+      <section className="today-hud" aria-label="主廚職階與 EXP">
+        <div className="hud-row">
+          <div className="hud-chef">
+            <span className="hud-avatar material-symbols-outlined" aria-hidden="true">local_fire_department</span>
+            <div className="hud-chef-text">
+              <strong>{rank.name}</strong>
+              <small>{nextBadge ? `下一枚 · ${nextBadge.title} ${nextBadge.current}/${nextBadge.target}` : nextRank ? `距下一職階還有 ${nextRank.threshold - totalExp} EXP` : "已達最高職階"}</small>
+            </div>
+          </div>
+          <button type="button" className="hud-exp" onClick={openChefConsultation}>EXP {totalExp}</button>
+        </div>
+        <div className="hud-progress" aria-hidden="true"><span style={{ width: `${xpPercent}%` }} /></div>
+        <div className="hud-meta"><span>職階進度</span><span>{totalExp} / {nextRank?.threshold ?? totalExp}</span></div>
+      </section>
+
+      {/* 1. 今日頁面 Header 問候與低體力切換（置於標題右側） */}
       <section className="today-intro">
-        <div>
+        <div className="today-title-wrap">
           <h2>
             先別想一整週，
             <br />
@@ -289,35 +305,23 @@ export function TodayPage() {
           }}
           className={`energy-toggle ${energyLow ? "active" : ""}`}
           aria-pressed={energyLow}
+          aria-label={energyLow ? "已開啟低體力模式" : "切換低體力模式"}
         >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <rect x="2" y="6" width="17" height="12" rx="3" />
+            <line x1="22" x2="22" y1="10" y2="14" />
+            {energyLow ? (
+              <line x1="6" x2="6" y1="10" y2="14" strokeWidth="2.5" stroke="currentColor" />
+            ) : (
+              <>
+                <line x1="6" x2="6" y1="10" y2="14" />
+                <line x1="10" x2="10" y1="10" y2="14" />
+                <line x1="14" x2="14" y1="10" y2="14" />
+              </>
+            )}
           </svg>
-          <span>{energyLow ? "低體力中" : "今天有點累"}</span>
+          <span>{energyLow ? "低體力中" : "今日有點累"}</span>
         </button>
-      </section>
-
-      {/* HUD：主廚職階與 EXP 進度 */}
-      <section className="today-hud" aria-label="主廚職階與 EXP">
-        <div className="hud-row">
-          <div className="hud-chef">
-            <span className="hud-avatar" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z" />
-                <line className="chef-eyes" x1="9" y1="12" x2="9.01" y2="12" />
-                <line className="chef-eyes" x1="15" y1="12" x2="15.01" y2="12" />
-                <line x1="6" y1="17" x2="18" y2="17" />
-              </svg>
-            </span>
-            <div className="hud-chef-text">
-              <strong>{rank.name}</strong>
-              <small>{nextRank ? `距下一職階還有 ${nextRank.threshold - totalExp} EXP` : "已達最高職階"}</small>
-            </div>
-          </div>
-          <button type="button" className="hud-xp" onClick={openChefConsultation}>{totalExp} EXP</button>
-        </div>
-        <div className="hud-bar" aria-hidden="true"><span style={{ width: `${xpPercent}%` }} /></div>
-        <div className="hud-meta"><span>{rank.threshold}</span><span>{nextRank ? `下一目標 ${nextRank.threshold} EXP` : "最高職階 900 EXP"}</span></div>
       </section>
 
       {/* 主任務票券 */}

@@ -5,22 +5,36 @@
   color: #1c1c11;
 }
 
+.recipes-page > header {
+  margin: 4px 0 16px;
+}
+
+.recipes-page > header .eyebrow {
+  margin: 0 0 4px;
+  color: #9a442d;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
 .recipes-page > header h2 {
   margin: 0;
   color: #293c4e;
-  font-family: Georgia, "Noto Serif TC", serif;
-  font-size: clamp(32px, 7vw, 48px);
-  line-height: 1.08;
-  letter-spacing: -0.04em;
+  font-family: "Plus Jakarta Sans", "Noto Sans TC", sans-serif;
+  font-size: clamp(22px, 5vw, 28px);
+  font-weight: 900;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
   text-wrap: balance;
 }
 
 .recipes-page > header > p:last-child {
   max-width: 620px;
-  margin: 10px 0 0;
-  color: #817a6e;
+  margin: 4px 0 0;
+  color: #716b60;
   font-size: 12px;
-  line-height: 1.65;
+  line-height: 1.5;
 }
 
 .recipe-tabs {
@@ -128,8 +142,9 @@
 .recipe-results h3 {
   margin: 7px 0 3px;
   color: #293c4e;
-  font-family: Georgia, "Noto Serif TC", serif;
-  font-size: 19px;
+  font-family: "Plus Jakarta Sans", "Noto Sans TC", sans-serif;
+  font-size: 17px;
+  font-weight: 900;
 }
 
 .recipe-results p,
@@ -191,8 +206,8 @@
 
 .compose-panel > header h3 {
   color: #293c4e;
-  font-family: Georgia, "Noto Serif TC", serif;
-  font-size: 19px;
+  font-family: "Plus Jakarta Sans", "Noto Sans TC", sans-serif;
+  font-size: 18px;
   font-weight: 900;
 }
 

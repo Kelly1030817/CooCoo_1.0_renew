@@ -1,6 +1,6 @@
 /* CooCoo Fridge Page - Scheme D (清新小資快手 · 湖水綠 #2a9d8f 對齊 + 鮮活警戒橘 #ea580c 警報) */
 .fridge-page {
-  --fridge-canvas-bg: #fcfbf4;
+  --fridge-canvas-bg: #fdfae7;
   --cold-chamber-bg: #e6f5f4;
   --cold-chamber-border: #bce3df;
   --cold-chamber-title: #1b6b61;
@@ -16,8 +16,8 @@
   --pantry-chamber-title: #76572b;
   --urgent-bg: #fff3e6;
   --urgent-border: #fed7aa;
-  --urgent-title: #c2410c;
-  --urgent-btn-bg: #ea580c;
+  --urgent-title: #9a442d;
+  --urgent-btn-bg: #9a442d;
   --urgent-btn-text: #ffffff;
   --card-border: #eee8dd;
   --text-main: #1f1c1a;
@@ -33,12 +33,69 @@
   margin: 0 auto;
 }
 
+.fridge-page .fridge-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 4px 0 16px;
+}
+
+.fridge-page .fridge-heading .eyebrow {
+  margin: 0 0 4px;
+  color: #9a442d;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.fridge-page .fridge-heading h2 {
+  margin: 0;
+  color: #293c4e;
+  font-family: "Plus Jakarta Sans", "Noto Sans TC", sans-serif;
+  font-size: clamp(22px, 5vw, 28px);
+  font-weight: 900;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+}
+
+.fridge-page .fridge-heading .fridge-subtitle {
+  margin: 4px 0 0;
+  color: #716b60;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.fridge-page .fridge-add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+  border-radius: 99px;
+  background: #55755b;
+  border: 0;
+  padding: 6px 14px;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 900;
+  flex-shrink: 0;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.fridge-page .fridge-add-btn:hover {
+  filter: brightness(1.08);
+}
+
 .fridge-page .urgent-section {
   background-color: var(--urgent-bg);
   border: 1.5px solid var(--urgent-border);
   border-radius: 1.25rem;
   padding: 1rem;
-  box-shadow: 0 2px 6px rgba(234, 88, 12, 0.08);
+  box-shadow: 0 2px 6px rgba(154, 68, 45, 0.12);
 }
 
 .fridge-page .urgent-btn {
@@ -52,6 +109,27 @@
 }
 .fridge-page .urgent-btn:active {
   transform: scale(0.98);
+}
+
+.fridge-page .chamber-accordion-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 0.5rem;
+  transition: opacity 0.15s ease;
+}
+.fridge-page .chamber-accordion-toggle:hover {
+  opacity: 0.85;
+}
+.fridge-page .chamber-accordion-toggle:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 4px;
 }
 
 .fridge-page .cold-chamber {
@@ -160,7 +238,7 @@
 .fridge-page .inventory-status-line { margin-top: 0.08rem; color: #92400e; font-size: 0.62rem; font-weight: 800; }
 .fridge-page .inventory-tags { display: flex; flex-wrap: wrap; gap: 0.25rem; margin-top: 0.28rem; }
 .fridge-page .inventory-tag { border-radius: 999px; background: #f5f5f4; padding: 0.12rem 0.42rem; color: #57534e; font-size: 0.56rem; font-weight: 800; }
-.fridge-page .inventory-tag.is-stale { background: #fff1f2; color: #be123c; }
+.fridge-page .inventory-tag.is-stale { background: #fff0e6; color: #9a442d; }
 .fridge-page .inventory-tag.is-unpriced { background: #fffbeb; color: #a16207; }
 .fridge-page .ledger-toggle { flex: 0 0 auto; border-left: 1px solid #e7e5e4; padding-left: 0.55rem; color: #78716c; font-size: 0.6rem; font-weight: 900; }
 .fridge-page .ledger-toggle::after { content: "＋"; margin-left: 0.18rem; }
@@ -172,7 +250,7 @@
 .fridge-page .batch-sequence i { margin-top: 0.2rem; width: 1px; height: 1.7rem; background: #d6d3d1; }
 .fridge-page .fifo-tag,.fridge-page .stale-tag { border-radius: 999px; padding: 0.08rem 0.35rem; font-size: 0.52rem; font-weight: 900; }
 .fridge-page .fifo-tag { background: #dcfce7; color: #166534; }
-.fridge-page .stale-tag { background: #ffe4e6; color: #be123c; }
+.fridge-page .stale-tag { background: #fff0e6; color: #9a442d; }
 .fridge-page .batch-actions { display: flex; flex: 0 0 auto; flex-direction: column; align-items: flex-end; gap: 0.25rem; }
 .fridge-page .batch-actions button { color: #1b6b61; font-size: 0.58rem; font-weight: 900; }
 .fridge-page .batch-actions button.danger { color: #a8a29e; }
