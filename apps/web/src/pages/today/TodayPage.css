@@ -1,1613 +1,285 @@
 .today-page {
-  width: min(100%, 820px);
-  margin: auto;
-  padding-bottom: 48px;
-  font-family: "Plus Jakarta Sans", "Noto Sans TC", sans-serif;
-  color: #1c1c11;
-}
-
-/* 1. Header greeting & energy toggle */
-.today-page .today-intro {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 16px;
-  margin: 12px 0 20px;
-}
-
-.today-page .today-intro .eyebrow {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin: 0 0 6px;
-  color: #9a442d;
-  font-size: 11px;
-  font-weight: 900;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-}
-
-.today-page .today-intro .eyebrow-dot {
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #9a442d;
-}
-
-.today-page .today-intro h2 {
-  margin: 0;
-  color: #293c4e;
-  font-family: "Plus Jakarta Sans", "Noto Sans TC", sans-serif;
-  font-size: clamp(26px, 6vw, 38px);
-  font-weight: 900;
-  line-height: 1.18;
-  letter-spacing: -0.03em;
-}
-
-.today-page .energy-toggle {
-  display: flex;
-  min-height: 42px;
-  align-items: center;
-  gap: 6px;
-  border: 1px solid #d8cdbb;
-  border-radius: 9999px;
-  background: #fff;
-  padding: 8px 14px;
-  color: #34465b;
-  font-size: 12px;
-  font-weight: 800;
-  white-space: nowrap;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  transition: all 0.2s ease;
-  cursor: pointer;
-}
-
-.today-page .energy-toggle:active {
-  transform: scale(0.96);
-}
-
-.today-page .energy-toggle.active {
-  border-color: #34465b;
-  background: #34465b;
-  color: #fff;
-}
-
-.today-page .energy-toggle span {
-  font-size: 15px;
-}
-
-/* Pocket Chef CooCoo Consultation Entry */
-.today-page .chef-consultation-capsule {
-  margin: 0 0 16px;
-}
-
-@keyframes chefBlink {
-  0%, 88%, 100% { transform: scaleY(1); }
-  94% { transform: scaleY(0.12); }
-}
-
-.today-page .chef-eyes {
-  animation: chefBlink 4.2s infinite;
-  transform-origin: center;
-}
-
-/* 2. Notification capsule: 熟食庫存 (溫和綠色提醒) */
-.today-page .cooked-inventory-capsule {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  --today-bg: #fdfae7;
+  --today-card: #fffdf8;
+  --today-ink: #1c1c11;
+  --today-muted: #716b60;
+  --today-line: #d9cab2;
+  --today-primary: #9a442d;
+  --today-primary-ink: #6f2f20;
+  --today-stub: #34465b;
+  --today-stub-ink: #f4ce8d;
+  display: grid;
+  width: min(100%, 430px);
   gap: 12px;
-  margin-bottom: 16px;
-  border: 1px solid #b8ebd1;
-  border-radius: 16px;
-  background: #f0f7f3;
-  padding: 12px 14px;
-  box-shadow: 0 2px 6px rgba(56, 103, 83, 0.06);
+  margin: 0 auto;
+  padding: 0 0 24px;
+  color: var(--today-ink);
+  font-family: "Plus Jakarta Sans", "Noto Sans TC", sans-serif;
 }
 
-.today-page .cooked-capsule-info {
+.today-hud {
+  margin: 0 -15px 2px;
+  border-bottom: 1px solid #ebd9c6;
+  background: color-mix(in srgb, var(--today-card) 95%, transparent);
+  padding: 6px 16px 10px;
+}
+
+.hud-row,
+.hud-chef,
+.hud-meta,
+.ticket-cta,
+.meal-tags,
+.ticket-rewards,
+.mmeta {
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-width: 0;
 }
 
-.today-page .cooked-capsule-icon {
+.hud-row { justify-content: space-between; gap: 10px; }
+.hud-chef { gap: 8px; min-width: 0; }
+.hud-avatar {
   display: grid;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   place-items: center;
+  flex: 0 0 auto;
   border-radius: 50%;
-  background: rgba(56, 103, 83, 0.14);
-  font-size: 16px;
-  flex-shrink: 0;
+  background: #f2eadb;
+  color: var(--today-primary);
 }
-
-.today-page .cooked-capsule-text {
-  min-width: 0;
-}
-
-.today-page .cooked-capsule-header {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.today-page .cooked-capsule-label {
-  color: #386753;
-  font-size: 10px;
-  font-weight: 900;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.today-page .cooked-capsule-count {
-  color: rgba(56, 103, 83, 0.8);
-  font-size: 10px;
-  font-weight: 700;
-}
-
-.today-page .cooked-capsule-desc {
-  margin: 2px 0 0;
-  color: #293c4e;
-  font-size: 12px;
-  font-weight: 700;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.today-page .cooked-capsule-btn {
-  border: 0;
-  border-radius: 9999px;
-  background: #386753;
-  padding: 6px 12px;
-  color: #fff;
-  font-size: 11px;
-  font-weight: 800;
-  white-space: nowrap;
-  flex-shrink: 0;
-  box-shadow: 0 1px 4px rgba(56, 103, 83, 0.2);
-  transition: all 0.15s ease;
-  cursor: pointer;
-}
-
-.today-page .cooked-capsule-btn:hover {
-  background: #2f5746;
-}
-
-.today-page .cooked-capsule-btn:active {
-  transform: scale(0.95);
-}
-
-/* 3. Hero Ticket Card: 風格 B（進化雙色剪票口票券） */
-.today-page .meal-ticket {
-  position: relative;
-  display: grid;
-  grid-template-columns: 66px 1fr;
-  overflow: hidden;
-  border: 1px solid #d9cab2;
-  border-radius: 20px;
-  background: #fffdf8;
-  box-shadow: 0 16px 44px -12px rgba(154, 68, 45, 0.12), 0 4px 16px -2px rgba(41, 60, 78, 0.05);
-}
-
-/* Ticket semi-circular notches */
-.today-page .ticket-notch {
-  position: absolute;
-  width: 18px;
-  height: 18px;
-  background-color: #fdfae7;
-  border-radius: 50%;
-  z-index: 5;
-}
-
-.today-page .ticket-notch-top {
-  top: -9px;
-  left: 57px;
-  border-bottom: 1px solid #d9cab2;
-}
-
-.today-page .ticket-notch-bottom {
-  bottom: -9px;
-  left: 57px;
-  border-top: 1px solid #d9cab2;
-}
-
-/* Ticket Stub (Left: Deep Slate Blue) */
-.today-page .ticket-stub {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-direction: column;
-  border-right: 2px dashed #bba98d;
-  background: #34465b;
-  padding: 22px 6px;
-  color: #f4ce8d;
-  user-select: none;
-}
-
-.today-page .stub-vertical-text {
-  writing-mode: vertical-rl;
-  font-size: 10px;
-  font-weight: 900;
-  letter-spacing: 0.26em;
-  color: rgba(244, 206, 141, 0.85);
-}
-
-.today-page .stub-center {
-  text-align: center;
-  margin: auto 0;
-}
-
-.today-page .stub-center small {
-  display: block;
+.hud-avatar svg { width: 17px; height: 17px; }
+.hud-chef-text strong { display: block; color: #293c4e; font-size: 11px; font-weight: 900; }
+.hud-chef-text small { display: block; margin-top: 1px; color: var(--today-muted); font-size: 8.5px; font-weight: 700; }
+.hud-xp {
+  border: 1px solid #e5bb73;
+  border-radius: 999px;
+  background: #fff4d7;
+  padding: 4px 8px;
+  color: #8a551a;
   font-size: 9px;
   font-weight: 900;
-  letter-spacing: 0.15em;
-  color: rgba(244, 206, 141, 0.7);
-  text-transform: uppercase;
 }
+.hud-bar { height: 4px; margin-top: 7px; overflow: hidden; border-radius: 99px; background: #ebe4d6; }
+.hud-bar span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--today-primary), #e5a445); }
+.hud-meta { justify-content: space-between; margin-top: 3px; color: #978e80; font-size: 7.5px; font-weight: 700; }
 
-.today-page .stub-center strong {
-  font-family: "Plus Jakarta Sans", sans-serif;
-  font-size: 26px;
-  font-weight: 900;
-  line-height: 1;
-  color: #fef08a;
-}
-
-.today-page .stub-icon {
-  font-size: 16px;
-  color: rgba(244, 206, 141, 0.8);
-}
-
-/* Ticket Body (Right) */
-.today-page .ticket-body {
-  padding: 20px 20px 22px;
-}
-
-.today-page .meal-tags {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.today-page .meal-tags span {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  border-radius: 9999px;
-  padding: 4px 10px;
-  font-size: 11px;
-  font-weight: 800;
-}
-
-.today-page .meal-tags .tag-time {
-  background: #f4ebe0;
-  color: #9a442d;
-}
-
-.today-page .meal-tags .tag-time .material-symbols-outlined {
-  font-size: 13px;
-}
-
-.today-page .meal-tags .tag-covered {
-  background: rgba(184, 235, 209, 0.5);
-  color: #386753;
-}
-
-.today-page .meal-tags .tag-covered .material-symbols-outlined {
-  font-size: 13px;
-}
-
-.today-page .meal-tags .tag-cost {
-  background: #efe9d8;
-  color: #293c4e;
-  margin-left: auto;
-  font-weight: 900;
-}
-
-.today-page .ticket-body h3 {
-  margin: 14px 0 6px;
-  color: #293c4e;
-  font-family: "Plus Jakarta Sans", "Noto Sans TC", sans-serif;
-  font-size: 24px;
-  font-weight: 900;
-  letter-spacing: -0.02em;
-}
-
-.today-page .meal-subtitle {
+.today-warning,
+.today-loading-card {
   margin: 0;
-  color: #55423e;
-  font-size: 12px;
-  font-weight: 600;
+  border: 1px solid #e6c9a0;
+  border-radius: 14px;
+  background: #fff7e9;
+  padding: 12px;
+  color: #7d4d20;
+  font-size: 11px;
   line-height: 1.5;
 }
+.today-loading-card { display: flex; align-items: center; gap: 9px; }
+.today-loading-card p { margin: 0; }
 
-/* Cookware and prep reassurance */
-.today-page .cook-prep-row {
+.meal-ticket {
+  position: relative;
   display: grid;
-  grid-template-columns: 1fr auto 1fr auto 1fr;
-  align-items: center;
-  margin: 14px 0;
-  border: 1px solid #ede3cf;
-  border-radius: 14px;
-  background: #fbf7ee;
-  padding: 8px 10px;
-  text-align: center;
-}
-
-.today-page .cook-prep-row small {
-  display: block;
-  color: #88726d;
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.today-page .cook-prep-row strong {
-  margin-top: 2px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  color: #293c4e;
-  font-size: 11px;
-  font-weight: 800;
-  white-space: nowrap;
-}
-
-.today-page .inline-icon {
-  display: inline-block;
-  vertical-align: -2px;
-  flex-shrink: 0;
-}
-
-.today-page .cook-prep-row .prep-divider {
-  width: 1px;
-  height: 20px;
-  background: #ded2be;
-}
-
-/* Ingredient Route */
-.today-page .ingredient-route-wrapper {
-  margin: 12px 0 14px;
-}
-
-.today-page .route-title {
-  display: block;
-  margin-bottom: 6px;
-  color: #88726d;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.today-page .ingredient-route {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.today-page .route-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  border-radius: 9999px;
-  background: #f1eedb;
-  padding: 3px 10px;
-  color: #293c4e;
-  font-size: 11px;
-  font-weight: 800;
-}
-
-.today-page .route-chip.covered {
-  background: #e7f3ec;
-  color: #386753;
-}
-
-.today-page .route-chip small {
-  font-size: 10px;
-  opacity: 0.8;
-}
-
-.today-page .route-plus {
-  margin-left: 5px;
-  color: #dbc1ba;
-  font-style: normal;
-  font-weight: 900;
-}
-
-/* ROI Motivation Banner */
-.today-page .roi-motivation-banner {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 16px;
-  border: 1px solid #ebd9bc;
-  border-radius: 14px;
-  background: #faf5ea;
-  padding: 8px 12px;
-}
-
-.today-page .roi-icon {
-  font-size: 16px;
-}
-
-.today-page .roi-motivation-banner p {
-  margin: 0;
-  color: #293c4e;
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.today-page .roi-motivation-banner strong {
-  color: #9a442d;
-  font-weight: 900;
-}
-
-/* Option A: Segmented Mode Switch Row inside ticket */
-.today-page .ticket-mode-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 12px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #ebd9c6;
-}
-
-.today-page .mode-row-label {
-  font-size: 10px;
-  font-weight: 800;
-  color: #8c8275;
-  letter-spacing: 0.05em;
-}
-
-.today-page .segmented-switch {
-  display: inline-flex;
-  background: #ebe4d6;
-  border: 1px solid #ddd3c0;
-  border-radius: 9999px;
-  padding: 3px;
-  gap: 2px;
-}
-
-.today-page .segmented-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  border: 0;
-  background: transparent;
-  padding: 4px 11px;
-  font-size: 11px;
-  font-weight: 800;
-  border-radius: 9999px;
-  color: #716e66;
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  white-space: nowrap;
-}
-
-.today-page .segmented-btn.active {
-  background: #ffffff;
-  color: #9a442d;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-}
-
-.today-page .segmented-btn:active {
-  transform: scale(0.97);
-}
-
-.today-page .tag-coverage {
-  font-size: 10px;
-  font-weight: 800;
-  padding: 2px 8px;
-  border-radius: 6px;
-  display: inline-flex;
-  align-items: center;
-}
-
-.today-page .tag-coverage.tag-covered {
-  background: #ecfdf5;
-  color: #065f46;
-  border: 1px solid #a7f3d0;
-}
-
-.today-page .tag-coverage.tag-purchase {
-  background: #fef3c7;
-  color: #92400e;
-  border: 1px solid #fde68a;
-}
-
-.today-page .route-chip.missing {
-  background: #fffbeb;
-  border-color: #fcd34d;
-  color: #92400e;
-}
-
-.today-page .route-chip.missing small {
-  color: #b45309;
-}
-
-.today-page .purchase-tip-banner {
-  margin-bottom: 12px;
-  padding: 8px 12px;
-  border-radius: 12px;
-  background: #fffbeb;
-  border: 1px solid #fde68a;
-  font-size: 11px;
-  color: #78350f;
-}
-
-.today-page .purchase-tip-content {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.today-page .purchase-tip-icon {
-  font-size: 16px;
-  color: #b45309;
-  flex-shrink: 0;
-}
-
-.today-page .quick-add-shopping-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  min-height: 44px;
-  padding: 0 14px;
-  border-radius: 16px;
-  border: 1px solid #f59e0b;
-  background: #fffbeb;
-  color: #92400e;
-  font-size: 12px;
-  font-weight: 800;
-  cursor: pointer;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-  transition: all 0.15s ease;
-  white-space: nowrap;
-}
-
-.today-page .quick-add-shopping-btn:hover {
-  background: #fef3c7;
-}
-
-.today-page .quick-add-shopping-btn:active {
-  transform: scale(0.97);
-}
-
-/* Main CTA button: Compact & Right-Aligned */
-.today-page .cook-choice-row {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 14px;
-}
-
-.today-page .cook-choice {
-  display: inline-flex;
-  width: auto;
-  min-height: 44px;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  border: 0;
-  border-radius: 16px;
-  background: #9a442d;
-  padding: 0 20px;
-  color: #fff;
-  font-size: 13px;
-  font-weight: 900;
-  box-shadow: 0 4px 14px rgba(154, 68, 45, 0.25);
-  transition: all 0.2s ease;
-  cursor: pointer;
-}
-
-.today-page .cook-choice:hover {
-  background: #853621;
-}
-
-.today-page .cook-choice:active {
-  transform: scale(0.98);
-}
-
-.today-page .cook-choice-label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.today-page .cook-choice-arrow {
-  font-size: 16px;
-  line-height: 1;
-  transition: transform 0.2s ease;
-}
-
-.today-page .cook-choice:hover .cook-choice-arrow {
-  transform: translateX(2px);
-}
-
-/* 4. Alternatives section */
-.today-page .alternatives,
-.today-page .week-strip {
-  margin-top: 28px;
-}
-
-.today-page .section-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 10px;
-}
-
-.today-page .section-heading h3 {
-  margin: 0;
-  color: #293c4e;
-  font-family: "Plus Jakarta Sans", "Noto Sans TC", sans-serif;
-  font-size: 13px;
-  font-weight: 900;
-}
-
-.today-page .alternatives-hint {
-  color: #8a8075;
-  font-size: 10px;
-  font-weight: 700;
-}
-
-.today-page .alternative-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-  width: 100%;
-}
-
-.today-page .alternative-card {
-  display: flex;
-  min-width: 0;
-  width: 100%;
-  box-sizing: border-box;
-  min-height: unset;
-  align-items: flex-start;
-  flex-direction: column;
-  gap: 6px;
-  border: 1px solid #d9cab2;
-  border-radius: 20px;
-  background: #fff;
-  padding: 12px;
-  text-align: left;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-  transition: all 0.2s ease;
-  cursor: pointer;
-}
-
-.today-page .alternative-card:hover {
-  border-color: #9a442d;
-  box-shadow: 0 4px 12px rgba(154, 68, 45, 0.08);
-}
-
-.today-page .alternative-card:active {
-  transform: scale(0.98);
-}
-
-.today-page .alt-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  border-radius: 9999px;
-  background: rgba(56, 103, 83, 0.1);
-  padding: 2px 8px;
-  color: #386753;
-  font-size: 10px;
-  font-weight: 900;
-  white-space: nowrap;
-}
-
-.today-page .alternative-card > strong {
-  margin-top: 2px;
-  color: #293c4e;
-  font-family: "Plus Jakarta Sans", "Noto Sans TC", sans-serif;
-  font-size: 13px;
-  font-weight: 900;
-  white-space: nowrap;
+  grid-template-columns: 66px minmax(0, 1fr);
   overflow: hidden;
-  text-overflow: ellipsis;
-  width: 100%;
-}
-
-.today-page .alternative-card > small {
-  margin-top: 2px;
-  color: #6d6159;
-  font-size: 10px;
-  line-height: 1.4;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  width: 100%;
-  min-height: 30px;
-}
-
-.today-page .alternative-card > small .sub-line {
-  display: block;
-  width: 100%;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.today-page .alternative-card footer {
-  display: flex;
-  width: 100%;
-  justify-content: space-between;
-  margin-top: auto;
-  padding-top: 6px;
-  border-top: 1px solid #f0e8d9;
-  color: #7a7065;
-  font-size: 10px;
-  font-weight: 800;
-}
-
-/* 5. Weekly rhythm (可收摺手風琴) */
-.today-page .week-strip {
+  border: 1px solid var(--today-line);
   border-radius: 20px;
-  background: #ebe4d2;
-  border: 1px solid #ded5be;
-  padding: 16px 18px;
+  background: var(--today-card);
+  box-shadow: 0 16px 44px -12px rgb(154 68 45 / 14%), 0 4px 16px -2px rgb(41 60 78 / 5%);
 }
-
-.today-page .week-summary-header {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.today-page .week-summary-header .eyebrow {
-  margin: 0 0 3px;
-  color: #88726d;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.today-page .week-summary-header h3 {
-  margin: 0;
-  color: #293c4e;
-  font-family: "Plus Jakarta Sans", "Noto Sans TC", sans-serif;
-  font-size: 17px;
-  font-weight: 900;
-}
-
-.today-page .week-toggle-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  border: 1px solid #ded5be;
-  border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.85);
-  padding: 5px 12px;
-  color: #9a442d;
-  font-size: 11px;
-  font-weight: 800;
-  transition: all 0.15s ease;
-  cursor: pointer;
-}
-
-.today-page .week-toggle-btn:hover {
-  background: #fff;
-  border-color: #9a442d;
-}
-
-.today-page .week-toggle-btn .material-symbols-outlined {
-  font-size: 16px;
-}
-
-.today-page .week-rates {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-top: 12px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.75);
-  padding: 10px 14px;
-}
-
-.today-page .week-rates span {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.today-page .week-rates strong {
-  color: #9a442d;
-  font-size: 20px;
-  font-weight: 900;
-}
-
-.today-page .week-rates small {
-  color: #293c4e;
-  font-size: 11px;
-  font-weight: 800;
-}
-
-.today-page .week-rates span:last-child strong {
-  color: #386753;
-}
-
-.today-page .expiry-warning {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 10px;
-  border-radius: 10px;
-  background: #fdf2ee;
-  border: 1px solid #f5cfc4;
-  padding: 6px 10px;
-  color: #8f2f22;
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.today-page .expiry-warning .material-symbols-outlined {
-  font-size: 14px;
-  color: #d95d39;
-}
-
-.today-page .week-meals-list {
-  margin: 14px 0 0;
-  padding: 0;
-  list-style: none;
-  border-top: 1px solid #ded5be;
-  padding-top: 10px;
-}
-
-.today-page .week-meals-list li {
-  display: grid;
-  grid-template-columns: 24px 1fr auto;
-  align-items: center;
-  gap: 8px;
-  min-height: 42px;
-  border-bottom: 1px solid rgba(212, 204, 185, 0.6);
-  color: #293c4e;
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.today-page .week-meals-list li:last-child {
-  border-bottom: 0;
-}
-
-.today-page .week-meals-list li i {
-  display: grid;
-  width: 22px;
-  height: 22px;
-  place-items: center;
+.ticket-notch {
+  position: absolute;
+  left: 57px;
+  z-index: 5;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
-  background: #fff;
-  color: #9a442d;
-  font-size: 11px;
-  font-style: normal;
-  font-weight: 900;
+  background: var(--today-bg);
 }
-
-.today-page .week-meals-list li button {
-  border: 0;
-  background: transparent;
-  color: #9a442d;
-  font-size: 11px;
-  font-weight: 900;
-  cursor: pointer;
-}
-
-.today-page .week-meals-list li button:hover {
-  text-decoration: underline;
-}
-
-/* Empty / Fallback states */
-.today-page.no-safe-meal {
-  padding: 60px 16px;
-  text-align: center;
-}
-
-.today-page.no-safe-meal h2 {
-  margin: 12px 0 16px;
-  color: #293c4e;
-  font-size: 20px;
-  font-weight: 800;
-}
-
-.today-page.no-safe-meal p {
-  color: #55423e;
-  font-size: 13px;
-}
-
-.today-page .today-warning {
-  margin-bottom: 16px;
-  border-radius: 12px;
-  background: #fdf2ee;
-  border: 1px solid #f5cfc4;
-  padding: 10px 14px;
-  color: #8f2f22;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-/* Loading Card */
-.today-page .today-loading-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 56px 20px;
-  border: 1px dashed #d9cab2;
-  border-radius: 20px;
-  background: #fffdf8;
-  color: #88726d;
-  text-align: center;
-  gap: 12px;
-}
-
-.today-page .today-loading-card .spinning {
-  font-size: 32px;
-  color: #9a442d;
-  animation: today-spin 1.2s linear infinite;
-}
-
-@keyframes today-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-.today-page .today-loading-card p {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 700;
-  color: #293c4e;
-}
-
-/* Mismatch State Ticket (Scheme A: 深石板藍票根 + 琥珀金檢核字) */
-.today-page .ticket-mismatch {
-  border-color: #d9cab2;
-  background: #fffdf8;
-  box-shadow: 0 16px 40px -12px rgba(41, 60, 78, 0.12), 0 4px 16px -2px rgba(41, 60, 78, 0.05);
-}
-
-.today-page .stub-mismatch {
-  background: #34465b !important;
-  border-right: 2px dashed #bba98d !important;
-  color: rgba(251, 191, 36, 0.85) !important;
-}
-
-.today-page .stub-mismatch .stub-vertical-text {
-  color: rgba(251, 191, 36, 0.85) !important;
-}
-
-.today-page .stub-mismatch .stub-center small {
-  color: rgba(251, 191, 36, 0.75) !important;
-}
-
-.today-page .stub-mismatch strong {
-  color: #fbbf24 !important;
-}
-
-.today-page .stub-mismatch .stub-icon {
-  color: rgba(251, 191, 36, 0.85) !important;
-}
-
-.today-page .tag-warning {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  border-radius: 9999px;
-  background: #fef3c7;
-  color: #92400e;
-  border: 1px solid #fde68a;
-  padding: 4px 10px;
-  font-size: 11px;
-  font-weight: 800;
-}
-
-.today-page .tag-warning .material-symbols-outlined {
-  font-size: 14px;
-  color: #b45309;
-}
-
-/* Backend Diagnostics Box */
-.today-page .backend-diagnostics-box {
-  margin: 16px 0;
-  padding: 14px 16px;
-  border: 1px solid #eedec9;
-  border-radius: 14px;
-  background: #fffdfa;
-}
-
-.today-page .diag-header {
-  margin-bottom: 10px;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  color: #88726d;
-  text-transform: uppercase;
-}
-
-.today-page .diag-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.today-page .diag-item {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  font-size: 12px;
-}
-
-.today-page .diag-label {
-  color: #55423e;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.today-page .diag-val {
-  color: #293c4e;
-  font-weight: 800;
-  text-align: right;
-  word-break: break-all;
-}
-
-/* Diagnostics Action Buttons */
-.today-page .ticket-actions-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 18px;
-}
-
-.today-page .diag-action-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-height: 44px;
-  padding: 0 16px;
-  border-radius: 14px;
-  font-size: 13px;
-  font-weight: 800;
-  text-decoration: none;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border: 0;
-}
-
-.today-page .diag-action-btn.primary {
-  background: #9a442d;
-  color: #fff;
-  box-shadow: 0 4px 12px rgba(154, 68, 45, 0.2);
-}
-
-.today-page .diag-action-btn.highlight-switch {
-  background: linear-gradient(135deg, #b45309, #d97706);
-  color: #ffffff;
-  box-shadow: 0 4px 14px rgba(180, 83, 9, 0.25);
-}
-
-.today-page .diag-action-btn.highlight-switch:hover {
-  background: linear-gradient(135deg, #92400e, #b45309);
-}
-
-.today-page .diag-action-btn.primary:hover {
-  background: #853621;
-}
-
-.today-page .diag-action-btn.highlight-switch {
-  background: linear-gradient(135deg, #b45309, #d97706);
-  color: #ffffff;
-  box-shadow: 0 4px 14px rgba(180, 83, 9, 0.25);
-}
-
-.today-page .diag-action-btn.highlight-switch:hover {
-  background: linear-gradient(135deg, #92400e, #b45309);
-}
-
-.today-page .diag-action-btn.secondary {
-  background: #fff;
-  color: #293c4e;
-  border: 1px solid #d9cab2;
-}
-
-.today-page .diag-action-btn.secondary:hover {
-  background: #f7f3e8;
-}
-
-.today-page .diag-action-btn.text {
-  background: transparent;
-  color: #88726d;
-  min-height: 36px;
-}
-
-.today-page .diag-action-btn.text:hover {
-  color: #293c4e;
-}
-
-/* Mobile responsive adjustments */
-@media (max-width: 600px) {
-  .today-page .today-intro {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .today-page .meal-ticket {
-    grid-template-columns: 52px 1fr;
-  }
-
-  .today-page .ticket-notch-top,
-  .today-page .ticket-notch-bottom {
-    left: 43px;
-  }
-
-  .today-page .ticket-stub {
-    padding: 18px 4px;
-  }
-
-  .today-page .stub-center strong {
-    font-size: 22px;
-  }
-
-  .today-page .ticket-body {
-    padding: 16px 14px 18px;
-  }
-
-  .today-page .ticket-body h3 {
-    font-size: 20px;
-  }
-
-  .today-page .ticket-mode-row {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .today-page .segmented-switch {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    width: 100%;
-    border-radius: 16px;
-  }
-
-  .today-page .segmented-btn {
-    min-width: 0;
-    padding: 7px 5px;
-    border-radius: 12px;
-    font-size: 10px;
-    line-height: 1.25;
-    white-space: normal;
-  }
-
-  .today-page .cook-prep-row strong {
-    font-size: 10px;
-  }
-
-  .today-page .alternative-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
-    width: 100%;
-  }
-
-  .today-page .alternative-card {
-    padding: 12px 10px;
-    min-width: 0;
-    width: 100%;
-    min-height: unset;
-  }
-}
-
-/* ============================================================
-   今日頁任務板融合版：HUD、票根任務進度、圖示化票身、小票根列、任務清單
-   ============================================================ */
-
-.today-page .today-hud {
-  margin: 0 0 14px;
-  padding: 12px 14px;
-  border: 1px solid #e7dac2;
-  border-radius: 18px;
-  background: #fffdf8;
-  box-shadow: 0 8px 24px -14px rgba(84, 63, 39, 0.28);
-}
-.today-page .hud-row {
+.ticket-notch-top { top: -9px; border-bottom: 1px solid var(--today-line); }
+.ticket-notch-bottom { bottom: -9px; border-top: 1px solid var(--today-line); }
+.ticket-stub {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  flex-direction: column;
+  border-right: 2px dashed #bba98d;
+  background: var(--today-stub);
+  padding: 16px 5px;
+  color: var(--today-stub-ink);
 }
-.today-page .hud-chef {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-}
-.today-page .hud-avatar {
-  display: grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  flex-shrink: 0;
-  border-radius: 999px;
-  background: #9a442d;
-  color: #fff;
-}
-.today-page .hud-avatar svg { width: 18px; height: 18px; }
-.today-page .hud-chef-text strong { display: block; font-size: 12.5px; font-weight: 900; color: #293c4e; }
-.today-page .hud-chef-text small { display: block; margin-top: 1px; font-size: 10px; font-weight: 700; color: #716b60; }
-.today-page .hud-xp {
-  flex-shrink: 0;
-  border: 1px solid rgba(184, 134, 47, 0.3);
-  border-radius: 9px;
-  background: #fdf3dc;
-  padding: 5px 10px;
-  color: #b8862f;
-  font-family: "JetBrains Mono", ui-monospace, monospace;
-  font-size: 11px;
-  font-weight: 800;
-  cursor: pointer;
-}
-.today-page .hud-bar {
-  margin-top: 9px;
-  height: 6px;
-  border-radius: 999px;
-  background: #ebe4d6;
-  overflow: hidden;
-}
-.today-page .hud-bar span {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: linear-gradient(90deg, #d9a441, #b8862f);
-  transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.today-page .hud-meta {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 5px;
-  font-size: 9.5px;
-  font-weight: 700;
-  color: #8c8275;
-}
-
-/* 票根：任務進度 */
-.today-page .stub-center .stub-mealno {
-  display: block;
+.stub-vertical-text {
+  writing-mode: vertical-rl;
+  color: rgb(244 206 141 / 82%);
   font-size: 8.5px;
   font-weight: 900;
-  letter-spacing: 0.08em;
-  color: rgba(244, 206, 141, 0.75);
+  letter-spacing: .28em;
 }
-.today-page .stub-pips {
+.stub-center { display: grid; place-items: center; gap: 4px; margin: auto 0; text-align: center; }
+.stub-center small { display: block; max-width: 54px; color: rgb(244 206 141 / 72%); font-size: 7.5px; font-weight: 900; line-height: 1.25; }
+.stub-center strong { color: #fef08a; font-size: 23px; font-weight: 900; line-height: 1; }
+.stub-pips { display: flex; gap: 3px; }
+.stub-pips i { width: 5px; height: 5px; border-radius: 50%; background: rgb(255 255 255 / 24%); }
+.stub-pips i.on { background: #fef08a; }
+.stub-icon { color: rgb(244 206 141 / 82%); font-size: 16px !important; }
+.ticket-body { min-width: 0; padding: 14px 13px 13px; }
+
+.segmented-switch {
   display: flex;
-  gap: 3px;
-  justify-content: center;
-  margin-top: 4px;
-}
-.today-page .stub-pips i {
-  width: 6px;
-  height: 6px;
-  border-radius: 999px;
-  background: rgba(244, 206, 141, 0.32);
-}
-.today-page .stub-pips i.on { background: #fef08a; }
-
-/* 票身：圖示化數據列 */
-.today-page .ticket-stats {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-  margin: 12px 0;
-  border: 1px solid #ede3cf;
-  border-radius: 14px;
-  background: #fbf7ee;
-  padding: 9px 8px;
-  text-align: center;
-}
-.today-page .ticket-stats .tstat { display: grid; gap: 3px; justify-items: center; }
-.today-page .ticket-stats .material-symbols-outlined { font-size: 17px; color: #9a442d; }
-.today-page .ticket-stats b { font-size: 12.5px; font-weight: 900; color: #293c4e; }
-
-/* 票身：食材 chips 圖示化 */
-.today-page .ingredient-route .route-chip .material-symbols-outlined {
-  font-size: 12px;
-  margin-right: 2px;
-}
-.today-page .ingredient-route .route-chip.missing {
-  background: #fdf3dc;
-  color: #b8862f;
-}
-
-/* 票身：獎勵徽章 */
-.today-page .ticket-rewards {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 12px;
-}
-.today-page .ticket-rewards .reward-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  border-radius: 9999px;
-  border: 1px solid;
-  padding: 5px 10px;
-  font-size: 10.5px;
-  font-weight: 800;
-}
-.today-page .ticket-rewards .reward-chip .material-symbols-outlined { font-size: 13px; }
-.today-page .ticket-rewards .reward-chip.xp {
-  color: #b8862f;
-  background: #fdf3dc;
-  border-color: rgba(184, 134, 47, 0.3);
-}
-.today-page .ticket-rewards .reward-chip.badge {
-  color: #386753;
-  background: #e7f3ec;
-  border-color: rgba(56, 103, 83, 0.28);
-}
-
-/* 票身：CTA 與第二層 */
-.today-page .ticket-cta { display: flex; gap: 8px; align-items: stretch; }
-.today-page .ticket-cta .cook-choice { flex: 1; }
-.today-page .ticket-cta .cook-choice:disabled { opacity: 0.65; }
-.today-page .ticket-more {
-  display: grid;
-  place-items: center;
-  width: 46px;
-  flex-shrink: 0;
-  border: 1px solid #d9cab2;
-  border-radius: 9999px;
-  background: #fffdf8;
-  color: #716b60;
-  cursor: pointer;
-}
-.today-page .ticket-more .material-symbols-outlined { font-size: 19px; }
-
-.today-page .ticket-detail {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 12;
-  border-top: 1px solid #e7dac2;
-  border-radius: 0 0 20px 20px;
-  background: #fffdf8;
-  padding: 14px 16px 16px;
-  box-shadow: 0 -12px 30px -18px rgba(28, 25, 23, 0.4);
-}
-.today-page .ticket-detail .detail-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-.today-page .ticket-detail .detail-head strong { font-size: 13px; font-weight: 900; color: #293c4e; }
-.today-page .ticket-detail .detail-close {
-  border: 0;
-  background: transparent;
-  color: #716b60;
-  cursor: pointer;
-  display: grid;
-  place-items: center;
-}
-.today-page .ticket-detail .detail-why { margin: 8px 0 0; font-size: 11.5px; color: #55423e; line-height: 1.6; }
-.today-page .ticket-detail .detail-missing { margin: 8px 0 0; font-size: 11.5px; font-weight: 800; color: #b8862f; line-height: 1.6; }
-.today-page .ticket-detail .detail-note { margin: 8px 0 0; font-size: 10.5px; color: #716b60; line-height: 1.6; }
-
-/* 小票根列（三個可行方向 / 補買候選） */
-.today-page .alt-stubs { margin-top: 14px; }
-.today-page .alt-stubs h4 {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin: 0 0 8px;
-  font-size: 11px;
-  font-weight: 900;
-  color: #8f3d28;
-}
-.today-page .alt-stubs h4 .material-symbols-outlined { font-size: 15px; }
-.today-page .ministub {
-  display: grid;
-  grid-template-columns: 44px minmax(0, 1fr) auto;
-  align-items: stretch;
   width: 100%;
-  margin-bottom: 8px;
-  border: 1px solid #d9cab2;
-  border-radius: 14px;
-  background: #fffdf8;
-  overflow: hidden;
-  padding: 0;
-  cursor: pointer;
-  text-align: left;
-  transition: transform 0.16s ease, border-color 0.16s ease;
-}
-.today-page .ministub:active { transform: scale(0.985); }
-.today-page .ministub:hover { border-color: #9a442d; }
-.today-page .ministub .mstub {
-  display: grid;
-  place-items: center;
-  border-right: 2px dashed #bba98d;
-  background: #34465b;
-  color: #f4ce8d;
-  font-family: "JetBrains Mono", ui-monospace, monospace;
-  font-size: 12px;
-  font-weight: 900;
-}
-.today-page .ministub .mbody { padding: 9px 10px; min-width: 0; }
-.today-page .ministub .mbody strong {
-  display: block;
-  font-size: 12.5px;
-  font-weight: 900;
-  color: #293c4e;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.today-page .ministub .mmeta {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  margin-top: 3px;
-  font-size: 10px;
-  font-weight: 800;
-  color: #716b60;
-}
-.today-page .ministub .mmeta > span { display: inline-flex; align-items: center; gap: 3px; }
-.today-page .ministub .mmeta .material-symbols-outlined { font-size: 12px; }
-.today-page .ministub .mside { display: grid; place-items: center; padding: 0 11px; color: #88726d; }
-.today-page .ministub .mside .material-symbols-outlined { font-size: 17px; }
-
-/* 今日任務清單 */
-.today-page .mission-list {
-  margin-top: 14px;
-  border: 1px solid #e7dac2;
-  border-radius: 16px;
-  background: #fffdf8;
-  padding: 12px;
-}
-.today-page .mission-list h4 {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin: 0 0 8px;
-  font-size: 11px;
-  font-weight: 900;
-  color: #8f3d28;
-}
-.today-page .mission-list h4 .material-symbols-outlined { font-size: 15px; }
-.today-page .mrow {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 8px 0;
-  border-top: 1px dashed #e7dac2;
-  font-size: 11.5px;
-  font-weight: 700;
-  color: #293c4e;
-}
-.today-page .mrow:first-of-type { border-top: 0; }
-.today-page .mmark {
-  display: grid;
-  place-items: center;
-  width: 19px;
-  height: 19px;
-  flex-shrink: 0;
-  border: 1.6px solid #d9cab2;
-  border-radius: 999px;
-  color: #fff;
-}
-.today-page .mmark .material-symbols-outlined { font-size: 12px; opacity: 0; }
-.today-page .mrow.done .mmark { background: #386753; border-color: #386753; }
-.today-page .mrow.done .mmark .material-symbols-outlined { opacity: 1; }
-.today-page .mrow.done .mlabel { color: #88726d; text-decoration: line-through; }
-.today-page .mrow .rw {
-  margin-left: auto;
-  font-family: "JetBrains Mono", ui-monospace, monospace;
-  font-size: 10px;
-  font-weight: 800;
-  color: #b8862f;
-}
-
-/* 本週節奏（單行） */
-.today-page .weekstrip {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 12px;
-  border: 1px solid #e7dac2;
-  border-radius: 14px;
-  background: #fffdf8;
-  padding: 10px 12px;
-}
-.today-page .weekstrip .wk { color: #9a442d; flex-shrink: 0; }
-.today-page .weekstrip .wk .material-symbols-outlined { font-size: 18px; }
-.today-page .weekstrip .wtxt { flex: 1; min-width: 0; }
-.today-page .weekstrip b { display: block; font-size: 12px; font-weight: 900; color: #293c4e; }
-.today-page .weekstrip .wbar {
-  margin-top: 5px;
-  height: 5px;
+  gap: 3px;
+  border: 1px solid #ddd3c0;
   border-radius: 999px;
   background: #ebe4d6;
-  overflow: hidden;
+  padding: 3px;
 }
-.today-page .weekstrip .wbar span {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: #9a442d;
-  transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.today-page .weekstrip .wgo {
+.segmented-btn {
+  display: inline-flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
   border: 0;
+  border-radius: 999px;
   background: transparent;
-  color: #88726d;
-  cursor: pointer;
-  text-decoration: none;
-  display: grid;
-  place-items: center;
+  padding: 6px 5px;
+  color: #716e66;
+  font-size: 9.5px;
+  font-weight: 800;
+  white-space: nowrap;
 }
-.today-page .weekstrip .wgo .material-symbols-outlined { font-size: 19px; }
+.segmented-btn .material-symbols-outlined { font-size: 13px; }
+.segmented-btn.active { background: #fff; color: var(--today-primary); box-shadow: 0 1px 4px rgb(0 0 0 / 8%); }
+.meal-tags { flex-wrap: wrap; gap: 5px; margin-top: 9px; }
+.meal-tags > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  border: 1px solid;
+  border-radius: 999px;
+  padding: 3px 7px;
+  font-size: 8.5px;
+  font-weight: 900;
+}
+.meal-tags .material-symbols-outlined { font-size: 11px; }
+.tag-time { border-color: #e5c27c !important; background: #fff5da; color: #875a18; }
+.tag-covered { border-color: #b9d8c8 !important; background: #eaf6ef; color: #386753; }
+.tag-purchase,
+.tag-warning { border-color: #e0b89f !important; background: #fff0e5; color: var(--today-primary); }
+.tag-cost { border-color: #d6c8e9 !important; background: #f3edfa; color: #64507b; }
+.ticket-body h3 { margin: 12px 0 0; color: var(--today-ink); font-size: 23px; font-weight: 900; letter-spacing: -.02em; line-height: 1.2; }
+.meal-subtitle { margin: 7px 0 0; color: var(--today-muted); font-size: 10.5px; line-height: 1.6; }
+.ticket-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 11px; }
+.tstat { min-width: 0; border: 1px solid #ede3cf; border-radius: 10px; background: #fbf7ee; padding: 7px 4px; text-align: center; }
+.tstat .material-symbols-outlined { display: block; margin: 0 auto 3px; color: var(--today-primary); font-size: 17px; }
+.tstat b { display: block; overflow: hidden; color: #504a40; font-size: 8.5px; text-overflow: ellipsis; white-space: nowrap; }
+.ingredient-route { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+.route-chip { display: inline-flex; align-items: center; gap: 3px; border-radius: 999px; background: #f0ece4; padding: 4px 7px; color: #746e64; font-size: 8.5px; font-weight: 800; }
+.route-chip .material-symbols-outlined { font-size: 10px; }
+.route-chip.covered { background: #e9f4ee; color: #386753; }
+.route-chip.missing { background: #fff0e6; color: var(--today-primary); }
+.ticket-rewards { flex-wrap: wrap; gap: 6px; margin-top: 11px; }
+.reward-chip { display: inline-flex; align-items: center; gap: 3px; border-radius: 999px; padding: 4px 7px; font-size: 8.5px; font-weight: 900; }
+.reward-chip .material-symbols-outlined { font-size: 11px; }
+.reward-chip.xp { background: #fff0d1; color: #8a551a; }
+.reward-chip.badge { background: #f1ecfa; color: #66517e; }
+.ticket-cta { gap: 8px; margin-top: 11px; }
+.cook-choice { min-height: 42px; flex: 1; border: 0; border-radius: 999px; background: var(--today-primary); color: #fff; font-size: 12px; font-weight: 900; }
+.cook-choice:disabled { opacity: .55; }
+.cook-choice-label { display: inline-flex; align-items: center; gap: 6px; }
+.cook-choice-label .material-symbols-outlined { font-size: 17px; }
+.ticket-more { display: grid; width: 42px; height: 42px; place-items: center; flex: 0 0 auto; border: 1px solid var(--today-line); border-radius: 50%; background: var(--today-card); color: var(--today-muted); }
+.ticket-more .material-symbols-outlined { font-size: 19px; }
+.ticket-detail { grid-column: 1 / -1; border-top: 1px dashed var(--today-line); background: #fffaf0; padding: 13px 15px; }
+.detail-head { display: flex; justify-content: space-between; gap: 10px; font-size: 11px; }
+.detail-close { border: 0; background: transparent; color: var(--today-muted); }
+.detail-close .material-symbols-outlined { font-size: 17px; }
+.ticket-detail p { margin: 6px 0 0; color: var(--today-muted); font-size: 10px; line-height: 1.55; }
+.ticket-actions-group { display: grid; gap: 7px; margin-top: 12px; }
+.diag-action-btn { display: flex; align-items: center; gap: 6px; border: 1px solid var(--today-line); border-radius: 12px; background: #fff; padding: 9px 10px; color: #34465b; font-size: 10px; font-weight: 800; text-decoration: none; }
+.diag-action-btn .material-symbols-outlined { font-size: 15px; }
+.diag-action-btn.primary { border-color: var(--today-primary); background: var(--today-primary); color: #fff; }
+.stub-mismatch { background: #5a626b; }
 
-/* 相談室入口 */
-.today-page .chef-entry {
+.alt-stubs h4,
+.mission-list h4 { display: flex; align-items: center; gap: 6px; margin: 0 0 8px; color: var(--today-primary-ink); font-size: 11px; font-weight: 900; }
+.alt-stubs h4 .material-symbols-outlined,
+.mission-list h4 .material-symbols-outlined { font-size: 15px; }
+.ministub {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 38px 1fr auto;
+  align-items: stretch;
+  overflow: hidden;
+  margin: 0 0 8px;
+  border: 1px solid var(--today-line);
+  border-radius: 14px;
+  background: var(--today-card);
+  padding: 0;
+  text-align: left;
+}
+.mstub { display: grid; place-items: center; border-right: 2px dashed #bba98d; background: #eee2ca; color: #675f53; font-family: ui-monospace, monospace; font-size: 12px; font-weight: 900; }
+.mbody { min-width: 0; padding: 9px 10px; }
+.mbody strong { display: block; overflow: hidden; color: var(--today-ink); font-size: 12.5px; font-weight: 900; text-overflow: ellipsis; white-space: nowrap; }
+.mmeta { gap: 8px; margin-top: 3px; color: var(--today-muted); font-size: 9px; font-weight: 800; }
+.mmeta > span { display: inline-flex; align-items: center; gap: 3px; }
+.mmeta .material-symbols-outlined { font-size: 12px; }
+.mside { display: grid; place-items: center; padding: 0 11px; color: var(--today-muted); }
+.mside .material-symbols-outlined { font-size: 17px; }
+
+.cooked-inventory-capsule,
+.weekstrip {
   display: flex;
   align-items: center;
   gap: 10px;
-  width: 100%;
-  border: 1px solid #e7dac2;
-  border-radius: 16px;
-  background: #fffdf8;
-  padding: 11px 12px;
-  cursor: pointer;
-  text-align: left;
+  border: 1px solid var(--today-line);
+  border-radius: 14px;
+  background: var(--today-card);
+  padding: 10px 12px;
 }
-.today-page .chef-entry-avatar {
-  display: grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  flex-shrink: 0;
-  border-radius: 999px;
-  background: #9a442d;
-  color: #fff;
-}
-.today-page .chef-entry-avatar .material-symbols-outlined { font-size: 17px; }
-.today-page .chef-entry-text { flex: 1; min-width: 0; }
-.today-page .chef-entry-text strong { display: block; font-size: 12.5px; font-weight: 900; color: #293c4e; }
-.today-page .chef-entry-text small { display: block; margin-top: 2px; font-size: 10.5px; font-weight: 700; color: #716b60; }
-.today-page .chef-entry-go {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  flex-shrink: 0;
-  border-radius: 9999px;
-  background: #fdf1e2;
-  padding: 7px 11px;
-  color: #8f3d28;
-  font-size: 11px;
-  font-weight: 900;
-}
-.today-page .chef-entry-go .material-symbols-outlined { font-size: 14px; }
+.cooked-capsule-info { display: flex; align-items: center; gap: 9px; min-width: 0; flex: 1; }
+.cooked-capsule-icon { color: var(--today-primary); }
+.cooked-capsule-icon .material-symbols-outlined { font-size: 18px; }
+.cooked-capsule-header { display: flex; gap: 4px; font-size: 10px; font-weight: 900; }
+.cooked-capsule-label { color: #386753; }
+.cooked-capsule-count { color: var(--today-muted); }
+.cooked-capsule-desc { margin: 3px 0 0; color: var(--today-muted); font-size: 9.5px; }
+.cooked-capsule-btn { border: 0; border-radius: 999px; background: #386753; padding: 7px 9px; color: #fff; font-size: 9.5px; font-weight: 900; }
 
-@media (max-width: 520px) {
-  .today-page .ticket-stats { gap: 6px; }
-  .today-page .ministub { grid-template-columns: 40px minmax(0, 1fr) auto; }
+.mission-list { border: 1px solid var(--today-line); border-radius: 16px; background: var(--today-card); padding: 12px; }
+.mrow { display: flex; align-items: center; gap: 9px; border-top: 1px dashed #e7dac2; padding: 8px 0; font-size: 11.5px; font-weight: 700; }
+.mrow:first-of-type { border-top: 0; }
+.mmark { display: grid; width: 19px; height: 19px; place-items: center; flex: 0 0 auto; border: 1.6px solid var(--today-line); border-radius: 50%; color: #fff; }
+.mmark .material-symbols-outlined { font-size: 12px; opacity: 0; }
+.mlabel { display: flex; min-width: 0; flex: 1; flex-direction: column; }
+.mlabel small { margin-top: 2px; color: #8c8275; font-size: 9.5px; font-weight: 700; }
+.rw { color: #a8661d; font-family: ui-monospace, monospace; font-size: 9px; font-weight: 800; white-space: nowrap; }
+.mgo { color: var(--today-primary); font-size: 15px !important; }
+.mrow.done .mmark { border-color: #386753; background: #386753; }
+.mrow.done .mmark .material-symbols-outlined { opacity: 1; }
+.mrow.done .mlabel { color: var(--today-muted); text-decoration: line-through; }
+.mrow.done .mlabel small { color: #386753; }
+
+.weekstrip .wk { flex: 0 0 auto; color: var(--today-primary); }
+.weekstrip .wk .material-symbols-outlined { font-size: 18px; }
+.weekstrip .wtxt { min-width: 0; flex: 1; }
+.weekstrip b { display: block; color: #293c4e; font-size: 12px; font-weight: 900; }
+.weekstrip .wbar { height: 5px; margin-top: 5px; overflow: hidden; border-radius: 999px; background: #ebe4d6; }
+.weekstrip .wbar span { display: block; height: 100%; border-radius: inherit; background: var(--today-primary); }
+.weekstrip .wgo { border: 0; background: transparent; color: var(--today-muted); }
+.weekstrip .wgo .material-symbols-outlined { font-size: 19px; }
+.today-operations:empty { display: none; }
+
+.today-page button:focus-visible,
+.today-page a:focus-visible { outline: 3px solid rgb(154 68 45 / 24%); outline-offset: 2px; }
+
+@media (max-width: 480px) {
+  .today-page { width: 100%; }
+  .ticket-body h3 { font-size: 20px; }
+  .reward-chip.badge { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .today-page *, .today-page *::before, .today-page *::after { animation: none !important; transition: none !important; }
 }

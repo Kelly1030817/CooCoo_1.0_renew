@@ -7,7 +7,9 @@ describe('HTTP contract adapter', () => {
   test('returns the current state envelope', async () => {
     const response = await app.handle(new Request('http://localhost/api/v1/state'))
     expect(response.status).toBe(200)
-    expect((await response.json()) as object).toHaveProperty('data')
+    const body=(await response.json()) as {data:{missions:Array<{key:string}>}}
+    expect(body).toHaveProperty('data')
+    expect(body.data.missions.map((mission)=>mission.key)).toEqual(['cook_today','eat_prepared','use_expiring'])
   })
   test('exposes deterministic recipe errors', async () => {
     const response = await app.handle(new Request('http://localhost/api/v1/recipes/generate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({ingredientIds:[]})}))

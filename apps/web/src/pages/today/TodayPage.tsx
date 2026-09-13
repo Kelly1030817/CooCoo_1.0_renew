@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { RecipePackage, RecipePreferences, RecipeRecommendations, TodayDecision } from "@coocoo/contracts";
-import { CHEF_RANKS, EXP_POINTS } from "@coocoo/core";
+import { CHEF_RANKS, EXP_POINTS, dateInTimeZone, todayMealNumberLabel } from "@coocoo/core";
 import { useAppState, stateQueryKey } from "@/entities/app-state/model";
 import { UiContext } from "@/app/ui-context";
 import { RecipePackageModal } from "@/features/cooking/RecipeModal";
@@ -25,47 +25,12 @@ const subtitles: Record<string, string> = {
   "蒜炒鮮蔬里肌": "高纖清爽，下班快速補充蛋白質",
 };
 
-const taipeiDateParts = (value: Date) =>
-  Object.fromEntries(
-    new Intl.DateTimeFormat("en-US", {
-      timeZone: "Asia/Taipei",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    })
-      .formatToParts(value)
-      .filter((part) => part.type !== "literal")
-      .map((part) => [part.type, part.value]),
-  );
-const dateOnly = () => {
-  const parts = taipeiDateParts(new Date());
-  return `${parts.year}-${parts.month}-${parts.day}`;
-};
-
-// 任務推導：只讀既有欄位，不寫入資料（規格 docs/product-decisions/2026-09-12-mission-backend-definition.md 選項 A）
-function deriveMissions(input: {
-  today: string;
-  cookedToday: number;
-  eatenPreparedToday: boolean;
-  usedExpiringToday: boolean;
-  weekProgress: number;
-  weekTarget: number;
-  preparedCount: number;
-}) {
-  return [
-    { key: "cook_today", label: "完成今天的料理", reward: EXP_POINTS.cooking_completed, done: input.cookedToday > 0 },
-    { key: "eat_prepared", label: "吃掉 1 份熟食", reward: EXP_POINTS.prepared_serving_eaten, done: input.eatenPreparedToday },
-    { key: "use_expiring", label: "用掉即期食材", reward: EXP_POINTS.expiring_ingredient_used, done: input.usedExpiringToday },
-    { key: "weekly_rhythm", label: "本週節奏", reward: EXP_POINTS.weekly_goal_completed, done: input.weekProgress >= input.weekTarget },
-  ];
-}
-
 export function TodayPage() {
   const { data } = useAppState();
   const queryClient = useQueryClient();
   const ui = useContext(UiContext);
   const [energyLow, setEnergyLow] = useState(false);
-  const [ticketMode, setTicketMode] = useState<"fridge" | "low" | "purchase">("fridge");
+  const [ticketMode, setTicketMode] = useState<"fridge" | "purchase">("fridge");
   const [hasAutoSwitched, setHasAutoSwitched] = useState(false);
   const [decision, setDecision] = useState<TodayDecision | null>(null);
   const [primaryId, setPrimaryId] = useState("");
@@ -83,7 +48,7 @@ export function TodayPage() {
     queryFn: () => api<RecipePreferences>("/settings/recipes").catch(() => null),
   });
   const purchaseBudget = recipeSettings.data?.purchaseBudget ?? 100;
-  const today = dateOnly();
+  const today = dateInTimeZone(new Date()) ?? "";
 
   const openChefConsultation = () => {
     ui.open(
@@ -91,7 +56,7 @@ export function TodayPage() {
         onClose={ui.close}
         onSelectLowEnergy={() => {
           setEnergyLow(true);
-          setTicketMode("low");
+          setTicketMode("fridge");
         }}
         onStartCooking={(customRecipe) => startCooking(customRecipe)}
         inventoryNames={(data?.inventory || []).map((item) => item.name)}
@@ -251,30 +216,10 @@ export function TodayPage() {
   const xpDone = nextRank ? totalExp - rank.threshold : 1;
   const xpPercent = Math.min(100, Math.round((xpDone / xpSpan) * 100));
 
-  const eventsToday = (data?.expEvents || []).filter((event) => String(event.createdAt).slice(0, 10) === today);
-  const cookedToday = (data?.cookingOutcomes || []).filter(
-    (item) => String(item.createdAt).slice(0, 10) === today,
-  ).length;
-  const missions = deriveMissions({
-    today,
-    cookedToday,
-    eatenPreparedToday: eventsToday.some((event) => event.type === "prepared_serving_eaten"),
-    usedExpiringToday: eventsToday.some((event) => event.type === "expiring_ingredient_used"),
-    weekProgress: weeklyGoal?.progress ?? 0,
-    weekTarget: weeklyGoal?.target ?? 1,
-    preparedCount,
-  });
+  const missions = data?.missions ?? [];
   const missionsDone = missions.filter((mission) => mission.done).length;
 
-  const planMeals = (data?.mealPlan?.meals || []).filter((meal) => meal.status !== "cancelled");
-  const mealNumber = (() => {
-    if (planMeals.length === 0) return "今日餐點";
-    const sorted = [...planMeals].sort((a, b) => (a.date + a.slot).localeCompare(b.date + b.slot));
-    const idx = sorted.findIndex((meal) => meal.date === today);
-    if (idx >= 0) return `今日第 ${idx + 1} 餐`;
-    const upcoming = sorted.findIndex((meal) => meal.date >= today);
-    return upcoming >= 0 ? `第 ${upcoming + 1} 餐` : "本週餐點";
-  })();
+  const mealNumber = todayMealNumberLabel(data?.mealPlan?.meals ?? []);
 
   const cookwareLabel = recommended && recommended.cookwareTypes.length > 0 ? recommended.cookwareTypes.join("、") : "單平底鍋";
   const stepCount = recommended?.steps.length ?? 0;
@@ -357,7 +302,7 @@ export function TodayPage() {
             <div className="meal-tags">
               <span className="tag-warning">
                 <span className="material-symbols-outlined">info</span>
-                {ticketMode === "purchase" ? "少量補買條件檢核" : ticketMode === "low" ? "最低體力／時間檢核" : "冰箱現有庫存檢核"}
+                {ticketMode === "purchase" ? "少量補買條件檢核" : "冰箱現有庫存檢核"}
               </span>
             </div>
             <h3>{ticketMode !== "purchase" ? "目前冰箱現有食材暫無完全匹配的料理" : "目前條件暫無完全匹配的料理"}</h3>
@@ -392,7 +337,7 @@ export function TodayPage() {
             <span className="stub-vertical-text">TODAY</span>
             <div className="stub-center">
               <small className="stub-mealno">{mealNumber}</small>
-              <strong>{missionsDone}/{missions.length}</strong>
+              <strong>{missionsDone}/3</strong>
               <span className="stub-pips" aria-hidden="true">
                 {missions.map((mission, index) => (
                   <i key={mission.key} className={index < missionsDone ? "on" : ""} />
@@ -412,14 +357,6 @@ export function TodayPage() {
                 >
                   <span className="material-symbols-outlined">kitchen</span>
                   冰箱就能煮{choices.length > 0 ? `（${choices.length}）` : "（0）"}
-                </button>
-                <button
-                  type="button" role="tab" aria-selected={ticketMode === "low"}
-                  className={`segmented-btn ${ticketMode === "low" ? "active" : ""}`}
-                  onClick={() => { setTicketMode("low"); setEnergyLow(true); }}
-                >
-                  <span className="material-symbols-outlined">bolt</span>
-                  低體力
                 </button>
                 <button
                   type="button" role="tab" aria-selected={ticketMode === "purchase"}
@@ -540,9 +477,9 @@ export function TodayPage() {
       {ticketMode !== "purchase" && alternativeMeals.length > 0 && (
         <section className="alt-stubs" aria-label="三個可行方向">
           <h4><span className="material-symbols-outlined">alt_route</span>三個可行方向</h4>
-          {alternativeMeals.map((meal) => (
+          {alternativeMeals.map((meal, index) => (
             <button type="button" className="ministub" key={meal.id} onClick={() => choose(meal)}>
-              <span className="mstub">{meal.totalMinutes}m</span>
+              <span className="mstub">{String(index + 1).padStart(2, "0")}</span>
               <span className="mbody">
                 <strong>{meal.title}</strong>
                 <span className="mmeta">
@@ -612,8 +549,12 @@ export function TodayPage() {
         {missions.map((mission) => (
           <div className={`mrow ${mission.done ? "done" : ""}`} key={mission.key}>
             <span className="mmark"><span className="material-symbols-outlined">check</span></span>
-            <span className="mlabel">{mission.label}</span>
-            <span className="rw">+{mission.reward}</span>
+            <span className="mlabel">
+              {mission.label}
+              <small>{mission.done ? "已完成" : mission.key === "cook_today" ? "就煮這道" : mission.key === "eat_prepared" ? "到冰箱加熱" : `用即期食材煮${mission.hint ? ` · 庫存 ${mission.hint} 項即期` : ""}`}</small>
+            </span>
+            <span className="rw">{mission.done ? "已入帳" : `+${mission.reward}`}</span>
+            {!mission.done && <span className="mgo material-symbols-outlined" aria-hidden="true">{mission.key === "cook_today" ? "local_fire_department" : mission.key === "eat_prepared" ? "ramen_dining" : "schedule"}</span>}
           </div>
         ))}
       </section>
@@ -630,21 +571,7 @@ export function TodayPage() {
         </a>
       </div>
 
-      {/* 主廚相談室入口 */}
-      <section className="chef-consultation-capsule" aria-label="主廚 CooCoo 相談室">
-        <button type="button" onClick={openChefConsultation} className="chef-entry">
-          <span className="chef-entry-avatar">
-            <span className="material-symbols-outlined">restaurant</span>
-          </span>
-          <span className="chef-entry-text">
-            <strong>主廚 CooCoo 相談室{energyLow ? " · 低體力模式中" : ""}</strong>
-            <small>太累、要順延或想換口味，點此諮詢</small>
-          </span>
-          <span className="chef-entry-go">諮詢<span className="material-symbols-outlined">chevron_right</span></span>
-        </button>
-      </section>
-
-      <div className="mt-8">
+      <div className="today-operations">
         <OfflineImportAndConflicts userId={data?.session.user?.id} />
       </div>
     </div>

@@ -2,7 +2,7 @@ import { http, HttpResponse } from "msw";
 import { FormatRegistry } from "@sinclair/typebox";
 import { Value } from "@sinclair/typebox/value";
 import type { TSchema, Static } from "@sinclair/typebox";
-import { brandSafeRecipes, CooCooService, createMealTask, getRescuePlan, parseShoppingText, searchRecipes } from "@coocoo/core";
+import { brandSafeRecipes, CooCooService, createMealTask, getRescuePlan, parseShoppingText, searchRecipes, withTodayMissions } from "@coocoo/core";
 import { ContractSchemas, type IngredientPrice, type MealPostpone, type MealSlot } from "@coocoo/contracts";
 import { createMealPlan, createTodayDecision, refreshAvailability, rescheduleMeal, weekOf, type MealPlanningContext } from "../../../../../api/src/modules/meal-plans/meal-planning";
 import { MemoryPlanningRepository } from "../../../../../api/src/modules/meal-plans/memory-planning.repository";
@@ -91,7 +91,7 @@ const validated = <T extends TSchema>(schema: T, value: unknown): Static<T> => {
 };
 
 export const handlers = [
-  http.get("/api/v1/state", () => ok(service.state())),
+  http.get("/api/v1/state", () => ok(withTodayMissions(service.state()))),
   http.get("/api/v1/session", () => ok(service.state().session)),
   http.post("/api/v1/auth/login", async ({ request }) => {
     try {

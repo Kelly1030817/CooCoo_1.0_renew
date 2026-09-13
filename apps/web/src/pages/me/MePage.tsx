@@ -6,7 +6,7 @@ import type {
   ChefChatSession,
   ReminderPreferences,
 } from "@coocoo/contracts";
-import { BADGE_DEFINITIONS, CHEF_RANKS } from "@coocoo/core";
+import { BADGE_DEFINITIONS, CHEF_RANKS, dateInTimeZone, mealsWithRecordedOutcomes } from "@coocoo/core";
 import { useAppRoute } from "@/app/routing/useAppRoute";
 import { useAppState, stateQueryKey } from "@/entities/app-state/model";
 import { api, json } from "@/shared/api/client";
@@ -42,6 +42,15 @@ export function MePage() {
   if (!data) return null;
 
   const { weeklyGoal, growth } = data;
+  const weeklyMeals = [...mealsWithRecordedOutcomes(data.mealPlan?.meals ?? [], data.cookingOutcomes)]
+    .sort((left, right) => `${left.date}${left.slot}`.localeCompare(`${right.date}${right.slot}`));
+  const today = dateInTimeZone(new Date());
+  const mealCounts = {
+    cooked: weeklyMeals.filter((meal) => meal.status === "cooked").length,
+    planned: weeklyMeals.filter((meal) => meal.status === "planned").length,
+    postponed: weeklyMeals.filter((meal) => meal.status === "postponed").length,
+    cancelled: weeklyMeals.filter((meal) => meal.status === "cancelled").length,
+  };
   const percent = Math.min(
     100,
     Math.round((weeklyGoal.progress / weeklyGoal.target) * 100),
@@ -102,6 +111,28 @@ export function MePage() {
             儲存
           </button>
         </label>
+      </section>
+
+      <section className="weekly-meals-card">
+        <span>本週餐次</span>
+        <h3>逐餐明細</h3>
+        <div className="meal-tally" aria-label="本週餐次統計">
+          <div><b>{mealCounts.cooked}</b><small>已煮</small></div>
+          <div><b>{mealCounts.planned}</b><small>待煮</small></div>
+          <div><b>{mealCounts.postponed}</b><small>延後</small></div>
+          <div><b>{mealCounts.cancelled}</b><small>已取消</small></div>
+        </div>
+        {weeklyMeals.length === 0 ? <p className="empty-meals">尚未安排本週餐點。</p> : (
+          <div className="weekly-meal-list">
+            {weeklyMeals.map((meal, index) => (
+              <article className={meal.date === today ? "today" : ""} key={meal.id}>
+                <span>{String(index + 1).padStart(2, "0")}</span>
+                <div><strong>{meal.title || "尚未選食譜"}</strong><small>{meal.date} · {({ breakfast: "早餐", lunch: "午餐", dinner: "晚餐" })[meal.slot]} · {meal.totalMinutes} 分鐘</small></div>
+                <b className={meal.status}>{({ cooked: "已完成", planned: "待安排", postponed: "延後", cancelled: "已取消" })[meal.status]}</b>
+              </article>
+            ))}
+          </div>
+        )}
       </section>
 
       <section className="rank-card">

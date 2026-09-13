@@ -15,6 +15,7 @@ export * from "./meal-task";
 export * from "./reminders";
 export * from "./inventory-confirmation";
 export * from "./ingredient";
+export * from "./today";
 import { completeCookingSession } from "./mvp";
 import { awardBadges, awardExp, deriveGrowthProfile, grantWeeklyGoalReward } from "./growth";
 import { sameIngredient } from "./ingredient";
