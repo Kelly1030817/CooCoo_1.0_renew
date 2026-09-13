@@ -38,7 +38,7 @@
 - `weekly_rhythm` 不再出現在今日任務，週進度只留在獨立進度列。
 - 「今日第 N 餐」只計算今天的有效餐次，並以 `Asia/Taipei` 處理跨午夜事件。
 - 「我的」新增本週逐餐明細，將 `mealPlan.meals` 與 `cookingOutcomes` 合併顯示，不修改既有餐單資料。
-- 五步 Onboarding 以 `output/onboarding-audit/chef-consultation-5step-proposal.html` 為視覺基準，保留主廚心情、卡片、計數器、標籤、精確冰箱、親簽與蓋章動態。
+- 五步 Onboarding 保留主廚心情、卡片、計數器、標籤、登入同步、親簽與蓋章動態；第 4 步不再建立或設定冰箱。
 - Onboarding 仍使用既有 `/onboarding`、`/inventory`、收據 OCR、Supabase Auth 與 `save_onboarding_profile`，過敏／禁食維持後端硬限制。
 - 蓋章後才送出完成資料，完成後進入「今日」。
 
@@ -48,7 +48,7 @@
 - `shopping_items.shortage_id/source`、`restock_operations` 與 `restock_checked_shopping_v2` 是採買票根的正式持久化邊界；`pantry` 類別入庫到常溫位置。
 - 冰箱頁只管理食材庫存；不再提供冰箱品牌、型號、總容量、容量佔比或冷藏／冷凍比例設定。
 - `fridge_profiles` 由 migration 移除；食材庫存仍由 `inventory_batches` 管理。
-- Onboarding 寫入既有 `profiles`、`cookware`、`dietary_restrictions`、`weekly_goals_v2`、`notification_preferences`；確認空箱時依既有 RPC 規則清除該帳號庫存。
+- Onboarding 寫入既有 `profiles`、`cookware`、`dietary_restrictions`、`weekly_goals_v2`、`notification_preferences`，不新增、清空或修改庫存；食材由登入後的冰箱頁管理。
 - OCR 仍先建立草稿，使用者逐項確認數量、單位、位置與期限後才入庫。
 - 任務為 `/state` 回應的衍生資料，不可由前端切換，也不直接寫入資料庫。
 

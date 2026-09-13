@@ -6,16 +6,23 @@ import { ChefAvatar } from "./ChefAvatar";
 import { PassportTicket } from "./PassportTicket";
 import { emptyOnboardingDraft } from "../../shared/model/onboarding-draft";
 import { suggestWeeklyGoalTarget } from "./weekly-goal";
-import { isOnboardingStepValid } from "./validation";
+import { completeOnboardingProfile, isOnboardingStepValid } from "./validation";
 
 describe("Chef Consultation Components", () => {
-  test("step 4 enables the continue action after either inventory path while auth restores", () => {
-    const manualProfile = { ...emptyOnboardingDraft, currentStep: 4, hasNoInventory: false };
-    expect(isOnboardingStepValid(4, manualProfile, { name: "雞蛋", expiresOn: "2026-09-20" }, false)).toBe(true);
-
-    const emptyProfile = { ...emptyOnboardingDraft, currentStep: 4, hasNoInventory: true };
-    expect(isOnboardingStepValid(4, emptyProfile, { name: "", expiresOn: "" }, false)).toBe(true);
-    expect(isOnboardingStepValid(4, manualProfile, { name: "雞蛋", expiresOn: "" }, false)).toBe(false);
+  test("step 4 only verifies sign-in and completing onboarding never changes inventory", () => {
+    expect(isOnboardingStepValid(4, { ...emptyOnboardingDraft, currentStep: 4 })).toBe(true);
+    expect(completeOnboardingProfile({
+      ...emptyOnboardingDraft,
+      currentStep: 5,
+      inventoryReviewed: true,
+      hasNoInventory: true,
+    }, "2026-09-14T00:00:00.000Z")).toMatchObject({
+      status: "complete",
+      currentStep: 5,
+      inventoryReviewed: false,
+      hasNoInventory: false,
+      completedAt: "2026-09-14T00:00:00.000Z",
+    });
   });
   test("weekly goal suggestion is current frequency plus one within the supported range",()=>{
     expect(suggestWeeklyGoalTarget(0)).toBe(1);
