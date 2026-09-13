@@ -258,8 +258,8 @@
 .ticket-rewards { flex-wrap: wrap; gap: 6px; margin-top: 11px; }
 .reward-chip { display: inline-flex; align-items: center; gap: 3px; border-radius: 999px; padding: 4px 7px; font-size: 8.5px; font-weight: 900; }
 .reward-chip .material-symbols-outlined { font-size: 11px; }
-.reward-chip.xp { background: #fff0d1; color: #8a551a; }
-.reward-chip.badge { background: #f1ecfa; color: #66517e; }
+.reward-chip.xp { background: #fdf3dc; color: #b8862f; }
+.reward-chip.badge { background: #edf2f7; color: #34465b; }
 .ticket-cta { gap: 8px; margin-top: 11px; }
 .cook-choice { min-height: 42px; flex: 1; border: 0; border-radius: 999px; background: var(--today-primary); color: #fff; font-size: 12px; font-weight: 900; }
 .cook-choice:disabled { opacity: .55; }
