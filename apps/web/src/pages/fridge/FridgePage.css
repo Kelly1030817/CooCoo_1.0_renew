@@ -25,14 +25,6 @@
   padding-bottom: 7rem;
 }
 
-.fridge-page .capacity-card {
-  background-color: #ffffff;
-  border: 1px solid var(--card-border);
-  border-radius: 1.25rem;
-  padding: 0.875rem 1rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
-}
-
 .fridge-page .urgent-section {
   background-color: var(--urgent-bg);
   border: 1.5px solid var(--urgent-border);

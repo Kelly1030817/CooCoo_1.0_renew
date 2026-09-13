@@ -342,21 +342,6 @@ export const handlers = [
       notice: "本機預覽使用安全採買規則；切換真實 API 後才會呼叫 OpenRouter。",
     }),
   ),
-  http.get("/api/v1/settings/fridge", () => ok(service.state().fridgeProfile)),
-  http.put("/api/v1/settings/fridge", async ({ request }) => {
-    try {
-      return ok(
-        service.updateSettings({
-          fridgeProfile: validated(
-            ContractSchemas.FridgeProfileSchema,
-            await request.json(),
-          ),
-        }).fridgeProfile,
-      );
-    } catch (e) {
-      return error(e);
-    }
-  }),
   http.get("/api/v1/settings/cookware", () => ok(service.state().cookware)),
   http.put("/api/v1/settings/cookware", async ({ request }) => {
     try {

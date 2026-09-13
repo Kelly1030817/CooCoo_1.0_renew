@@ -12,7 +12,7 @@
 | Cooking | 未選食材 → 選擇風格／食材 → 食譜 → 步驟／計時 → 完成 | 至少一項庫存食材；空選擇為 `INGREDIENT_REQUIRED` | completionKey 冪等；一次扣庫存、記錄 outcome、圓夢金、習慣與健康 |
 | Shopping | 清單 → 新增／編輯／勾選 → 分析 → 批次補貨 | 名稱、數量、價格為有效值；解析失敗保留原輸入供修正 | 已勾選項一次移入庫存並從採買清單移除，不允許半完成 |
 | Decision Support | 即期候選 → 食品安全閘門 → 吃掉／轉化保存／丟棄 | 不安全食材只能丟棄，其他行動回 `UNSAFE_ACTION` | 庫存變更與 rescue outcome 同一命令完成 |
-| Settings | 冰箱容量、冷藏／冷凍比例與廚具設定 | 比例與容量不可為負；資料需符合共用 runtime schema | 整份 profile 原子替換 |
+| Settings | 廚具設定 | 廚具資料需符合共用 runtime schema | 整份 profile 原子替換 |
 | Reset | 開發／測試環境的資料重設 | production 不暴露 | 清除目前 mock state，恢復固定 seed 與 schema version 1 |
 
 ## 圓夢六步與計算規則
@@ -41,7 +41,7 @@
 - 救援建議只可使用目標食材、基本調味與目前相容庫存，不憑空加入食材。
 - `eat`：確認安全後移除庫存；`preserve`：原項目轉為冷凍並延長保存；`discard`：移除。
 - rescue 是單一 application command；任何驗證失敗都不能留下局部 mutation。
-- 冰箱容量只影響容量／警示呈現，不改變現有卡片幾何。
+- 冰箱頁只管理食材庫存，不記錄實體冰箱容量、品牌、型號或冷藏／冷凍比例。
 
 ## 食譜、料理與結算
 

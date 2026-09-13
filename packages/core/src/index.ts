@@ -391,13 +391,6 @@ export function createSeedState(): AppState {
     },
     inventory,
     shoppingItems,
-    fridgeProfile: {
-      brand: "",
-      model: "",
-      capacityLiters: 0,
-      coldRatio: 0.6,
-      isConfigured: false,
-    },
     cookware: [
       {
         id: "cw1",
@@ -830,7 +823,7 @@ export class CooCooService {
     this.repository.write(s);
     return next;
   }
-  updateSettings(patch: Partial<Pick<AppState, "fridgeProfile" | "cookware">>) {
+  updateSettings(patch: Partial<Pick<AppState, "cookware">>) {
     const s = this.state();
     Object.assign(s, patch);
     this.repository.write(s);

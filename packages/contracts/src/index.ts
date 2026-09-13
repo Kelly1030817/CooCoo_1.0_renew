@@ -574,15 +574,6 @@ export const RecipeSchema = Type.Object({
 });
 export type Recipe = Static<typeof RecipeSchema>;
 
-export const FridgeProfileSchema = Type.Object({
-  brand: Type.String(),
-  model: Type.String(),
-  capacityLiters: Type.Integer({ minimum: 0 }),
-  coldRatio: Type.Number({ minimum: 0, maximum: 1 }),
-  isConfigured: Type.Boolean(),
-});
-export type FridgeProfile = Static<typeof FridgeProfileSchema>;
-
 export const CookwareProfileSchema = Type.Object({
   id: IdSchema,
   type: Type.String(),
@@ -724,7 +715,6 @@ export interface AppState {
   healthAssets: HealthAssets;
   inventory: InventoryItem[];
   shoppingItems: ShoppingItem[];
-  fridgeProfile: FridgeProfile;
   cookware: CookwareProfile[];
   onboardingProfile?: OnboardingProfile;
   mealPlan?: MealPlan;
@@ -896,7 +886,6 @@ export const ContractSchemas = {
   ShoppingResolutionCommandSchema,
   ReceiptRecognizeSchema,
   ShoppingAnalysisSchema,
-  FridgeProfileSchema,
   CookwareListSchema: Type.Array(CookwareProfileSchema),
   DietaryRestrictionSchema,
   OnboardingProfileSchema,
