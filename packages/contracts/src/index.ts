@@ -507,6 +507,14 @@ export const RescuePlanSchema = Type.Object({
 });
 export type RescuePlan = Static<typeof RescuePlanSchema>;
 
+export const ShoppingSourceSchema = Type.Union([
+  Type.Literal("manual"),
+  Type.Literal("voice"),
+  Type.Literal("assistant"),
+  Type.Literal("task"),
+  Type.Literal("receipt"),
+]);
+export type ShoppingSource = Static<typeof ShoppingSourceSchema>;
 export const ShoppingItemSchema = Type.Object({
   id: IdSchema,
   name: Type.String({ minLength: 1 }),
@@ -521,6 +529,8 @@ export const ShoppingItemSchema = Type.Object({
   checked: Type.Boolean(),
   status: Type.String(),
   estCost: MoneySchema,
+  shortageId: Type.Optional(Type.String({ minLength: 1 })),
+  source: Type.Optional(ShoppingSourceSchema),
 });
 export type ShoppingItem = Static<typeof ShoppingItemSchema>;
 
@@ -629,11 +639,78 @@ export const ShoppingWriteSchema = Type.Object({
   checked: Type.Optional(Type.Boolean()),
   status: Type.Optional(Type.String()),
   estCost: Type.Optional(MoneySchema),
+  shortageId: Type.Optional(Type.String({ minLength: 1 })),
+  source: Type.Optional(ShoppingSourceSchema),
 });
 export const ShoppingParseSchema = Type.Object({
   text: Type.String({ minLength: 1 }),
 });
 export const ShoppingAnalyzeSchema = Type.Object({ operationId: IdSchema });
+export const StorageLocationSchema = Type.Union([
+  Type.Literal("cold"),
+  Type.Literal("frozen"),
+  Type.Literal("pantry"),
+
+]);
+export type StorageLocation = Static<typeof StorageLocationSchema>;
+export const RestockPurchasedItemSchema = Type.Object({
+  shoppingItemId: IdSchema,
+  shortageId: Type.Optional(Type.String({ minLength: 1 })),
+  actualQuantity: Type.Number({ exclusiveMinimum: 0 }),
+  actualUnit: Type.String({ minLength: 1 }),
+  actualPrice: Type.Optional(MoneySchema),
+  storageLocation: StorageLocationSchema,
+  expiresOn: Type.Optional(DateOnlySchema),
+});
+export type RestockPurchasedItem = Static<typeof RestockPurchasedItemSchema>;
+export const MealTaskRestockCommandSchema = Type.Object({
+  operationId: IdSchema,
+  mealTaskId: Type.Optional(IdSchema),
+  shortageRevision: Type.Optional(Type.Integer({ minimum: 1 })),
+  purchasedItems: Type.Array(RestockPurchasedItemSchema, { minItems: 1 }),
+});
+export type MealTaskRestockCommand = Static<typeof MealTaskRestockCommandSchema>;
+export const MealTaskRestockResultSchema = Type.Object({
+  operationId: IdSchema,
+  replayed: Type.Boolean(),
+  count: Type.Integer({ minimum: 0 }),
+  mealTaskStatus: Type.Optional(MealTaskStatusSchema),
+  remainingShortages: Type.Array(MealTaskSchema.properties.shortages.items),
+  nextActions: Type.Array(Type.Union([
+    Type.Literal("return_to_task"),
+    Type.Literal("continue_shopping"),
+    Type.Literal("start_cooking"),
+  ])),
+});
+export type MealTaskRestockResult = Static<typeof MealTaskRestockResultSchema>;
+export const ShoppingResolutionCommandSchema = Type.Intersect([Type.Object({mealTaskId: Type.Optional(IdSchema), shortageRevision: Type.Optional(Type.Integer({minimum:1})), adjustmentPreviewId: Type.Optional(IdSchema)}), Type.Union([
+  Type.Object({
+    operationId: IdSchema,
+    shortageId: IdSchema,
+    action: Type.Literal("replace"),
+    replacementIngredientKey: Type.String({ minLength: 1 }),
+    replacementName: Type.String({ minLength: 1 }),
+    replacementQuantity: Type.Number({ exclusiveMinimum: 0 }),
+    replacementUnit: Type.String({ minLength: 1 }),
+  }),
+  Type.Object({
+    operationId: IdSchema,
+    shortageId: IdSchema,
+    action: Type.Union([Type.Literal("keep_for_later"),Type.Literal("resume")]),
+  }),
+  Type.Object({
+    operationId: IdSchema,
+    action: Type.Literal("replan_meal"),
+  }),
+])]);
+export type ShoppingResolutionCommand = Static<typeof ShoppingResolutionCommandSchema>;
+export const RestockOperationSchema = Type.Object({
+  operationId: IdSchema,
+  request: Type.Optional(Type.String()),
+  result: MealTaskRestockResultSchema,
+  createdAt: IsoDateTimeSchema,
+});
+export type RestockOperation = Static<typeof RestockOperationSchema>;
 export const ReceiptRecognizeSchema = Type.Object({ operationId: Type.Optional(IdSchema) });
 export interface AppState {
   version: 2;
@@ -665,6 +742,7 @@ export interface AppState {
   syncConflicts?: SyncConflict[];
   /** Read-only daily missions derived by the /state backend response. */
   missions?: TodayMission[];
+  restockOperations?: RestockOperation[];
 
 }
 
@@ -813,6 +891,9 @@ export const ContractSchemas = {
   ShoppingWriteSchema,
   ShoppingParseSchema,
   ShoppingAnalyzeSchema,
+  MealTaskRestockCommandSchema,
+  MealTaskRestockResultSchema,
+  ShoppingResolutionCommandSchema,
   ReceiptRecognizeSchema,
   ShoppingAnalysisSchema,
   FridgeProfileSchema,

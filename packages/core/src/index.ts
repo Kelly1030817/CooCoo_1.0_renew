@@ -1,3 +1,6 @@
+import { createMealTask } from "./meal-task";
+import { resolveShoppingTask } from "./shopping-resolution";
+export { resolveShoppingTask } from "./shopping-resolution";
 import type {
   AppState,
   CookingOutcome,
@@ -7,8 +10,13 @@ import type {
   Recipe,
   RescuePlan,
   ShoppingItem,
+  MealTask,
+  MealTaskRestockCommand,
+  MealTaskRestockResult,
+  ShoppingResolutionCommand,
 } from "@coocoo/contracts";
 
+type MealTaskStatus = MealTask["status"];
 export * from "./mvp";
 export * from "./growth";
 export * from "./meal-task";
@@ -202,6 +210,20 @@ export function getRescuePlan(item: InventoryItem): RescuePlan {
   return { itemId: item.id, eatNow, preserve };
 }
 
+export function shoppingCategoryFor(name: string): ShoppingItem["category"] {
+  const n = name.trim().toLowerCase();
+  if (/水餃|餃子|餛飩|烏龍|拉麵|義大利麵|通心麵|冬粉|米粉|麵條|白飯|糙米飯|年糕|吐司|麵包/.test(n) || (/(飯|麵|粉)$/.test(n) && !/胡椒粉|辣椒粉|太白粉|地瓜粉/.test(n))) return "pantry";
+  if (/食用油|橄欖油|香油|沙拉油|麻油|醬油|蠔油|豆瓣醬|番茄醬|沙茶|味醂|胡椒|鹽巴|海鹽|砂糖|黑糖|烏醋|白醋|味噌|辣醬|辣椒醬|美乃滋|泡菜|醃|漬|醬/.test(n)) return "pantry";
+  if (/肉|豬|牛|雞|羊|鴨|鵝|魚|蝦|蛤|蚵|花枝|魷魚|干貝|海鮮|培根|火腿|熱狗|香腸|絞肉/.test(n)) return "protein";
+  if (/蛋|豆腐|豆漿|豆花|豆皮|豆包|乾絲|起司|乳酪|起士|牛奶|優格|毛豆|黃豆|黑豆/.test(n)) return "protein";
+  if (/菇|木耳|蕈|蘑菇|菌/.test(n)) return "produce";
+  if (/菜|葉|菠菜|空心菜|小白菜|青江菜|地瓜葉|茼蒿|水蓮|萵苣|娃娃菜|羽衣甘藍|芥藍/.test(n)) return "produce";
+  if (/地瓜|番薯|馬鈴薯|山藥|芋頭|蓮藕|牛蒡|竹筍|筍|蘿蔔|洋蔥|洋葱|蒜|蒜頭|蔥|蔥花|青蔥|薑|老薑|生薑/.test(n)) return "produce";
+  if (/節瓜|櫛瓜|南瓜|絲瓜|苦瓜|冬瓜|胡瓜|小黃瓜|大黃瓜|佛手瓜|扁蒲|瓠瓜|木瓜|西瓜|瓜/.test(n)) return "produce";
+  if (/番茄|西紅柿|玉米|花椰/.test(n)) return "produce";
+  return "other";
+}
+
 export function parseShoppingText(text: string) {
   const chinese: Record<string, number> = {
     一: 1,
@@ -229,9 +251,7 @@ export function parseShoppingText(text: string) {
         name: (match?.[1] || part).trim(),
         qty: match?.[2] ? Number(match[2]) || chinese[match[2]] || 1 : 1,
         unit: match?.[3] || "包",
-        category: /肉|魚|蛋|奶|起司/.test(part)
-          ? ("protein" as const)
-          : ("produce" as const),
+        category: shoppingCategoryFor(match?.[1] || part),
         checked: true,
         status: "語音新增",
         estCost: 50,
@@ -656,16 +676,20 @@ export class CooCooService {
     const s = this.state();
     const existing = item.id
       ? s.shoppingItems.find((i) => i.id === item.id)
-      : null;
+      : item.shortageId
+        ? s.shoppingItems.find((i) => i.shortageId === item.shortageId)
+        : null;
     const next: ShoppingItem = {
       id: existing?.id || this.runtime.id(),
       name: item.name,
-      category: item.category || existing?.category || "produce",
+      category: item.category || existing?.category || shoppingCategoryFor(item.name),
       qty: item.qty ?? existing?.qty ?? 1,
       unit: item.unit || existing?.unit || "包",
       checked: item.checked ?? existing?.checked ?? false,
       status: item.status || existing?.status || "手動新增",
       estCost: nonNegative(item.estCost ?? existing?.estCost ?? 50),
+      shortageId: item.shortageId ?? existing?.shortageId,
+      source: item.source ?? existing?.source,
     };
     s.shoppingItems = existing
       ? s.shoppingItems.map((i) => (i.id === next.id ? next : i))
@@ -678,8 +702,9 @@ export class CooCooService {
     s.shoppingItems = s.shoppingItems.filter((i) => i.id !== id);
     this.repository.write(s);
   }
-  restock() {
+  restock(command?: MealTaskRestockCommand): MealTaskRestockResult | { count: number; items: ShoppingItem[] } {
     const s = this.state();
+    if (command) return this.restockWithCommand(s, command);
     const selected = s.shoppingItems.filter((i) => i.checked);
     selected.forEach((i) =>
       s.inventory.push({
@@ -704,6 +729,7 @@ export class CooCooService {
     const bought = selected.map((item) => ({ ...item, remaining: item.qty }));
     s.mealTasks = (s.mealTasks ?? []).map((task) => {
       const shortages = task.shortages.map((shortage) => {
+        if(["bought","replaced"].includes(shortage.resolution))return shortage;
         let needed = shortage.quantity;
         for (const item of bought.filter((candidate) => candidate.unit === shortage.unit && sameIngredient({ ingredientKey: candidate.name, name: candidate.name }, shortage))) {
           const used = Math.min(needed, item.remaining);
@@ -721,6 +747,88 @@ export class CooCooService {
     });
     this.repository.write(s);
     return { count: selected.length, items: selected };
+  }
+  private restockWithCommand(s: ReturnType<StateRepository["read"]>, command: MealTaskRestockCommand): MealTaskRestockResult {
+    const prior = (s.restockOperations ?? []).find((op) => op.operationId === command.operationId);
+    if (prior) { if(prior.request && prior.request !== JSON.stringify(command)) throw new Error("OPERATION_CONFLICT"); return { ...prior.result, replayed: true }; }
+    const task = command.mealTaskId ? (s.mealTasks ?? []).find((t) => t.id === command.mealTaskId) : undefined;
+    if (command.mealTaskId && !task) throw new Error("MEAL_TASK_NOT_FOUND");
+    if(task && !["needs_shopping","ready"].includes(task.status)) throw new Error("MEAL_TASK_NOT_ACTIVE");
+    if (task && command.shortageRevision !== undefined && command.shortageRevision !== task.revision) {
+      throw new Error("MEAL_TASK_REVISION_CONFLICT");
+    }
+    if(new Set(command.purchasedItems.map(p=>p.shoppingItemId)).size!==command.purchasedItems.length) throw new Error("DUPLICATE_SHOPPING_ITEM");
+    for (const entry of command.purchasedItems) {
+      const item=s.shoppingItems.find(i=>i.id===entry.shoppingItemId);
+      if(!item)throw new Error("SHOPPING_ITEM_NOT_FOUND");
+      if(!item.checked)throw new Error("SHOPPING_ITEM_NOT_CHECKED");
+      if(item.shortageId!==entry.shortageId)throw new Error("SHORTAGE_LINK_CONFLICT");
+      if(entry.actualQuantity<=0||!entry.actualUnit.trim())throw new Error("INVALID_PURCHASE");
+      if(item.shortageId){
+        if(!task)throw new Error("MEAL_TASK_REQUIRED");
+        const shortage=task.shortages.find(sh=>sh.id===item.shortageId);
+        if(!shortage||!["needed","unavailable"].includes(shortage.resolution))throw new Error("SHORTAGE_NOT_ACTIVE");
+        if(!entry.expiresOn)throw new Error("EXPIRY_REQUIRED");
+        if(entry.expiresOn<dateOnly(this.runtime.now())!)throw new Error("EXPIRED_PURCHASE");
+        if(entry.actualUnit!==shortage.unit)throw new Error("UNIT_CONFIRMATION_REQUIRED");
+      }
+    }
+    const nowIso = this.runtime.now().toISOString();
+    const purchased = command.purchasedItems.map((p) => ({ p, item: s.shoppingItems.find((i) => i.id === p.shoppingItemId) })).filter((x): x is { p: MealTaskRestockCommand["purchasedItems"][number]; item: ShoppingItem } => !!x.item);
+    for (const { p, item } of purchased) {
+      const chamber = p.storageLocation === "pantry" ? "pantry" : p.storageLocation === "frozen" ? "frozen" : "cold";
+      const expiresOn = p.expiresOn ?? null;
+      const days = expiresOn ? Math.max(0, Math.ceil((new Date(`${expiresOn}T12:00:00Z`).getTime() - this.runtime.now().getTime()) / DAY_MS)) : 30;
+      s.inventory.push({
+        id: this.runtime.id(),
+        ingredientKey: item.name,
+        name: item.name,
+        chamber,
+        qty: p.actualQuantity,
+        unit: p.actualUnit,
+        daysLeft: days,
+        image,
+        addedDate: dateOnly(this.runtime.now())!,
+        expiresOn,
+        lastConfirmedAt: nowIso,
+        estimatedValue: p.actualPrice ?? Math.max(50, item.estCost),
+        roi: { savings: p.actualPrice ?? Math.max(50, item.estCost), sodium: 100, fat: 5 },
+        storageProtocol: chamber === "frozen" ? "密封冷凍並標示日期" : "先進先出，依期限優先使用",
+        boxSize: "M",
+      });
+    }
+    const boughtIds = new Set(purchased.map((x) => x.item.id));
+    s.shoppingItems = s.shoppingItems.filter((i) => !boughtIds.has(i.id));
+    let mealTaskStatus: MealTaskStatus | undefined;
+    let remainingShortages: MealTask["shortages"] = [];
+    if(task){
+      const recalculated=createMealTask({operationId:task.operationId,recipePackageId:task.recipe.recipeId,currentMeal:task.currentMeal,nextMeal:task.nextMeal},task.recipe,s.inventory,s.onboardingProfile?.restrictions??[],nowIso);
+      const shortages:MealTask["shortages"]=task.shortages.map(sh=>recalculated.shortages.find(n=>n.ingredientKey===sh.ingredientKey&&n.unit===sh.unit)?{...sh,quantity:recalculated.shortages.find(n=>n.ingredientKey===sh.ingredientKey&&n.unit===sh.unit)!.quantity,resolution:sh.resolution==='unavailable'?'unavailable' as const:'needed' as const}:{...sh,resolution:'bought' as const});
+      shortages.push(...recalculated.shortages.filter(sh=>!shortages.some(old=>old.ingredientKey===sh.ingredientKey&&old.unit===sh.unit)));
+      mealTaskStatus=recalculated.status;
+      remainingShortages=shortages.filter(sh=>!['bought','replaced'].includes(sh.resolution));
+      s.mealTasks=(s.mealTasks??[]).map(t=>t.id===task.id?{...t,shortages,status:mealTaskStatus!,revision:t.revision+(JSON.stringify(shortages)!==JSON.stringify(t.shortages)||mealTaskStatus!==t.status?1:0),updatedAt:nowIso}:t);
+    }
+    const result: MealTaskRestockResult = {
+      operationId: command.operationId,
+      replayed: false,
+      count: purchased.length,
+      mealTaskStatus,
+      remainingShortages,
+      nextActions: mealTaskStatus === "ready" ? ["return_to_task", "start_cooking"] : ["continue_shopping", "return_to_task"],
+    };
+    s.restockOperations = [...(s.restockOperations ?? []), { operationId: command.operationId, request: JSON.stringify(command), result, createdAt: nowIso }];
+    this.repository.write(s);
+    return result;
+  }
+  resolveShortage(command: ShoppingResolutionCommand): MealTask | null {
+    const s=this.state();
+    const next=resolveShoppingTask(s,command,this.runtime.now().toISOString());
+    const old=s.mealTasks?.find(t=>t.id===next.id);
+    if(command.action==='replace'||command.action==='replan_meal')s.shoppingItems=s.shoppingItems.map(item=>old?.shortages.some(sh=>sh.id===item.shortageId)?{...item,shortageId:undefined,source:'manual',status:'一般採買'}:item);
+    s.mealTasks=(s.mealTasks??[]).map(t=>t.id===next.id?next:t);
+    this.repository.write(s);
+    return next;
   }
   updateSettings(patch: Partial<Pick<AppState, "fridgeProfile" | "cookware">>) {
     const s = this.state();
