@@ -116,9 +116,9 @@ export function ShoppingPage(){
         <h2>採買清單</h2>
         <p className="shopping-heading-sub">先買任務真正缺少的；一般食材順路再帶。</p>
       </div>
-      <button type="button" onClick={()=>ui.open(<ShoppingAssistantModal onClose={ui.close}/>)}>
-        <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>smart_toy</span>
-        <span>AI 陪我逛</span>
+      <button type="button" onClick={()=>ui.open(<AddShoppingModal onClose={ui.close}/>)}>
+        <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>add</span>
+        <span>新增品項</span>
       </button>
     </section>
 
