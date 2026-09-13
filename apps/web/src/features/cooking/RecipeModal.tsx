@@ -7,6 +7,7 @@ import { UiContext } from "@/app/ui-context";
 import { useAppState, stateQueryKey } from "@/entities/app-state/model";
 import { enqueueOperation, markRecipePackageCompleted, saveRecipePackage } from "@/shared/offline/recipe-packages";
 import { requestFirstCookingPushPermission } from "./push-permission";
+import { instructionForMode, toggledGuidanceMode } from "./recipe-guidance";
 import "./RecipeModal.css";
 
 export function RecipeModal({ ingredientIds, style, onClose, onComplete }: { ingredientIds: string[]; style: string; onClose: () => void; onComplete?: () => void }) {
@@ -98,8 +99,12 @@ function playTimerChime() {
 }
 
 function CookingMode({ recipePackage, ingredientIds, mealTaskId, onClose, onComplete }: { recipePackage: RecipePackage; ingredientIds: string[]; mealTaskId?: string; onClose: () => void; onComplete?: () => void }) {
+  const { data: appState } = useAppState();
+  const [guidanceOverride, setGuidanceOverride] = useState<"detailed" | "compact" | null>(null);
   const [stepIndex, setStepIndex] = useState(0);
   const step = recipePackage.steps[stepIndex];
+  const guidanceMode = guidanceOverride ?? appState?.onboardingProfile?.guidanceMode ?? "detailed";
+  const visibleInstruction = instructionForMode(step, guidanceMode);
   const [secondsLeft, setSecondsLeft] = useState<number | null>(step?.timerSeconds ?? null);
   const [timerRunning, setTimerRunning] = useState(false);
   const [timerFinished, setTimerFinished] = useState(false);
@@ -195,7 +200,14 @@ function CookingMode({ recipePackage, ingredientIds, mealTaskId, onClose, onComp
           <small className="header-recipe-title">{recipePackage.title}</small>
           <span className="header-step-counter">步驟 {stepIndex + 1} / {recipePackage.steps.length}</span>
         </div>
-        <div className="header-spacer" aria-hidden="true" />
+        <button
+          type="button"
+          className="guidance-mode-toggle"
+          aria-label={`目前為${guidanceMode === "detailed" ? "詳細陪做" : "精簡步驟"}，按下切換`}
+          onClick={() => setGuidanceOverride(toggledGuidanceMode(guidanceMode))}
+        >
+          {guidanceMode === "detailed" ? "詳細陪做" : "精簡步驟"}
+        </button>
       </header>
 
       <div className="cooking-progress-segments" aria-hidden="true">
@@ -216,7 +228,7 @@ function CookingMode({ recipePackage, ingredientIds, mealTaskId, onClose, onComp
         </div>
 
         <div className="step-main-card">
-          <h2 className="step-instruction-text">{step.instruction}</h2>
+          <h2 className="step-instruction-text">{visibleInstruction}</h2>
           {stepIngredients.length > 0 && (
             <div className="step-ingredients-section">
               <span className="step-ingredients-label">本步驟投入食材</span>
@@ -261,7 +273,16 @@ function CookingMode({ recipePackage, ingredientIds, mealTaskId, onClose, onComp
           </div>
         )}
 
-        <div className="step-tip-card">
+        {guidanceMode === "detailed" && step.guidance && (
+          <div className="step-guidance-card">
+            <strong>完成判斷</strong>
+            <p>{step.guidance.successCue}</p>
+            {step.guidance.why && <><strong>為什麼這樣做</strong><p>{step.guidance.why}</p></>}
+            {step.guidance.rescueTip && <><strong>不如預期時</strong><p>{step.guidance.rescueTip}</p></>}
+          </div>
+        )}
+
+        {guidanceMode === "detailed" && <div className="step-tip-card">
           <div className="step-tip-icon">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M9 18h6"/>
@@ -274,7 +295,7 @@ function CookingMode({ recipePackage, ingredientIds, mealTaskId, onClose, onComp
             <strong>主廚私房撇步 · 料理科學</strong>
             <p>{chefTip}</p>
           </div>
-        </div>
+        </div>}
 
         {step.safetyNote && (
           <div className="step-safety-card">

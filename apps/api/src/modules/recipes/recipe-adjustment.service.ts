@@ -2,6 +2,7 @@ import { Value } from "@sinclair/typebox/value";
 import { RecipePackageSchema, type DietaryRestriction, type InventoryItem, type RecipeAdjustmentRequest, type RecipeAdjustmentPreview, type RecipePackage } from "@coocoo/contracts";
 import { assertRecipeSafety } from "@coocoo/core";
 import { OpenRouterJsonClient } from "../ai/openrouter-json-client";
+import { hasCompleteRecipeGuidance } from "./recipe-guidance";
 
 const normalize = (value: string) => value.trim().toLocaleLowerCase("zh-TW");
 
@@ -30,10 +31,11 @@ export async function previewRecipeAdjustment(recipe: RecipePackage, request: Re
         schemaName: "coocoo_recipe_adjustment",
         maxTokens: 4096,
         requireZeroDataRetention: true,
-        system: "你是 CooCoo 食譜調整器。只能依要求調整份數、替代食材與料理情境；不可放寬過敏、禁食或食安，不可新增使用者沒有的廚具。只輸出繁體中文 JSON。",
+        system: "你是 CooCoo 食譜調整器。只能依要求調整份數、替代食材與料理情境；不可放寬過敏、禁食或食安，不可新增使用者沒有的廚具。維持同一份權威料理包，instruction、compactInstruction 與 guidance 必須描述相同的食材用量、步驟、時間、溫度及完成標準，精簡指引不得刪除安全關鍵資訊。只輸出繁體中文 JSON。",
         prompt: JSON.stringify({ original: recipe, servings: request.servings, replacements: request.replacementRequests, context: request.context, hardRestrictions: restrictions.filter((item) => item.isHardLimit) }),
       });
       if (!Value.Check(RecipePackageSchema, result.value)) throw new Error("AI_SCHEMA_INVALID");
+      if (!hasCompleteRecipeGuidance(result.value)) throw new Error("AI_RECIPE_GUIDANCE_INCOMPLETE");
       adjustedRecipe = { ...result.value, id: `${recipe.id}:adjusted:${request.operationId}`, recipeId: recipe.recipeId, cookwareTypes: recipe.cookwareTypes, servings: request.servings };
       source = "openrouter";
       costUsd = result.costUsd ?? 0;
