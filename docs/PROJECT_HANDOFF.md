@@ -60,12 +60,14 @@
 - viewport 模擬不等於 iPhone Safari／Android Chrome 真機驗收。
 - MealTask 有缺口的正式帳號票根互動、Google OAuth、正式帳號 OCR、OpenRouter、Push、離線重播與同步衝突仍須在正式服務以測試帳號驗證。
 
-## 待發布：本週一次備齊
+## Preview 待驗證：本週一次備齊
 
 - `codex/weekly-stockup-flow` 新增可跳過的週啟動流程：選本週料理餐數、預覽餐點與合併缺料、確認後建立週餐單並加入一般採買。
 - 本週餐數與 EXP 週主目標分離；週中首次進入只排今天以後的餐期。
 - 「我的」可延後或取消未料理餐次，未勾選的週餐單採買會重新計算，已勾選品項保留。
-- 新 migration 為 `20260913170000_weekly_stockup_shopping.sql`；尚未套用正式 Supabase，也未合併、推送或部署。
+- 分支 `codex/weekly-stockup-flow` 已整合 `origin/main@5a1e6fa` 並推送；`bun run verify` 通過 174 tests、Web build、API typecheck 與 PGlite migrations。
+- canonical Vercel 專案 `coocoo-marketing` 已建立受登入保護的 Preview：`https://coocoo-marketing-git-codex-weekly-00e98f-kelly1030817s-projects.vercel.app`。部署為 `target=preview`、狀態 `Ready`，且 `/today` 的部署程式包包含週啟動流程。
+- 新 migration 為 `20260913170000_weekly_stockup_shopping.sql`；尚未套用正式 Supabase，也未合併 `main` 或部署 Production。正式帳號完整週採買寫入仍為 `待驗證`。
 
 ## 本機操作
 

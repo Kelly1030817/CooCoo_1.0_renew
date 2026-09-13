@@ -2,7 +2,7 @@
 
 - 日期：2026-09-13
 - 分支：`codex/weekly-stockup-flow`
-- 狀態：本機實作與驗證完成；尚未核准合併、Supabase migration、Preview 或 Production
+- 狀態：功能分支已推送並建立 Vercel Preview；尚未核准合併、Supabase migration 或 Production
 - 目的：讓使用者一週內第一次打開 CooCoo 時，能先決定本週實際要安排的料理餐數，將食材合併成一次採買，減少重複跑超市。
 
 ## 1. 產品決策
@@ -37,6 +37,7 @@
 
 ## 5. 本機驗證
 
-- `bun run verify`：163 tests、Web build、API typecheck、PGlite migrations 全數通過。
+- 整合 `origin/main@5a1e6fa` 後執行 `bun run verify`：174 tests、Web build、API typecheck、PGlite migrations 全數通過。
 - 390 × 844 瀏覽器走過：自動週啟動 → 預覽 → 確認 → Today 已安排狀態 → 採買頁出現 `本週餐單` 品項。
-- 尚未驗證：Supabase 正式 migration、正式帳號跨裝置、iPhone Safari、Android Chrome、Preview 與 Production。
+- Vercel Preview：`https://coocoo-marketing-git-codex-weekly-00e98f-kelly1030817s-projects.vercel.app`。部署為 `target=preview` 且狀態 `Ready`；以 Vercel 保護繞過查核 `/today` 回傳 CooCoo 應用，Today 程式包包含本流程文案。匿名瀏覽會先進入 Vercel 登入保護。
+- 尚未驗證：Supabase 正式 migration、Preview 正式帳號完整週採買寫入與跨裝置、iPhone Safari、Android Chrome、Production。
