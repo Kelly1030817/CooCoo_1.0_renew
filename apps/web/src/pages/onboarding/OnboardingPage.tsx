@@ -141,7 +141,7 @@ export function OnboardingPage({ onComplete, onExit, canExit = false, initialSte
         const { data, error: authError } = await supabase.auth.getSession();
         if (authError || !data.session) {
           setAuthStatus("signed-out");
-          setError("冰箱選擇已保存在草稿；請先完成登入，再按一次繼續。");
+          setError("主廚設定已保存在草稿；請先完成登入，再按一次繼續。");
           return;
         }
         setAuthStatus("signed-in");
@@ -179,7 +179,6 @@ export function OnboardingPage({ onComplete, onExit, canExit = false, initialSte
       <div className="onboarding-content"><div className={`onboarding-stack onboarding-step-${step} step-slide-down`} key={step}>
         {step === 1 && <>
           <div className="chef-open"><span className="chef-open-icon material-symbols-outlined" aria-hidden="true">restaurant</span><div><strong>下班辛苦了！我是你的專屬主廚 CooCoo。</strong><p>沒有標準答案，我們只想讓第一次推薦更可行。你的回答會決定我怎麼挑菜、怎麼排餐。</p></div></div>
-          <StepCard title="目前料理熟練度"><div className="choices one">{([['beginner','剛開始'],['comfortable','能完成幾道家常菜'],['advanced','熟悉料理與調整']] as const).map(([value,label]) => <Choice key={value} selected={profile.cookingExperience === value} onClick={() => update({ cookingExperience: value })}>{label}</Choice>)}</div></StepCard>
           <StepCard title="目前每週料理幾次？" description="用來推估第一步可行的週目標，不用勉強。"><Counter value={profile.currentWeeklyCookingFrequency} min={0} max={21} unit="次 / 週" onChange={(value) => update({ currentWeeklyCookingFrequency: value })} /></StepCard>
           <StepCard title="最常卡在哪裡？" description="可多選。這會決定我第一則提醒的方式。"><div className="choices">{barriers.map(([value,label]) => <Choice key={value} selected={profile.habitBarriers.includes(value)} onClick={() => toggleBarrier(value)}>{label}</Choice>)}</div></StepCard>
         </>}
@@ -196,7 +195,6 @@ export function OnboardingPage({ onComplete, onExit, canExit = false, initialSte
           <StepCard title="喜歡的口味"><div className="tag-input"><input value={flavorInput} placeholder="例如：清爽、台式、微辣" onChange={(event) => setFlavorInput(event.target.value)} /><button type="button" disabled={!flavorInput.trim()} onClick={addFlavor}>＋</button></div><div className="tag-list">{profile.preferredFlavors.map((flavor) => <span className="tag" key={flavor}>{flavor}<button type="button" aria-label={`移除 ${flavor}`} onClick={() => update({ preferredFlavors: profile.preferredFlavors.filter((item) => item !== flavor) })}>×</button></span>)}</div></StepCard>
           <StepCard title="平常可用時間"><div className="slider-row"><input name="available-minutes" type="range" min="5" max="180" step="5" value={profile.availableMinutes} onChange={(event) => update({ availableMinutes: Number(event.target.value) })} /><strong>{profile.availableMinutes} 分鐘</strong></div></StepCard>
           <StepCard title="常用餐期"><div className="choices three">{([['breakfast','早餐'],['lunch','午餐'],['dinner','晚餐']] as const).map(([value,label]) => <Choice key={value} selected={profile.plannedMealSlots.includes(value)} onClick={() => update({ plannedMealSlots: profile.plannedMealSlots.includes(value) ? profile.plannedMealSlots.filter((item) => item !== value) : [...profile.plannedMealSlots, value] })}>{label}</Choice>)}</div></StepCard>
-          <StepCard title="料理時預設指引"><div className="choices">{([['detailed','詳細陪做','逐步提示與時間提醒'],['compact','精簡步驟','熟悉後只看關鍵步驟']] as const).map(([value,label,sub]) => <Choice key={value} selected={profile.guidanceMode === value} onClick={() => update({ guidanceMode: value })}>{label}<small>{sub}</small></Choice>)}</div></StepCard>
         </>}
 
         {step === 4 && <>
@@ -207,8 +205,7 @@ export function OnboardingPage({ onComplete, onExit, canExit = false, initialSte
 
         {step === 5 && <>
           <div className="chef-open"><span className="chef-open-icon material-symbols-outlined" aria-hidden="true">military_tech</span><div><strong>最後一步，把可行的節奏寫進主廚檔案。</strong><p>未達標不扣 EXP、不歸零；目標之後仍能隨生活調整。</p></div></div>
-          <StepCard title="本週主指標"><div className="choices"><Choice selected={profile.primaryGoalMetric === "cooking_sessions"} onClick={() => update({ primaryGoalMetric: "cooking_sessions" })}>料理次數</Choice><Choice selected={profile.primaryGoalMetric === "self_cooked_servings"} onClick={() => update({ primaryGoalMetric: "self_cooked_servings" })}>自煮餐份</Choice></div></StepCard>
-          <StepCard title="本週目標" description={`依目前每週 ${profile.currentWeeklyCookingFrequency} 次，建議先多一次：${suggestedTarget}。`}><Counter value={profile.weeklyGoalTarget} min={1} max={21} unit={profile.primaryGoalMetric === "cooking_sessions" ? "次 / 週" : "份 / 週"} onChange={(value) => { setGoalTargetEdited(true); update({ weeklyGoalTarget: value }); }} /></StepCard>
+          <StepCard title="本週目標" description={`依目前每週 ${profile.currentWeeklyCookingFrequency} 次，建議先多一次：${suggestedTarget}。`}><Counter value={profile.weeklyGoalTarget} min={1} max={21} unit="次 / 週" onChange={(value) => { setGoalTargetEdited(true); update({ weeklyGoalTarget: value }); }} /></StepCard>
           <StepCard title="每週最多三則智慧提醒">{([['expiringIngredients','即期食材'],['plannedMeals','已安排料理'],['weeklyRhythm','本週節奏']] as const).map(([key,label]) => <label className="check-row" key={key}><input type="checkbox" checked={profile.reminders[key]} onChange={(event) => update({ reminders: { ...profile.reminders, [key]: event.target.checked } })} />{label}</label>)}<p className="helper">21:00–09:00 不推播；Push 權限會在首次料理完成後才詢問。</p></StepCard>
           <PassportTicket profile={profile} isStamped={stamped} isSealDropped={sealDropped} />
         </>}

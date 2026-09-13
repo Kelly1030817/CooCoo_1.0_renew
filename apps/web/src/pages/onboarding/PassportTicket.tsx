@@ -48,11 +48,7 @@ export function PassportTicket({
       <dl className="grid grid-cols-2 gap-2 text-[11px] pt-1 border-t border-stone-100">
         <div>
           <dt className="text-stone-400 text-[10px] font-bold">每週自煮</dt>
-          <dd className="font-bold text-stone-800">{profile.weeklyGoalTarget} {profile.primaryGoalMetric === "cooking_sessions" ? "次" : "份"} / 週</dd>
-        </div>
-        <div>
-          <dt className="text-stone-400 text-[10px] font-bold">料理指引</dt>
-          <dd className="font-bold text-stone-800">{profile.guidanceMode === "detailed" ? "詳細" : "精簡"}</dd>
+          <dd className="font-bold text-stone-800">{profile.weeklyGoalTarget} 次 / 週</dd>
         </div>
         <div>
           <dt className="text-stone-400 text-[10px] font-bold">常用份量</dt>

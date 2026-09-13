@@ -38,7 +38,7 @@
 - `weekly_rhythm` 不再出現在今日任務，週進度只留在獨立進度列。
 - 「今日第 N 餐」只計算今天的有效餐次，並以 `Asia/Taipei` 處理跨午夜事件。
 - 「我的」新增本週逐餐明細，將 `mealPlan.meals` 與 `cookingOutcomes` 合併顯示，不修改既有餐單資料。
-- 五步 Onboarding 保留主廚心情、卡片、計數器、標籤、登入同步、親簽與蓋章動態；第 4 步不再建立或設定冰箱。
+- 五步 Onboarding 保留主廚心情、卡片、計數器、標籤、登入同步、親簽與蓋章動態；第 4 步不再建立或設定冰箱。熟練度、料理預設指引與週主指標不再詢問，完成時分別固定為 `beginner`、`detailed`、`cooking_sessions`，避免舊草稿保留不可見選項。
 - Onboarding 仍使用既有 `/onboarding`、`/inventory`、收據 OCR、Supabase Auth 與 `save_onboarding_profile`，過敏／禁食維持後端硬限制。
 - 蓋章後才送出完成資料，完成後進入「今日」。
 
