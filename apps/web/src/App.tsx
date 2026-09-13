@@ -1,5 +1,7 @@
 import { lazy, Suspense, useContext, useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import type { ApiSuccess, AppState } from "@coocoo/contracts";
+import type { Session } from "@supabase/supabase-js";
 import { stateQueryKey, useAppState } from "@/entities/app-state/model";
 import { useAppRoute } from "@/app/routing/useAppRoute";
 import { Header } from "@/widgets/app-shell/Header";
@@ -38,13 +40,26 @@ export default function App() {
   useEffect(() => {
     if (!supabase) return;
     let active = true;
-    const applySession = (hasSession: boolean) => {
+    const applySession = async (session: Session | null) => {
       if (!active) return;
-      setAuthStatus(hasSession ? "signed-in" : "signed-out");
-      if (hasSession) void queryClient.invalidateQueries({ queryKey: stateQueryKey });
+      setAuthStatus(session ? "signed-in" : "signed-out");
+      if (!session) return;
+      try {
+        const response = await fetch("/api/v1/state", {
+          headers: { authorization: `Bearer ${session.access_token}` },
+        });
+        if (!response.ok) throw new Error("STATE_RESTORE_FAILED");
+        const { data: state } = await response.json() as ApiSuccess<AppState>;
+        queryClient.setQueryData(stateQueryKey, state);
+        if (active && state.onboardingProfile?.status === "complete") {
+          setOnboardingComplete(true);
+        }
+      } catch {
+        if (active) void queryClient.invalidateQueries({ queryKey: stateQueryKey });
+      }
     };
-    void supabase.auth.getSession().then(({ data }) => applySession(Boolean(data.session)));
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => applySession(Boolean(session)));
+    void supabase.auth.getSession().then(({ data }) => applySession(data.session));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => { void applySession(session); });
     return () => {
       active = false;
       subscription.unsubscribe();
