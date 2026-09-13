@@ -256,6 +256,8 @@ export const app = new Elysia({ name: "coocoo-api" })
     service.deleteInventory(params.id);
     return ok({ id: params.id });
   })
+  .post("/api/v1/inventory/:id/confirm", async ({ params,headers }) =>
+    cloudDataEnabled?ok(await inventoryRepository.confirm((await authenticateRequest(headers.authorization)).id,params.id)):ok(service.confirmInventory(params.id)))
   .get("/api/v1/inventory/rescue-candidates", async ({headers}) =>
     cloudDataEnabled?ok((await inventoryRepository.list((await authenticateRequest(headers.authorization)).id)).filter(i=>i.chamber==="cold"&&i.daysLeft<=3).sort((a,b)=>a.daysLeft-b.daysLeft).map(item=>({item,plan:getRescuePlan(item)}))):ok(
       service

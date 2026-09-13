@@ -9,6 +9,7 @@ import { AddInventoryModal } from "@/features/inventory/InventoryModals";
 import { Modal, ModalHeader } from "@/shared/ui/Modal";
 import { IngredientIcon } from "@/shared/ui/IngredientIcon";
 import { usePrepTray } from "@/features/kitchen/prep-tray";
+import { groupInventory, needsInventoryConfirmation, type InventoryGroup } from "./inventory-view";
 import "./FridgePage.css";
 
 export function FridgePage() {
@@ -16,14 +17,23 @@ export function FridgePage() {
   const ui = useContext(UiContext);
   const query = useQueryClient();
   const { navigate } = useAppRoute();
-  const { isInTray, addToTray, addMultipleToTray } = usePrepTray();
+  const { isInTray, addMultipleToTray } = usePrepTray();
 
   if (!data) return null;
 
   const sorted = [...data.inventory].sort((a, b) => a.daysLeft - b.daysLeft);
   const coldItems = sorted.filter((i) => i.chamber === "cold");
-  const frozenItems = sorted.filter((i) => i.chamber === "frozen");
   const urgent = coldItems.filter((i) => i.daysLeft <= 3);
+  const inventoryGroups = groupInventory(sorted);
+  const coldGroups = inventoryGroups.filter((group) => group.chamber === "cold");
+  const frozenGroups = inventoryGroups.filter((group) => group.chamber === "frozen");
+  const pantryGroups = inventoryGroups.filter((group) => group.chamber === "pantry");
+  const preparedServings = (data.mealServings ?? []).filter((serving) => serving.status === "prepared_inventory");
+  const preparedGroups = [...new Set(preparedServings.map((serving) => serving.cookingSessionId))].map((sessionId) => ({
+    sessionId,
+    name: data.cookingOutcomes.find((outcome) => outcome.id === sessionId)?.mealName ?? "自煮熟食",
+    servings: preparedServings.filter((serving) => serving.cookingSessionId === sessionId),
+  }));
 
   const refresh = () => query.invalidateQueries({ queryKey: stateQueryKey });
 
@@ -55,8 +65,20 @@ export function FridgePage() {
     window.history.replaceState(window.history.state, "", "/recipes?tab=compose");
   };
 
-  const openInCompose = (itemId: string) => {
-    addToTray(itemId);
+  const confirm = async (id: string) => {
+    await api(`/inventory/${id}/confirm`, { method: "POST" });
+    await refresh();
+    ui.toast("已更新這批食材的確認時間");
+  };
+
+  const eatPreparedServing = async (id: string) => {
+    await api(`/meal-servings/${id}/eat`, json("POST", { operationId: crypto.randomUUID() }));
+    await refresh();
+    ui.toast("熟食已記為吃完，獲得 10 EXP");
+  };
+
+  const openInCompose = (itemIds: string[]) => {
+    addMultipleToTray(itemIds);
     navigate("recipes");
     window.history.replaceState(window.history.state, "", "/recipes?tab=compose");
   };
@@ -113,145 +135,30 @@ export function FridgePage() {
         </section>
       )}
 
-      {/* 溫層 1：冷藏室庫存 (4°C) - 方案 D 湖水綠系列 */}
-      <section className="cold-chamber space-y-2.5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
-            <svg className="h-4 w-4" style={{ color: "var(--cold-chamber-title)" }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2v20" />
-              <path d="m4.93 4.93 14.14 14.14" />
-              <path d="M2 12h20" />
-              <path d="m19.07 4.93-14.14 14.14" />
-            </svg>
-            <h3 className="text-xs font-black" style={{ color: "var(--cold-chamber-title)" }}>
-              冷藏室 (4°C)
-            </h3>
+      {preparedGroups.length > 0 && (
+        <section className="prepared-section space-y-2.5" aria-labelledby="prepared-heading">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[9px] font-black uppercase tracking-[0.16em] text-[#8a5b32]">已煮好 · 獨立餐份</p>
+              <h3 id="prepared-heading" className="text-xs font-black text-stone-900">熟食庫存</h3>
+            </div>
+            <span className="text-[10px] font-bold text-[#8a5b32]">{preparedServings.length} 份</span>
           </div>
-          <span className="text-[10px] font-bold" style={{ color: "var(--cold-chamber-title)" }}>
-            {coldItems.length} 項在庫
-          </span>
-        </div>
+          {preparedGroups.map((group) => (
+            <article key={group.sessionId} className="prepared-card">
+              <div>
+                <h4 className="text-xs font-black text-stone-900">{group.name}</h4>
+                <p className="text-[10px] text-stone-500">剩 {group.servings.length} 份 · 不列入生鮮食材批次</p>
+              </div>
+              <button type="button" className="prepared-eat-btn" onClick={() => void eatPreparedServing(group.servings[0].id)}>吃掉一份</button>
+            </article>
+          ))}
+        </section>
+      )}
 
-        {coldItems.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-[#bce3df] bg-white/70 p-4 text-center text-xs text-stone-500">
-            冷藏室目前無庫存食材，點擊右上角新增
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {coldItems.map((item) => {
-              const inTray = isInTray(item.id);
-              return (
-                <article key={item.id} className="ingredient-item-card flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white shadow-2xs">
-                      <IngredientIcon name={item.name} size={22} />
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-black text-stone-900">
-                        {item.name} <span className="font-normal text-stone-500">{item.qty} {item.unit}</span>
-                      </h4>
-                      <p className="text-[10px] text-amber-800 font-bold">
-                        {item.daysLeft <= 1 ? "今天到期" : `剩餘 ${item.daysLeft} 天`}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => openInCompose(item.id)}
-                      className={`rounded-lg px-2.5 py-1 text-[11px] font-black transition-all ${
-                        inTray ? "btn-in-tray" : "btn-add-tray"
-                      }`}
-                    >
-                      {inTray ? "打開自由搭配 →" : "帶入自由搭配 →"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => remove(item.id)}
-                      aria-label={`刪除 ${item.name}`}
-                      className="rounded-lg p-1 text-stone-400 hover:bg-stone-100 hover:text-stone-700"
-                    >
-                      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="3 6 5 6 21 6" />
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                      </svg>
-                    </button>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        )}
-      </section>
-
-      {/* 溫層 2：冷凍庫庫存 (-18°C) - 天青冷藍系列 */}
-      <section className="frozen-chamber space-y-2.5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
-            <svg className="h-4 w-4" style={{ color: "var(--frozen-chamber-title)" }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 3a9 9 0 0 0-9 9c0 4.97 4.03 9 9 9s9-4.03 9-9" />
-              <path d="M12 7v5l3 3" />
-            </svg>
-            <h3 className="text-xs font-black" style={{ color: "var(--frozen-chamber-title)" }}>
-              冷凍庫 (-18°C)
-            </h3>
-          </div>
-          <span className="text-[10px] font-bold" style={{ color: "var(--frozen-chamber-title)" }}>
-            {frozenItems.length} 項在庫
-          </span>
-        </div>
-
-        {frozenItems.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-[#d7e3fc] bg-white/70 p-4 text-center text-xs text-stone-500">
-            冷凍庫目前無庫存食材
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {frozenItems.map((item) => {
-              const inTray = isInTray(item.id);
-              return (
-                <article key={item.id} className="ingredient-item-card flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white shadow-2xs">
-                      <IngredientIcon name={item.name} size={22} />
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-black text-stone-900">
-                        {item.name} <span className="font-normal text-stone-500">{item.qty} {item.unit}</span>
-                      </h4>
-                      <p className="text-[10px] text-blue-700 font-bold">
-                        冷凍保存中 · 剩 {item.daysLeft} 天
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => openInCompose(item.id)}
-                      className={`rounded-lg px-2.5 py-1 text-[11px] font-black transition-all ${
-                        inTray ? "btn-in-tray" : "btn-add-tray"
-                      }`}
-                    >
-                      {inTray ? "打開自由搭配 →" : "帶入自由搭配 →"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => remove(item.id)}
-                      aria-label={`刪除 ${item.name}`}
-                      className="rounded-lg p-1 text-stone-400 hover:bg-stone-100 hover:text-stone-700"
-                    >
-                      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="3 6 5 6 21 6" />
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                      </svg>
-                    </button>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        )}
-      </section>
+      <InventoryChamberSection title="冷藏室" detail="4°C" tone="cold" groups={coldGroups} empty="冷藏室目前無庫存食材，點擊右上角新增" isInTray={isInTray} onCompose={openInCompose} onConfirm={confirm} onRemove={remove}/>
+      <InventoryChamberSection title="冷凍庫" detail="-18°C" tone="frozen" groups={frozenGroups} empty="冷凍庫目前無庫存食材" isInTray={isInTray} onCompose={openInCompose} onConfirm={confirm} onRemove={remove}/>
+      <InventoryChamberSection title="常溫櫃" detail="乾燥避光" tone="pantry" groups={pantryGroups} empty="常溫櫃目前無庫存食材" isInTray={isInTray} onCompose={openInCompose} onConfirm={confirm} onRemove={remove}/>
 
       {/* 食安與延展保存中心 */}
       {urgent.length > 0 && (
@@ -298,6 +205,70 @@ export function FridgePage() {
     </div>
   );
 }
+
+function InventoryChamberSection({title,detail,tone,groups,empty,isInTray,onCompose,onConfirm,onRemove}:{
+  title:string;detail:string;tone:"cold"|"frozen"|"pantry";groups:InventoryGroup[];empty:string;
+  isInTray:(id:string)=>boolean;onCompose:(ids:string[])=>void;onConfirm:(id:string)=>Promise<void>;onRemove:(id:string)=>Promise<void>;
+}) {
+  const batchCount = groups.reduce((sum, group) => sum + group.batches.length, 0);
+  return <section className={`${tone}-chamber inventory-chamber space-y-2.5`}>
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        <ChamberIcon tone={tone}/>
+        <div><h3 className="text-xs font-black chamber-title">{title}</h3><p className="text-[9px] font-bold chamber-subtitle">{detail}</p></div>
+      </div>
+      <span className="text-[10px] font-bold chamber-title">{groups.length} 種 · {batchCount} 批</span>
+    </div>
+    {groups.length === 0 ? <div className="inventory-empty">{empty}</div> : <div className="space-y-2">
+      {groups.map((group) => {
+        const allInTray = group.batches.every((batch) => isInTray(batch.id));
+        return <details key={group.key} className="ingredient-item-card inventory-ledger">
+          <summary>
+            <div className="inventory-summary-main">
+              <div className="ingredient-icon-shell"><IngredientIcon name={group.name} size={22}/></div>
+              <div className="min-w-0">
+                <h4 className="truncate text-xs font-black text-stone-900">{group.name} <span className="font-normal text-stone-500">{group.qty} {group.unit}</span></h4>
+                <p className="inventory-status-line">{expiryLabel(group.daysLeft)} · {group.batches.length} 批次</p>
+                <div className="inventory-tags">
+                  {group.staleBatchCount > 0 && <span className="inventory-tag is-stale">{group.staleBatchCount} 批待確認</span>}
+                  {group.unpricedBatchCount > 0 && <span className="inventory-tag is-unpriced">{group.unpricedBatchCount} 批未記錄成本</span>}
+                  {group.estimatedValue > 0 && <span className="inventory-tag">已記錄 NT${Math.round(group.estimatedValue)}</span>}
+                </div>
+              </div>
+            </div>
+            <span className="ledger-toggle">批次</span>
+          </summary>
+          <div className="batch-ledger">
+            {group.batches.map((batch, index) => {
+              const stale = needsInventoryConfirmation(batch);
+              return <article key={batch.id} className="batch-row">
+                <div className="batch-sequence"><span>{String(index + 1).padStart(2,"0")}</span><i/></div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-1.5"><strong>{batch.qty} {batch.unit}</strong>{index === 0 && <span className="fifo-tag">先用這批</span>}{stale && <span className="stale-tag">待確認</span>}</div>
+                  <p>購入 {formatDate(batch.addedDate)} · 期限 {batch.expiresOn ? formatDate(batch.expiresOn) : "待補"}</p>
+                  <p>最後確認 {formatDate(batch.lastConfirmedAt)} · {batch.estimatedValue > 0 ? `NT$${Math.round(batch.estimatedValue)}` : "未記錄成本"}</p>
+                </div>
+                <div className="batch-actions">
+                  {stale && <button type="button" onClick={() => void onConfirm(batch.id)}>確認仍在庫</button>}
+                  <button type="button" className="danger" onClick={() => void onRemove(batch.id)}>移除</button>
+                </div>
+              </article>;
+            })}
+            <button type="button" onClick={() => onCompose(group.batches.map((batch) => batch.id))} className={`compose-group-btn ${allInTray?"is-active":""}`}>{allInTray?"打開自由搭配 →":"整組帶入自由搭配 →"}</button>
+          </div>
+        </details>;
+      })}
+    </div>}
+  </section>;
+}
+
+function ChamberIcon({tone}:{tone:"cold"|"frozen"|"pantry"}) {
+  if (tone === "pantry") return <svg className="chamber-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M4 7h16v13H4z"/><path d="M7 4h10l3 3H4z"/><path d="M8 12h8M8 16h5"/></svg>;
+  return <svg className="chamber-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 2v20M4.9 4.9l14.2 14.2M2 12h20M19.1 4.9 4.9 19.1"/>{tone === "frozen" && <circle cx="12" cy="12" r="9"/>}</svg>;
+}
+
+function expiryLabel(daysLeft:number) { return daysLeft <= 0 ? "今天到期" : daysLeft === 1 ? "明天到期" : `最近期限剩 ${daysLeft} 天`; }
+function formatDate(value:string) { const date=new Date(value.length===10?`${value}T12:00:00+08:00`:value);return Number.isNaN(date.getTime())?"待確認":new Intl.DateTimeFormat("zh-TW",{month:"numeric",day:"numeric"}).format(date); }
 
 function SafetyModal({
   item,

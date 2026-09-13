@@ -78,6 +78,14 @@ describe("MSW contract adapter", () => {
     expect(body.data.some((item) => item.id === "i1")).toBe(true);
   });
 
+  test("confirms one inventory batch through the public endpoint", async () => {
+    const response = await api("/inventory/i1/confirm", { method: "POST" });
+    const body = (await response.json()) as { data: { id: string; lastConfirmedAt: string } };
+    expect(response.status).toBe(200);
+    expect(body.data.id).toBe("i1");
+    expect(Number.isFinite(Date.parse(body.data.lastConfirmedAt))).toBe(true);
+  });
+
   test("connects completed onboarding to growth and weekly goal state", async () => {
     const response = await api("/onboarding", {
       method: "PUT",

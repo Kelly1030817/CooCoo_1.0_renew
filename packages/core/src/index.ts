@@ -490,6 +490,14 @@ export class CooCooService {
     s.inventory = s.inventory.filter((i) => i.id !== id);
     this.repository.write(s);
   }
+  confirmInventory(id: string) {
+    const s = this.state();
+    const item = s.inventory.find((value) => value.id === id);
+    if (!item) throw new Error("ITEM_NOT_FOUND");
+    item.lastConfirmedAt = this.runtime.now().toISOString();
+    this.repository.write(s);
+    return structuredClone(item);
+  }
   rescue(
     id: string,
     action: "eat" | "preserve" | "discard",
