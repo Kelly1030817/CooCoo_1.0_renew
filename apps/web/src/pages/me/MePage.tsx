@@ -16,11 +16,11 @@ import {
 } from "@/shared/model/onboarding-draft";
 import { Modal, ModalHeader } from "@/shared/ui/Modal";
 import { UiContext } from "@/app/ui-context";
+import { startGoogleAuth, supabase } from "@/shared/auth/supabase";
 import {
   CookwareModal,
   ProfileModal,
 } from "@/widgets/app-shell/Header";
-import { supabase, startGoogleAuth } from "@/shared/auth/supabase";
 import "./MePage.css";
 
 const defaultReminders: ReminderPreferences = {
@@ -40,8 +40,26 @@ export function MePage() {
   const { navigate } = useAppRoute();
   const [target, setTarget] = useState(data?.weeklyGoal.target ?? 1);
   const [authBusy, setAuthBusy] = useState(false);
+  const [authError, setAuthError] = useState("");
 
   if (!data) return null;
+
+  const handleGoogleSignIn = async () => {
+    setAuthBusy(true);
+    setAuthError("");
+    try {
+      await startGoogleAuth();
+    } catch (e) {
+      setAuthBusy(false);
+      setAuthError(e instanceof Error ? e.message : "Google 登入啟動失敗");
+    }
+  };
+
+  const handleSignOut = async () => {
+    await supabase?.auth.signOut();
+    await query.invalidateQueries({ queryKey: stateQueryKey });
+    ui.toast("已登出雲端帳號");
+  };
 
   const { weeklyGoal, growth } = data;
   const weeklyMeals = [...mealsWithRecordedOutcomes(data.mealPlan?.meals ?? [], data.cookingOutcomes)]
@@ -85,12 +103,12 @@ export function MePage() {
         <p>每一次回來，都算數；沒達標不扣分，也不把你歸零。</p>
       </header>
 
-      {/* 帳號登入與主廚檔案 */}
-      <section className="account-card" aria-label="帳號登入與主廚檔案">
-        <div className="account-card-main">
-          <div className="account-card-avatar">
+      {/* 帳號與主廚檔案卡片 */}
+      <section className="account-card" aria-label="帳號與個人檔案">
+        <div className="account-main">
+          <div className="account-avatar">
             <svg
-              className="w-5 h-5"
+              className="w-5 h-5 text-amber-900"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -103,24 +121,28 @@ export function MePage() {
               <circle cx="12" cy="7" r="4" />
             </svg>
           </div>
-          <div className="account-card-info">
-            <div className="account-card-badge">
-              <span className={`status-dot ${data.session.user ? "online" : ""}`} />
-              <span>{data.session.user ? "雲端帳號已連線" : "本機訪客模式"}</span>
+          <div className="account-details">
+            <div className="account-status-row">
+              <span className={`account-status-pill ${data.session.user ? "cloud" : "local"}`}>
+                <span className="dot" />
+                {data.session.user ? "雲端帳號已連線" : "本機訪客模式"}
+              </span>
             </div>
-            <h3>{data.session.user ? data.session.user.displayName : "訪客主廚"}</h3>
-            <p>{data.session.user ? data.session.user.email : "資料暫存於此瀏覽器；登入可跨裝置同步紀錄"}</p>
+            <h3 className="account-name">
+              {data.session.user ? data.session.user.displayName : "本機訪客"}
+            </h3>
+            <p className="account-desc">
+              {data.session.user
+                ? data.session.user.email
+                : "自煮紀錄暫存於此瀏覽器，登入可跨裝置同步備份"}
+            </p>
           </div>
-          <div className="account-card-action">
+          <div className="account-action">
             {data.session.user ? (
               <button
                 type="button"
-                onClick={async () => {
-                  await supabase?.auth.signOut();
-                  await query.invalidateQueries({ queryKey: stateQueryKey });
-                  ui.toast("已登出雲端帳號");
-                }}
-                className="account-btn signout"
+                onClick={handleSignOut}
+                className="btn-signout"
               >
                 登出
               </button>
@@ -128,30 +150,26 @@ export function MePage() {
               <button
                 type="button"
                 disabled={authBusy}
-                onClick={async () => {
-                  setAuthBusy(true);
-                  try {
-                    await startGoogleAuth();
-                  } catch (e) {
-                    setAuthBusy(false);
-                    ui.toast(e instanceof Error ? e.message : "Google 登入啟動失敗", "error");
-                  }
-                }}
-                className="account-btn signin"
+                onClick={handleGoogleSignIn}
+                className="btn-signin"
               >
-                {authBusy ? "登入中…" : "Google 帳號登入"}
+                {authBusy ? "登入中…" : "Google 登入"}
               </button>
             )}
           </div>
         </div>
-        <div className="account-card-footer">
+
+        {authError && <p role="alert" className="account-error">{authError}</p>}
+
+        <div className="account-footer">
           <button
             type="button"
             onClick={replayOnboarding}
             className="account-replay-btn"
           >
             <span className="material-symbols-outlined">restart_alt</span>
-            重新檢視五步主廚檔案設定 ➔
+            <span>重新檢視五步主廚檔案設定</span>
+            <span className="arrow">➔</span>
           </button>
         </div>
       </section>

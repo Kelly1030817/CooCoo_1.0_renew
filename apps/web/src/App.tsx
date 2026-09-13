@@ -87,9 +87,9 @@ export default function App() {
     );
   return (
     <>
-      {route !== "today" && <Header enabled={stateEnabled} onNavigate={navigate} />}
+      <Header enabled={stateEnabled} onNavigate={navigate} />
       <main className={route === "today"
-        ? "mx-auto w-full max-w-[430px] min-w-0 flex-1 px-[15px] py-0"
+        ? "mx-auto w-full max-w-[430px] min-w-0 flex-1 px-[15px] py-md"
         : "mx-auto w-full max-w-[1200px] min-w-0 flex-1 px-md py-md transition-all duration-300 md:px-lg md:py-lg"}>
         {isLoading ? (
           <div className="py-xl text-center text-sm font-bold text-on-surface-variant">
