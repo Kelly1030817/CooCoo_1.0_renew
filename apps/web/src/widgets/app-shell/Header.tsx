@@ -34,8 +34,8 @@ export function Header({
   };
 
   return (
-    <header className="sticky top-0 z-50 border-b border-surface-container-high bg-surface shadow-sm">
-      <div className="mx-auto flex w-full max-w-[1200px] items-center justify-between px-md py-sm sm:px-lg">
+    <header className="fixed inset-x-0 top-0 z-50 border-b border-surface-container-high bg-surface shadow-sm">
+      <div className="mx-auto flex min-h-[60px] w-full max-w-[1200px] items-center justify-between px-md py-sm sm:px-lg">
         <div className="flex min-w-0 items-center gap-sm sm:gap-md">
           <span className="material-symbols-outlined text-3xl text-primary">
             kitchen
