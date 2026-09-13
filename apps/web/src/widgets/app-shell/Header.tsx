@@ -9,18 +9,15 @@ import { supabase, startGoogleAuth } from "@/shared/auth/supabase";
 import { readOnboardingDraft } from "@/shared/model/onboarding-draft";
 
 import type { AppRoute } from "@/app/routing/routes";
-import { useAppRoute } from "@/app/routing/useAppRoute";
 
 export function Header({
   enabled = true,
-  onNavigate,
+  onNavigate: _onNavigate,
 }: {
   enabled?: boolean;
   onNavigate?: (route: AppRoute) => void;
 }) {
   const { data } = useAppState(enabled);
-  const { navigate: routeNavigate } = useAppRoute();
-  const navigate = onNavigate || routeNavigate;
   const access = useQuery({
     queryKey: ["catalog-access", data?.session.user?.id],
     queryFn: () => api<{ owner: boolean }>("/admin/recipes/access"),
@@ -59,34 +56,11 @@ export function Header({
               </span>
             </button>
           )}
-          {access.data?.owner && (
+          {import.meta.env.DEV && access.data?.owner && (
             <button className="text-xs" onClick={() => ui.open(<CatalogAdminModal onClose={ui.close} />)}>
               食譜管理
             </button>
           )}
-          <div className="h-8 w-px bg-outline-variant/40" />
-
-          {/* 我的 (Profile & Consultation Replay) SVG Button */}
-          <button
-            onClick={() => navigate("me")}
-            aria-label="前往我的主廚檔案"
-            className="flex items-center gap-1.5 rounded-full border border-amber-300/80 bg-amber-50/90 hover:bg-amber-100 px-3 py-1.5 text-xs font-bold text-amber-950 shadow-2xs transition-all active:scale-95 group"
-          >
-            <svg
-              className="w-4 h-4 text-amber-800 shrink-0 group-hover:scale-105 transition-transform"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
-            </svg>
-            <span>{data?.session.user ? data.session.user.displayName : "我的"}</span>
-          </button>
         </div>
       </div>
     </header>
