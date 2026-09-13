@@ -134,7 +134,7 @@ export function OnboardingPage({ onComplete, onExit, canExit = false, initialSte
     setFlavorInput("");
   };
   const next = async () => {
-    if (step === 4 && supabase) {
+    if (step === 4 && supabase && authStatus !== "signed-in") {
       setBusy(true);
       setError("");
       try {
