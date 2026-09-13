@@ -12,7 +12,7 @@
 ## 決定與實作
 
 - 第 4 步改為純「登入與同步」，移除 OCR、確認空箱與手動食材。
-- 使用者按下第四步「繼續」時，向 Supabase 即時確認 session；登入有效才進第五步。
+- 第四步已由 Supabase auth state 確認登入時直接前進；尚未確認登入時，按下「繼續」才即時重查 session。避免正式瀏覽器在已登入狀態重複取 session 時卡住。
 - session 未完成或網路暫時無法確認時，保留 Onboarding 草稿並顯示可操作的登入／重試訊息。
 - 完成 Onboarding 時固定送出 `inventoryReviewed: false`、`hasNoInventory: false`，避免舊草稿觸發後端清空庫存；不呼叫 `/inventory`。
 - 第 1、3、5 步分別移除熟練度、料理預設指引與週主指標卡片；完成時固定寫入 `beginner`、`detailed`、`cooking_sessions`，避免舊草稿中的隱藏值延續。
