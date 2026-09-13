@@ -285,6 +285,16 @@ export const ExpEventSchema = Type.Object({
 });
 export type ExpEvent = Static<typeof ExpEventSchema>;
 
+export type TodayMissionKey = "cook_today" | "eat_prepared" | "use_expiring";
+export interface TodayMission {
+  key: TodayMissionKey;
+  label: string;
+  reward: number;
+  done: boolean;
+  source: "cooking_completed" | "prepared_serving_eaten" | "expiring_ingredient_used";
+  hint?: number;
+}
+
 export const ChefRankSchema = Type.Object({
   level: Type.Integer({ minimum: 1, maximum: 5 }),
   name: Type.Union([
@@ -653,6 +663,8 @@ export interface AppState {
   chefChatSessions?: ChefChatSession[];
   offlineOperations?: OfflineOperation[];
   syncConflicts?: SyncConflict[];
+  /** Read-only daily missions derived by the /state backend response. */
+  missions?: TodayMission[];
 
 }
 

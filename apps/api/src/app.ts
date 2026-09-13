@@ -3,7 +3,7 @@ import { CatalogRepository } from './modules/catalog/repository';
 import { catalogRoutes } from './modules/catalog/routes';
 import { recommend } from './modules/catalog/recommendations';
 import { Elysia } from "elysia";
-import { brandSafeRecipes, CooCooService, createMealTask, deriveGrowthProfile, getRescuePlan, parseShoppingText, searchRecipes } from "@coocoo/core";
+import { brandSafeRecipes, CooCooService, createMealTask, deriveGrowthProfile, getRescuePlan, parseShoppingText, searchRecipes, withTodayMissions } from "@coocoo/core";
 import type { InventoryItem, MealTask, RecipeGeneration, RecipePackage } from "@coocoo/contracts";
 import { ContractSchemas } from "@coocoo/contracts";
 import { MemoryStateRepository } from "./shared/infrastructure/memory-state.repository";
@@ -146,7 +146,7 @@ export const app = new Elysia({ name: "coocoo-api" })
   .use(cloudDataEnabled?syncRoutes():new Elysia())
   .use(cloudDataEnabled?catalogRoutes(authenticateRequest,cloudPlanningContext,catalogRepository):new Elysia())
   .get("/api/v1/health", () => ok({ status: "ok" }))
-  .get("/api/v1/state", async ({headers}) => ok(cloudDataEnabled?await integratedState(headers.authorization):service.state()))
+  .get("/api/v1/state", async ({headers}) => ok(withTodayMissions(cloudDataEnabled?await integratedState(headers.authorization):service.state())))
   .get("/api/v1/session", () => ok(service.state().session))
   .post("/api/v1/auth/login", ({ body }) => ok(service.login(body.email)), {
     body: ContractSchemas.LoginRequestSchema,

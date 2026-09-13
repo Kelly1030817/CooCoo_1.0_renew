@@ -39,7 +39,8 @@
 
 .weekly-card span,
 .rank-card span,
-.badge-card > span {
+.badge-card > span,
+.weekly-meals-card > span {
   color: #9a442d;
   font-size: 10px;
   font-weight: 900;
@@ -48,7 +49,8 @@
 
 .weekly-card h3,
 .rank-card h3,
-.badge-card h3 {
+.badge-card h3,
+.weekly-meals-card h3 {
   margin: 5px 0;
   color: #293c4e;
   font-family: Georgia, "Noto Serif TC", serif;
@@ -200,6 +202,25 @@
   color: #817a6e;
   font-size: 9px;
 }
+
+.meal-tally { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; margin-top: 12px; }
+.meal-tally div { border: 1px solid #ede3cf; border-radius: 12px; background: #fbf7ee; padding: 8px 5px; text-align: center; }
+.meal-tally b { display: block; color: #293c4e; font-family: ui-monospace, monospace; font-size: 15px; }
+.meal-tally small { display: block; margin-top: 2px; color: #817a6e; font-size: 9px; font-weight: 800; }
+.weekly-meal-list { margin-top: 13px; }
+.weekly-meal-list article { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; align-items: center; gap: 9px; border-top: 1px dashed #e7dac2; padding: 9px 0; }
+.weekly-meal-list article:first-child { border-top: 0; }
+.weekly-meal-list article.today { margin: 0 -6px; border-radius: 10px; background: linear-gradient(90deg, rgb(154 68 45 / 7%), transparent); padding-right: 6px; padding-left: 6px; }
+.weekly-meal-list article > span { color: #817a6e; font-family: ui-monospace, monospace; font-size: 10px; font-weight: 900; }
+.weekly-meal-list article div { min-width: 0; }
+.weekly-meal-list article div strong { display: block; overflow: hidden; color: #293c4e; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.weekly-meal-list article div small { display: block; margin-top: 2px; color: #817a6e; font-size: 9px; }
+.weekly-meal-list article > b { border: 1px solid; border-radius: 999px; padding: 3px 7px; font-size: 9px; white-space: nowrap; }
+.weekly-meal-list article > b.cooked { border-color: #b8d5c5; background: #edf6f0; color: #386753; }
+.weekly-meal-list article > b.planned { border-color: #e2bcae; background: #fff1e8; color: #9a442d; }
+.weekly-meal-list article > b.postponed { border-color: #e7c88e; background: #fff6df; color: #94601d; }
+.weekly-meal-list article > b.cancelled { border-color: #ded7ca; background: #f2eee6; color: #817a6e; }
+.empty-meals { margin: 12px 0 0; color: #817a6e; font-size: 11px; }
 
 .me-page button:focus-visible,
 .me-page input:focus-visible,
