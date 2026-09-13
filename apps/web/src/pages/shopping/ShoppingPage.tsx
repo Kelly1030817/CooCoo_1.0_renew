@@ -110,6 +110,18 @@ export function ShoppingPage(){
       <div className="hud-progress"><span style={{width:`${rankProgress}%`}}/></div><div className="hud-meta"><span>職階進度</span><span>{growth.totalExp} / {nextRank?.threshold??growth.totalExp}</span></div>
     </section>
 
+    <section className="shopping-heading">
+      <div>
+        <p className="eyebrow">GROCERY & MEALTASKS</p>
+        <h2>採買清單</h2>
+        <p className="shopping-heading-sub">先買任務真正缺少的；一般食材順路再帶。</p>
+      </div>
+      <button type="button" onClick={()=>ui.open(<ShoppingAssistantModal onClose={ui.close}/>)}>
+        <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>smart_toy</span>
+        <span>AI 陪我逛</span>
+      </button>
+    </section>
+
     {tasks.length>1&&<label className="task-selector">切換採買任務<select value={activeTask?.id} onChange={e=>setSelectedTaskId(e.target.value)}>{tasks.map(t=><option key={t.id} value={t.id}>{t.recipe.title} · {shortDate(t.currentMeal.date)} {slotLabel[t.currentMeal.slot]}</option>)}</select></label>}
 
     <section className={`task-strip ${activeTask?.status??"empty"}`}>

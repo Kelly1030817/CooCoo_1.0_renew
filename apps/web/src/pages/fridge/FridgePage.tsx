@@ -88,13 +88,14 @@ export function FridgePage() {
       {/* 標題與新增食材按鈕 */}
       <div className="fridge-heading flex items-center justify-between pt-1">
         <div>
-          <h2 className="text-xl font-black tracking-tight text-stone-900">食材庫存</h2>
-          <p className="text-[11px] text-stone-500">管理數量、存放位置與使用期限</p>
+          <p className="eyebrow">FRIDGE INVENTORY</p>
+          <h2>食材庫存</h2>
+          <p className="fridge-subtitle">管理數量、存放位置與使用期限</p>
         </div>
         <button
           type="button"
           onClick={() => ui.open(<AddInventoryModal onClose={ui.close} />)}
-          className="flex items-center gap-1 rounded-xl bg-[#2a9d8f] px-3.5 py-1.5 text-xs font-black text-white shadow-xs hover:brightness-105 active:scale-95 transition-all"
+          className="fridge-add-btn"
         >
           <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <line x1="12" y1="5" x2="12" y2="19" />
@@ -210,16 +211,37 @@ function InventoryChamberSection({title,detail,tone,groups,empty,isInTray,onComp
   title:string;detail:string;tone:"cold"|"frozen"|"pantry";groups:InventoryGroup[];empty:string;
   isInTray:(id:string)=>boolean;onCompose:(ids:string[])=>void;onConfirm:(id:string)=>Promise<void>;onRemove:(id:string)=>Promise<void>;
 }) {
+  const [isOpen, setIsOpen] = useState(true);
   const batchCount = groups.reduce((sum, group) => sum + group.batches.length, 0);
   return <section className={`${tone}-chamber inventory-chamber space-y-2.5`}>
-    <div className="flex items-center justify-between">
+    <button
+      type="button"
+      onClick={() => setIsOpen((prev) => !prev)}
+      className="chamber-accordion-toggle"
+      aria-expanded={isOpen}
+      aria-label={`${title}（點擊${isOpen ? "收合" : "展開"}）`}
+    >
       <div className="flex items-center gap-2">
         <ChamberIcon tone={tone}/>
         <div><h3 className="text-xs font-black chamber-title">{title}</h3><p className="text-[9px] font-bold chamber-subtitle">{detail}</p></div>
       </div>
-      <span className="text-[10px] font-bold chamber-title">{groups.length} 種 · {batchCount} 批</span>
-    </div>
-    {groups.length === 0 ? <div className="inventory-empty">{empty}</div> : <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <span className="text-[10px] font-bold chamber-title">{groups.length} 種 · {batchCount} 批</span>
+        <svg
+          className={`w-3.5 h-3.5 chamber-title transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </div>
+    </button>
+    {isOpen && (groups.length === 0 ? <div className="inventory-empty">{empty}</div> : <div className="space-y-2">
       {groups.map((group) => {
         const allInTray = group.batches.every((batch) => isInTray(batch.id));
         return <details key={group.key} className="ingredient-item-card inventory-ledger">
@@ -258,7 +280,7 @@ function InventoryChamberSection({title,detail,tone,groups,empty,isInTray,onComp
           </div>
         </details>;
       })}
-    </div>}
+    </div>)}
   </section>;
 }
 

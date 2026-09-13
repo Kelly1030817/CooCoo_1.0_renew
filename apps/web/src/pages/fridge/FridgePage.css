@@ -33,6 +33,63 @@
   margin: 0 auto;
 }
 
+.fridge-page .fridge-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 4px 0 16px;
+}
+
+.fridge-page .fridge-heading .eyebrow {
+  margin: 0 0 4px;
+  color: #9a442d;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.fridge-page .fridge-heading h2 {
+  margin: 0;
+  color: #293c4e;
+  font-family: "Plus Jakarta Sans", "Noto Sans TC", sans-serif;
+  font-size: clamp(22px, 5vw, 28px);
+  font-weight: 900;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+}
+
+.fridge-page .fridge-heading .fridge-subtitle {
+  margin: 4px 0 0;
+  color: #716b60;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.fridge-page .fridge-add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+  border-radius: 99px;
+  background: #55755b;
+  border: 0;
+  padding: 6px 14px;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 900;
+  flex-shrink: 0;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.fridge-page .fridge-add-btn:hover {
+  filter: brightness(1.08);
+}
+
 .fridge-page .urgent-section {
   background-color: var(--urgent-bg);
   border: 1.5px solid var(--urgent-border);
@@ -52,6 +109,27 @@
 }
 .fridge-page .urgent-btn:active {
   transform: scale(0.98);
+}
+
+.fridge-page .chamber-accordion-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 0.5rem;
+  transition: opacity 0.15s ease;
+}
+.fridge-page .chamber-accordion-toggle:hover {
+  opacity: 0.85;
+}
+.fridge-page .chamber-accordion-toggle:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 4px;
 }
 
 .fridge-page .cold-chamber {
