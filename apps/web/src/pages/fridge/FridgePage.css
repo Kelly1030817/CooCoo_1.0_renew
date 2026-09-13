@@ -28,6 +28,11 @@
   padding-bottom: 7rem;
 }
 
+.fridge-page {
+  width: min(100%, 1080px);
+  margin: 0 auto;
+}
+
 .fridge-page .urgent-section {
   background-color: var(--urgent-bg);
   border: 1.5px solid var(--urgent-border);
@@ -204,4 +209,36 @@
   border: 1px solid var(--card-border);
   border-radius: 1.25rem;
   padding: 1rem;
+}
+
+@media (min-width: 700px) {
+  .fridge-page {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    gap: 16px;
+  }
+
+  .fridge-page .fridge-heading,
+  .fridge-page .urgent-section,
+  .fridge-page .rescue-center {
+    grid-column: 1 / -1;
+  }
+
+  .fridge-page .cold-chamber,
+  .fridge-page .frozen-chamber {
+    height: 100%;
+  }
+}
+
+@media (max-width: 430px) {
+  .fridge-page .ingredient-item-card {
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .fridge-page .ingredient-item-card > div:last-child {
+    align-items: flex-end;
+    flex-direction: column;
+  }
 }
