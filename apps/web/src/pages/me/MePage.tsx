@@ -20,6 +20,7 @@ import {
   CookwareModal,
   ProfileModal,
 } from "@/widgets/app-shell/Header";
+import { supabase, startGoogleAuth } from "@/shared/auth/supabase";
 import "./MePage.css";
 
 const defaultReminders: ReminderPreferences = {
@@ -38,6 +39,7 @@ export function MePage() {
   const ui = useContext(UiContext);
   const { navigate } = useAppRoute();
   const [target, setTarget] = useState(data?.weeklyGoal.target ?? 1);
+  const [authBusy, setAuthBusy] = useState(false);
 
   if (!data) return null;
 
@@ -82,6 +84,77 @@ export function MePage() {
         <h2>我的</h2>
         <p>每一次回來，都算數；沒達標不扣分，也不把你歸零。</p>
       </header>
+
+      {/* 帳號登入與主廚檔案 */}
+      <section className="account-card" aria-label="帳號登入與主廚檔案">
+        <div className="account-card-main">
+          <div className="account-card-avatar">
+            <svg
+              className="w-5 h-5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+          </div>
+          <div className="account-card-info">
+            <div className="account-card-badge">
+              <span className={`status-dot ${data.session.user ? "online" : ""}`} />
+              <span>{data.session.user ? "雲端帳號已連線" : "本機訪客模式"}</span>
+            </div>
+            <h3>{data.session.user ? data.session.user.displayName : "訪客主廚"}</h3>
+            <p>{data.session.user ? data.session.user.email : "資料暫存於此瀏覽器；登入可跨裝置同步紀錄"}</p>
+          </div>
+          <div className="account-card-action">
+            {data.session.user ? (
+              <button
+                type="button"
+                onClick={async () => {
+                  await supabase?.auth.signOut();
+                  await query.invalidateQueries({ queryKey: stateQueryKey });
+                  ui.toast("已登出雲端帳號");
+                }}
+                className="account-btn signout"
+              >
+                登出
+              </button>
+            ) : (
+              <button
+                type="button"
+                disabled={authBusy}
+                onClick={async () => {
+                  setAuthBusy(true);
+                  try {
+                    await startGoogleAuth();
+                  } catch (e) {
+                    setAuthBusy(false);
+                    ui.toast(e instanceof Error ? e.message : "Google 登入啟動失敗", "error");
+                  }
+                }}
+                className="account-btn signin"
+              >
+                {authBusy ? "登入中…" : "Google 帳號登入"}
+              </button>
+            )}
+          </div>
+        </div>
+        <div className="account-card-footer">
+          <button
+            type="button"
+            onClick={replayOnboarding}
+            className="account-replay-btn"
+          >
+            <span className="material-symbols-outlined">restart_alt</span>
+            重新檢視五步主廚檔案設定 ➔
+          </button>
+        </div>
+      </section>
 
       <section className="weekly-card">
         <div>

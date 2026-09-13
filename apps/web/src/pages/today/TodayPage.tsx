@@ -185,6 +185,19 @@ export function TodayPage() {
   if (loading) {
     return (
       <div className="today-page">
+        <section className="today-intro">
+          <div>
+            <p className="eyebrow">
+              <span className="eyebrow-dot" />
+              今天 · 安排中
+            </p>
+            <h2>
+              先別想一整週，
+              <br />
+              決定下一餐就好。
+            </h2>
+          </div>
+        </section>
         <div className="today-loading-card" role="status">
           <span className="material-symbols-outlined spinning">sync</span>
           <p>正在依你的廚具、時間與庫存檢核今日餐點…</p>
@@ -257,10 +270,42 @@ export function TodayPage() {
     ? purchaseChoices.filter((item) => item.recipe.id !== recommended.id).slice(0, 2)
     : [];
 
+  const slotText = decision?.slot ? ({ breakfast: "早餐", lunch: "午餐", dinner: "晚餐" })[decision.slot] : "晚餐";
+
   return (
     <div className="today-page">
       {generalError && <p className="today-warning" role="alert">{generalError}</p>}
       {ticketMode === "purchase" && purchaseError && <p className="today-warning" role="alert">{purchaseError}</p>}
+
+      {/* 1. 今日頁面 Header 問候與低體力切換 */}
+      <section className="today-intro">
+        <div>
+          <p className="eyebrow">
+            <span className="eyebrow-dot" />
+            今天 · {mealNumber ? `${mealNumber} · ` : ""}{slotText}
+          </p>
+          <h2>
+            先別想一整週，
+            <br />
+            決定下一餐就好。
+          </h2>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            const next = !energyLow;
+            setEnergyLow(next);
+            ui.toast(next ? "已開啟低體力模式" : "已恢復一般模式");
+          }}
+          className={`energy-toggle ${energyLow ? "active" : ""}`}
+          aria-pressed={energyLow}
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />
+          </svg>
+          <span>{energyLow ? "低體力中" : "今天有點累"}</span>
+        </button>
+      </section>
 
       {/* HUD：主廚職階與 EXP 進度 */}
       <section className="today-hud" aria-label="主廚職階與 EXP">
