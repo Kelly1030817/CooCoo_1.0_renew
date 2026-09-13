@@ -646,3 +646,29 @@
   .choices.three { grid-template-columns: 1fr; }
   .onboarding-actions small { display: none; }
 }
+
+@media (min-width: 700px) {
+  .onboarding-shell {
+    width: min(100%, 760px);
+  }
+
+  .onboarding-content {
+    padding: 22px 22px 104px;
+  }
+
+  .onboarding-stack {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    gap: 16px;
+  }
+
+  .onboarding-stack > :not(.onboarding-step-card) {
+    grid-column: 1 / -1;
+  }
+
+  .onboarding-actions {
+    max-width: 760px;
+    padding-right: 22px;
+    padding-left: 22px;
+  }
+}
