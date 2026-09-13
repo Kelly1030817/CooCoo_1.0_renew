@@ -175,6 +175,13 @@ export const handlers = [
     service.deleteInventory(String(params.id));
     return ok({ id: params.id });
   }),
+  http.post("/api/v1/inventory/:id/confirm", ({ params }) => {
+    try {
+      return ok(service.confirmInventory(String(params.id)));
+    } catch (e) {
+      return error(e);
+    }
+  }),
   http.get("/api/v1/inventory/rescue-candidates", () =>
     ok(
       service

@@ -177,6 +177,12 @@ export const RecipeStepSchema = Type.Object({
   id: IdSchema,
   order: Type.Integer({ minimum: 1 }),
   instruction: Type.String({ minLength: 1 }),
+  compactInstruction: Type.Optional(Type.String({ minLength: 1 })),
+  guidance: Type.Optional(Type.Object({
+    successCue: Type.String({ minLength: 1 }),
+    why: Type.Union([Type.String({ minLength: 1 }), Type.Null()]),
+    rescueTip: Type.Union([Type.String({ minLength: 1 }), Type.Null()]),
+  })),
   voiceText: Type.String({ minLength: 1 }),
   timerSeconds: Type.Union([Type.Integer({ minimum: 1 }), Type.Null()]),
   safetyNote: Type.Union([Type.String(), Type.Null()]),
