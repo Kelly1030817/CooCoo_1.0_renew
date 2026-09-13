@@ -1,5 +1,5 @@
 .recipes-page {
-  width: min(100%, 920px);
+  width: min(100%, 1080px);
   margin: 0 auto;
   padding-bottom: 7rem;
   color: #1c1c11;
@@ -246,5 +246,21 @@
 @media (max-width: 600px) {
   .recipe-results {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 900px) {
+  .recipe-results {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .compose-panel {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+  }
+
+  .compose-panel > header {
+    grid-column: 1 / -1;
   }
 }

@@ -86,7 +86,7 @@ export function FridgePage() {
   return (
     <div className="fridge-page space-y-4 px-3 py-2 sm:px-4 sm:py-3">
       {/* 標題與新增食材按鈕 */}
-      <div className="flex items-center justify-between pt-1">
+      <div className="fridge-heading flex items-center justify-between pt-1">
         <div>
           <h2 className="text-xl font-black tracking-tight text-stone-900">食材庫存</h2>
           <p className="text-[11px] text-stone-500">管理數量、存放位置與使用期限</p>

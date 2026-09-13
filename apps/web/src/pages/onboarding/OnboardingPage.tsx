@@ -11,6 +11,12 @@ import { InvoiceModal } from "@/features/shopping/ShoppingModals";
 import { ChefAvatar, type ChefMood } from "./ChefAvatar";
 import { PassportTicket } from "./PassportTicket";
 import { suggestWeeklyGoalTarget } from "./weekly-goal";
+import {
+  addCustomRestriction,
+  hasRestriction,
+  restrictionQuickOptions,
+  toggleRestriction,
+} from "./restrictions";
 import "./OnboardingPage.css";
 
 const barriers: Array<[HabitBarrier, string]> = [
@@ -28,8 +34,8 @@ function Choice({ selected, onClick, children, danger = false }: { selected: boo
   return <button type="button" className={`onboarding-choice ${selected ? "selected" : ""} ${danger ? "danger" : ""}`} onClick={onClick}><span>{children}</span><Tick /></button>;
 }
 
-function StepCard({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
-  return <section className="onboarding-step-card"><header><h2>{title}</h2>{description && <p>{description}</p>}</header>{children}</section>;
+function StepCard({ title, description, children, className = "" }: { title: string; description?: string; children: ReactNode; className?: string }) {
+  return <section className={`onboarding-step-card ${className}`}><header><h2>{title}</h2>{description && <p>{description}</p>}</header>{children}</section>;
 }
 
 function Counter({ value, min, max, unit, onChange }: { value: number; min: number; max: number; unit: string; onChange: (value: number) => void }) {
@@ -43,6 +49,7 @@ export function OnboardingPage({ onComplete, onExit, canExit = false, initialSte
   const [profile, setProfile] = useState<OnboardingProfile>({ ...emptyOnboardingDraft, ...saved, currentStep: initialStep ?? saved.currentStep });
   const [inventory, setInventory] = useState({ name: "", quantity: 1, unit: "份", chamber: "cold", expiresOn: "" });
   const [customCookware, setCustomCookware] = useState("");
+  const [restrictionInput, setRestrictionInput] = useState("");
   const [flavorInput, setFlavorInput] = useState("");
   const [ocrInventoryConfirmed, setOcrInventoryConfirmed] = useState(false);
   const [authVerified, setAuthVerified] = useState(() => !supabase);
@@ -133,6 +140,17 @@ export function OnboardingPage({ onComplete, onExit, canExit = false, initialSte
     toggleCookware(value);
     setCustomCookware("");
   };
+  const toggleHardRestriction = (option: (typeof restrictionQuickOptions)[number]) => {
+    cheer("care");
+    update({ restrictions: toggleRestriction(profile.restrictions, option) });
+  };
+  const addRestriction = () => {
+    const next = addCustomRestriction(profile.restrictions, restrictionInput);
+    if (next === profile.restrictions) return;
+    cheer("care");
+    update({ restrictions: next });
+    setRestrictionInput("");
+  };
   const addFlavor = () => {
     const value = flavorInput.trim();
     if (!value || profile.preferredFlavors.includes(value)) return;
@@ -164,7 +182,7 @@ export function OnboardingPage({ onComplete, onExit, canExit = false, initialSte
       </header>
       <div className="onboarding-progress" role="progressbar" aria-label={`第 ${step} 步，共 5 步`} aria-valuemin={1} aria-valuemax={5} aria-valuenow={step}><span style={{ width: `${step * 20}%` }} /></div>
 
-      <div className="onboarding-content"><div className="onboarding-stack step-slide-down" key={step}>
+      <div className="onboarding-content"><div className={`onboarding-stack onboarding-step-${step} step-slide-down`} key={step}>
         {step === 1 && <>
           <div className="chef-open"><span className="chef-open-icon material-symbols-outlined" aria-hidden="true">restaurant</span><div><strong>下班辛苦了！我是你的專屬主廚 CooCoo。</strong><p>沒有標準答案，我們只想讓第一次推薦更可行。你的回答會決定我怎麼挑菜、怎麼排餐。</p></div></div>
           <StepCard title="目前料理熟練度"><div className="choices one">{([['beginner','剛開始'],['comfortable','能完成幾道家常菜'],['advanced','熟悉料理與調整']] as const).map(([value,label]) => <Choice key={value} selected={profile.cookingExperience === value} onClick={() => update({ cookingExperience: value })}>{label}</Choice>)}</div></StepCard>
@@ -174,9 +192,9 @@ export function OnboardingPage({ onComplete, onExit, canExit = false, initialSte
 
         {step === 2 && <>
           <div className="chef-open"><span className="chef-open-icon material-symbols-outlined" aria-hidden="true">skillet</span><div><strong>我先確認你真的能用什麼來煮。</strong><p>過敏與絕對不吃是最高防線，推薦與 AI 都不能放寬。</p></div></div>
-          <StepCard title="通常幾人吃？"><Counter value={profile.householdServings} min={1} max={12} unit="人份" onChange={(value) => update({ householdServings: value })} /></StepCard>
-          <StepCard title="可用廚具" description="至少選一項；其他廚具也能自行新增。"><div className="choices">{cookwareOptions.map((value) => <Choice key={value} selected={profile.cookware.some((item) => item.type === value)} onClick={() => toggleCookware(value)}>{value}</Choice>)}</div><div className="tag-input"><input name="custom-cookware" maxLength={24} placeholder="例如：卡式爐、蒸烤箱" value={customCookware} onChange={(event) => setCustomCookware(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); addCustomCookware(); } }} /><button type="button" disabled={!customCookware.trim()} onClick={addCustomCookware}>＋</button></div><div className="tag-list">{profile.cookware.filter((item) => !cookwareOptions.includes(item.type)).map((item) => <span className="tag" key={item.type}>{item.type}<button type="button" aria-label={`移除 ${item.type}`} onClick={() => toggleCookware(item.type)}>×</button></span>)}</div></StepCard>
-          <StepCard title="過敏或絕對不吃" description="用逗號分隔；這些項目會存成後端硬限制。"><input className="text-field" name="dietary-restrictions" value={profile.restrictions.map((item) => item.label).join("、")} placeholder="例如：花生、蝦…" onChange={(event) => { cheer("care"); update({ restrictions: event.target.value.split(/[、,，]/).map((value) => value.trim()).filter(Boolean).map((label, index) => ({ id: `restriction-${index}`, label, kind: "allergy" as const, ingredientKeys: [label], isHardLimit: true })) }); }} /><p className="safety-note">硬限制會寫入 dietary_restrictions，所有推薦與 AI 調整都必須遵守。</p></StepCard>
+          <StepCard className="step2-household" title="通常幾人吃？"><Counter value={profile.householdServings} min={1} max={12} unit="人份" onChange={(value) => update({ householdServings: value })} /></StepCard>
+          <StepCard className="step2-cookware" title="可用廚具" description="至少選一項；其他廚具也能自行新增。"><div className="choices">{cookwareOptions.map((value) => <Choice key={value} selected={profile.cookware.some((item) => item.type === value)} onClick={() => toggleCookware(value)}>{value}</Choice>)}</div><div className="tag-input"><input name="custom-cookware" maxLength={24} placeholder="例如：卡式爐、蒸烤箱" value={customCookware} onChange={(event) => setCustomCookware(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); addCustomCookware(); } }} /><button type="button" disabled={!customCookware.trim()} onClick={addCustomCookware}>＋</button></div><div className="tag-list">{profile.cookware.filter((item) => !cookwareOptions.includes(item.type)).map((item) => <span className="tag" key={item.type}>{item.type}<button type="button" aria-label={`移除 ${item.type}`} onClick={() => toggleCookware(item.type)}>×</button></span>)}</div></StepCard>
+          <StepCard className="step2-restrictions" title="過敏或絕對不吃" description="可多選常見過敏原，其他項目也能自行新增；全部都會成為硬限制。"><div className="restriction-chip-grid" aria-label="常見過敏原快選">{restrictionQuickOptions.map((option) => { const selected = hasRestriction(profile.restrictions, option); return <button type="button" className={`restriction-chip ${selected ? "selected" : ""}`} aria-pressed={selected} key={option.id} onClick={() => toggleHardRestriction(option)}><span>{option.label}</span><i aria-hidden="true">✓</i></button>; })}</div><div className="tag-input restriction-input"><input name="dietary-restrictions" maxLength={24} placeholder="其他不能吃，例如：香菜" value={restrictionInput} onChange={(event) => setRestrictionInput(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); addRestriction(); } }} /><button type="button" disabled={!restrictionInput.trim()} aria-label="新增其他不能吃的食物" onClick={addRestriction}>＋</button></div><div className="tag-list">{profile.restrictions.filter((item) => !restrictionQuickOptions.some((option) => option.id === item.id || option.label === item.label)).map((item) => <span className="tag" key={item.id}>{item.label}<button type="button" aria-label={`移除 ${item.label}`} onClick={() => update({ restrictions: profile.restrictions.filter((restriction) => restriction.id !== item.id) })}>×</button></span>)}</div><p className="safety-note">硬限制會寫入 dietary_restrictions，所有推薦與 AI 調整都必須遵守。</p></StepCard>
         </>}
 
         {step === 3 && <>
