@@ -334,6 +334,8 @@ export function TodayPage() {
       </section>
 
       {/* 主任務票券 */}
+      <div className="today-responsive-layout">
+        <div className="today-primary-column">
       {!recommended ? (
         <article className="meal-ticket ticket-mismatch">
           <div className="ticket-notch ticket-notch-top" aria-hidden="true" />
@@ -520,6 +522,9 @@ export function TodayPage() {
           )}
         </article>
       )}
+        </div>
+
+        <div className="today-support-column">
 
       {/* 三個可行方向（小票根列） */}
       {ticketMode !== "purchase" && alternativeMeals.length > 0 && (
@@ -606,6 +611,8 @@ export function TodayPage() {
           </div>
         ))}
       </section>
+        </div>
+      </div>
 
       {/* 本週節奏（單行進度） */}
       <div className="weekstrip">

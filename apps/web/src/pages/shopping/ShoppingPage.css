@@ -685,3 +685,64 @@
   .shopping-mobile .shopping-basket { gap: 7px; padding-inline: 10px; }
   .shopping-mobile .shopping-basket > button { padding-inline: 11px; }
 }
+
+/* Keep the approved ticket language while letting the whole page use wider screens. */
+@media (min-width: 700px) {
+  .shopping-mobile {
+    display: grid;
+    width: 100%;
+    max-width: 1080px;
+    grid-template-columns: minmax(0, 1.08fr) minmax(280px, 0.92fr);
+    gap: 16px;
+    padding-inline: 0;
+  }
+
+  .shopping-mobile .shopping-hud,
+  .shopping-mobile .task-strip,
+  .shopping-mobile .meal-task-ticket {
+    grid-column: 1 / -1;
+  }
+
+  .shopping-mobile .shopping-hud {
+    margin: 0 0 2px;
+    border: 1px solid #ebd9c6;
+    border-radius: 16px;
+  }
+
+  .shopping-mobile .task-strip,
+  .shopping-mobile .shopping-coverage,
+  .shopping-mobile .shopping-ledger,
+  .shopping-mobile .meal-task-ticket,
+  .shopping-mobile .shopping-entry-grid,
+  .shopping-mobile .shopping-list,
+  .shopping-mobile .shopping-rescue {
+    margin: 0;
+  }
+
+  .shopping-mobile .shopping-basket {
+    width: min(calc(100% - 40px), 1080px);
+  }
+}
+
+@media (min-width: 1024px) {
+  .shopping-mobile {
+    grid-template-columns: minmax(0, 1.18fr) minmax(330px, 0.82fr);
+    gap: 18px;
+  }
+
+  .shopping-mobile .meal-task-ticket {
+    grid-column: 1;
+  }
+
+  .shopping-mobile .shopping-entry-grid {
+    grid-column: 2;
+  }
+
+  .shopping-mobile .shopping-list {
+    grid-column: 1;
+  }
+
+  .shopping-mobile .shopping-rescue {
+    grid-column: 2;
+  }
+}

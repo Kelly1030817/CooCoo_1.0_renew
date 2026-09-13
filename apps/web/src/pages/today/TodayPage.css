@@ -17,6 +17,14 @@
   font-family: "Plus Jakarta Sans", "Noto Sans TC", sans-serif;
 }
 
+.today-responsive-layout,
+.today-primary-column,
+.today-support-column {
+  display: grid;
+  min-width: 0;
+  gap: 12px;
+}
+
 /* 1. Header greeting & energy toggle */
 .today-page .today-intro {
   display: flex;
@@ -351,6 +359,67 @@
   }
   .ticket-body h3 { font-size: 20px; }
   .reward-chip.badge { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+
+@media (min-width: 600px) {
+  .today-page {
+    width: min(100%, 1080px);
+    gap: 14px;
+  }
+
+  .today-hud {
+    margin: 0;
+    border: 1px solid #ebd9c6;
+    border-radius: 14px;
+  }
+
+  .today-responsive-layout {
+    grid-template-columns: minmax(0, 1.35fr) minmax(280px, .85fr);
+    align-items: start;
+    gap: 14px;
+  }
+
+  .ticket-body {
+    padding: 16px;
+  }
+}
+
+@media (min-width: 900px) {
+  .today-page {
+    gap: 16px;
+  }
+
+  .today-responsive-layout {
+    grid-template-columns: minmax(430px, 1.45fr) minmax(330px, .75fr);
+    gap: 22px;
+  }
+
+  .today-page .today-intro {
+    padding-top: 8px;
+  }
+
+  .today-primary-column .meal-ticket {
+    min-height: 438px;
+  }
+
+  .today-primary-column .ticket-body {
+    display: flex;
+    flex-direction: column;
+    padding: 18px;
+  }
+
+  .today-primary-column .ticket-body h3 {
+    font-size: 27px;
+  }
+
+  .today-primary-column .ticket-cta {
+    margin-top: auto;
+    padding-top: 14px;
+  }
+
+  .today-support-column .ministub {
+    min-height: 60px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
