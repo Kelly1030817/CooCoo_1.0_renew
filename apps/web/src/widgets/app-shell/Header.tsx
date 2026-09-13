@@ -57,7 +57,7 @@ export function Header({
             </button>
           )}
           {import.meta.env.DEV && access.data?.owner && (
-            <button className="text-xs" onClick={() => ui.open(<CatalogAdminModal onClose={ui.close} />)}>
+            <button className="text-xs text-on-surface-variant hover:text-primary px-2 py-1 rounded-lg border border-outline-variant/50" onClick={() => ui.open(<CatalogAdminModal onClose={ui.close} />)}>
               食譜管理
             </button>
           )}

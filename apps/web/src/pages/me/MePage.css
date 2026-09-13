@@ -31,147 +31,6 @@
   box-shadow: 0 8px 26px rgb(84 63 39 / 0.06);
 }
 
-/* Account Profile Card */
-.account-card {
-  display: flex !important;
-  flex-direction: column;
-  gap: 14px;
-  background: linear-gradient(180deg, #fffdf8 0%, #fff 100%);
-  border: 1px solid #d9cab2;
-}
-
-.account-card-main {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-}
-
-.account-card-avatar {
-  display: grid;
-  width: 42px;
-  height: 42px;
-  place-items: center;
-  flex: 0 0 auto;
-  border-radius: 50%;
-  background: #fdf2e9;
-  border: 1px solid #f2d4be;
-  color: #9a442d;
-}
-
-.account-card-info {
-  min-width: 0;
-  flex: 1;
-}
-
-.account-card-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  color: #8c5d39;
-  font-size: 10px;
-  font-weight: 900;
-  letter-spacing: 0.04em;
-}
-
-.account-card-badge .status-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #c2b6a5;
-}
-
-.account-card-badge .status-dot.online {
-  background: #2e7d32;
-}
-
-.account-card-info h3 {
-  margin: 2px 0 3px;
-  color: #293c4e;
-  font-family: Georgia, "Noto Serif TC", serif;
-  font-size: 20px;
-  line-height: 1.2;
-}
-
-.account-card-info p {
-  margin: 0;
-  color: #817a6e;
-  font-size: 11px;
-  line-height: 1.4;
-  word-break: break-all;
-}
-
-.account-card-action {
-  flex: 0 0 auto;
-}
-
-.account-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 36px;
-  padding: 8px 14px;
-  border-radius: 10px;
-  font-size: 12px;
-  font-weight: 900;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  white-space: nowrap;
-}
-
-.account-btn.signin {
-  border: 1px solid #d4a373;
-  background: #9a442d;
-  color: #fff;
-  box-shadow: 0 2px 6px rgba(154, 68, 45, 0.2);
-}
-
-.account-btn.signin:hover {
-  background: #853723;
-}
-
-.account-btn.signout {
-  border: 1px solid #ded3c2;
-  background: #fff;
-  color: #78716c;
-}
-
-.account-btn.signout:hover {
-  background: #fbf7ee;
-  color: #9a442d;
-}
-
-.account-card-footer {
-  border-top: 1px dashed #e7dac2;
-  padding-top: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-}
-
-.account-replay-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  border: 0;
-  background: transparent;
-  color: #817a6e;
-  font-size: 11px;
-  font-weight: 800;
-  cursor: pointer;
-  padding: 4px 6px;
-  border-radius: 6px;
-  transition: color 0.15s;
-}
-
-.account-replay-btn:hover {
-  color: #9a442d;
-}
-
-.account-replay-btn .material-symbols-outlined {
-  font-size: 14px;
-}
-
 .weekly-card {
   display: grid !important;
   grid-template-columns: 1fr auto;
@@ -370,23 +229,6 @@
   outline-offset: 2px;
 }
 
-@media (max-width: 480px) {
-  .account-card-main {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
-  .account-card-action {
-    width: 100%;
-  }
-  .account-btn {
-    width: 100%;
-  }
-  .account-card-footer {
-    justify-content: flex-start;
-  }
-}
-
 @media (max-width: 420px) {
   .weekly-card label {
     flex-wrap: wrap;
@@ -396,3 +238,185 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* Account Profile Card */
+.account-card {
+  display: flex !important;
+  flex-direction: column;
+  gap: 14px;
+  background: linear-gradient(135deg, #fffefb 0%, #fff9f0 100%) !important;
+  border: 1px solid #ebd9c6 !important;
+}
+
+.account-main {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.account-avatar {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #fdf0d5;
+  border: 1px solid #ebd9c6;
+  color: #78350f;
+}
+
+.account-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.account-status-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+
+.account-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 9.5px;
+  font-weight: 800;
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+.account-status-pill.cloud {
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.account-status-pill.local {
+  background: #fffbeb;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.account-status-pill .dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.account-name {
+  margin: 2px 0 0;
+  font-family: Georgia, "Noto Serif TC", serif;
+  font-size: 19px;
+  color: #293c4e;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-desc {
+  margin: 2px 0 0;
+  font-size: 11px;
+  color: #817a6e;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-action {
+  flex-shrink: 0;
+}
+
+.btn-signin {
+  border: 1px solid #f59e0b;
+  border-radius: 12px;
+  background: #fef3c7;
+  color: #78350f;
+  font-size: 11px;
+  font-weight: 900;
+  padding: 8px 14px;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: all 0.15s ease;
+}
+
+.btn-signin:hover:not(:disabled) {
+  background: #fde68a;
+}
+
+.btn-signout {
+  border: 1px solid #d9cbb2;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #6f685e;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-signout:hover {
+  color: #9a442d;
+  border-color: #e2bcae;
+  background: #fff8f5;
+}
+
+.account-error {
+  margin: 0;
+  font-size: 11px;
+  color: #b91c1c;
+}
+
+.account-footer {
+  border-top: 1px dashed #ebd9c6;
+  padding-top: 10px;
+}
+
+.account-replay-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: #9a442d;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  padding: 4px 0;
+  transition: opacity 0.15s ease;
+}
+
+.account-replay-btn:hover {
+  opacity: 0.8;
+}
+
+.account-replay-btn .material-symbols-outlined {
+  font-size: 16px;
+  margin-right: 6px;
+}
+
+.account-replay-btn .arrow {
+  font-weight: 900;
+  margin-left: auto;
+}
+
+@media (max-width: 480px) {
+  .account-main {
+    flex-wrap: wrap;
+  }
+  .account-action {
+    width: 100%;
+    margin-top: 6px;
+  }
+  .btn-signin,
+  .btn-signout {
+    width: 100%;
+    text-align: center;
+  }
+}
+
