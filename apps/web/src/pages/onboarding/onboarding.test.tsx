@@ -1,3 +1,4 @@
+import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, test } from "vitest";
 import { EquipmentRadar } from "./EquipmentRadar";
@@ -5,8 +6,17 @@ import { ChefAvatar } from "./ChefAvatar";
 import { PassportTicket } from "./PassportTicket";
 import { emptyOnboardingDraft } from "../../shared/model/onboarding-draft";
 import { suggestWeeklyGoalTarget } from "./weekly-goal";
+import { isOnboardingStepValid } from "./validation";
 
 describe("Chef Consultation Components", () => {
+  test("step 4 enables the continue action after either inventory path while auth restores", () => {
+    const manualProfile = { ...emptyOnboardingDraft, currentStep: 4, hasNoInventory: false };
+    expect(isOnboardingStepValid(4, manualProfile, { name: "雞蛋", expiresOn: "2026-09-20" }, false)).toBe(true);
+
+    const emptyProfile = { ...emptyOnboardingDraft, currentStep: 4, hasNoInventory: true };
+    expect(isOnboardingStepValid(4, emptyProfile, { name: "", expiresOn: "" }, false)).toBe(true);
+    expect(isOnboardingStepValid(4, manualProfile, { name: "雞蛋", expiresOn: "" }, false)).toBe(false);
+  });
   test("weekly goal suggestion is current frequency plus one within the supported range",()=>{
     expect(suggestWeeklyGoalTarget(0)).toBe(1);
     expect(suggestWeeklyGoalTarget(1)).toBe(2);
