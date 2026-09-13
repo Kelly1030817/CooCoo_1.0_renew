@@ -11,6 +11,7 @@ beforeAll(async()=>{
 },30000);
 afterAll(async()=>{await db.close();});
 test('all migrations apply, preferences are optimistic, and another account cannot edit them directly',async()=>{
+ expect((await db.query("select to_regclass('public.fridge_profiles') value")).rows[0]).toEqual({value:null});
  const r=await db.query<{value:{version:number}}>('select public.save_recipe_preferences($1,150,0) as value',[user]);expect(r.rows[0].value.version).toBe(1);
  await expect(db.query('select public.save_recipe_preferences($1,99,0)',[user])).rejects.toThrow('SETTINGS_CONFLICT');
  await db.exec(`set role authenticated;set request.jwt.claim.sub='dddddddd-dddd-4ddd-8ddd-dddddddddddd';`);

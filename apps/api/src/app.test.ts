@@ -7,9 +7,15 @@ describe('HTTP contract adapter', () => {
   test('returns the current state envelope', async () => {
     const response = await app.handle(new Request('http://localhost/api/v1/state'))
     expect(response.status).toBe(200)
-    const body=(await response.json()) as {data:{missions:Array<{key:string}>}}
+    const body=(await response.json()) as {data:{missions:Array<{key:string}>;fridgeProfile?:unknown}}
     expect(body).toHaveProperty('data')
+    expect(body.data).not.toHaveProperty('fridgeProfile')
     expect(body.data.missions.map((mission)=>mission.key)).toEqual(['cook_today','eat_prepared','use_expiring'])
+  })
+  test('does not expose physical fridge settings', async () => {
+    const response = await app.handle(new Request('http://localhost/api/v1/settings/fridge'))
+    expect(response.status).toBe(422)
+    expect((await response.json()) as {error:{code:string}}).toMatchObject({error:{code:'NOT_FOUND'}})
   })
   test('exposes deterministic recipe errors', async () => {
     const response = await app.handle(new Request('http://localhost/api/v1/recipes/generate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({ingredientIds:[]})}))

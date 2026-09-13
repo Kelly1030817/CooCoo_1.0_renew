@@ -2,7 +2,7 @@
 
 - 更新：2026-09-13
 - 現行產品依據：[`../CONTEXT.md`](../CONTEXT.md)、[`product-decisions/2026-09-11-coocoo-v1-brand-product-reset.md`](product-decisions/2026-09-11-coocoo-v1-brand-product-reset.md)
-- 本次發布分支：`codex/shopping-ticket-ui-production`（已合入當前 `main@2643f34`）
+- 本次發布分支：`codex/remove-fridge-capacity-main`（由最新 `origin/main@bf72b6c` 建立）
 - 發布目標：GitHub `main` 與 Vercel Production；正式站結果須以發布後瀏覽器查核為準
 
 ## 唯一產品方向
@@ -37,13 +37,15 @@
 
 - 本次 UI 提交不新增 migration；採買功能依賴已進入 `main` 的 `supabase/migrations/20260913090000_shopping_restock_v2.sql`。正式資料庫套用狀態必須另行查核，不可以 GitHub 檔案存在代替雲端證據。
 - `shopping_items.shortage_id/source`、`restock_operations` 與 `restock_checked_shopping_v2` 是採買票根的正式持久化邊界；`pantry` 類別入庫到常溫位置。
+- 冰箱頁只管理食材庫存；不再提供冰箱品牌、型號、總容量、容量佔比或冷藏／冷凍比例設定。
+- `fridge_profiles` 由 migration 移除；食材庫存仍由 `inventory_batches` 管理。
 - Onboarding 寫入既有 `profiles`、`cookware`、`dietary_restrictions`、`weekly_goals_v2`、`notification_preferences`；確認空箱時依既有 RPC 規則清除該帳號庫存。
 - OCR 仍先建立草稿，使用者逐項確認數量、單位、位置與期限後才入庫。
 - 任務為 `/state` 回應的衍生資料，不可由前端切換，也不直接寫入資料庫。
 
 ## 驗證
 
-- 2026-09-13 採買 UI 合入當前 `main` 後執行 `bun run verify`：158 tests、Web build、API typecheck 與 PGlite migration 全數通過。
+- 2026-09-13 冰箱容量移除整合最新 `main` 後執行 `bun run verify`：159 tests、Web build、API typecheck 與 PGlite migration 全數通過；包含容量設定移除的 API、狀態契約與資料表回歸檢查。
 - 本機瀏覽器完成五步 Onboarding 後驗證 `/shopping` 空任務、一般採買、固定採買籃與入庫確認表單；版面依 430px 手機內容寬度收斂，360px 以下另有單欄範圍卡。
 - Playwright 以 390 × 844 viewport 實際走過五步 Onboarding、空箱、蓋章、進入 Today、Today 三任務票券與「我的」週餐次區塊。
 - viewport 模擬不等於 iPhone Safari／Android Chrome 真機驗收。

@@ -5,10 +5,7 @@ import { UiContext } from "@/app/ui-context";
 import { useAppRoute } from "@/app/routing/useAppRoute";
 import { useAppState, stateQueryKey } from "@/entities/app-state/model";
 import { api, json } from "@/shared/api/client";
-import {
-  AddInventoryModal,
-  FridgeSetupModal,
-} from "@/features/inventory/InventoryModals";
+import { AddInventoryModal } from "@/features/inventory/InventoryModals";
 import { Modal, ModalHeader } from "@/shared/ui/Modal";
 import { IngredientIcon } from "@/shared/ui/IngredientIcon";
 import { usePrepTray } from "@/features/kitchen/prep-tray";
@@ -27,16 +24,6 @@ export function FridgePage() {
   const coldItems = sorted.filter((i) => i.chamber === "cold");
   const frozenItems = sorted.filter((i) => i.chamber === "frozen");
   const urgent = coldItems.filter((i) => i.daysLeft <= 3);
-
-  // Dynamic capacity calculation based on boxSize heuristics (S=1L, M=2.5L, L=5L)
-  const totalCapacityLiters = data.fridgeProfile.isConfigured
-    ? data.fridgeProfile.capacityLiters
-    : 130;
-  const usedLiters = data.inventory.reduce((sum, item) => {
-    const sizeMap: Record<string, number> = { S: 1.0, M: 2.5, L: 5.0 };
-    return sum + (sizeMap[item.boxSize] || 2.0);
-  }, 0);
-  const capacityPercent = Math.min(100, Math.round((usedLiters / totalCapacityLiters) * 100));
 
   const refresh = () => query.invalidateQueries({ queryKey: stateQueryKey });
 
@@ -76,55 +63,11 @@ export function FridgePage() {
 
   return (
     <div className="fridge-page space-y-4 px-3 py-2 sm:px-4 sm:py-3">
-      {/* 頂部冰箱設定與容積計算卡 */}
-      <section className="capacity-card">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#e0f2f1] text-[#2a9d8f]">
-              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect width="18" height="18" x="3" y="3" rx="2" />
-                <path d="M3 9h18" />
-                <path d="M9 21V9" />
-              </svg>
-            </div>
-            <div>
-              <h3 className="text-xs font-black text-stone-900">
-                {data.fridgeProfile.isConfigured
-                  ? `${data.fridgeProfile.brand} ${data.fridgeProfile.model} (${totalCapacityLiters}L)`
-                  : `雙門小冰箱 (${totalCapacityLiters}L)`}
-              </h3>
-              <p className="text-[10px] text-stone-500">
-                目前庫存佔比 {capacityPercent}% ({usedLiters.toFixed(1)}L / {totalCapacityLiters}L) · 運作正常
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="rounded-full border border-[#bce3df] bg-[#e0f2f1] px-2.5 py-0.5 text-[10px] font-extrabold text-[#2a9d8f]">
-              {capacityPercent}% 佔比
-            </span>
-            <button
-              type="button"
-              onClick={() => ui.open(<FridgeSetupModal onClose={ui.close} />)}
-              className="rounded-lg border border-stone-200 bg-stone-50 px-2 py-0.5 text-[10px] font-bold text-stone-600 hover:bg-stone-100"
-            >
-              調整
-            </button>
-          </div>
-        </div>
-        {/* 容量進度條 */}
-        <div className="mt-2.5 h-1.5 w-full overflow-hidden rounded-full bg-stone-100">
-          <div
-            className="h-full rounded-full transition-all duration-500"
-            style={{ width: `${Math.max(5, capacityPercent)}%`, backgroundColor: "var(--cold-tag-text)" }}
-          />
-        </div>
-      </section>
-
       {/* 標題與新增食材按鈕 */}
       <div className="flex items-center justify-between pt-1">
         <div>
-          <h2 className="text-xl font-black tracking-tight text-stone-900">冰箱沙漏</h2>
-          <p className="text-[11px] text-stone-500">掌握低溫保存期限，徹底消滅食物浪費</p>
+          <h2 className="text-xl font-black tracking-tight text-stone-900">食材庫存</h2>
+          <p className="text-[11px] text-stone-500">管理數量、存放位置與使用期限</p>
         </div>
         <button
           type="button"
