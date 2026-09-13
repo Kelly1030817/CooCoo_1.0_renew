@@ -293,7 +293,7 @@
   .fridge-page {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    align-items: start;
+    align-items: stretch;
     gap: 16px;
   }
 
@@ -303,9 +303,18 @@
     grid-column: 1 / -1;
   }
 
-  .fridge-page .cold-chamber,
-  .fridge-page .frozen-chamber {
+  .fridge-page .prepared-section,
+  .fridge-page .inventory-chamber {
     height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .fridge-page .inventory-empty {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 }
 
