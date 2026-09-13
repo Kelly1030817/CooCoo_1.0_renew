@@ -1,5 +1,6 @@
 import { lazy, Suspense, useContext, useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import type { AppState } from "@coocoo/contracts";
 import { stateQueryKey, useAppState } from "@/entities/app-state/model";
 import { useAppRoute } from "@/app/routing/useAppRoute";
 import { Header } from "@/widgets/app-shell/Header";
@@ -7,6 +8,7 @@ import { BottomNav } from "@/widgets/app-shell/BottomNav";
 import { OnboardingPage } from "@/pages/onboarding/OnboardingPage";
 import { readOnboardingDraft } from "@/shared/model/onboarding-draft";
 import { startGoogleAuth, supabase } from "@/shared/auth/supabase";
+import { api } from "@/shared/api/client";
 import { AuthRecoveryPanel } from "@/shared/auth/AuthRecoveryPanel";
 import { UiContext } from "@/app/ui-context";
 
@@ -38,13 +40,24 @@ export default function App() {
   useEffect(() => {
     if (!supabase) return;
     let active = true;
-    const applySession = (hasSession: boolean) => {
+    const applySession = async (hasSession: boolean) => {
       if (!active) return;
       setAuthStatus(hasSession ? "signed-in" : "signed-out");
-      if (hasSession) void queryClient.invalidateQueries({ queryKey: stateQueryKey });
+      if (!hasSession) return;
+      try {
+        const state = await queryClient.fetchQuery({
+          queryKey: stateQueryKey,
+          queryFn: () => api<AppState>("/state"),
+        });
+        if (active && state.onboardingProfile?.status === "complete") {
+          setOnboardingComplete(true);
+        }
+      } catch {
+        if (active) void queryClient.invalidateQueries({ queryKey: stateQueryKey });
+      }
     };
     void supabase.auth.getSession().then(({ data }) => applySession(Boolean(data.session)));
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => applySession(Boolean(session)));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => { void applySession(Boolean(session)); });
     return () => {
       active = false;
       subscription.unsubscribe();
