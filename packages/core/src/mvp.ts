@@ -32,9 +32,9 @@ export const brandSafeRecipes: RecipePackage[] = [
       {ingredientKey:"油",name:"食用油",quantity:5,unit:"毫升",isPantryStaple:true,isVegetable:false,coveredByInventory:false},
     ],
     steps:[
-      {id:"te-1",order:1,instruction:"將 250 克番茄切成小塊，雞蛋打散。",voiceText:"將二百五十克番茄切成小塊，雞蛋打散。",timerSeconds:null,safetyNote:"切菜時讓指尖向內收。"},
-      {id:"te-2",order:2,instruction:"鍋中少量油，中火炒蛋到半熟後先盛起。",voiceText:"中火炒蛋到半熟後先盛起。",timerSeconds:90,safetyNote:null},
-      {id:"te-3",order:3,instruction:"同鍋炒番茄至出汁，放回雞蛋拌勻。",voiceText:"炒番茄至出汁，放回雞蛋拌勻。",timerSeconds:180,safetyNote:"蛋液需完全凝固。"},
+      {id:"te-1",order:1,instruction:"將 250 克番茄洗淨後切成約 2 公分小塊；雞蛋打入碗中，攪拌到蛋白與蛋黃均勻。",compactInstruction:"250 克番茄切成 2 公分小塊，雞蛋打散。",guidance:{successCue:"番茄大小接近、蛋液顏色均勻且沒有明顯蛋白塊。",why:"大小一致能讓番茄受熱與出汁速度接近。",rescueTip:"番茄汁較多時先保留，炒番茄時再一起加入。"},voiceText:"將二百五十克番茄切成小塊，雞蛋打散。",timerSeconds:null,safetyNote:"切菜時讓指尖向內收。"},
+      {id:"te-2",order:2,instruction:"鍋中加入少量油，以中火加熱後倒入蛋液；用鍋鏟由外往內推，約 90 秒炒到表面仍微濕的半熟狀態，立刻盛起。",compactInstruction:"少量油中火炒蛋約 90 秒，表面微濕時先盛起。",guidance:{successCue:"蛋大致凝固、表面仍帶光澤，鍋底沒有焦褐色。",why:"先盛起可避免回鍋後過熟變乾。",rescueTip:"蛋凝固太快時立刻關小火並把鍋移離爐面。"},voiceText:"中火炒蛋到半熟後先盛起。",timerSeconds:90,safetyNote:null},
+      {id:"te-3",order:3,instruction:"使用同一鍋以中火炒番茄約 3 分鐘，直到果肉變軟並明顯出汁；放回先盛起的雞蛋拌勻，繼續加熱到蛋液完全凝固。",compactInstruction:"同鍋中火炒番茄 3 分鐘至出汁，放回雞蛋拌至完全凝固。",guidance:{successCue:"番茄有汁、蛋塊熟透且看不到流動蛋液。",why:"番茄先出汁能形成醬汁，也讓雞蛋回鍋後均勻裹味。",rescueTip:"鍋底太乾時加入一大匙水，避免加更多油。"},voiceText:"炒番茄至出汁，放回雞蛋拌勻。",timerSeconds:180,safetyNote:"蛋液需完全凝固。"},
     ],imageUrl:null,fallbackImageUrl:"/favicon.svg",downloadedAt:null,
   },
   {
@@ -46,9 +46,9 @@ export const brandSafeRecipes: RecipePackage[] = [
       {ingredientKey:"味噌",name:"味噌",quantity:18,unit:"克",isPantryStaple:true,isVegetable:false,coveredByInventory:false},
     ],
     steps:[
-      {id:"mu-1",order:1,instruction:"一鍋水煮滾，放入烏龍麵與 100 克青花菜。",voiceText:"一鍋水煮滾，放入烏龍麵與一百克青花菜。",timerSeconds:180,safetyNote:"避免蒸氣燙傷。"},
-      {id:"mu-2",order:2,instruction:"打入雞蛋，煮到蛋白完全凝固。",voiceText:"打入雞蛋，煮到蛋白完全凝固。",timerSeconds:150,safetyNote:"雞蛋需完全熟透。"},
-      {id:"mu-3",order:3,instruction:"關火後再拌入味噌。",voiceText:"關火後再拌入味噌。",timerSeconds:null,safetyNote:null},
+      {id:"mu-1",order:1,instruction:"鍋中加水煮到持續冒大泡，放入烏龍麵與 100 克青花菜，以中火煮 3 分鐘；麵條自然散開後再輕輕攪動。",compactInstruction:"水滾後放入烏龍麵與 100 克青花菜，中火煮 3 分鐘。",guidance:{successCue:"麵條已散開且中心沒有硬芯，青花菜轉為鮮綠。",why:"等麵條受熱後再攪動，比較不容易斷裂。",rescueTip:"湯汁快溢出時轉小火並短暫移開鍋蓋。"},voiceText:"一鍋水煮滾，放入烏龍麵與一百克青花菜。",timerSeconds:180,safetyNote:"避免蒸氣燙傷。"},
+      {id:"mu-2",order:2,instruction:"維持中火，將雞蛋打入鍋中後煮約 2 分 30 秒；確認蛋白與蛋黃都完全凝固，不可留下流動蛋液。",compactInstruction:"打入雞蛋，中火煮 2 分 30 秒至蛋白蛋黃完全凝固。",guidance:{successCue:"蛋白、蛋黃都已凝固，沒有透明或流動部分。",why:"雞蛋完全熟透可降低食安風險。",rescueTip:"蛋仍未凝固時每次延長 30 秒並再次確認。"},voiceText:"打入雞蛋，煮到蛋白完全凝固。",timerSeconds:150,safetyNote:"雞蛋需完全熟透。"},
+      {id:"mu-3",order:3,instruction:"完全關火，先用少量熱湯把味噌調開，再倒回鍋中攪拌均勻；加入後不要重新煮滾。",compactInstruction:"關火後用熱湯調開味噌，倒回拌勻，不再煮滾。",guidance:{successCue:"味噌完全散開，湯中沒有明顯結塊。",why:"關火後再加味噌可避免香氣因持續沸騰而流失。",rescueTip:"仍有結塊時用湯勺背面壓散，不必重新開火。"},voiceText:"關火後再拌入味噌。",timerSeconds:null,safetyNote:null},
     ],imageUrl:null,fallbackImageUrl:"/favicon.svg",downloadedAt:null,
   },
   {
@@ -60,9 +60,9 @@ export const brandSafeRecipes: RecipePackage[] = [
       {ingredientKey:"胡麻醬",name:"胡麻醬",quantity:20,unit:"毫升",isPantryStaple:true,isVegetable:false,coveredByInventory:false},
     ],
     steps:[
-      {id:"sc-1",order:1,instruction:"雞胸肉煮熟，以食物溫度計確認中心至少 74°C 後撕成絲。",voiceText:"雞胸肉中心至少七十四度後撕成絲。",timerSeconds:600,safetyNote:"使用食物溫度計確認中心至少 74°C，不以顏色作為唯一熟度判斷。"},
-      {id:"sc-2",order:2,instruction:"同鍋煮 100 克麵條與 100 克青花菜，撈起瀝乾。",voiceText:"同鍋煮一百克麵條與一百克青花菜，撈起瀝乾。",timerSeconds:300,safetyNote:"撈麵時小心熱水。"},
-      {id:"sc-3",order:3,instruction:"拌入雞絲與胡麻醬。",voiceText:"拌入雞絲與胡麻醬。",timerSeconds:null,safetyNote:"芝麻過敏者不可食用。"},
+      {id:"sc-1",order:1,instruction:"雞胸肉放入滾水後轉中火煮約 10 分鐘；用食物溫度計插入最厚處，確認中心至少 74°C，再取出稍微放涼並撕成絲。",compactInstruction:"雞胸肉中火煮 10 分鐘，最厚處達 74°C 後取出撕絲。",guidance:{successCue:"食物溫度計在肉最厚處顯示至少 74°C。",why:"中心溫度是確認禽肉安全熟度的可靠依據。",rescueTip:"未達 74°C 時放回鍋中，每次加熱 1 分鐘後重新測量。"},voiceText:"雞胸肉中心至少七十四度後撕成絲。",timerSeconds:600,safetyNote:"使用食物溫度計確認中心至少 74°C，不以顏色作為唯一熟度判斷。"},
+      {id:"sc-2",order:2,instruction:"使用同一鍋水，放入 100 克麵條與 100 克青花菜煮 5 分鐘；確認麵條沒有硬芯後，小心撈起並充分瀝乾。",compactInstruction:"同鍋煮 100 克麵條與 100 克青花菜 5 分鐘，撈起瀝乾。",guidance:{successCue:"麵條沒有硬芯，青花菜熟而仍保持綠色。",why:"同鍋烹煮可減少清洗，也能縮短準備時間。",rescueTip:"麵條仍偏硬時每次延長 30 秒並試吃確認。"},voiceText:"同鍋煮一百克麵條與一百克青花菜，撈起瀝乾。",timerSeconds:300,safetyNote:"撈麵時小心熱水。"},
+      {id:"sc-3",order:3,instruction:"把瀝乾的麵、青花菜與雞絲放入碗中，加入 20 毫升胡麻醬，從底部翻拌到所有食材均勻裹上醬汁。",compactInstruction:"麵、青花菜與雞絲加入 20 毫升胡麻醬，拌勻即可。",guidance:{successCue:"食材表面均勻裹上胡麻醬，碗底沒有大量未拌開的醬。",why:"趁食材仍微溫時拌醬會比較容易均勻。",rescueTip:"醬汁太稠時加入一茶匙煮麵水調開。"},voiceText:"拌入雞絲與胡麻醬。",timerSeconds:null,safetyNote:"芝麻過敏者不可食用。"},
     ],imageUrl:null,fallbackImageUrl:"/favicon.svg",downloadedAt:null,
   },
 ];
