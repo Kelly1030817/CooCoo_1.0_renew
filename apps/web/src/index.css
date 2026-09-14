@@ -182,3 +182,14 @@ button {
 .otp-verify{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:9px}.otp-verify button{min-width:72px;border:0;border-radius:12px;background:#34465b;color:#fff;font-size:12px;font-weight:900}.receipt-drop{position:relative;display:flex;min-height:210px;align-items:center;justify-content:center;flex-direction:column;border:2px dashed #d4c3a7;border-radius:20px;background:#fbf5e9;padding:24px;text-align:center}.receipt-drop input{position:absolute;inset:0;opacity:0;cursor:pointer}.receipt-drop .material-symbols-outlined{color:#9a442d;font-size:46px}.receipt-drop strong{margin-top:12px;color:#34465b}.receipt-drop small{margin-top:7px;color:#7d766b;font-size:10px}.receipt-review>p{color:#6f685e;font-size:12px}.receipt-review>div{margin:12px 0;border:1px solid #ded3c2;border-radius:16px;background:#fff;padding:13px}.receipt-review>div.low-confidence{border-color:#d18b48;background:#fff8eb}.receipt-review label{color:#6e675d;font-size:10px;font-weight:800}.receipt-review>div>small{display:block;margin-top:8px;color:#a05527;font-size:10px}.receipt-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:8px}.receipt-row:last-of-type{grid-template-columns:1fr 1fr}
 .voice-capture{display:flex;width:100%;min-height:82px;align-items:center;justify-content:center;gap:10px;margin-bottom:12px;border:1px solid #ddcfb8;border-radius:18px;background:#fbf2e2;color:#8f3d28}.voice-capture .material-symbols-outlined{font-size:34px}.voice-capture strong{font-size:12px}
 @media(max-width:600px){.receipt-row{grid-template-columns:1fr 1fr}.receipt-row label:last-child{grid-column:1/-1}}
+
+/* Living Chef CooCoo mascot blink animation across site */
+@keyframes chefBlink {
+  0%, 94%, 98%, 100% { stroke-width: 2; opacity: 1; }
+  96% { stroke-width: 0.5; opacity: 0.2; }
+}
+
+.chef-eyes {
+  animation: chefBlink 4.2s infinite;
+}
+
