@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CooCoo Today Header｜三方案比較</title>
+  <style>
+    :root {
+      --cream: #fdf9e8;
+      --paper: #fffdf8;
+      --ink: #293c4e;
+      --muted: #746d62;
+      --rust: #9a442d;
+      --amber: #d89435;
+      --line: #dfd2bd;
+      --soft: #f2eadb;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #e9e3d8;
+      color: var(--ink);
+      font-family: "PingFang TC", "Noto Sans TC", system-ui, sans-serif;
+    }
+
+    .board {
+      width: min(1440px, 100%);
+      margin: 0 auto;
+      padding: 34px 28px 46px;
+    }
+    .board-head { margin: 0 auto 22px; text-align: center; }
+    .board-head small {
+      color: var(--rust);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .18em;
+    }
+    .board-head h1 { margin: 7px 0 5px; font-size: 25px; letter-spacing: -.03em; }
+    .board-head p { margin: 0; color: #6e675e; font-size: 13px; }
+
+    .options {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+      align-items: start;
+    }
+    .option { min-width: 0; }
+    .option-label {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      min-height: 38px;
+      padding: 0 3px 9px;
+    }
+    .option-label strong { font-size: 15px; }
+    .option-label span { color: #81796f; font-size: 11px; }
+
+    .phone {
+      overflow: hidden;
+      min-height: 690px;
+      border: 1px solid #cec3b4;
+      border-radius: 28px;
+      background: var(--cream);
+      box-shadow: 0 20px 50px rgb(55 45 34 / 12%);
+    }
+    .appbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      height: 70px;
+      border-bottom: 1px solid #eee5d7;
+      background: rgb(253 249 232 / 92%);
+      padding: 0 20px;
+      color: var(--rust);
+      font-weight: 900;
+      font-size: 18px;
+      letter-spacing: .01em;
+    }
+    .brand-mark {
+      display: grid;
+      width: 26px;
+      height: 26px;
+      grid-template-rows: 7px 1fr;
+      border: 2px solid currentColor;
+      border-radius: 3px;
+      padding: 3px 4px;
+    }
+    .brand-mark::before { content: ""; border-bottom: 2px solid currentColor; }
+    .brand-mark::after { content: ""; width: 3px; height: 7px; margin-top: 3px; background: currentColor; }
+
+    .screen { padding: 18px 16px 28px; }
+
+    /* Common requested placement: EXP above title */
+    .hud {
+      margin: 0 -16px;
+      border-bottom: 1px solid #ebd9c6;
+      background: rgb(255 253 248 / 88%);
+      padding: 8px 16px 11px;
+    }
+    .hud-row, .chef, .hud-meta { display: flex; align-items: center; }
+    .hud-row, .hud-meta { justify-content: space-between; }
+    .chef { gap: 9px; }
+    .avatar {
+      display: grid;
+      width: 31px;
+      height: 31px;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--soft);
+      color: var(--rust);
+    }
+    .avatar svg { width: 19px; }
+    .chef-copy strong { display: block; font-size: 12px; }
+    .chef-copy small { display: block; margin-top: 1px; color: var(--muted); font-size: 9px; font-weight: 650; }
+    .exp {
+      border: 1px solid #e5b96e;
+      border-radius: 999px;
+      background: #fff3d4;
+      padding: 5px 10px;
+      color: #865216;
+      font-size: 10px;
+      font-weight: 900;
+    }
+    .bar { height: 5px; margin-top: 8px; overflow: hidden; border-radius: 99px; background: #ebe4d6; }
+    .bar::after { content: ""; display: block; width: 8%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--rust), #e3a143); }
+    .hud-meta { margin-top: 3px; color: #948b7e; font-size: 8px; font-weight: 700; }
+
+    .intro {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 10px;
+      min-height: 150px;
+      padding: 22px 0 20px;
+    }
+    .intro h2 { margin: 0; }
+    .energy {
+      display: inline-flex;
+      min-height: 38px;
+      align-items: center;
+      gap: 6px;
+      align-self: center;
+      border: 1px solid #d6c9b6;
+      border-radius: 999px;
+      background: #fff;
+      padding: 7px 11px;
+      color: #34465b;
+      font-size: 10px;
+      font-weight: 850;
+      white-space: nowrap;
+      box-shadow: 0 2px 0 rgb(52 70 91 / 5%);
+    }
+    .energy svg { width: 18px; height: 18px; color: var(--rust); }
+
+    /* A — calm editorial statement */
+    .option-a .title { font-size: clamp(25px, 2.15vw, 31px); font-weight: 900; line-height: 1.28; letter-spacing: -.045em; }
+    .option-a .title span { display: block; }
+    .option-a .title .quiet { color: #435466; font-weight: 740; }
+
+    /* B — next-meal focus */
+    .option-b .intro { align-items: end; }
+    .option-b .title { font-size: clamp(18px, 1.55vw, 22px); font-weight: 760; line-height: 1.45; letter-spacing: -.025em; }
+    .option-b .title span { display: block; }
+    .option-b .title em {
+      position: relative;
+      display: inline-block;
+      margin-top: 2px;
+      color: var(--ink);
+      font-style: normal;
+      font-size: clamp(31px, 2.6vw, 38px);
+      font-weight: 950;
+      line-height: 1.05;
+      letter-spacing: -.065em;
+    }
+    .option-b .title em::after {
+      content: "";
+      position: absolute;
+      right: -2px;
+      bottom: -5px;
+      left: 0;
+      height: 5px;
+      border-radius: 9px 3px 8px 2px;
+      background: #e0a044;
+      opacity: .65;
+      transform: rotate(-1deg);
+    }
+
+    /* C — kitchen note, grounded by ticket rule */
+    .option-c .title-wrap {
+      position: relative;
+      padding-left: 13px;
+    }
+    .option-c .title-wrap::before {
+      content: "";
+      position: absolute;
+      top: 3px;
+      bottom: 2px;
+      left: 0;
+      width: 3px;
+      border-radius: 4px;
+      background: var(--rust);
+    }
+    .option-c .kicker { display: block; margin-bottom: 5px; color: var(--rust); font-size: 9px; font-weight: 900; letter-spacing: .15em; }
+    .option-c .title { font-size: clamp(23px, 1.95vw, 29px); font-weight: 900; line-height: 1.22; letter-spacing: -.04em; }
+    .option-c .title span { display: block; }
+    .option-c .title .last { color: #435466; }
+
+    .ticket {
+      display: grid;
+      grid-template-columns: 58px minmax(0, 1fr);
+      min-height: 310px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: var(--paper);
+      box-shadow: 0 16px 36px rgb(154 68 45 / 10%);
+    }
+    .stub {
+      display: grid;
+      place-items: center;
+      border-right: 2px dashed #bba98d;
+      background: #34465b;
+      color: #f4ce8d;
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: .16em;
+      writing-mode: vertical-rl;
+    }
+    .ticket-body { padding: 16px 14px; }
+    .tabs { height: 29px; border-radius: 99px; background: #ebe4d6; padding: 3px; }
+    .tabs::before { content: "冰箱就能煮"; display: grid; width: 53%; height: 100%; place-items: center; border-radius: 99px; background: #fff; color: var(--rust); font-size: 9px; font-weight: 900; }
+    .chips { display: flex; gap: 5px; margin-top: 12px; }
+    .chip { border-radius: 99px; background: #fff2d7; padding: 4px 7px; color: #875a18; font-size: 8px; font-weight: 850; }
+    .ticket h3 { margin: 15px 0 6px; font-size: 21px; letter-spacing: -.04em; }
+    .ticket p { margin: 0; color: var(--muted); font-size: 10px; line-height: 1.6; }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 14px; }
+    .stats span { border: 1px solid #eee4d2; border-radius: 10px; background: #fbf7ee; padding: 9px 4px; color: #665f55; font-size: 8px; font-weight: 800; text-align: center; }
+    .cta { height: 39px; margin-top: 15px; border-radius: 99px; background: var(--rust); color: #fff; font-size: 11px; font-weight: 900; display: grid; place-items: center; }
+
+    @media (max-width: 980px) {
+      .options { grid-template-columns: 1fr; max-width: 430px; margin: 0 auto; gap: 28px; }
+      .phone { min-height: 0; }
+      .option-a .title { font-size: 29px; }
+      .option-b .title em { font-size: 36px; }
+      .option-c .title { font-size: 28px; }
+    }
+    @media (max-width: 390px) {
+      .board { padding: 24px 10px 36px; }
+      .screen { padding-right: 13px; padding-left: 13px; }
+      .hud { margin-right: -13px; margin-left: -13px; padding-right: 13px; padding-left: 13px; }
+      .intro { gap: 7px; }
+      .energy { padding-right: 9px; padding-left: 9px; font-size: 9px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="board">
+    <header class="board-head">
+      <small>TODAY HEADER STUDY</small>
+      <h1>「先別想一整週」三方案</h1>
+      <p>徽章經驗條已移到標題上方；低體力膠囊固定在標題右側。</p>
+    </header>
+
+    <section class="options" aria-label="三個標題設計方案">
+      <article class="option option-a">
+        <header class="option-label"><strong>A｜安定留白</strong><span>最穩定、最接近現況</span></header>
+        <div class="phone">
+          <div class="appbar"><span class="brand-mark" aria-hidden="true"></span>CooCoo 煮煮</div>
+          <div class="screen">
+            <div class="hud">
+              <div class="hud-row">
+                <div class="chef"><span class="avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 13.9A4 4 0 0 1 7.4 6 5 5 0 0 1 16.6 6 4 4 0 0 1 18 13.9V21H6Z"/><path d="M6 17h12"/><path d="M9 12h.01M15 12h.01"/></svg></span><span class="chef-copy"><strong>初火學徒</strong><small>距下一職階還有 100 EXP</small></span></div>
+                <span class="exp">0 EXP</span>
+              </div>
+              <div class="bar"></div><div class="hud-meta"><span>0</span><span>下一目標 100 EXP</span></div>
+            </div>
+            <div class="intro">
+              <h2 class="title"><span class="quiet">先別想一整週，</span><span>決定下一餐就好。</span></h2>
+              <span class="energy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 11.5h14l-1.1 7H6.1l-1.1-7Z"/><path d="M8 8.2h8M10 5.3h4"/><path d="M8.2 21h7.6"/><path d="M18.7 14.2c1.4-.2 2.3.3 2.3 1.5 0 1.3-1 2-2.6 2"/></svg>今天有點累</span>
+            </div>
+            <div class="ticket"><div class="stub">TODAY 0 / 3</div><div class="ticket-body"><div class="tabs"></div><div class="chips"><span class="chip">15 分鐘</span><span class="chip">庫存可做</span></div><h3>蔥蛋豆腐煎</h3><p>用手邊食材，先把下一餐安穩做好。</p><div class="stats"><span>單平底鍋</span><span>4 個步驟</span><span>2 人份</span></div><div class="cta">開始料理</div></div></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="option option-b">
+        <header class="option-label"><strong>B｜下一餐聚焦</strong><span>行動感最清楚</span></header>
+        <div class="phone">
+          <div class="appbar"><span class="brand-mark" aria-hidden="true"></span>CooCoo 煮煮</div>
+          <div class="screen">
+            <div class="hud">
+              <div class="hud-row">
+                <div class="chef"><span class="avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 13.9A4 4 0 0 1 7.4 6 5 5 0 0 1 16.6 6 4 4 0 0 1 18 13.9V21H6Z"/><path d="M6 17h12"/><path d="M9 12h.01M15 12h.01"/></svg></span><span class="chef-copy"><strong>初火學徒</strong><small>距下一職階還有 100 EXP</small></span></div>
+                <span class="exp">0 EXP</span>
+              </div>
+              <div class="bar"></div><div class="hud-meta"><span>0</span><span>下一目標 100 EXP</span></div>
+            </div>
+            <div class="intro">
+              <h2 class="title"><span>先別想一整週，</span><span>決定 <em>下一餐</em> 就好。</span></h2>
+              <span class="energy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 11.5h14l-1.1 7H6.1l-1.1-7Z"/><path d="M8 8.2h8M10 5.3h4"/><path d="M8.2 21h7.6"/><path d="M18.7 14.2c1.4-.2 2.3.3 2.3 1.5 0 1.3-1 2-2.6 2"/></svg>今天有點累</span>
+            </div>
+            <div class="ticket"><div class="stub">TODAY 0 / 3</div><div class="ticket-body"><div class="tabs"></div><div class="chips"><span class="chip">15 分鐘</span><span class="chip">庫存可做</span></div><h3>蔥蛋豆腐煎</h3><p>用手邊食材，先把下一餐安穩做好。</p><div class="stats"><span>單平底鍋</span><span>4 個步驟</span><span>2 人份</span></div><div class="cta">開始料理</div></div></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="option option-c">
+        <header class="option-label"><strong>C｜料理便箋</strong><span>最有人味、品牌感最強</span></header>
+        <div class="phone">
+          <div class="appbar"><span class="brand-mark" aria-hidden="true"></span>CooCoo 煮煮</div>
+          <div class="screen">
+            <div class="hud">
+              <div class="hud-row">
+                <div class="chef"><span class="avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 13.9A4 4 0 0 1 7.4 6 5 5 0 0 1 16.6 6 4 4 0 0 1 18 13.9V21H6Z"/><path d="M6 17h12"/><path d="M9 12h.01M15 12h.01"/></svg></span><span class="chef-copy"><strong>初火學徒</strong><small>距下一職階還有 100 EXP</small></span></div>
+                <span class="exp">0 EXP</span>
+              </div>
+              <div class="bar"></div><div class="hud-meta"><span>0</span><span>下一目標 100 EXP</span></div>
+            </div>
+            <div class="intro">
+              <div class="title-wrap"><span class="kicker">今天只做一個決定</span><h2 class="title"><span>先別想一整週，</span><span class="last">下一餐就好。</span></h2></div>
+              <span class="energy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 11.5h14l-1.1 7H6.1l-1.1-7Z"/><path d="M8 8.2h8M10 5.3h4"/><path d="M8.2 21h7.6"/><path d="M18.7 14.2c1.4-.2 2.3.3 2.3 1.5 0 1.3-1 2-2.6 2"/></svg>今天有點累</span>
+            </div>
+            <div class="ticket"><div class="stub">TODAY 0 / 3</div><div class="ticket-body"><div class="tabs"></div><div class="chips"><span class="chip">15 分鐘</span><span class="chip">庫存可做</span></div><h3>蔥蛋豆腐煎</h3><p>用手邊食材，先把下一餐安穩做好。</p><div class="stats"><span>單平底鍋</span><span>4 個步驟</span><span>2 人份</span></div><div class="cta">開始料理</div></div></div>
+          </div>
+        </div>
+      </article>
+    </section>
+  </main>
+</body>
+</html>

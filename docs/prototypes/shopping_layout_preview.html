@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>CooCoo 採買介面最新預覽</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <style>
+    :root {
+      --cream: #fdfaf3;
+      --paper: #ffffff;
+      --ink: #293c4e;
+      --muted: #817a6e;
+      --rust: #9a442d;
+      --rust-light: #f3e6ce;
+      --sage: #4f8067;
+      --sage-light: #f2f5ed;
+      --amber: #c59332;
+      --line: #ded3c2;
+    }
+  </style>
+</head>
+<body class="bg-[#fdfae7] text-[#293c4e] p-4 md:p-6 antialiased font-sans">
+  <div class="max-w-4xl mx-auto">
+
+    <!-- Status Header -->
+    <div class="bg-white rounded-2xl p-4 shadow-sm border border-[#ded3c2] mb-6 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <span class="w-8 h-8 rounded-full bg-[#f2f5ed] text-[#4f8067] grid place-items-center">
+          <span class="material-symbols-outlined text-base">check</span>
+        </span>
+        <div>
+          <h2 class="text-sm font-bold text-[#293c4e]">頂端 LOGO 與下方採買籃抽屜已全數還原</h2>
+          <p class="text-xs text-[#817a6e] m-0">頂端 CooCoo 煮煮主廚標誌、AI 工具在標題下方、下方輔助卡片、完整採買籃抽屜與導覽列</p>
+        </div>
+      </div>
+      <span class="bg-[#f3e6ce] text-[#9a442d] text-xs font-black px-3 py-1 rounded-full">最新狀態</span>
+    </div>
+
+    <!-- Phone Simulator Container -->
+    <div class="flex justify-center">
+      <div class="w-full max-w-[420px] bg-[#fdfae7] rounded-[36px] border-[8px] border-[#1e2832] shadow-2xl overflow-hidden flex flex-col min-h-[800px] relative">
+        
+        <!-- Screen Content -->
+        <div class="p-4 flex-1 overflow-y-auto pb-36">
+
+          <!-- Top Brand Header with Logo (Aligned to #fdfae7) -->
+          <header class="border-b border-[#ece9d6] bg-[#fdfae7] px-4 py-2.5 flex items-center justify-between -mx-4 -mt-4 mb-3 sticky top-0 z-30">
+            <div class="flex items-center gap-2">
+              <svg class="h-6 w-6 text-[#9a442d]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"></path>
+                <line x1="9" y1="12" x2="9.01" y2="12"></line>
+                <line x1="15" y1="12" x2="15.01" y2="12"></line>
+                <line x1="6" y1="17" x2="18" y2="17"></line>
+              </svg>
+              <h1 class="text-base font-extrabold text-[#9a442d] tracking-wide m-0">CooCoo 煮煮</h1>
+            </div>
+          </header>
+
+          <!-- 1. HUD Rank Progress (Aligned 100% with TodayPage) -->
+          <section class="border-b border-[#ebd9c6] bg-[color-mix(in_srgb,#fffdf8_95%,transparent)] -mx-4 px-4 py-2.5 mb-3" aria-label="主廚職階與 EXP">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-[9px] min-w-0">
+                <div class="w-[34px] h-[34px] rounded-full bg-[#9a442d] text-white flex items-center justify-center flex-shrink-0 shadow-xs">
+                  <span class="material-symbols-outlined text-[18px]">local_fire_department</span>
+                </div>
+                <div class="grid gap-[1px]">
+                  <strong class="text-[12px] font-black text-[#293c4e] leading-tight">見習主廚 · Rank 1</strong>
+                  <small class="text-[9.5px] font-bold text-[#716b60] leading-tight">下一枚 · 料理新手 2/3</small>
+                </div>
+              </div>
+              <button type="button" class="min-h-[30px] border border-[#ead6ae] rounded-[9px] bg-[#fdf3dc] px-[9px] py-[4px] text-[#b8862f] font-mono text-[11px] font-black cursor-pointer shadow-xs">
+                EXP 120
+              </button>
+            </div>
+            <div class="h-[6px] mt-2 overflow-hidden rounded-full bg-[#ebe4d6]" aria-hidden="true">
+              <span class="block h-full rounded-full bg-gradient-to-r from-[#d9a441] to-[#b8862f] w-2/5"></span>
+            </div>
+            <div class="flex items-center justify-between text-[9.5px] font-bold text-[#716b60] mt-1">
+              <span>職階進度</span>
+              <span>120 / 300</span>
+            </div>
+          </section>
+
+          <!-- 2. Header with Subtitle Preserved -->
+          <div class="flex items-center justify-between gap-3 mb-3.5 mt-1">
+            <div>
+              <p class="text-[10px] font-black text-[#9a442d] tracking-widest uppercase mb-0.5">GROCERY & MEALTASKS</p>
+              <h1 class="text-2xl font-black text-[#293c4e] tracking-tight m-0">採買清單</h1>
+              <p class="text-xs text-[#817a6e] mt-0.5 mb-0">先買任務真正缺少的；一般食材順路再帶。</p>
+            </div>
+            <button class="inline-flex items-center gap-1 border border-[#d9cbb2] rounded-full bg-white px-3 py-1.5 text-xs font-bold text-[#9a442d] shadow-sm flex-shrink-0">
+              <span class="material-symbols-outlined text-sm">add</span>
+              <span>新增品項</span>
+            </button>
+          </div>
+
+          <!-- 3. REQUIREMENT 1: AI Entry Grid placed directly below header -->
+          <div class="mb-4">
+            <div class="grid grid-cols-3 gap-2">
+              <button class="bg-white border border-[#ded3c2] rounded-2xl p-3 text-left flex flex-col items-start shadow-sm hover:border-[#9a442d] transition-all">
+                <span class="w-8 h-8 rounded-full bg-[#f3e6ce] text-[#9a442d] grid place-items-center mb-2">
+                  <span class="material-symbols-outlined text-sm">auto_awesome</span>
+                </span>
+                <strong class="text-xs font-bold text-[#34465b]">AI 陪我逛</strong>
+                <small class="text-[9px] text-[#817a6e] mt-1 leading-tight">帶任務缺口一起分析</small>
+              </button>
+              <button class="bg-white border border-[#ded3c2] rounded-2xl p-3 text-left flex flex-col items-start shadow-sm hover:border-[#9a442d] transition-all">
+                <span class="w-8 h-8 rounded-full bg-[#f3e6ce] text-[#9a442d] grid place-items-center mb-2">
+                  <span class="material-symbols-outlined text-sm">document_scanner</span>
+                </span>
+                <strong class="text-xs font-bold text-[#34465b]">掃描發票</strong>
+                <small class="text-[9px] text-[#817a6e] mt-1 leading-tight">逐項確認後直接入庫</small>
+              </button>
+              <button class="bg-white border border-[#ded3c2] rounded-2xl p-3 text-left flex flex-col items-start shadow-sm hover:border-[#9a442d] transition-all">
+                <span class="w-8 h-8 rounded-full bg-[#f3e6ce] text-[#9a442d] grid place-items-center mb-2">
+                  <span class="material-symbols-outlined text-sm">mic</span>
+                </span>
+                <strong class="text-xs font-bold text-[#34465b]">用說的新增</strong>
+                <small class="text-[9px] text-[#817a6e] mt-1 leading-tight">也可以直接打字</small>
+              </button>
+            </div>
+          </div>
+
+          <!-- 4. Shopping List Section (Directly Accessible) -->
+          <div class="border border-[#ddd1bd] rounded-2xl bg-white overflow-hidden shadow-sm mb-4">
+            <header class="flex items-center justify-between bg-[#f3eddf] px-3.5 py-2.5 border-b border-[#e7ded0]">
+              <div>
+                <p class="text-[9px] font-black text-[#9a442d] tracking-widest uppercase m-0">本週一般採買</p>
+                <h3 class="text-sm font-bold text-[#34465b] m-0">3 項 · 已買到 1 項</h3>
+              </div>
+              <button class="text-xs font-bold text-[#9a442d]">全選</button>
+            </header>
+            <div class="divide-y divide-[#f2ecdf]">
+              <div class="flex items-center gap-3 p-3 bg-[#f4f7ef]">
+                <div class="w-6 h-6 rounded-full bg-[#4f8067] border-2 border-[#4f8067] text-white grid place-items-center flex-shrink-0">
+                  <span class="material-symbols-outlined text-xs">check</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <span class="text-[9px] font-bold text-[#9a442d]">蔬果</span>
+                  <div class="text-xs font-bold text-[#34465b] truncate">有機牛番茄</div>
+                  <div class="text-[10px] text-[#857e72]">3 顆 · 待入庫</div>
+                </div>
+                <span class="text-xs font-bold text-[#61584a]">NT$ 65</span>
+              </div>
+              <div class="flex items-center gap-3 p-3">
+                <div class="w-6 h-6 rounded-full border-2 border-[#cbbda6] bg-white grid place-items-center flex-shrink-0"></div>
+                <div class="flex-1 min-w-0">
+                  <span class="text-[9px] font-bold text-[#9a442d]">蛋白質</span>
+                  <div class="text-xs font-bold text-[#34465b] truncate">冷藏去骨雞腿肉</div>
+                  <div class="text-[10px] text-[#857e72]">1 盒 · 待採買</div>
+                </div>
+                <span class="text-xs font-bold text-[#61584a]">NT$ 135</span>
+              </div>
+              <div class="flex items-center gap-3 p-3">
+                <div class="w-6 h-6 rounded-full border-2 border-[#cbbda6] bg-white grid place-items-center flex-shrink-0"></div>
+                <div class="flex-1 min-w-0">
+                  <span class="text-[9px] font-bold text-[#9a442d]">常備品</span>
+                  <div class="text-xs font-bold text-[#34465b] truncate">純釀造醬油</div>
+                  <div class="text-[10px] text-[#857e72]">1 瓶 · 待採買</div>
+                </div>
+                <span class="text-xs font-bold text-[#61584a]">NT$ 110</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Divider indicating bottom-moved modules -->
+          <div class="relative text-center my-4">
+            <span class="bg-[#fdfae7] px-2 text-[10px] font-bold text-[#8a7f70] relative z-10">▼ 輔助資訊（已移至下方）</span>
+            <div class="absolute inset-x-0 top-1/2 h-[1px] bg-[#d8cdbd] -z-0"></div>
+          </div>
+
+          <!-- 5. REQUIREMENT 3: Coverage moved to bottom -->
+          <div class="flex items-center gap-3 border border-[#dfd2be] rounded-2xl bg-white p-3.5 mb-3 shadow-sm">
+            <div class="w-12 h-12 rounded-full bg-[#eee4d6] flex items-center justify-center flex-shrink-0 relative">
+              <div class="text-center leading-none">
+                <span class="text-xs font-black text-[#293c4e]">0%</span>
+                <span class="text-[7px] block text-[#817a6e]">補齊度</span>
+              </div>
+            </div>
+            <div>
+              <h3 class="text-xs font-bold text-[#34465b] m-0">先選一道料理開始</h3>
+              <p class="text-[10px] text-[#787267] m-0 mt-0.5 leading-snug">確認料理後，必要食材會自動成為任務補齊目標；一般採買不影響此數字。</p>
+            </div>
+          </div>
+
+          <!-- 6. REQUIREMENT 3: Ledger moved to bottom -->
+          <div class="border border-[#dfd2be] rounded-2xl bg-white p-3 mb-3 shadow-sm">
+            <div class="flex items-center justify-between mb-2">
+              <div>
+                <strong class="text-xs text-[#34465b] block">這次採買算到哪裡？</strong>
+                <small class="text-[9px] text-[#8c8273]">等待確認料理任務</small>
+              </div>
+              <button class="text-[10px] font-bold text-[#9a442d]">查看依據</button>
+            </div>
+            <div class="flex items-center gap-1.5 bg-[#f8f4eb] rounded-xl p-2 text-[10px]">
+              <div class="flex-1">
+                <span class="text-[#8c8273] block text-[9px]">這一餐 · 待確認</span>
+                <b class="text-[#293c4e] block text-[11px]">尚未選擇</b>
+                <i class="text-[#6a6459] not-italic block text-[9px]">到今日選擇料理</i>
+              </div>
+              <span class="material-symbols-outlined text-xs text-[#b5a894]">arrow_forward</span>
+              <div class="flex-1">
+                <span class="text-[#8c8273] block text-[9px]">下一餐 · 待確認</span>
+                <b class="text-[#293c4e] block text-[11px]">待確認</b>
+                <i class="text-[#6a6459] not-italic block text-[9px]">不納入計算</i>
+              </div>
+            </div>
+          </div>
+
+          <!-- 7. Rescue Section -->
+          <div class="border border-[#dfd2be] rounded-2xl bg-white p-3 shadow-sm">
+            <div class="flex items-center justify-between">
+              <div>
+                <span class="text-[8px] font-bold text-[#9a442d] tracking-widest uppercase block">惜食救援軌</span>
+                <h4 class="text-xs font-bold text-[#34465b] m-0">順路補貨，讓即期食材接上下一餐</h4>
+                <small class="text-[9px] text-[#8c8273]">只顯示冰箱中三天內到期的食材</small>
+              </div>
+              <button class="text-[10px] font-bold text-[#9a442d]">去看看</button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Sticky Bottom Shopping Basket Drawer -->
+        <div class="absolute bottom-[58px] inset-x-0 bg-[#fffdf4] border-t border-x border-[#e6d8c2] rounded-t-[20px] px-3.5 py-2.5 flex items-center justify-between shadow-lg z-20">
+          <div class="flex items-center gap-2.5">
+            <div class="relative w-11 h-11 rounded-[14px] bg-[#293c4e] text-[#f4ce8d] flex items-center justify-center flex-shrink-0">
+              <span class="material-symbols-outlined text-xl">shopping_basket</span>
+              <i class="absolute -top-1.5 -right-1.5 w-[18px] h-[18px] rounded-full bg-[#9a442d] border-2 border-[#fffdf4] text-white text-[9px] font-black flex items-center justify-center not-italic">0</i>
+            </div>
+            <div>
+              <small class="text-[9px] text-[#8c8273] block leading-tight">已勾選 0 項 · 任務 0/0 · 預估</small>
+              <strong class="text-base font-black text-[#293c4e] block font-mono leading-tight mt-0.5">NT$ 0</strong>
+            </div>
+          </div>
+          <button class="bg-[#c8c5b8] text-white px-5 py-2.5 rounded-full text-xs font-bold shadow-sm cursor-not-allowed">
+            完成這次採買
+          </button>
+        </div>
+
+        <!-- Bottom Navigation Bar -->
+        <nav class="absolute bottom-0 inset-x-0 h-[58px] bg-white border-t border-[#ded3c2] flex items-center justify-around z-10 text-[10px] text-[#8c8273]">
+          <div class="flex flex-col items-center gap-0.5">
+            <span class="material-symbols-outlined text-lg">today</span>
+            <span>今日</span>
+          </div>
+          <div class="flex flex-col items-center gap-0.5 text-[#9a442d] font-bold">
+            <span class="material-symbols-outlined text-lg fill">shopping_bag</span>
+            <span>採買</span>
+          </div>
+          <div class="flex flex-col items-center gap-0.5">
+            <span class="material-symbols-outlined text-lg">kitchen</span>
+            <span>冰箱</span>
+          </div>
+          <div class="flex flex-col items-center gap-0.5">
+            <span class="material-symbols-outlined text-lg">menu_book</span>
+            <span>食譜</span>
+          </div>
+          <div class="flex flex-col items-center gap-0.5">
+            <span class="material-symbols-outlined text-lg">person</span>
+            <span>我的</span>
+          </div>
+        </nav>
+
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>
