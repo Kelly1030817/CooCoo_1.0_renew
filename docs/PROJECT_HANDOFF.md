@@ -38,8 +38,8 @@
 - `weekly_rhythm` 不再出現在今日任務，週進度只留在獨立進度列。
 - 「今日第 N 餐」只計算今天的有效餐次，並以 `Asia/Taipei` 處理跨午夜事件。
 - 「我的」新增本週逐餐明細，將 `mealPlan.meals` 與 `cookingOutcomes` 合併顯示，不修改既有餐單資料。
-- 五步 Onboarding 保留主廚心情、卡片、計數器、標籤、登入同步、親簽與蓋章動態；第 4 步不再建立或設定冰箱。熟練度、料理預設指引與週主指標不再詢問，完成時分別固定為 `beginner`、`detailed`、`cooking_sessions`，避免舊草稿保留不可見選項。
-- Onboarding 仍使用既有 `/onboarding`、`/inventory`、收據 OCR、Supabase Auth 與 `save_onboarding_profile`，過敏／禁食維持後端硬限制。
+- Onboarding 收斂為三步：時間／餐期／口味／硬限制；人數／廚具／卡點；登入同步／主廚通行證。熟練度、目前每週料理次數、料理預設指引、週主指標、可見週目標與提醒卡片不再詢問。
+- Onboarding 使用既有 `/onboarding`、Supabase Auth 與 `save_onboarding_profile`；不呼叫 `/inventory`，過敏／禁食維持後端硬限制。
 - 蓋章後才送出完成資料，完成後進入「今日」。
 
 ## 後端與資料庫邊界
@@ -55,8 +55,8 @@
 ## 驗證
 
 - 2026-09-13 冰箱容量移除整合最新 `main` 後執行 `bun run verify`：159 tests、Web build、API typecheck 與 PGlite migration 全數通過；包含容量設定移除的 API、狀態契約與資料表回歸檢查。
-- 本機瀏覽器完成五步 Onboarding 後驗證 `/shopping` 空任務、一般採買、固定採買籃與入庫確認表單；版面依 430px 手機內容寬度收斂，360px 以下另有單欄範圍卡。
-- Playwright 以 390 × 844 viewport 實際走過五步 Onboarding、空箱、蓋章、進入 Today、Today 三任務票券與「我的」週餐次區塊。
+- 2026-09-14 三步 Onboarding 本機 `bun run verify`：173 tests、Web production build、API typecheck 全數通過；390 × 844 實走三步並確認無水平溢位。
+- 先前五步版本曾實走 `/shopping`、Today 與「我的」；三步改版部署後仍須重新驗證正式帳號完成寫入與進入 Today。
 - viewport 模擬不等於 iPhone Safari／Android Chrome 真機驗收。
 - MealTask 有缺口的正式帳號票根互動、Google OAuth、正式帳號 OCR、OpenRouter、Push、離線重播與同步衝突仍須在正式服務以測試帳號驗證。
 

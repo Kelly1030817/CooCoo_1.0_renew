@@ -9,11 +9,14 @@ import { suggestWeeklyGoalTarget } from "./weekly-goal";
 import { completeOnboardingProfile, isOnboardingStepValid } from "./validation";
 
 describe("Chef Consultation Components", () => {
-  test("step 4 only verifies sign-in and completing onboarding never changes inventory", () => {
-    expect(isOnboardingStepValid(4, { ...emptyOnboardingDraft, currentStep: 4 })).toBe(true);
+  test("three-step onboarding preserves inventory and fixes removed settings", () => {
+    expect(isOnboardingStepValid(1, emptyOnboardingDraft)).toBe(true);
+    expect(isOnboardingStepValid(1, { ...emptyOnboardingDraft, plannedMealSlots: [] })).toBe(false);
+    expect(isOnboardingStepValid(2, { ...emptyOnboardingDraft, habitBarriers: [] })).toBe(false);
+    expect(isOnboardingStepValid(3, { ...emptyOnboardingDraft, currentStep: 3 })).toBe(true);
     expect(completeOnboardingProfile({
       ...emptyOnboardingDraft,
-      currentStep: 5,
+      currentStep: 3,
       cookingExperience: "advanced",
       guidanceMode: "compact",
       primaryGoalMetric: "self_cooked_servings",
@@ -21,10 +24,12 @@ describe("Chef Consultation Components", () => {
       hasNoInventory: true,
     }, "2026-09-14T00:00:00.000Z")).toMatchObject({
       status: "complete",
-      currentStep: 5,
+      currentStep: 3,
       cookingExperience: "beginner",
       guidanceMode: "detailed",
       primaryGoalMetric: "cooking_sessions",
+      currentWeeklyCookingFrequency: 0,
+      weeklyGoalTarget: 1,
       inventoryReviewed: false,
       hasNoInventory: false,
       completedAt: "2026-09-14T00:00:00.000Z",
@@ -115,13 +120,13 @@ describe("Chef Consultation Components", () => {
 
     saveOnboardingDraft({
       ...emptyOnboardingDraft,
-      currentStep: 5,
+      currentStep: 3,
       status: "draft",
     });
     expect(hasSavedOnboardingDraft()).toBe(true);
 
     const stored = JSON.parse(mockStorage.getItem(ONBOARDING_DRAFT_STORAGE_KEY) || "{}");
-    expect(stored.currentStep).toBe(5);
+    expect(stored.currentStep).toBe(3);
     expect(stored.status).toBe("draft");
   });
 });
