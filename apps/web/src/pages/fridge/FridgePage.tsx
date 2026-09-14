@@ -140,10 +140,10 @@ export function FridgePage() {
         <section className="prepared-section space-y-2.5" aria-labelledby="prepared-heading">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-[9px] font-black uppercase tracking-[0.16em] text-[#8a5b32]">已煮好 · 獨立餐份</p>
+              <p className="text-[9px] font-black uppercase tracking-[0.16em] text-[#9a442d]">已煮好 · 獨立餐份</p>
               <h3 id="prepared-heading" className="text-xs font-black text-stone-900">熟食庫存</h3>
             </div>
-            <span className="text-[10px] font-bold text-[#8a5b32]">{preparedServings.length} 份</span>
+            <span className="text-[10px] font-bold text-[#9a442d]">{preparedServings.length} 份</span>
           </div>
           {preparedGroups.map((group) => (
             <article key={group.sessionId} className="prepared-card">
