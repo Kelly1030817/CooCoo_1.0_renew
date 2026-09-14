@@ -4,14 +4,13 @@ import type { MealTask, MealTaskRestockResult, RecipeAdjustmentPreview, RestockP
 import { useAppState, stateQueryKey } from "@/entities/app-state/model";
 import { UiContext } from "@/app/ui-context";
 import { api, json } from "@/shared/api/client";
-import { AddShoppingModal, InvoiceModal, ShoppingAssistantModal, VoiceInputModal } from "@/features/shopping/ShoppingModals";
+import { AddShoppingModal, InvoiceModal, ShoppingChefChatModal, VoiceInputModal } from "@/features/shopping/ShoppingModals";
 import { RecipePackageModal } from "@/features/cooking/RecipeModal";
 import { IngredientIcon } from "@/shared/ui/IngredientIcon";
 import { useAppRoute } from "@/app/routing/useAppRoute";
 import { CHEF_RANKS } from "@coocoo/core";
 import "./ShoppingPage.css";
 
-const categoryLabel:Record<ShoppingItem["category"],string>={produce:"蔬果",protein:"蛋白質",pantry:"常備品",other:"其他"};
 type DraftLine={item:ShoppingItem;actualQuantity:number;actualUnit:string;actualPrice:number;storageLocation:"cold"|"frozen"|"pantry";expiresOn:string};
 const defaultLocation=(item:ShoppingItem):DraftLine["storageLocation"]=>item.category==="pantry"?"pantry":"cold";
 const slotLabel={breakfast:"早餐",lunch:"午餐",dinner:"晚餐"} as const;
@@ -28,7 +27,6 @@ export function ShoppingPage(){
   useEffect(()=>{void api('/health').catch(()=>undefined)},[]);
   const refresh=()=>query.invalidateQueries({queryKey:stateQueryKey});
   const save=async(item:ShoppingItem,patch:Partial<ShoppingItem>)=>{await api(`/shopping-items/${item.id}`,json("PATCH",{...item,...patch}));await refresh()};
-  const remove=async(id:string)=>{await api(`/shopping-items/${id}`,{method:"DELETE"});await refresh()};
   const tasks=useMemo(()=>(data?.mealTasks??[]).filter((task)=>["needs_shopping","ready","needs_replan"].includes(task.status)),[data?.mealTasks]);
   const activeTask=useMemo(()=>tasks.find(task=>task.id===selectedTaskId)??tasks.find((task)=>task.status==="needs_shopping")??tasks[0],[tasks,selectedTaskId]);
   const byShortage=useMemo(()=>{const map=new Map<string,ShoppingItem>();(data?.shoppingItems??[]).forEach((item)=>{if(item.shortageId&&!map.has(item.shortageId))map.set(item.shortageId,item)});return map},[data?.shoppingItems]);
@@ -38,8 +36,6 @@ export function ShoppingPage(){
   const requirements=activeTask?.recipe.ingredients.filter(i=>!i.isPantryStaple)??[];
   const coverage=activeTask&&requirements.length?Math.round(100*requirements.reduce((total,item)=>{const sh=remaining.find(sh=>sh.ingredientKey===item.ingredientKey);const required=item.quantity*activeTask.plannedTotalServings/activeTask.recipe.servings;return total+(sh?Math.max(0,1-sh.quantity/Math.max(required,0.001)):1)},0)/requirements.length):activeTask?100:0;
   const rescued=data.inventory.filter(item=>item.qty>0&&item.expiresOn&&item.daysLeft<=3);
-  const generalItems=data.shoppingItems.filter((item)=>!item.shortageId);
-  const generalChecked=generalItems.filter((item)=>item.checked);
   const taskDone=activeTask?.shortages.filter((item)=>item.resolution==="bought"||item.resolution==="replaced").length??0;
   const taskTotal=activeTask?.shortages.length??0;
   const growth=data.growth;
@@ -50,6 +46,12 @@ export function ShoppingPage(){
   const rankProgress=nextRank?Math.min(100,Math.round(((growth.totalExp-rank.threshold)/rankSpan)*100)):100;
   const goToday=()=>{ui.close();navigate("today")};
   const act=(action:()=>Promise<unknown>)=>{void action().catch(()=>ui.toast("操作未完成，請再試一次","error"))};
+  const applyReplacement=async(shortageId:string,replacementName:string,qty:number,unit:string)=>{
+    if(!activeTask)return;
+    const payload={mealTaskId:activeTask.id,shortageRevision:activeTask.revision,shortageId,mode:"replace" as const,name:replacementName,quantity:qty,unit};
+    await api<MealTask>(`/meal-tasks/${activeTask.id}/shortages/${shortageId}`,json("PATCH",payload));
+    await refresh();ui.toast(`已採納主廚建議！食材已替換為「${replacementName}」`);
+  };
   const startTask=(task:MealTask)=>{const ingredientIds=data.inventory.filter((item)=>task.recipe.ingredients.some((ingredient)=>ingredient.ingredientKey===item.ingredientKey||ingredient.name===item.name)).map((item)=>item.id);ui.open(<RecipePackageModal recipePackage={task.recipe} ingredientIds={ingredientIds} mealTaskId={task.id} onClose={ui.close} onComplete={()=>{void refresh();}}/>)};
   const bridge=(task:MealTask,shortageId:string)=>async()=>{
     const shortage=task.shortages.find((item)=>item.id===shortageId);if(!shortage)return;
@@ -123,15 +125,24 @@ export function ShoppingPage(){
           </button>
         </section>
 
-        <section className="shopping-entry-grid"><button onClick={()=>ui.open(<ShoppingAssistantModal onClose={ui.close}/>)}><span className="material-symbols-outlined">auto_awesome</span><strong>AI 陪我逛</strong><small>帶任務缺口一起分析</small></button><button onClick={()=>ui.open(<InvoiceModal onClose={ui.close}/>)}><span className="material-symbols-outlined">document_scanner</span><strong>掃描發票</strong><small>逐項確認後直接入庫</small></button><button onClick={()=>ui.open(<VoiceInputModal onClose={ui.close}/>)}><span className="material-symbols-outlined">mic</span><strong>用說的新增</strong><small>也可以直接打字</small></button></section>
+        <section className="shopping-entry-grid">
+          <button onClick={()=>ui.open(
+            <ShoppingChefChatModal
+              onClose={ui.close}
+              activeTask={activeTask}
+              rescuedItems={rescued}
+              onApplyReplacement={applyReplacement}
+            />
+          )}>
+            <span className="material-symbols-outlined">auto_awesome</span>
+            <strong>AI 陪我逛</strong>
+            <small>每日 30 則 · 雙向對話</small>
+          </button>
+          <button onClick={()=>ui.open(<InvoiceModal onClose={ui.close}/>)}><span className="material-symbols-outlined">document_scanner</span><strong>掃描發票</strong><small>逐項確認後直接入庫</small></button>
+          <button onClick={()=>ui.open(<VoiceInputModal onClose={ui.close}/>)}><span className="material-symbols-outlined">mic</span><strong>用說的新增</strong><small>也可以直接打字</small></button>
+        </section>
 
         {tasks.length>1&&<label className="task-selector">切換採買任務<select value={activeTask?.id} onChange={e=>setSelectedTaskId(e.target.value)}>{tasks.map(t=><option key={t.id} value={t.id}>{t.recipe.title} · {shortDate(t.currentMeal.date)} {slotLabel[t.currentMeal.slot]}</option>)}</select></label>}
-
-        <section className={`task-strip ${activeTask?.status??"empty"}`}>
-          <span className="task-node material-symbols-outlined" aria-hidden="true">{activeTask?.status==="ready"?"check_circle":activeTask?.status==="needs_replan"?"error":"shopping_cart"}</span>
-          <div><strong>{activeTask?.recipe.title??"尚未建立料理任務"}</strong><small>{activeTask?`${slotLabel[activeTask.currentMeal.slot]} · ${activeTask.plannedTotalServings} 份 · ${activeTask.nextMeal.strategy==="cook_extra"?"順便多煮":activeTask.nextMeal.strategy==="plan_separately"?"下餐另規劃":"跳過下一餐"}`:"先到今日確認菜色與份數"}</small></div>
-          <button onClick={goToday}>{activeTask?"回 Today":"去選料理"}</button>
-        </section>
 
         {activeTask&&<section className={`meal-task-ticket ${activeTask.status==="ready"?"sealed":""}`}>
           <div className="ticket-stub"><span className="material-symbols-outlined" aria-hidden="true">{activeTask.status==="ready"?"verified":"local_fire_department"}</span><div><small>任務進度</small><strong>{taskDone}/{taskTotal}</strong><span>{Array.from({length:Math.min(taskTotal,5)},(_,index)=><i key={index} className={index<taskDone?"on":""}/>)}</span></div><b>MEALTASK</b></div>
@@ -141,17 +152,15 @@ export function ShoppingPage(){
             <p className="ticket-note">{activeTask.status==="ready"?"食材已備妥。完成採買不發 EXP；料理完成後才會記錄成就。":`${remaining.length} 項仍缺。全部確認入庫後才會轉為 ready；部分買到會保留缺口。`}</p></div>
         </section>}
 
-        <section className="shopping-list"><header><div><p className="eyebrow">本週一般採買</p><h3>{generalItems.length} 項 · 已買到 {generalChecked.length} 項</h3><small>一般採買不會影響料理任務是否 ready</small></div><button onClick={async()=>{const shouldCheck=!generalItems.every(item=>item.checked);await Promise.all(generalItems.map(item=>save(item,{checked:shouldCheck})))}}>{generalItems.length&&generalItems.every(item=>item.checked)?"取消全選":"全選"}</button></header>{generalItems.length===0?<div className="empty-shopping"><span className="material-symbols-outlined">add_shopping_cart</span><strong>本週清單是空的</strong><p>從「今日」選一道料理，或手動新增日常食材。</p><button onClick={()=>ui.open(<AddShoppingModal onClose={ui.close}/>)}>手動新增</button></div>:<div className="shopping-cards">{generalItems.map(item=><article key={item.id} className={item.checked?"checked":""}><button className="shopping-check" onClick={event=>{if(!item.checked&&!window.matchMedia("(prefers-reduced-motion: reduce)").matches){const rect=event.currentTarget.getBoundingClientRect();const target=document.querySelector(".shopping-basket");if(target){const end=target.getBoundingClientRect();const dot=document.createElement("span");dot.className="shopping-flyer";dot.style.left=`${rect.left}px`;dot.style.top=`${rect.top}px`;document.body.append(dot);dot.animate([{transform:"translate(0,0)",opacity:1},{transform:`translate(${(end.left-rect.left)/2}px,${(end.top-rect.top)/2-60}px)`,opacity:1},{transform:`translate(${end.left-rect.left+28}px,${end.top-rect.top+20}px) scale(.3)`,opacity:0}],{duration:500}).onfinish=()=>dot.remove();}}act(()=>save(item,{checked:!item.checked}))}} aria-label={`${item.checked?'取消':'勾選'} ${item.name}`}><span className="material-symbols-outlined">check</span></button><div><span>本週一般 · {categoryLabel[item.category]}</span><strong>{item.name}</strong><small>{item.qty} {item.unit} · {item.status}</small></div><b>NT$ {item.estCost}</b><div className="shopping-card-actions"><button onClick={()=>ui.open(<AddShoppingModal item={item} onClose={ui.close}/>)}>編輯</button><button onClick={()=>act(()=>remove(item.id))}>刪除</button></div></article>)}</div>}</section>
+        <section className="shopping-coverage">
+          <div className="coverage-ring" style={{background:`conic-gradient(${activeTask?.status==="ready"?"#4f8067":"#c59332"} ${coverage}%,#ebe4d6 0)`}}><strong>{coverage}<small>%</small><span>任務補齊度</span></strong></div>
+          <div><h2>{activeTask?(activeTask.status==='needs_replan'?'這道餐點待重新選擇':remaining.length?`還差 ${remaining.length} 樣就能煮`:'食材已備妥'):"先選一道料理開始"}</h2><p>{activeTask?`只計算已確認的 ${activeTask.plannedTotalServings} 份需求；採買入庫後自動蓋章。`:"確認料理後，必要食材會自動成為任務票上的章格。"}</p>{activeTask&&<div className="need-list">{remaining.slice(0,3).map(item=><span key={item.id}><IngredientIcon name={item.name} size={13}/>{item.name}</span>)}</div>}</div>
+        </section>
+
+        <section className="shopping-rescue"><header><div><p className="eyebrow">惜食救援軌</p><h3>順路補貨，讓即期食材接上下一餐</h3><small>只顯示冰箱中三天內需要優先照顧的食材</small></div><button onClick={()=>navigate("fridge")}>去看看</button></header>{rescued.length?<div>{rescued.map(item=><article key={item.id}><span className="rescue-icon"><IngredientIcon name={item.name} size={25}/></span><div><strong>{item.name}</strong><small>冰箱剩 {item.qty}{item.unit} · {item.daysLeft===0?"今天確認狀態":`還有 ${item.daysLeft} 天`}</small></div><button onClick={()=>navigate("fridge")}>查看冰箱</button></article>)}</div>:<p className="rescue-empty">冰箱目前沒有三天內到期的食材。</p>}</section>
       </div>
 
       <div className="shopping-support-column">
-        <section className="shopping-rescue"><header><div><p className="eyebrow">惜食救援軌</p><h3>順路補貨，讓即期食材接上下一餐</h3><small>只顯示冰箱中三天內需要優先照顧的食材</small></div><button onClick={()=>navigate("fridge")}>去看看</button></header>{rescued.length?<div>{rescued.map(item=><article key={item.id}><span className="rescue-icon"><IngredientIcon name={item.name} size={25}/></span><div><strong>{item.name}</strong><small>冰箱剩 {item.qty}{item.unit} · {item.daysLeft===0?"今天確認狀態":`還有 ${item.daysLeft} 天`}</small></div><button onClick={()=>navigate("fridge")}>查看冰箱</button></article>)}</div>:<p className="rescue-empty">冰箱目前沒有三天內到期的食材。</p>}</section>
-
-        <section className="shopping-coverage">
-          <div className="coverage-ring" style={{background:`conic-gradient(${activeTask?.status==="ready"?"#4f8067":"#c59332"} ${coverage}%,#ebe4d6 0)`}}><strong>{coverage}<small>%</small><span>任務補齊度</span></strong></div>
-          <div><h2>{activeTask?(activeTask.status==='needs_replan'?'這道餐點待重新選擇':remaining.length?`還差 ${remaining.length} 樣就能煮`:'食材已備妥'):"先選一道料理開始"}</h2><p>{activeTask?`只計算已確認的 ${activeTask.plannedTotalServings} 份需求；本週一般採買不影響這個數字。`:"確認料理後，必要食材會自動成為任務票上的章格。"}</p>{activeTask&&<div className="need-list">{remaining.slice(0,3).map(item=><span key={item.id}><IngredientIcon name={item.name} size={13}/>{item.name}</span>)}</div>}</div>
-        </section>
-
         <section className="shopping-ledger">
           <header><div><strong>這次採買算到哪裡？</strong><small>{activeTask?`${activeTask.nextMeal.strategy==="cook_extra"?"順便多煮":activeTask.nextMeal.strategy==="plan_separately"?"下餐另規劃":"跳過下一餐"} · 合計 ${activeTask.plannedTotalServings} 份`:"等待確認料理任務"}</small></div><button onClick={goToday}>查看依據</button></header>
           <div className="scope-flow"><div className="scope-card"><span>這一餐 · {activeTask?"已確認":"待確認"}</span><b>{activeTask?`${shortDate(activeTask.currentMeal.date)} ${slotLabel[activeTask.currentMeal.slot]}`:"尚未選擇"}</b><i>{activeTask?`${activeTask.recipe.title} ${activeTask.currentMeal.servings} 份`:"到今日選擇料理"}</i></div><span className="scope-arrow material-symbols-outlined" aria-hidden="true">arrow_forward</span><div className="scope-card"><span>下一餐 · {activeTask?.nextMeal.strategy==="skip"?"已跳過":activeTask?"已確認":"待確認"}</span><b>{activeTask?.nextMeal.strategy!=="skip"?`${shortDate(activeTask?.nextMeal.date)} ${activeTask?slotLabel[activeTask.nextMeal.slot]:""}`:"跳過下一餐"}</b><i>{activeTask?.nextMeal.strategy==="cook_extra"?`同一道菜留 ${activeTask.nextMeal.servings} 份`:activeTask?.nextMeal.strategy==="plan_separately"?"只保留餐期，不加食材":"不納入計算"}</i></div></div>
