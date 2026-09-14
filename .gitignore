@@ -48,3 +48,4 @@ package-lock.json
 **/*.bun
 /coocoo-webapp/
 /marketing-site/
+.playwright-cli/

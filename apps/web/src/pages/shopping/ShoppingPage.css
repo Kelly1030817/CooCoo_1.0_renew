@@ -523,7 +523,7 @@
   grid-template-columns: 92px minmax(0, 1fr);
   gap: 13px;
   align-items: center;
-  margin-bottom: 11px;
+  margin: 12px 0 11px;
   border: 1px solid var(--shopping-line);
   border-radius: 18px;
   background: var(--shopping-card);
