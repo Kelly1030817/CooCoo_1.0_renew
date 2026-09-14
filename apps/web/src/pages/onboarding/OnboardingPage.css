@@ -225,7 +225,7 @@
   font-family: 'Cedarville Cursive', cursive;
 }
 
-/* CooCoo 1.0 five-step onboarding keeps the production card language. */
+/* CooCoo 1.0 onboarding keeps the production card language. */
 .onboarding-topbar {
   display: flex;
   align-items: flex-start;
@@ -486,7 +486,7 @@
 }
 
 /* ============================================================
-   五步 Onboarding：方案 A 融合語彙（主廚心情、開場卡）
+   三步 Onboarding：方案 A 融合語彙（主廚心情、開場卡）
    ============================================================ */
 .onboarding-card > .step-head {
   display: flex;
@@ -557,7 +557,7 @@
 }
 .onboarding-card .chef-open p { margin: 0; font-size: 11.5px; line-height: 1.66; color: #716b60; }
 
-/* Approved chef-consultation five-step layout */
+/* Approved chef-consultation layout */
 .onboarding-shell {
   width: min(100%, 430px);
   min-height: 100vh;

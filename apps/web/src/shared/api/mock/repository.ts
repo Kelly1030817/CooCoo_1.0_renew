@@ -14,7 +14,7 @@ const storage = () =>
 function completedOnboardingProfile(value: unknown): OnboardingProfile | null {
   if (!value || typeof value !== "object") return null;
   const profile = value as Partial<OnboardingProfile>;
-  if (profile.status !== "complete" || profile.currentStep !== 5 || !profile.weeklyGoalTarget) return null;
+  if (profile.status !== "complete" || profile.currentStep == null || profile.currentStep < 3 || !profile.weeklyGoalTarget) return null;
   return profile as OnboardingProfile;
 }
 
