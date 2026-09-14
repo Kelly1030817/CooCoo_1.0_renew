@@ -402,6 +402,21 @@
   color: var(--shopping-ink);
 }
 
+.shopping-responsive-layout,
+.shopping-primary-column,
+.shopping-support-column {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 12px;
+}
+
+.shopping-mobile .shopping-primary-column > *,
+.shopping-mobile .shopping-support-column > * {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
 .shopping-mobile button:focus-visible,
 .shopping-mobile select:focus-visible,
 .shopping-mobile input:focus-visible {
@@ -708,6 +723,10 @@
 }
 
 @media (max-width: 370px) {
+  .shopping-mobile .shopping-entry-grid { gap: 6px; }
+  .shopping-mobile .shopping-entry-grid button { min-height: 116px; padding: 10px 8px; }
+  .shopping-mobile .shopping-entry-grid strong { font-size: 11.5px; }
+  .shopping-mobile .shopping-entry-grid small { font-size: 8.5px; }
   .shopping-mobile .shopping-coverage { grid-template-columns: 76px minmax(0, 1fr); gap: 10px; padding: 11px; }
   .shopping-mobile .coverage-ring { width: 76px; height: 76px; }
   .shopping-mobile .coverage-ring strong { width: 61px; height: 61px; font-size: 18px; }
@@ -717,64 +736,90 @@
   .shopping-mobile .shopping-basket > button { padding-inline: 11px; }
 }
 
-/* Keep the approved ticket language while letting the whole page use wider screens. */
-@media (min-width: 700px) {
+/* Tablet & Mid-Width Viewports (680px - 959px) */
+@media (min-width: 680px) {
   .shopping-mobile {
-    display: grid;
-    width: 100%;
+    width: min(100%, 1080px);
     max-width: 1080px;
-    grid-template-columns: minmax(0, 1.08fr) minmax(280px, 0.92fr);
-    gap: 16px;
-    padding-inline: 0;
-  }
-
-  .shopping-mobile .shopping-hud,
-  .shopping-mobile .shopping-heading,
-  .shopping-mobile .task-strip,
-  .shopping-mobile .meal-task-ticket {
-    grid-column: 1 / -1;
+    padding: 0 20px 140px;
   }
 
   .shopping-mobile .shopping-hud {
-    margin: 0 0 2px;
+    margin: 0 0 16px;
     border: 1px solid #ebd9c6;
     border-radius: 16px;
+    padding: 12px 20px;
   }
 
-  .shopping-mobile .task-strip,
-  .shopping-mobile .shopping-coverage,
-  .shopping-mobile .shopping-ledger,
-  .shopping-mobile .meal-task-ticket,
-  .shopping-mobile .shopping-entry-grid,
-  .shopping-mobile .shopping-list,
-  .shopping-mobile .shopping-rescue {
-    margin: 0;
+  .shopping-responsive-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.26fr) minmax(280px, 0.84fr);
+    align-items: start;
+    gap: 18px;
+  }
+
+  .shopping-primary-column,
+  .shopping-support-column {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .shopping-mobile .shopping-entry-grid button {
+    min-height: 124px;
+    padding: 14px;
   }
 
   .shopping-mobile .shopping-basket {
     width: min(calc(100% - 40px), 1080px);
+    padding: 10px 20px;
+    border-radius: 20px 20px 0 0;
   }
 }
 
-@media (min-width: 1024px) {
+/* Desktop Viewports (>= 960px) */
+@media (min-width: 960px) {
   .shopping-mobile {
-    grid-template-columns: minmax(0, 1.18fr) minmax(330px, 0.82fr);
-    gap: 18px;
+    padding: 0 24px 144px;
   }
 
-  .shopping-mobile .meal-task-ticket {
-    grid-column: 1;
+  .shopping-mobile .shopping-hud {
+    margin: 0 0 20px;
+    padding: 14px 24px;
+    border-radius: 18px;
   }
 
-  .shopping-mobile .shopping-entry-grid {
-    grid-column: 2;
+  .shopping-responsive-layout {
+    grid-template-columns: minmax(480px, 1.35fr) minmax(320px, 0.75fr);
+    gap: 24px;
   }
 
-  .shopping-mobile .shopping-list {
-    grid-column: 1;
+  .shopping-primary-column,
+  .shopping-support-column {
+    gap: 20px;
   }
 
-  .shopping-mobile .shopping-rescue {
-    grid-column: 2;
+  @media (min-height: 650px) {
+    .shopping-support-column {
+      position: sticky;
+      top: 76px;
+    }
+  }
+
+  .shopping-mobile .shopping-entry-grid button {
+    min-height: 128px;
+    padding: 16px;
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+  }
+
+  .shopping-mobile .shopping-entry-grid button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(41, 60, 78, 0.08);
+    border-color: #bcaaa4;
+  }
+
+  .shopping-mobile .shopping-basket {
+    width: min(calc(100% - 48px), 1080px);
+    padding: 12px 28px;
   }
 }
