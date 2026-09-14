@@ -1,18 +1,19 @@
-import { CatalogAdminModal } from "@/features/recipes/CatalogAdminModal";
+import { CatalogAdminModal } from "../../features/recipes/CatalogAdminModal";
 import { useContext, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useAppState, stateQueryKey } from "@/entities/app-state/model";
-import { api } from "@/shared/api/client";
-import { UiContext } from "@/app/ui-context";
-import { Modal, ModalHeader } from "@/shared/ui/Modal";
-import { supabase, startGoogleAuth } from "@/shared/auth/supabase";
-import { readOnboardingDraft } from "@/shared/model/onboarding-draft";
+import { useAppState, stateQueryKey } from "../../entities/app-state/model";
+import { api } from "../../shared/api/client";
+import { UiContext } from "../../app/ui-context";
+import { Modal, ModalHeader } from "../../shared/ui/Modal";
+import { BrandLogo } from "../../shared/ui/BrandLogo";
+import { supabase, startGoogleAuth } from "../../shared/auth/supabase";
+import { readOnboardingDraft } from "../../shared/model/onboarding-draft";
 
-import type { AppRoute } from "@/app/routing/routes";
+import type { AppRoute } from "../../app/routing/routes";
 
 export function Header({
   enabled = true,
-  onNavigate: _onNavigate,
+  onNavigate,
 }: {
   enabled?: boolean;
   onNavigate?: (route: AppRoute) => void;
@@ -36,14 +37,7 @@ export function Header({
   return (
     <header className="fixed inset-x-0 top-0 z-50 border-b border-surface-container-high bg-surface shadow-sm">
       <div className="mx-auto flex min-h-[60px] w-full max-w-[1200px] items-center justify-between px-md py-sm sm:px-lg">
-        <div className="flex min-w-0 items-center gap-sm sm:gap-md">
-          <span className="material-symbols-outlined text-3xl text-primary">
-            kitchen
-          </span>
-          <h1 className="whitespace-nowrap text-base font-extrabold tracking-wide text-primary sm:text-xl">
-            CooCoo 煮煮
-          </h1>
-        </div>
+        <BrandLogo onNavigate={onNavigate ? () => onNavigate("today") : undefined} />
         <div className="flex shrink-0 items-center gap-xs sm:gap-sm">
           {import.meta.env.DEV && (
             <button
