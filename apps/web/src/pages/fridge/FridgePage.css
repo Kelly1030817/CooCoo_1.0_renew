@@ -19,6 +19,12 @@
   --urgent-title: #9a442d;
   --urgent-btn-bg: #9a442d;
   --urgent-btn-text: #ffffff;
+  --prepared-chamber-bg: #fff1ee;
+  --prepared-chamber-border: #f4cfc6;
+  --prepared-chamber-title: #9a442d;
+  --prepared-chamber-divider: #f0cec5;
+  --prepared-chamber-btn-border: #9a442d;
+  --prepared-chamber-btn-text: #9a442d;
   --card-border: #eee8dd;
   --text-main: #1f1c1a;
   --text-muted: #78716c;
@@ -154,8 +160,8 @@
 }
 
 .fridge-page .prepared-section {
-  background: linear-gradient(135deg, #fff9ed, #f4ead7);
-  border: 1.5px solid #e6d1ad;
+  background-color: var(--prepared-chamber-bg);
+  border: 1.5px solid var(--prepared-chamber-border);
   border-radius: 1.25rem;
   padding: 1rem;
 }
@@ -165,16 +171,16 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  border-top: 1px dashed #d8bd91;
+  border-top: 1px dashed var(--prepared-chamber-divider);
   padding-top: 0.65rem;
 }
 
 .fridge-page .prepared-eat-btn {
   flex: 0 0 auto;
-  border: 1px solid #ba8a52;
+  border: 1px solid var(--prepared-chamber-btn-border);
   border-radius: 0.65rem;
   padding: 0.35rem 0.65rem;
-  color: #74491f;
+  color: var(--prepared-chamber-btn-text);
   font-size: 0.68rem;
   font-weight: 900;
 }
@@ -299,6 +305,8 @@
 
   .fridge-page .fridge-heading,
   .fridge-page .urgent-section,
+  .fridge-page .prepared-section,
+  .fridge-page .pantry-chamber,
   .fridge-page .rescue-center {
     grid-column: 1 / -1;
   }
