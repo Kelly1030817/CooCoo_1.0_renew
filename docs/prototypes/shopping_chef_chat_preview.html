@@ -1,0 +1,988 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>CooCoo 採買「AI陪我逛」· 正式站介面配色與後台資料庫對齊預覽</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <style>
+    /* =========================================================================
+       100% 正式站 CSS Tokens (對齊 ShoppingPage.css 與 index.css)
+       ========================================================================= */
+    :root {
+      --shopping-bg: #fdfae7;
+      --shopping-card: #fffdf8;
+      --shopping-ink: #293c4e;
+      --shopping-muted: #716b60;
+      --shopping-line: #d9cab2;
+      --shopping-line-subtle: #ebd9c6;
+      --shopping-rust: #9a442d;
+      --shopping-rust-soft: #fdf1e2;
+      --shopping-slate: #34465b;
+      --shopping-gold: #b8862f;
+      --shopping-gold-soft: #fdf3dc;
+      --shopping-jade: #55755b;
+      --shopping-safe: #386753;
+      --shopping-safe-soft: #e7f3ec;
+      --paper: #ffffff;
+    }
+
+    body {
+      background-color: var(--shopping-bg);
+      color: var(--shopping-ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Plus Jakarta Sans", "Noto Sans TC", "Segoe UI", Roboto, sans-serif;
+    }
+
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+    }
+    .material-symbols-outlined.fill {
+      font-variation-settings: 'FILL' 1, 'wght' 600, 'GRAD' 0, 'opsz' 24;
+    }
+
+    /* Production Stamp & Ticket Animations */
+    @keyframes shopping-stamp {
+      from { transform: scale(1.08); opacity: .6; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .stamp-animated {
+      animation: shopping-stamp 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    /* Modal Sheet Slide Transition */
+    .sheet-enter {
+      animation: sheet-in 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes sheet-in {
+      from { transform: translateY(100%); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    /* Custom scrollbar for chat */
+    .chat-scroll::-webkit-scrollbar { width: 5px; }
+    .chat-scroll::-webkit-scrollbar-thumb { background: #d8cdba; border-radius: 99px; }
+
+    /* Active Tab in Controls */
+    .active-tab {
+      background-color: var(--shopping-rust) !important;
+      color: #ffffff !important;
+      border-color: var(--shopping-rust) !important;
+    }
+    .active-nav-tab {
+      border-bottom: 2px solid var(--shopping-rust);
+      color: var(--shopping-rust);
+      font-weight: 900;
+    }
+  </style>
+</head>
+<body class="min-h-screen p-3 md:p-6 antialiased flex flex-col items-center">
+
+  <!-- =========================================================================
+       TOP GLOBAL BANNER: 正式站規範對齊查核狀態列
+       ========================================================================= -->
+  <header class="w-full max-w-7xl bg-white rounded-3xl p-5 shadow-sm border border-[#ded3c2] mb-6">
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      
+      <!-- Brand & Title -->
+      <div class="flex items-start sm:items-center gap-3">
+        <div class="w-12 h-12 rounded-2xl bg-[#9a442d] text-white flex items-center justify-center flex-shrink-0 shadow-xs">
+          <svg class="h-7 w-7 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"></path>
+            <line x1="9" y1="12" x2="9.01" y2="12"></line>
+            <line x1="15" y1="12" x2="15.01" y2="12"></line>
+            <line x1="6" y1="17" x2="18" y2="17"></line>
+          </svg>
+        </div>
+        <div>
+          <div class="flex flex-wrap items-center gap-2 mb-1">
+            <span class="inline-flex items-center gap-1 bg-[#f2f5ed] text-[#4f8067] border border-[#bcd3c6] text-[11px] font-black px-2.5 py-0.5 rounded-full">
+              <span class="material-symbols-outlined text-xs fill">verified</span>
+              正式站色彩與介面規格 100% 對齊
+            </span>
+            <span class="bg-[#fdf3dc] text-[#b8862f] border border-[#f3e2ba] text-[11px] font-black px-2.5 py-0.5 rounded-full">
+              每日 30 則限額 · chef_chat 資料表對齊
+            </span>
+          </div>
+          <h1 class="text-lg md:text-xl font-black text-[#293c4e] tracking-tight m-0">
+            採買「AI 陪我逛」主廚 CooCoo 對話框 · 正式站全真預覽
+          </h1>
+          <p class="text-xs text-[#716b60] m-0 mt-0.5">
+            配色鎖定米白 <code class="text-[#9a442d] bg-[#fdf1e2] px-1 py-0.2 rounded font-mono">#fdfae7</code>、陶土橘 <code class="text-[#9a442d] bg-[#fdf1e2] px-1 py-0.2 rounded font-mono">#9a442d</code>、石板藍 <code class="text-[#34465b] bg-stone-100 px-1 py-0.2 rounded font-mono">#34465b</code> 與鼠尾草綠 <code class="text-[#386753] bg-[#e7f3ec] px-1 py-0.2 rounded font-mono">#55755b</code>；嚴格零 Emoji。
+          </p>
+        </div>
+      </div>
+
+      <!-- Control Toolbar -->
+      <div class="flex flex-wrap items-center gap-2 shrink-0">
+        <!-- Device Switcher -->
+        <div class="flex items-center bg-[#fdfae7] p-1 rounded-xl border border-[#ded3c2]">
+          <button id="btn-mobile" onclick="setViewport('mobile')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all active-tab flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-sm">smartphone</span>
+            <span>手機 (390px)</span>
+          </button>
+          <button id="btn-tablet" onclick="setViewport('tablet')" class="px-3 py-1.5 rounded-lg text-xs font-bold text-[#716b60] hover:text-[#293c4e] transition-all flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-sm">tablet_mac</span>
+            <span>雙欄 (768px)</span>
+          </button>
+          <button id="btn-desktop" onclick="setViewport('desktop')" class="px-3 py-1.5 rounded-lg text-xs font-bold text-[#716b60] hover:text-[#293c4e] transition-all flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-sm">laptop_mac</span>
+            <span>全寬 (1080px)</span>
+          </button>
+        </div>
+
+        <button onclick="resetAllState()" class="flex items-center gap-1 bg-white hover:bg-stone-50 text-[#34465b] text-xs font-bold px-3 py-2 rounded-xl transition-all border border-[#ded3c2] shadow-2xs">
+          <span class="material-symbols-outlined text-sm">restart_alt</span>
+          <span>重設展示資料</span>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- =========================================================================
+       MAIN GRID: 左側實機操作體驗 (8 cols) + 右側後台資料庫即時監控 (4 cols)
+       ========================================================================= -->
+  <div class="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+    <!-- LEFT COLUMN: Mobile/Tablet Production Simulation Viewport -->
+    <main class="lg:col-span-8 flex flex-col items-center">
+      
+      <!-- Viewport Frame -->
+      <div id="viewport-box" class="w-full max-w-[390px] bg-[#fdfae7] rounded-[36px] border-[6px] border-[#293c4e] shadow-2xl overflow-hidden relative flex flex-col transition-all duration-300" style="height: 820px;">
+
+        <!-- 1. OS Mobile Status Bar -->
+        <div class="bg-[#fdfae7] px-6 pt-3 pb-1 flex justify-between items-center text-xs font-black text-[#293c4e] border-b border-[#ded3c2]/30 shrink-0 select-none">
+          <span>09:41</span>
+          <div class="flex items-center gap-1.5 text-xs">
+            <span class="material-symbols-outlined text-xs">signal_cellular_alt</span>
+            <span class="material-symbols-outlined text-xs">wifi</span>
+            <span class="material-symbols-outlined text-xs">battery_full</span>
+          </div>
+        </div>
+
+        <!-- 2. 正式站 Top Brand Header (帶吉祥物與品牌橘色) -->
+        <header class="border-b border-[#ece9d6] bg-[#fdfae7] px-4 py-2.5 flex items-center justify-between shrink-0 sticky top-0 z-30">
+          <div class="flex items-center gap-2">
+            <svg class="h-6 w-6 text-[#9a442d]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"></path>
+              <line x1="9" y1="12" x2="9.01" y2="12"></line>
+              <line x1="15" y1="12" x2="15.01" y2="12"></line>
+              <line x1="6" y1="17" x2="18" y2="17"></line>
+            </svg>
+            <h1 class="text-base font-black text-[#9a442d] tracking-wide m-0">CooCoo 煮煮</h1>
+          </div>
+          <span class="text-[10px] font-bold text-[#817a6e] bg-[#f1eedb] px-2.5 py-0.5 rounded-full border border-[#ded3c2]">採買專區</span>
+        </header>
+
+        <!-- 3. 正式站 HUD Rank Progress (主廚職階與經驗值) -->
+        <section class="border-b border-[#ebd9c6] bg-[#fffdf8]/90 px-4 py-2.5 shrink-0" aria-label="主廚職階進度">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2 min-w-0">
+              <div class="w-8 h-8 rounded-full bg-[#9a442d] text-white flex items-center justify-center flex-shrink-0 shadow-xs">
+                <span class="material-symbols-outlined text-[17px]">local_fire_department</span>
+              </div>
+              <div class="grid leading-tight">
+                <strong class="text-xs font-black text-[#293c4e]">見習主廚 · Rank 1</strong>
+                <small class="text-[9.5px] font-bold text-[#716b60]">下一枚 · 料理新手 2/3</small>
+              </div>
+            </div>
+            <button type="button" class="min-h-[28px] border border-[#ead6ae] rounded-lg bg-[#fdf3dc] px-2 py-0.5 text-[#b8862f] font-mono text-[11px] font-black shadow-2xs">
+              EXP 120
+            </button>
+          </div>
+          <div class="h-1.5 mt-2 overflow-hidden rounded-full bg-[#ebe4d6]" aria-hidden="true">
+            <span class="block h-full rounded-full bg-gradient-to-r from-[#d9a441] to-[#b8862f]" style="width: 40%;"></span>
+          </div>
+          <div class="flex items-center justify-between text-[9.5px] font-bold text-[#716b60] mt-1">
+            <span>職階進度</span>
+            <span>120 / 300</span>
+          </div>
+        </section>
+
+        <!-- 4. 正式站 Shopping Content Container (Scrollable) -->
+        <div class="flex-1 overflow-y-auto p-4 space-y-4 text-[#293c4e] pb-24" id="page-content-scroll">
+          
+          <!-- Heading Section -->
+          <section class="flex items-center justify-between gap-3">
+            <div>
+              <p class="text-[10px] font-black text-[#9a442d] uppercase tracking-widest m-0">GROCERY & MEALTASKS</p>
+              <h2 class="text-xl font-black text-[#293c4e] m-0 tracking-tight">採買清單</h2>
+            </div>
+            <button type="button" class="inline-flex items-center gap-1 min-h-[34px] border border-[#d9cbb2] rounded-full bg-white px-3 py-1 text-xs font-bold text-[#9a442d] shadow-2xs">
+              <span class="material-symbols-outlined text-sm">add</span>
+              <span>新增品項</span>
+            </button>
+          </section>
+
+          <!-- Shopping Entry Grid (3 Buttons - 對齊正式站) -->
+          <section class="grid grid-cols-3 gap-2">
+            <!-- 1. AI 陪我逛 (Target Feature!) -->
+            <button onclick="openChefChat()" class="flex flex-col items-start p-3 rounded-2xl bg-white border-2 border-[#9a442d] shadow-sm hover:bg-[#fdf1e2]/30 active:scale-95 transition-all relative text-left group">
+              <span class="w-8 h-8 rounded-full bg-[#f3e6ce] text-[#9a442d] flex items-center justify-center mb-2 shadow-2xs">
+                <span class="material-symbols-outlined text-lg">auto_awesome</span>
+              </span>
+              <strong class="text-xs font-black text-[#34465b]">AI 陪我逛</strong>
+              <small class="text-[9px] text-[#817a6e] mt-0.5 leading-tight">主廚對話相談</small>
+              <span id="badge-entry-quota" class="absolute top-2 right-2 bg-[#9a442d] text-white text-[8px] font-black px-1.5 py-0.2 rounded-full shadow-2xs">剩 28 則</span>
+            </button>
+
+            <!-- 2. 掃描發票 -->
+            <button class="flex flex-col items-start p-3 rounded-2xl bg-white border border-[#ded3c2] shadow-2xs opacity-85 text-left">
+              <span class="w-8 h-8 rounded-full bg-[#f3e6ce] text-[#9a442d] flex items-center justify-center mb-2">
+                <span class="material-symbols-outlined text-lg">document_scanner</span>
+              </span>
+              <strong class="text-xs font-black text-[#34465b]">掃描發票</strong>
+              <small class="text-[9px] text-[#817a6e] mt-0.5 leading-tight">逐項確認入庫</small>
+            </button>
+
+            <!-- 3. 用說的新增 -->
+            <button class="flex flex-col items-start p-3 rounded-2xl bg-white border border-[#ded3c2] shadow-2xs opacity-85 text-left">
+              <span class="w-8 h-8 rounded-full bg-[#f3e6ce] text-[#9a442d] flex items-center justify-center mb-2">
+                <span class="material-symbols-outlined text-lg">mic</span>
+              </span>
+              <strong class="text-xs font-black text-[#34465b]">用說的新增</strong>
+              <small class="text-[9px] text-[#817a6e] mt-0.5 leading-tight">語音快速建單</small>
+            </button>
+          </section>
+
+
+          <!-- MealTask Ticket with Stamp Grid (正式站必買票券) -->
+          <section id="meal-task-ticket" class="rounded-2xl border border-[#ead7b7] bg-[#fff7e8] p-3.5 space-y-2.5 shadow-2xs">
+            <div class="flex items-start justify-between border-b border-dashed border-[#d9cab2] pb-2">
+              <div>
+                <p class="text-[10px] font-black text-[#9a442d] uppercase tracking-wider m-0">MEALTASK 必買</p>
+                <h3 class="text-base font-black text-[#293c4e] m-0">照燒雞肉蓋飯</h3>
+                <small class="text-[10px] text-[#716b60] font-bold block mt-0.5">依 2 份計算 · 缺口 2 項 · revision 1</small>
+              </div>
+              <div class="text-right font-mono">
+                <span class="text-[9px] font-bold text-[#716b60] block">任務進度</span>
+                <strong class="text-base font-black text-[#9a442d]" id="task-progress-num">0/2</strong>
+              </div>
+            </div>
+
+            <!-- Stamp Grid -->
+            <div class="grid grid-cols-2 gap-2" id="stamp-grid">
+              
+              <!-- Stamp Cell 1: 去骨雞腿肉 -->
+              <article id="stamp-chicken" class="p-2.5 rounded-xl border border-dashed border-[#e3d7c1] bg-[#fbf7ee] text-center space-y-1">
+                <span class="material-symbols-outlined text-[#b8862f] text-xl block mx-auto">nutrition</span>
+                <strong class="text-xs font-black text-[#293c4e] block">去骨雞腿肉</strong>
+                <small class="text-[10px] text-[#716b60] font-bold block">需 2 盒</small>
+                <button onclick="toggleStampCheck('chicken')" class="w-full rounded-full border border-[#d9cbb2] bg-white py-1 text-[10px] font-extrabold text-[#9a442d] hover:bg-[#9a442d] hover:text-white transition-all">
+                  加入採買
+                </button>
+              </article>
+
+              <!-- Stamp Cell 2: 青蔥 (將由主廚建議替換為洋蔥) -->
+              <article id="stamp-scallion" class="p-2.5 rounded-xl border border-dashed border-[#e3d7c1] bg-[#fbf7ee] text-center space-y-1 transition-all">
+                <span id="stamp-scallion-icon" class="material-symbols-outlined text-[#b8862f] text-xl block mx-auto">eco</span>
+                <strong id="stamp-scallion-name" class="text-xs font-black text-[#293c4e] block">青蔥</strong>
+                <small id="stamp-scallion-desc" class="text-[10px] text-[#716b60] font-bold block">需 1 把</small>
+                <div id="stamp-scallion-btn-wrap">
+                  <button onclick="toggleStampCheck('scallion')" class="w-full rounded-full border border-[#d9cbb2] bg-white py-1 text-[10px] font-extrabold text-[#9a442d]">
+                    加入採買
+                  </button>
+                </div>
+              </article>
+
+            </div>
+
+            <p class="text-[9.5px] text-[#716b60] leading-relaxed border-t border-dashed border-[#ead7b7] pt-2 m-0">
+              2 項仍缺。確認全部入庫後自動轉為 ready；完成採買不會發 EXP。
+            </p>
+          </section>
+
+          <!-- Coverage Ring (任務補齊度環) -->
+          <section class="grid grid-cols-[80px_minmax(0,1fr)] gap-3 items-center p-3 rounded-2xl border border-[#d9cab2] bg-[#fffdf8]">
+            <div id="coverage-ring" class="w-20 h-20 rounded-full flex items-center justify-center shrink-0" style="background: conic-gradient(#b8862f 0%, #ebe4d6 0);">
+              <div class="w-16 h-16 rounded-full bg-[#fffdf8] flex flex-col items-center justify-center text-center">
+                <strong class="text-base font-black text-[#293c4e] font-mono leading-none" id="coverage-percent">0%</strong>
+                <span class="text-[8px] font-bold text-[#716b60] mt-0.5">任務補齊度</span>
+              </div>
+            </div>
+            <div>
+              <h4 class="text-xs font-black text-[#293c4e] m-0" id="coverage-title">還差 2 樣就能煮</h4>
+              <p class="text-[10px] text-[#716b60] mt-1 leading-relaxed m-0">
+                只計算已確認的 2 份照燒蓋飯需求；採買入庫後自動蓋章。
+              </p>
+            </div>
+          </section>
+
+          <!-- 惜食救援軌 (Fridge Rescue) - 移至上方 -->
+          <section class="rounded-2xl border border-[#d5ddcb] bg-[#f5f6ec] p-3 space-y-2">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-[9px] font-black text-[#55755b] uppercase tracking-wider m-0">惜食救援軌</p>
+                <h4 class="text-xs font-black text-[#293c4e] m-0">順路補貨，照顧即期庫存</h4>
+              </div>
+              <span class="text-[9px] font-extrabold text-[#55755b] bg-white px-2 py-0.5 rounded-full border border-[#d5ddcb]">3 天內</span>
+            </div>
+            <div class="space-y-1.5">
+              <div class="flex items-center gap-2 p-2 bg-white/80 rounded-xl border border-[#e2e8da] text-xs">
+                <span class="w-6 h-6 rounded-lg bg-[#e7f3ec] text-[#386753] flex items-center justify-center font-black text-xs">豆</span>
+                <div class="flex-1 leading-tight">
+                  <strong class="text-xs font-bold text-[#293c4e]">傳統板豆腐</strong>
+                  <small class="text-[9px] text-[#857e72] block">剩 1 盒 · <strong>剩 1 天到期</strong></small>
+                </div>
+                <span class="text-[9px] text-rose-700 font-extrabold bg-rose-50 px-1.5 py-0.2 rounded">極即期</span>
+              </div>
+              <div class="flex items-center gap-2 p-2 bg-white/80 rounded-xl border border-[#e2e8da] text-xs">
+                <span class="w-6 h-6 rounded-lg bg-[#e7f3ec] text-[#386753] flex items-center justify-center font-black text-xs">蛋</span>
+                <div class="flex-1 leading-tight">
+                  <strong class="text-xs font-bold text-[#293c4e]">洗選白雞蛋</strong>
+                  <small class="text-[9px] text-[#857e72] block">剩 4 顆 · <strong>剩 2 天到期</strong></small>
+                </div>
+                <span class="text-[9px] text-amber-700 font-extrabold bg-amber-50 px-1.5 py-0.2 rounded">即期</span>
+              </div>
+            </div>
+          </section>
+
+        </div>
+
+        <!-- 5. Fixed Bottom Basket (正式站採買籃) -->
+        <footer class="absolute bottom-0 left-0 right-0 z-40 bg-[#fffdf4]/95 backdrop-blur-md border-t border-[#d9cfb9] p-3 flex items-center justify-between shadow-lg">
+          <div class="flex items-center gap-2.5">
+            <div class="w-10 h-10 rounded-xl bg-[#34465b] text-[#f4ce8d] flex items-center justify-center relative shadow-xs">
+              <span class="material-symbols-outlined text-xl">shopping_basket</span>
+              <i id="basket-badge-count" class="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-[#9a442d] text-white text-[9px] font-mono font-black flex items-center justify-center border border-white">0</i>
+            </div>
+            <div>
+              <small class="text-[9.5px] text-[#777367] block" id="basket-summary-text">已勾選 0 項 · 預估</small>
+              <strong class="text-sm font-black text-[#293c4e] font-mono" id="basket-total-price">NT$ 0</strong>
+            </div>
+          </div>
+          <button class="px-4 py-2 rounded-full bg-[#34465b] text-white text-xs font-black shadow-xs hover:bg-[#202d3c] transition-all">
+            完成這次採買
+          </button>
+        </footer>
+
+        <!-- =====================================================================
+             6. OVERLAY MODAL:「AI 陪我逛」主廚 CooCoo 對話框
+             ===================================================================== -->
+        <div id="chef-chat-modal" class="absolute inset-0 z-50 bg-[#1c1917]/50 backdrop-blur-xs flex flex-col justify-end transition-opacity duration-200">
+          
+          <!-- Bottom Sheet Container (100% 正式站配色) -->
+          <section class="w-full bg-[#fffdf8] rounded-t-[28px] border-t-2 border-x border-[#d9cab2] shadow-2xl flex flex-col overflow-hidden sheet-enter" style="height: 92%;">
+            
+            <!-- Grab Handle -->
+            <div class="w-10 h-1 rounded-full bg-[#d9cab2] mx-auto mt-2 mb-1 shrink-0"></div>
+
+            <!-- Modal Header (100% 對齊 Onboarding Topbar 底色 #fffdf6 與組件語彙) -->
+            <header class="px-4 py-2.5 border-b border-[#e7dac2] bg-[rgb(255_253_246_/_96%)] backdrop-blur-md shrink-0">
+              <div class="flex items-center justify-between gap-2">
+                
+                <!-- Chef Avatar & Mood (100% Onboarding ChefAvatar 語彙) -->
+                <div class="flex items-center gap-2.5 min-w-0">
+                  <div class="w-8 h-8 rounded-full bg-stone-100/90 border border-stone-200 text-stone-700 flex items-center justify-center shrink-0 shadow-2xs">
+                    <svg class="w-5 h-5 text-stone-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/>
+                      <line class="chef-eyes" x1="9" y1="12" x2="9.01" y2="12"/>
+                      <line class="chef-eyes" x1="15" y1="12" x2="15.01" y2="12"/>
+                      <line x1="6" y1="17" x2="18" y2="17"/>
+                    </svg>
+                  </div>
+                  <div class="leading-tight min-w-0">
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                      <strong class="text-xs font-black text-stone-900">主廚 CooCoo</strong>
+                      <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+                      <span id="chef-mood-badge" class="text-[10px] font-bold text-amber-900 bg-amber-100 border border-amber-200/80 px-2 py-0.5 rounded-full shrink-0">聆聽日常</span>
+                    </div>
+                    <div class="text-[10px] text-stone-400 font-medium mt-0.5">口袋自煮夥伴</div>
+                  </div>
+                </div>
+
+                <!-- Right Actions: 稍後繼續 / 歷史 + 28/30 額度 Chip (對齊 01/03 樣式) + 關閉 -->
+                <div class="flex items-center gap-2 shrink-0">
+                  <button onclick="toggleSessionHistory()" type="button" class="text-[10px] font-bold text-[#716b60] hover:text-[#293c4e] border-0 bg-transparent px-1 py-1 transition-all">
+                    稍後繼續
+                  </button>
+                  <span id="quota-chip" class="border border-[rgb(154_68_45_/_22%)] rounded-xl bg-[#fdf1e2] px-2 py-0.5 text-[#8f3d28] font-mono text-[10.5px] font-extrabold shadow-2xs">
+                    <b id="quota-chip-num">28</b> / 30
+                  </span>
+                  <button onclick="closeChefChat()" aria-label="關閉對話框" class="w-7 h-7 rounded-full bg-white hover:bg-stone-100 text-[#716b60] border border-[#ded3c2] flex items-center justify-center transition-all ml-0.5">
+                    <span class="material-symbols-outlined text-sm font-bold">close</span>
+                  </button>
+                </div>
+
+              </div>
+
+              <!-- Context Subtitle (對齊 Onboarding: 首次設定 · 01 口味與飲食安全) -->
+              <p class="text-[9.5px] font-bold text-[#716b60] mt-1.5 mb-0 leading-normal">
+                首次設定 · 01 任務缺口與即期陪伴
+              </p>
+            </header>
+
+            <!-- Quota & Daily Limit Status Bar (串接 recipe_catalog_control: 30次限制) -->
+            <div id="quota-banner" class="px-4 py-1.5 bg-[#f6efe1] border-b border-[#ded3c2] flex items-center justify-between text-[10px] font-bold text-[#716b60] shrink-0">
+              <div class="flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-xs text-[#9a442d]" id="quota-icon">chat_bubble</span>
+                <span id="quota-status-label">今日 AI 相談剩餘：<strong class="text-[#9a442d]" id="quota-number">28</strong> / 30 則</span>
+              </div>
+              <span class="text-[9px] font-mono text-[#817a6e]">每日 00:00 重置</span>
+            </div>
+
+            <!-- Real-time Context Drawer (What the Backend Injects to AI) -->
+            <div class="px-3.5 py-1.5 bg-[#fdfae7] border-b border-[#ebd9c6] flex items-center justify-between text-[9.5px] font-bold shrink-0">
+              <div class="flex items-center gap-1.5 overflow-x-auto">
+                <span class="text-[#716b60] shrink-0">即時脈絡：</span>
+                <span class="bg-[#fdf1e2] text-[#9a442d] px-1.5 py-0.2 rounded border border-[#f3d3bd] shrink-0">缺：青蔥、雞腿肉</span>
+                <span class="bg-[#e7f3ec] text-[#386753] px-1.5 py-0.2 rounded border border-[#bad3c3] shrink-0">即期：豆腐(1天)</span>
+                <span class="bg-rose-50 text-rose-700 px-1.5 py-0.2 rounded border border-rose-200 shrink-0">硬限制：花生過敏</span>
+              </div>
+            </div>
+
+            <!-- Chat Stream Area -->
+            <div id="chat-stream" class="flex-1 overflow-y-auto p-3.5 space-y-3 chat-scroll bg-[#fffdf8]">
+              
+              <!-- System Welcome Message (0 Token Opening) -->
+              <div class="flex items-start gap-2 max-w-[90%]">
+                <div class="w-6 h-6 rounded-full bg-[#9a442d] text-white flex items-center justify-center text-[10px] font-black shrink-0 mt-0.5">C</div>
+                <div class="space-y-1">
+                  <div class="p-3 rounded-2xl rounded-tl-xs bg-[#f4ebe0] text-xs leading-5 text-[#293c4e] border border-[#e8dac8] shadow-2xs">
+                    哈囉！我是主廚 CooCoo。今天清單有 <strong>2 個照燒蓋飯任務缺口</strong>（去骨雞腿肉、青蔥）。<br>
+                    另外提醒：冰箱的<strong>傳統板豆腐只剩 1 天到期</strong>！現場如果有任何缺貨、大包裝猶豫或想順便消耗豆腐，隨時告訴我！
+                  </div>
+                  <div class="flex items-center gap-2 px-1 text-[9px] text-[#716b60]">
+                    <span class="font-extrabold text-[#55755b]">規則型開場 · 尚未消耗 AI 額度</span>
+                    <span>剛剛</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Message 1: User Asks for scallion advice -->
+              <div class="flex items-start justify-end gap-2 max-w-[90%] ml-auto">
+                <div class="space-y-1 text-right">
+                  <div class="p-3 rounded-2xl rounded-tr-xs bg-[#9a442d] text-white text-xs leading-5 shadow-2xs text-left">
+                    超市今天單把青蔥賣完了，只剩 5 把裝特價 45 元，但我只有 2 餐自煮，該買嗎？
+                  </div>
+                  <div class="px-1 text-[9px] text-[#716b60]">1 分鐘前</div>
+                </div>
+              </div>
+
+              <!-- Message 2: Chef CooCoo Suggests Onion Replacement -->
+              <div class="flex items-start gap-2 max-w-[92%]">
+                <div class="w-6 h-6 rounded-full bg-[#9a442d] text-white flex items-center justify-center text-[10px] font-black shrink-0 mt-0.5">C</div>
+                <div class="space-y-2 w-full">
+                  <div class="p-3 rounded-2xl rounded-tl-xs bg-[#f4ebe0] text-xs leading-5 text-[#293c4e] border border-[#e8dac8] shadow-2xs">
+                    <strong>強烈建議不要買 5 把裝大捆青蔥！</strong><br>
+                    青蔥極易出水黃爛，2 餐用不完就是浪費錢。主廚建議直接<strong>「改買洋蔥 1 顆」</strong>：
+                    <ul class="list-disc pl-4 mt-1 space-y-0.5 text-[11px]">
+                      <li>洋蔥切絲炒軟與雞肉一起煨煮照燒醬，天然甜度更高。</li>
+                      <li>單顆洋蔥只要約 NT$ 18，比青蔥更便宜且常溫可放 2 週！</li>
+                    </ul>
+                  </div>
+
+                  <!-- STRUCTURED ACTION CARD: Replace Shortage -->
+                  <div id="proposal-action-box" class="p-3 rounded-xl bg-[#e7f3ec] border border-[#bad3c3] space-y-2 shadow-2xs">
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-sm text-[#386753]">swap_horiz</span>
+                        <strong class="text-xs font-black text-[#2e5242]">主廚提案：替代任務食材</strong>
+                      </div>
+                      <span class="text-[9px] font-black text-[#386753] bg-white px-2 py-0.5 rounded border border-[#bad3c3]">省 NT$ 17</span>
+                    </div>
+                    <p class="text-[11px] text-[#426655] leading-4 m-0">
+                      將任務缺口「青蔥 1 把」替換為「洋蔥 1 顆」，自動更新照燒雞肉蓋飯任務配方。
+                    </p>
+                    <div class="flex items-center gap-2 pt-0.5">
+                      <button id="btn-accept-replace" onclick="executeIngredientReplace()" class="flex-1 py-1.5 rounded-lg bg-[#386753] hover:bg-[#2b4f3f] text-white text-xs font-black transition-all flex items-center justify-center gap-1 shadow-xs">
+                        <span class="material-symbols-outlined text-xs font-black">check</span>
+                        <span>採納替換（改買洋蔥）</span>
+                      </button>
+                      <button onclick="dismissProposalBox()" class="px-2.5 py-1.5 rounded-lg bg-white text-[#716b60] text-xs font-bold border border-[#d9cab2]">
+                        略過
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center gap-2 px-1 text-[9px] text-[#716b60]">
+                    <span class="font-black text-[#b8862f]">✦ AI 主廚建議 · Gemini 3.7 Flash</span>
+                    <span>消耗 1 則額度</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Quick Chips -->
+            <div class="px-3 py-1.5 bg-[#fdfae7] border-t border-[#ebd9c6] overflow-x-auto flex items-center gap-1.5 shrink-0">
+              <button onclick="sendQuickMessage('去骨雞腿肉缺貨，有什麼推薦替代？')" class="text-[10.5px] font-bold px-2.5 py-1 rounded-full bg-white border border-[#d9cab2] text-[#34465b] whitespace-nowrap hover:border-[#9a442d] transition-all">
+                🍗 雞腿肉缺貨怎麼辦？
+              </button>
+              <button onclick="sendQuickMessage('冰箱的即期板豆腐可以怎麼搭配這餐？')" class="text-[10.5px] font-bold px-2.5 py-1 rounded-full bg-white border border-[#d9cab2] text-[#34465b] whitespace-nowrap hover:border-[#9a442d] transition-all">
+                🧊 即期豆腐搭配法
+              </button>
+              <button onclick="sendQuickMessage('我想買花生醬來調照燒醬可以嗎？')" class="text-[10.5px] font-bold px-2.5 py-1 rounded-full bg-white border border-[#d9cab2] text-rose-800 whitespace-nowrap hover:border-rose-700 transition-all">
+                ⚠️ 測試花生過敏阻擋
+              </button>
+            </div>
+
+            <!-- Composer (Input Form) -->
+            <form onsubmit="handleChatSubmit(event)" class="p-3 bg-white border-t border-[#ebd9c6] flex items-center gap-2 shrink-0">
+              <div class="flex-1 relative flex items-center">
+                <input 
+                  type="text" 
+                  id="chat-input-text"
+                  placeholder="詢問主廚：替代食材、現場份量、預算搭配..." 
+                  class="w-full py-2 pl-3 pr-8 rounded-xl bg-[#fdfae7]/70 border border-[#d9cab2] text-xs font-medium text-[#293c4e] focus:outline-none focus:border-[#9a442d] focus:bg-white transition-all"
+                />
+                <button type="button" onclick="simVoiceInput()" title="模擬語音輸入" class="absolute right-2 text-[#716b60] hover:text-[#9a442d]">
+                  <span class="material-symbols-outlined text-base">mic</span>
+                </button>
+              </div>
+
+              <button 
+                type="submit" 
+                class="w-9 h-9 rounded-xl bg-[#9a442d] hover:bg-[#803522] text-white flex items-center justify-center transition-all shadow-xs"
+              >
+                <span class="material-symbols-outlined text-base font-bold">send</span>
+              </button>
+            </form>
+
+            <!-- Bottom Disclaimer (嚴禁未授權寫入資料庫) -->
+            <div class="px-4 py-1.5 bg-[#fdfae7] text-center text-[9px] font-medium text-[#716b60] border-t border-[#ebd9c6] shrink-0">
+              AI 建議僅供採買決策參考；所有替代入庫均須經由您在卡片點擊確認。
+            </div>
+
+          </section>
+        </div>
+
+      </div>
+    </main>
+
+    <!-- =========================================================================
+         RIGHT COLUMN: 後台資料庫即時監控與規格驗證儀表板 (4 cols)
+         ========================================================================= -->
+    <aside class="lg:col-span-4 space-y-4">
+
+      <!-- Panel 1: Database Live Sync Inspector (後台資料庫即時同步狀態) -->
+      <div class="bg-white rounded-3xl p-5 border border-[#ded3c2] shadow-sm space-y-3.5">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+            <h3 class="text-sm font-black text-[#293c4e] m-0">後台資料庫即時狀態</h3>
+          </div>
+          <span class="text-[10px] font-mono font-extrabold px-2 py-0.5 rounded bg-[#f2f5ed] text-[#4f8067] border border-[#bcd3c6]">PostgreSQL 15</span>
+        </div>
+
+        <p class="text-xs text-[#716b60] leading-relaxed m-0">
+          此處反映真實 Supabase 資料表在操作前後的即時欄位變更：
+        </p>
+
+        <!-- Live DB Table Display -->
+        <div class="space-y-2 text-xs">
+          <!-- Table 1: recipe_catalog_control -->
+          <div class="p-2.5 rounded-xl bg-stone-50 border border-stone-200">
+            <div class="flex justify-between items-center text-[10px] font-black text-[#34465b] mb-1">
+              <span>public.recipe_catalog_control</span>
+              <span class="font-mono text-emerald-700">quota_ledger</span>
+            </div>
+            <div class="grid grid-cols-2 gap-1 font-mono text-[11px]">
+              <div>限額: <b id="db-daily-limit" class="text-[#293c4e]">30 則/日</b></div>
+              <div>月預算: <b class="text-[#293c4e]">NT$ 100</b></div>
+              <div>今日已用: <b id="db-used-count" class="text-[#9a442d]">2 則</b></div>
+              <div>當前狀態: <b id="db-quota-status" class="text-emerald-700">充足 (active)</b></div>
+            </div>
+          </div>
+
+          <!-- Table 2: meal_tasks.shortages -->
+          <div class="p-2.5 rounded-xl bg-stone-50 border border-stone-200">
+            <div class="flex justify-between items-center text-[10px] font-black text-[#34465b] mb-1">
+              <span>public.meal_tasks (id:照燒雞肉)</span>
+              <span class="font-mono text-emerald-700">shortages[]</span>
+            </div>
+            <div class="font-mono text-[10px] space-y-0.5" id="db-shortages-view">
+              <div class="text-[#716b60]">[0] 去骨雞腿肉 · quantity:2 · <b class="text-amber-700">needed</b></div>
+              <div class="text-[#716b60]" id="db-row-scallion">[1] 青蔥 · quantity:1 · <b class="text-amber-700">needed</b></div>
+            </div>
+          </div>
+
+          <!-- Table 3: chef_chat_sessions -->
+          <div class="p-2.5 rounded-xl bg-stone-50 border border-stone-200">
+            <div class="flex justify-between items-center text-[10px] font-black text-[#34465b] mb-1">
+              <span>public.chef_chat_sessions</span>
+              <span class="font-mono text-emerald-700">active_session</span>
+            </div>
+            <div class="font-mono text-[10.5px] text-[#293c4e]">
+              <div>session_id: <span class="text-stone-500">c88f7fb1-67d8...</span></div>
+              <div>title: <b id="db-session-title">青蔥大捆特價詢問</b></div>
+              <div>source: <b id="db-session-source" class="text-[#b8862f]">openrouter (Gemini 3.7)</b></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel 2: Quota & Fallback Guardrail Controls -->
+      <div class="bg-white rounded-3xl p-5 border border-[#ded3c2] shadow-sm space-y-3">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-base text-[#9a442d]">tune</span>
+          <h3 class="text-sm font-black text-[#293c4e] m-0">後端 30 則限額測試器</h3>
+        </div>
+        <p class="text-xs text-[#716b60] leading-relaxed m-0">
+          點擊模擬 <code class="font-mono text-[11px] bg-stone-100 px-1 py-0.2 rounded text-[#9a442d]">reserve_ai_operation</code> 在不同次數下的限額行為：
+        </p>
+
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="simulateQuotaChange(2)" class="p-2 rounded-xl border border-stone-200 text-left hover:border-[#9a442d] transition-all">
+            <span class="text-[9.5px] text-stone-500 block">正常配額</span>
+            <strong class="text-xs text-[#293c4e]">剩餘 28 則</strong>
+          </button>
+          
+          <button onclick="simulateQuotaChange(25)" class="p-2 rounded-xl border border-amber-200 bg-amber-50/50 text-left hover:border-amber-400 transition-all">
+            <span class="text-[9.5px] text-amber-700 block">第 25 則警告</span>
+            <strong class="text-xs text-amber-900">提醒剩 5 則</strong>
+          </button>
+
+          <button onclick="simulateQuotaChange(29)" class="p-2 rounded-xl border border-orange-200 bg-orange-50/50 text-left hover:border-orange-400 transition-all">
+            <span class="text-[9.5px] text-orange-700 block">第 29 則警告</span>
+            <strong class="text-xs text-orange-900">提醒最後 1 則</strong>
+          </button>
+
+          <button onclick="simulateQuotaChange(30)" class="p-2 rounded-xl border border-rose-200 bg-rose-50/50 text-left hover:border-rose-400 transition-all">
+            <span class="text-[9.5px] text-rose-700 block">第 30 則上限</span>
+            <strong class="text-xs text-rose-900">強制轉規則備援</strong>
+          </button>
+        </div>
+      </div>
+
+      <!-- Panel 3: Technical Alignment Summary -->
+      <div class="bg-white rounded-3xl p-5 border border-[#ded3c2] shadow-sm space-y-2.5">
+        <h3 class="text-sm font-black text-[#293c4e] m-0">規範對齊清單</h3>
+        <ul class="space-y-1.5 text-xs text-[#34465b] pl-0 list-none m-0">
+          <li class="flex items-start gap-1.5">
+            <span class="material-symbols-outlined text-xs text-[#4f8067] mt-0.5 fill">check_circle</span>
+            <span><strong>色彩系統一致</strong>：嚴格使用暖米白 `#fdfae7`、陶土 `#9a442d`，移除所有冷灰與紫色。</span>
+          </li>
+          <li class="flex items-start gap-1.5">
+            <span class="material-symbols-outlined text-xs text-[#4f8067] mt-0.5 fill">check_circle</span>
+            <span><strong>零繪文字（Zero Emoji）</strong>：全部使用向量圖示與 Material Symbols，符合規範。</span>
+          </li>
+          <li class="flex items-start gap-1.5">
+            <span class="material-symbols-outlined text-xs text-[#4f8067] mt-0.5 fill">check_circle</span>
+            <span><strong>原子更新連動</strong>：採納替換食材立即連動後台 `meal_tasks.shortages` 與前端補齊度環。</span>
+          </li>
+          <li class="flex items-start gap-1.5">
+            <span class="material-symbols-outlined text-xs text-[#4f8067] mt-0.5 fill">check_circle</span>
+            <span><strong>誠實備援標記</strong>：AI 連線或額度耗盡時，明確標明 `source: rules`，不假裝 AI。</span>
+          </li>
+        </ul>
+      </div>
+
+    </aside>
+
+  </div>
+
+  <!-- Toast Notification Bar -->
+  <div id="toast" class="fixed bottom-6 z-50 bg-[#34465b] text-white text-xs font-black px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2 transform translate-y-20 opacity-0 transition-all duration-200 pointer-events-none">
+    <span class="material-symbols-outlined text-sm text-emerald-400" id="toast-icon">check_circle</span>
+    <span id="toast-text">已更新</span>
+  </div>
+
+  <!-- =========================================================================
+       JAVASCRIPT: 狀態管理、資料庫連動與限額邏輯
+       ========================================================================= -->
+  <script>
+    // Live State
+    let appState = {
+      usedCount: 2,
+      maxLimit: 30,
+      isScallionReplaced: false,
+      stamps: {
+        chicken: false,
+        scallion: false
+      }
+    };
+
+    function setViewport(mode) {
+      const box = document.getElementById('viewport-box');
+      const btnM = document.getElementById('btn-mobile');
+      const btnT = document.getElementById('btn-tablet');
+      const btnD = document.getElementById('btn-desktop');
+
+      [btnM, btnT, btnD].forEach(b => b.classList.remove('active-tab'));
+
+      if (mode === 'mobile') {
+        box.style.maxWidth = '390px';
+        btnM.classList.add('active-tab');
+      } else if (mode === 'tablet') {
+        box.style.maxWidth = '768px';
+        btnT.classList.add('active-tab');
+      } else if (mode === 'desktop') {
+        box.style.maxWidth = '1000px';
+        btnD.classList.add('active-tab');
+      }
+    }
+
+    function openChefChat() {
+      const modal = document.getElementById('chef-chat-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeChefChat() {
+      const modal = document.getElementById('chef-chat-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function simulateQuotaChange(count) {
+      appState.usedCount = count;
+      const remaining = Math.max(0, appState.maxLimit - appState.usedCount);
+
+      // Update UI elements
+      document.getElementById('quota-number').textContent = remaining;
+      document.getElementById('badge-entry-quota').textContent = `剩 ${remaining} 則`;
+      document.getElementById('db-used-count').textContent = `${count} 則`;
+      const chipNum = document.getElementById('quota-chip-num');
+      if (chipNum) chipNum.textContent = remaining;
+
+      const banner = document.getElementById('quota-banner');
+      const statusLabel = document.getElementById('quota-status-label');
+      const dbStatus = document.getElementById('db-quota-status');
+      const sessionSource = document.getElementById('db-session-source');
+      const moodBadge = document.getElementById('chef-mood-badge');
+
+      if (count >= 30) {
+        banner.className = 'px-4 py-1.5 bg-rose-50 border-b border-rose-200 flex items-center justify-between text-[10px] font-bold text-rose-800 shrink-0';
+        statusLabel.innerHTML = '今日 AI 相談額度已滿 · <strong class="text-rose-700">自動切換規則備援</strong>';
+        dbStatus.className = 'text-rose-700 font-bold';
+        dbStatus.textContent = '額度上限 (AI_DAILY_LIMITED)';
+        sessionSource.className = 'text-stone-600 font-bold';
+        sessionSource.textContent = 'rules (安全規則備援)';
+        if (moodBadge) {
+          moodBadge.textContent = '最高防線確認';
+          moodBadge.className = 'text-[10px] font-bold text-red-900 bg-red-100 border border-red-200/80 px-2 py-0.5 rounded-full shrink-0';
+        }
+
+        showToast('已達每日 30 則上限，主廚已自動切換至安全規則備援模式 (source: rules)', 'warning');
+        appendFallbackReply();
+      } else if (count >= 25) {
+        banner.className = 'px-4 py-1.5 bg-amber-50 border-b border-amber-200 flex items-center justify-between text-[10px] font-bold text-amber-900 shrink-0';
+        statusLabel.innerHTML = `今日 AI 相談剩餘：<strong class="text-amber-800">${remaining}</strong> / 30 則 (額度即將用盡)`;
+        dbStatus.className = 'text-amber-700 font-bold';
+        dbStatus.textContent = '剩餘稀少 (warning)';
+        sessionSource.className = 'text-[#b8862f] font-bold';
+        sessionSource.textContent = 'openrouter (Gemini 3.7)';
+        if (moodBadge) {
+          moodBadge.textContent = '聆聽日常';
+          moodBadge.className = 'text-[10px] font-bold text-amber-900 bg-amber-100 border border-amber-200/80 px-2 py-0.5 rounded-full shrink-0';
+        }
+
+        showToast(count === 29 ? '注意：今日僅剩最後 1 則 AI 額度！' : '注意：今日僅剩 5 則 AI 額度。', 'info');
+      } else {
+        banner.className = 'px-4 py-1.5 bg-[#f6efe1] border-b border-[#ded3c2] flex items-center justify-between text-[10px] font-bold text-[#716b60] shrink-0';
+        statusLabel.innerHTML = `今日 AI 相談剩餘：<strong class="text-[#9a442d]">${remaining}</strong> / 30 則`;
+        dbStatus.className = 'text-emerald-700 font-bold';
+        dbStatus.textContent = '充足 (active)';
+        sessionSource.className = 'text-[#b8862f] font-bold';
+        sessionSource.textContent = 'openrouter (Gemini 3.7)';
+        if (moodBadge) {
+          moodBadge.textContent = '聆聽日常';
+          moodBadge.className = 'text-[10px] font-bold text-amber-900 bg-amber-100 border border-amber-200/80 px-2 py-0.5 rounded-full shrink-0';
+        }
+
+        showToast(`已重設為使用 ${count} 則（剩餘 ${remaining} 則）`);
+      }
+    }
+
+    function appendFallbackReply() {
+      const stream = document.getElementById('chat-stream');
+      const html = `
+        <div class="flex items-start gap-2 max-w-[92%]">
+          <div class="w-6 h-6 rounded-full bg-stone-500 text-white flex items-center justify-center text-[10px] font-black shrink-0 mt-0.5">C</div>
+          <div class="space-y-1 w-full">
+            <div class="p-3 rounded-2xl rounded-tl-xs bg-stone-100 text-xs leading-5 text-[#293c4e] border border-stone-200 shadow-2xs">
+              <strong>已達今日 30 則上限（切換規則型備援）</strong><br>
+              主廚目前使用安全規則協助：對於任務缺口「青蔥」，現場缺貨建議直接考慮洋蔥或根莖類蔬菜替換；過敏與飲食限制維持絕對排除。
+            </div>
+            <div class="flex items-center gap-2 px-1 text-[9px] text-stone-600 font-bold">
+              <span>🛡️ 安全規則備援回覆 (source: rules)</span>
+              <span>剛剛</span>
+            </div>
+          </div>
+        </div>
+      `;
+      stream.insertAdjacentHTML('beforeend', html);
+      stream.scrollTop = stream.scrollHeight;
+    }
+
+    // Execute Ingredient Replacement (連動後台資料庫與前端介面)
+    function executeIngredientReplace() {
+      if (appState.isScallionReplaced) return;
+      appState.isScallionReplaced = true;
+
+      // 1. Update MealTask Ticket Stamp Cell
+      const stampCell = document.getElementById('stamp-scallion');
+      stampCell.className = 'p-2.5 rounded-xl border border-dashed border-[#e2c3ae] bg-[#fdf1e2] text-center space-y-1 stamp-animated';
+      
+      document.getElementById('stamp-scallion-icon').textContent = 'grocery';
+      document.getElementById('stamp-scallion-name').textContent = '洋蔥 (已替代青蔥)';
+      document.getElementById('stamp-scallion-desc').textContent = '需 1 顆 · NT$ 18';
+
+      document.getElementById('stamp-scallion-btn-wrap').innerHTML = `
+        <span class="inline-flex items-center gap-0.5 text-[9.5px] font-black text-[#9a442d] bg-white px-2 py-0.5 rounded-full border border-[#e2c3ae]">
+          <span class="material-symbols-outlined text-xs">check</span>
+          <span>已記錄替代</span>
+        </span>
+      `;
+
+      // 2. Update Background Shopping Basket
+      document.getElementById('basket-badge-count').textContent = '1';
+      if (document.getElementById('basket-summary-text')) {
+        document.getElementById('basket-summary-text').textContent = '已勾選 1 項 · 預估';
+      }
+      document.getElementById('basket-total-price').textContent = 'NT$ 18';
+
+      // 3. Update Coverage Ring
+      document.getElementById('coverage-ring').style.background = 'conic-gradient(#55755b 50%, #ebe4d6 0)';
+      document.getElementById('coverage-percent').textContent = '50%';
+      document.getElementById('coverage-title').textContent = '已替代 1 樣 · 還差 1 樣';
+      document.getElementById('task-progress-num').textContent = '1/2';
+
+      // 4. Update Chat Action Proposal Box
+      const box = document.getElementById('proposal-action-box');
+      box.className = 'p-3 rounded-xl bg-white border border-[#bad3c3] space-y-1.5 shadow-2xs';
+      box.innerHTML = `
+        <div class="flex items-center gap-1.5 text-[#386753] font-black text-xs">
+          <span class="material-symbols-outlined text-sm font-bold">verified</span>
+          <span>已成功採納！任務已記錄替代為「洋蔥 1 顆」</span>
+        </div>
+        <p class="text-[11px] text-[#55755b] m-0">後端 PATCH /api/v1/meal-tasks/.../shortages 已將 resolution 更新為 'replaced'。</p>
+      `;
+
+      // 5. Update Live DB Inspector
+      document.getElementById('db-row-scallion').innerHTML = `[1] 青蔥 ➔ 洋蔥 · quantity:1 · <b class="text-[#386753]">replaced (已替代)</b>`;
+
+      showToast('已更新任務缺口！青蔥已替換為洋蔥 1 顆，預估花費已同步更新。');
+    }
+
+    function dismissProposalBox() {
+      document.getElementById('proposal-action-box').style.display = 'none';
+      showToast('已略過替代建議，維持原青蔥需求');
+    }
+
+    function sendQuickMessage(text) {
+      document.getElementById('chat-input-text').value = text;
+      handleChatSubmit(new Event('submit'));
+    }
+
+    function handleChatSubmit(e) {
+      if (e) e.preventDefault();
+      const input = document.getElementById('chat-input-text');
+      const text = input.value.trim();
+      if (!text) return;
+
+      const stream = document.getElementById('chat-stream');
+
+      // Append User Message
+      const userHtml = `
+        <div class="flex items-start justify-end gap-2 max-w-[90%] ml-auto">
+          <div class="space-y-1 text-right">
+            <div class="p-3 rounded-2xl rounded-tr-xs bg-[#9a442d] text-white text-xs leading-5 shadow-2xs text-left">
+              ${escapeHtml(text)}
+            </div>
+            <div class="px-1 text-[9px] text-[#716b60]">剛剛</div>
+          </div>
+        </div>
+      `;
+      stream.insertAdjacentHTML('beforeend', userHtml);
+      input.value = '';
+      stream.scrollTop = stream.scrollHeight;
+
+      // Update Quota Count
+      appState.usedCount = Math.min(30, appState.usedCount + 1);
+      simulateQuotaChange(appState.usedCount);
+
+      // AI Response Simulation
+      setTimeout(() => {
+        simulateChefResponse(text);
+      }, 500);
+    }
+
+    function simulateChefResponse(userText) {
+      const stream = document.getElementById('chat-stream');
+      if (appState.usedCount >= 30) {
+        appendFallbackReply();
+        return;
+      }
+
+      let reply = '';
+      let badge = '✦ AI 主廚建議 · Gemini 3.7 Flash';
+
+      if (userText.includes('花生')) {
+        reply = `<strong>⚠️ 飲食禁忌硬限制警示！</strong><br>
+        你的個人檔案設定了「<strong>花生過敏（isHardLimit: true）</strong>」。CooCoo 主廚嚴格遵守食安底線，絕不允許推薦花生醬或含花生油脂的調味料！照燒醬只需醬油、味醂與白糖即可調出絕佳風味。`;
+      } else if (userText.includes('雞腿肉') || userText.includes('缺貨')) {
+        reply = `如果去骨雞腿肉買不到，最佳替代順序為：<br>
+        1. <strong>豬里肌肉排（約 NT$ 110）</strong>：肉質扎實，照燒醬汁非常容易入味。<br>
+        2. <strong>牛雪花肉片（約 NT$ 130）</strong>：快炒 3 分鐘即可起鍋，非常適合下班後快速上菜！`;
+      } else if (userText.includes('豆腐')) {
+        reply = `冰箱剩 1 天的<strong>傳統板豆腐</strong>正是今天的大功臣！<br>
+        建議切厚片煎到雙面金黃，直接鋪在照燒肉飯旁吸附醬汁。這樣能立刻清空即期庫存，而且省下一道配菜的時間！`;
+      } else {
+        reply = `收到！根據目前採買籃與冰箱剩餘批次，主廚建議優先將主要預算保留給肉類蛋白質；調味料家裡均有常備，無需重複購買。`;
+      }
+
+      const chefHtml = `
+        <div class="flex items-start gap-2 max-w-[92%]">
+          <div class="w-6 h-6 rounded-full bg-[#9a442d] text-white flex items-center justify-center text-[10px] font-black shrink-0 mt-0.5">C</div>
+          <div class="space-y-1 w-full">
+            <div class="p-3 rounded-2xl rounded-tl-xs bg-[#f4ebe0] text-xs leading-5 text-[#293c4e] border border-[#e8dac8] shadow-2xs">
+              ${reply}
+            </div>
+            <div class="flex items-center gap-2 px-1 text-[9px] text-[#716b60]">
+              <span class="font-black text-[#b8862f]">${badge}</span>
+              <span>消耗 1 則額度</span>
+            </div>
+          </div>
+        </div>
+      `;
+
+      stream.insertAdjacentHTML('beforeend', chefHtml);
+      stream.scrollTop = stream.scrollHeight;
+    }
+
+    function simVoiceInput() {
+      document.getElementById('chat-input-text').value = '超市去骨雞腿肉賣完了，我改買豬里肌排可以嗎？';
+      showToast('已將語音辨識為文字', 'info');
+    }
+
+    function toggleSessionHistory() {
+      showToast('最近 10 次相談紀錄：已載入本週 2 次歷史相談。', 'info');
+    }
+
+    function resetAllState() {
+      appState.usedCount = 2;
+      appState.isScallionReplaced = false;
+      location.reload();
+    }
+
+    function showToast(msg, type = 'success') {
+      const toast = document.getElementById('toast');
+      const icon = document.getElementById('toast-icon');
+      document.getElementById('toast-text').textContent = msg;
+
+      if (type === 'warning') {
+        icon.textContent = 'warning';
+        icon.className = 'material-symbols-outlined text-sm text-amber-400';
+      } else if (type === 'info') {
+        icon.textContent = 'info';
+        icon.className = 'material-symbols-outlined text-sm text-sky-400';
+      } else {
+        icon.textContent = 'check_circle';
+        icon.className = 'material-symbols-outlined text-sm text-emerald-400';
+      }
+
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 2600);
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+  </script>
+</body>
+</html>

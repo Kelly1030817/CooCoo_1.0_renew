@@ -64,3 +64,5 @@ export function ShoppingAssistantModal({ onClose }: { onClose: () => void }) {
     {error ? <p role="alert" className="offline-error">{error}</p> : null}
   </Modal>;
 }
+
+export { ShoppingChefChatModal, type ShoppingChefChatModalProps } from "./ShoppingChefChatModal";
