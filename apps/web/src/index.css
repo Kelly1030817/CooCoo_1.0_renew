@@ -1,6 +1,45 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #9a442d;
+  --color-on-primary: #fff;
+  --color-primary-container: #e07a5f;
+  --color-on-primary-container: #5b1604;
+  --color-secondary: #386753;
+  --color-on-secondary: #fff;
+  --color-secondary-container: #b8ebd1;
+  --color-on-secondary-container: #3d6c57;
+  --color-tertiary: #765a28;
+  --color-error: #ba1a1a;
+  --color-error-container: #ffdad6;
+  --color-on-error-container: #93000a;
+  --color-background: #fdfae7;
+  --color-surface: #fdfae7;
+  --color-surface-container-lowest: #fff;
+  --color-surface-container-low: #f7f4e1;
+  --color-surface-container: #f1eedb;
+  --color-surface-container-high: #ece9d6;
+  --color-on-surface: #1c1c11;
+  --color-on-surface-variant: #55423e;
+  --color-outline: #88726d;
+  --color-outline-variant: #dbc1ba;
+  --color-terracotta: #e07a5f;
+  --color-sage-green: #81b29a;
+  --color-ochre-gold: #f2cc8f;
+  --color-slate-blue: #3d405b;
+  --color-rust-orange: #d95d39;
+  --color-oatmeal-sand: #f4f1de;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+  --radius-3xl: 24px;
+  --spacing-4_5: 18px;
+  --spacing-gutter: 20px;
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 40px;
+}
 
 :root {
   font-family: "Plus Jakarta Sans", sans-serif;
