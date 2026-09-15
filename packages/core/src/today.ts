@@ -53,7 +53,10 @@ export function deriveTodayMissions(
   ];
 }
 
-export function withTodayMissions<T extends AppState>(state: T, now: Date | string = new Date()): T {
+export function withTodayMissions<T extends AppState>(
+  state: T,
+  now: Date | string = new Date(),
+): T {
   return { ...state, missions: deriveTodayMissions(state, now) };
 }
 
@@ -79,8 +82,9 @@ export function mealsWithRecordedOutcomes(meals: PlannedMeal[], outcomes: Cookin
   );
   return meals.map((meal) => ({
     ...meal,
-    status: meal.status === "planned" && completedKeys.has(`${meal.date}::${meal.title}`)
-      ? "cooked" as const
-      : meal.status,
+    status:
+      meal.status === "planned" && completedKeys.has(`${meal.date}::${meal.title}`)
+        ? ("cooked" as const)
+        : meal.status,
   }));
 }

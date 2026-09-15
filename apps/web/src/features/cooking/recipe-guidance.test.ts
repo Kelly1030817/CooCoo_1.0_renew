@@ -7,7 +7,11 @@ const step: RecipeStep = {
   order: 1,
   instruction: "雞胸肉煮 10 分鐘，以食物溫度計確認最厚處至少 74°C，再取出撕絲。",
   compactInstruction: "雞胸肉煮 10 分鐘，最厚處達 74°C 後撕絲。",
-  guidance: { successCue: "最厚處至少 74°C。", why: "中心溫度是可靠熟度依據。", rescueTip: "未達溫時每次加熱 1 分鐘。" },
+  guidance: {
+    successCue: "最厚處至少 74°C。",
+    why: "中心溫度是可靠熟度依據。",
+    rescueTip: "未達溫時每次加熱 1 分鐘。",
+  },
   voiceText: "雞胸肉煮熟後撕絲。",
   timerSeconds: 600,
   safetyNote: "不可只靠顏色判斷熟度。",
@@ -22,7 +26,9 @@ describe("recipe guidance modes", () => {
   });
 
   test("keeps legacy recipes usable when compact copy is absent", () => {
-    expect(instructionForMode({ ...step, compactInstruction: undefined }, "compact")).toBe(step.instruction);
+    expect(instructionForMode({ ...step, compactInstruction: undefined }, "compact")).toBe(
+      step.instruction,
+    );
   });
 
   test("switches only the presentation mode", () => {

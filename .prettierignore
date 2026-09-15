@@ -1,0 +1,12 @@
+node_modules
+dist
+.git
+.idea
+coverage
+test-results
+playwright-report
+blob-report
+apps/web/e2e/**/*.spec.ts-snapshots
+**/*.tsbuildinfo
+bun.lock
+apps/api/bun.lock

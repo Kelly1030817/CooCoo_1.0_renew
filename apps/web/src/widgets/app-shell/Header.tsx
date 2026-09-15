@@ -49,9 +49,7 @@ export function Header({
               aria-label="重設範例資料"
               className="flex items-center justify-center rounded-full p-2 text-on-surface-variant hover:bg-surface-container-high/40"
             >
-              <span className="material-symbols-outlined text-xl">
-                restart_alt
-              </span>
+              <span className="material-symbols-outlined text-xl">restart_alt</span>
             </button>
           )}
           {import.meta.env.DEV && access.data?.owner && (
@@ -106,11 +104,7 @@ export function ProfileModal({
 
   return (
     <Modal label="我的自煮檔案" onClose={onClose}>
-      <ModalHeader
-        title="我的自煮檔案"
-        kicker="CooCoo 主廚個人中心"
-        onClose={onClose}
-      />
+      <ModalHeader title="我的自煮檔案" kicker="CooCoo 主廚個人中心" onClose={onClose} />
       <div className="space-y-3.5 text-left text-xs">
         {/* User Account Status */}
         <div className="bg-stone-50 border border-stone-200 rounded-2xl p-3 flex items-center justify-between">
@@ -159,14 +153,21 @@ export function ProfileModal({
           )}
         </div>
 
-        {error && <p role="alert" className="offline-error text-xs text-error">{error}</p>}
+        {error && (
+          <p role="alert" className="offline-error text-xs text-error">
+            {error}
+          </p>
+        )}
 
         {/* Current Chef Profile Overview */}
         <div className="bg-amber-50/80 border border-amber-200 rounded-2xl p-3 space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-amber-800 uppercase tracking-wider">本週主目標</span>
+            <span className="text-[10px] font-bold text-amber-800 uppercase tracking-wider">
+              本週主目標
+            </span>
             <span className="text-[10px] font-mono font-bold text-amber-900 bg-amber-100/90 px-1.5 py-0.5 rounded">
-              每週 {draft.weeklyGoalTarget || 1} {draft.primaryGoalMetric === "self_cooked_servings" ? "份" : "次"}
+              每週 {draft.weeklyGoalTarget || 1}{" "}
+              {draft.primaryGoalMetric === "self_cooked_servings" ? "份" : "次"}
             </span>
           </div>
           <div className="flex items-baseline justify-between">
@@ -229,23 +230,22 @@ export function ProfileModal({
   );
 }
 
-export function CookwareModal({ onClose, enabled = true }: { onClose: () => void; enabled?: boolean }) {
+export function CookwareModal({
+  onClose,
+  enabled = true,
+}: {
+  onClose: () => void;
+  enabled?: boolean;
+}) {
   const { data } = useAppState(enabled);
   return (
     <Modal label="廚房裝備設定" onClose={onClose}>
       <ModalHeader title="我的廚房裝備" onClose={onClose} />
       <div className="space-y-sm">
         {data?.cookware.map((item) => (
-          <div
-            key={item.id}
-            className="rounded-2xl bg-surface-container-low p-md"
-          >
-            <span className="material-symbols-outlined text-secondary">
-              skillet
-            </span>
-            <strong className="ml-2 text-sm text-slate-blue">
-              {item.name}
-            </strong>
+          <div key={item.id} className="rounded-2xl bg-surface-container-low p-md">
+            <span className="material-symbols-outlined text-secondary">skillet</span>
+            <strong className="ml-2 text-sm text-slate-blue">{item.name}</strong>
             <p className="mt-1 text-[10px] text-on-surface-variant">
               {item.brand} {item.model} · {item.capacity || `${item.wattage}W`}
             </p>

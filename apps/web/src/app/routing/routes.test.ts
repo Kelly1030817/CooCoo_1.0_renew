@@ -1,11 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  appRoutePaths,
-  isAppPath,
-  pathForRoute,
-  routeFromPathname,
-  type AppRoute,
-} from "./routes";
+import { appRoutePaths, isAppPath, pathForRoute, routeFromPathname, type AppRoute } from "./routes";
 
 const appRoutes: AppRoute[] = ["today", "shopping", "fridge", "recipes", "me", "onboarding"];
 

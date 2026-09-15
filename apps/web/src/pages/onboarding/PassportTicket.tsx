@@ -36,12 +36,8 @@ export function PassportTicket({
       {/* Chef Profile */}
       <div>
         <span className="text-[10px] text-stone-400 font-bold block">主廚檔案</span>
-        <h3 className="text-base font-black text-stone-900 leading-snug">
-          初火學徒
-        </h3>
-        <span className="text-xs font-mono font-black text-amber-900">
-          從 0 EXP 開始
-        </span>
+        <h3 className="text-base font-black text-stone-900 leading-snug">初火學徒</h3>
+        <span className="text-xs font-mono font-black text-amber-900">從 0 EXP 開始</span>
       </div>
 
       {/* Parameters Summary */}
@@ -86,11 +82,21 @@ export function PassportTicket({
             <span className="sr-only">主廚檔案已成立 MASTER CHEF COOCOO SEALED</span>
             <div className="w-[70px] h-[70px] rounded-full border border-dashed border-red-600/70 flex flex-col items-center justify-center relative p-1">
               <div className="text-[6.5px] font-black tracking-widest uppercase text-red-800 flex items-center gap-0.5">
-                <svg className="w-2 h-2 text-red-700" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <svg
+                  className="w-2 h-2 text-red-700"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
                   <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                 </svg>
                 <span>COOCOO</span>
-                <svg className="w-2 h-2 text-red-700" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <svg
+                  className="w-2 h-2 text-red-700"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
                   <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                 </svg>
               </div>

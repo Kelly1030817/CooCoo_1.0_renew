@@ -34,14 +34,14 @@ bun run --cwd apps/web test:e2e -- --update-snapshots
 
 ## 分層（FSD）
 
-| 目錄 | 可以 import | 不可 import |
-| --- | --- | --- |
-| `src/app` | 各層 | — |
-| `src/pages` | widgets、features、entities、shared、app | 其他 pages |
-| `src/widgets` | features、entities、shared | pages |
-| `src/features` | entities、shared | pages、widgets |
-| `src/entities` | shared | pages、widgets、features |
-| `src/shared` | shared | 以上各層 |
+| 目錄           | 可以 import                              | 不可 import              |
+| -------------- | ---------------------------------------- | ------------------------ |
+| `src/app`      | 各層                                     | —                        |
+| `src/pages`    | widgets、features、entities、shared、app | 其他 pages               |
+| `src/widgets`  | features、entities、shared               | pages                    |
+| `src/features` | entities、shared                         | pages、widgets           |
+| `src/entities` | shared                                   | pages、widgets、features |
+| `src/shared`   | shared                                   | 以上各層                 |
 
 各目錄短 README 會隨後續重構補上。
 

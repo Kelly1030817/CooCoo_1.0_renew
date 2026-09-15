@@ -31,7 +31,9 @@ export const emptyOnboardingDraft: OnboardingProfile = {
   completedAt: null,
 };
 
-function isOnboardingDraftRecord(value: unknown): value is Partial<OnboardingProfile> & { version?: number } {
+function isOnboardingDraftRecord(
+  value: unknown,
+): value is Partial<OnboardingProfile> & { version?: number } {
   return typeof value === "object" && value !== null;
 }
 

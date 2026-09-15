@@ -26,16 +26,18 @@ const pages = {
   recipes: lazy(() =>
     import("@/pages/recipes/RecipesPage").then(({ RecipesPage }) => ({ default: RecipesPage })),
   ),
-  me: lazy(() =>
-    import("@/pages/me/MePage").then(({ MePage }) => ({ default: MePage })),
-  ),
+  me: lazy(() => import("@/pages/me/MePage").then(({ MePage }) => ({ default: MePage }))),
 };
 export default function App() {
   const { route, navigate } = useAppRoute();
   const queryClient = useQueryClient();
   const ui = useContext(UiContext);
-  const [onboardingComplete, setOnboardingComplete] = useState(() => readOnboardingDraft().status === "complete");
-  const [authStatus, setAuthStatus] = useState<"loading" | "signed-in" | "signed-out">(() => supabase ? "loading" : "signed-out");
+  const [onboardingComplete, setOnboardingComplete] = useState(
+    () => readOnboardingDraft().status === "complete",
+  );
+  const [authStatus, setAuthStatus] = useState<"loading" | "signed-in" | "signed-out">(() =>
+    supabase ? "loading" : "signed-out",
+  );
   const [reauthBusy, setReauthBusy] = useState(false);
   const [reauthError, setReauthError] = useState("");
   useEffect(() => {
@@ -61,7 +63,11 @@ export default function App() {
       }
     };
     void supabase.auth.getSession().then(({ data }) => applySession(data.session));
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => { void applySession(session); });
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      void applySession(session);
+    });
     return () => {
       active = false;
       subscription.unsubscribe();
@@ -76,20 +82,43 @@ export default function App() {
       await startGoogleAuth();
     } catch (reason) {
       setReauthBusy(false);
-      setReauthError(reason instanceof Error ? reason.message : "Google 登入暫時無法開始，請稍後再試。");
+      setReauthError(
+        reason instanceof Error ? reason.message : "Google 登入暫時無法開始，請稍後再試。",
+      );
     }
   };
   const Page = route !== "onboarding" ? pages[route] : null;
-  if(onboardingComplete && authStatus === "loading")return <main className="onboarding-shell"><p className="eyebrow">CooCoo</p><h1 className="text-2xl font-extrabold text-slate-blue">正在找回你的主廚檔案…</h1></main>;
-  if(onboardingComplete && supabase && authStatus === "signed-out")return <AuthRecoveryPanel busy={reauthBusy} error={reauthError} onGoogleSignIn={() => { void restartGoogleAuth(); }} />;
+  if (onboardingComplete && authStatus === "loading")
+    return (
+      <main className="onboarding-shell">
+        <p className="eyebrow">CooCoo</p>
+        <h1 className="text-2xl font-extrabold text-slate-blue">正在找回你的主廚檔案…</h1>
+      </main>
+    );
+  if (onboardingComplete && supabase && authStatus === "signed-out")
+    return (
+      <AuthRecoveryPanel
+        busy={reauthBusy}
+        error={reauthError}
+        onGoogleSignIn={() => {
+          void restartGoogleAuth();
+        }}
+      />
+    );
 
   const localDraft = readOnboardingDraft();
-  const isReplaying = route === "onboarding" && (onboardingComplete || localDraft.status === "complete" || localDraft.currentStep === 1);
+  const isReplaying =
+    route === "onboarding" &&
+    (onboardingComplete || localDraft.status === "complete" || localDraft.currentStep === 1);
 
   if (!onboardingComplete || route === "onboarding")
     return (
       <OnboardingPage
-        key={route === "onboarding" ? `onboarding-${isReplaying ? "replay-1" : localDraft.currentStep}` : "onboarding-initial"}
+        key={
+          route === "onboarding"
+            ? `onboarding-${isReplaying ? "replay-1" : localDraft.currentStep}`
+            : "onboarding-initial"
+        }
         initialStep={isReplaying ? 1 : undefined}
         canExit={onboardingComplete}
         onExit={() => {
@@ -106,9 +135,13 @@ export default function App() {
     <>
       <Header enabled={stateEnabled} onNavigate={navigate} />
       <div className="h-[60px] shrink-0" aria-hidden="true" />
-      <main className={route === "today"
-        ? "mx-auto w-full max-w-[1136px] min-w-0 flex-1 px-[15px] py-md sm:px-5 lg:px-7"
-        : "mx-auto w-full max-w-[1200px] min-w-0 flex-1 px-md py-md transition-all duration-300 md:px-lg md:py-lg"}>
+      <main
+        className={
+          route === "today"
+            ? "mx-auto w-full max-w-[1136px] min-w-0 flex-1 px-[15px] py-md sm:px-5 lg:px-7"
+            : "mx-auto w-full max-w-[1200px] min-w-0 flex-1 px-md py-md transition-all duration-300 md:px-lg md:py-lg"
+        }
+      >
         {isLoading ? (
           <div className="py-xl text-center text-sm font-bold text-on-surface-variant">
             載入 CooCoo 中…

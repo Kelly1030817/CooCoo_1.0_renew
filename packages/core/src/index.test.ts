@@ -1,21 +1,299 @@
 import { describe, expect, test } from "bun:test";
-import { CooCooService, applyOnboardingProfile, brandSafeRecipes, calculateIngredientOverlap, calculateInventoryCoverage, completeCookingSession, createMealTask, createSeedState, evaluateRecipe, getRescuePlan, parseShoppingText, postponeMeal, rankRecipes, type StateRepository } from "./index";
+import {
+  CooCooService,
+  applyOnboardingProfile,
+  brandSafeRecipes,
+  calculateIngredientOverlap,
+  calculateInventoryCoverage,
+  completeCookingSession,
+  createMealTask,
+  createSeedState,
+  evaluateRecipe,
+  getRescuePlan,
+  parseShoppingText,
+  postponeMeal,
+  rankRecipes,
+  type StateRepository,
+} from "./index";
 import type { MealPlan, OnboardingProfile, PlannedMeal } from "@coocoo/contracts";
 
-const profile: OnboardingProfile = { status: "complete", currentStep: 5, cookingExperience: "beginner", currentWeeklyCookingFrequency: 1, habitBarriers: ["no_ideas"], guidanceMode: "detailed", householdServings: 1, cookware: [{ type: "電磁爐", limitations: [] }], restrictions: [], preferredFlavors: [], availableMinutes: 30, inventoryReviewed: true, hasNoInventory: true, plannedMealSlots: ["dinner"], primaryGoalMetric: "cooking_sessions", weeklyGoalTarget: 2, reminders: { expiringIngredients: true, plannedMeals: true, weeklyRhythm: true, pushEnabled: false, quietHoursStart: "21:00", quietHoursEnd: "09:00", weeklyLimit: 3 }, completedAt: "2026-09-11T00:00:00.000Z" };
-const ingredient = (ingredientKey:string, coveredByInventory=false, isPantryStaple=false) => ({ ingredientKey,name:ingredientKey,quantity:1,unit:"份",isPantryStaple,isVegetable:false,coveredByInventory });
-const plannedMeal = (id:string, ingredients:ReturnType<typeof ingredient>[], date="2026-09-11", slot:PlannedMeal["slot"]="dinner"):PlannedMeal => ({ id,date,slot,recipeId:`recipe-${id}`,title:id,status:"planned",servings:1,ingredients,estimatedCost:80,totalMinutes:20,cookwareTypes:["電磁爐"],energyLevel:"normal" });
+const profile: OnboardingProfile = {
+  status: "complete",
+  currentStep: 5,
+  cookingExperience: "beginner",
+  currentWeeklyCookingFrequency: 1,
+  habitBarriers: ["no_ideas"],
+  guidanceMode: "detailed",
+  householdServings: 1,
+  cookware: [{ type: "電磁爐", limitations: [] }],
+  restrictions: [],
+  preferredFlavors: [],
+  availableMinutes: 30,
+  inventoryReviewed: true,
+  hasNoInventory: true,
+  plannedMealSlots: ["dinner"],
+  primaryGoalMetric: "cooking_sessions",
+  weeklyGoalTarget: 2,
+  reminders: {
+    expiringIngredients: true,
+    plannedMeals: true,
+    weeklyRhythm: true,
+    pushEnabled: false,
+    quietHoursStart: "21:00",
+    quietHoursEnd: "09:00",
+    weeklyLimit: 3,
+  },
+  completedAt: "2026-09-11T00:00:00.000Z",
+};
+const ingredient = (ingredientKey: string, coveredByInventory = false, isPantryStaple = false) => ({
+  ingredientKey,
+  name: ingredientKey,
+  quantity: 1,
+  unit: "份",
+  isPantryStaple,
+  isVegetable: false,
+  coveredByInventory,
+});
+const plannedMeal = (
+  id: string,
+  ingredients: ReturnType<typeof ingredient>[],
+  date = "2026-09-11",
+  slot: PlannedMeal["slot"] = "dinner",
+): PlannedMeal => ({
+  id,
+  date,
+  slot,
+  recipeId: `recipe-${id}`,
+  title: id,
+  status: "planned",
+  servings: 1,
+  ingredients,
+  estimatedCost: 80,
+  totalMinutes: 20,
+  cookwareTypes: ["電磁爐"],
+  energyLevel: "normal",
+});
 
 describe("CooCoo v2 core", () => {
-  test("onboarding creates a weekly habit goal and persists an explicitly confirmed empty fridge", () => { const state=applyOnboardingProfile(createSeedState(),profile,{now:new Date("2026-09-11T00:00:00.000Z")}); expect(state.weeklyGoal).toMatchObject({metric:"cooking_sessions",target:2}); expect(state.onboardingProfile).toEqual(profile);expect(state.inventory).toHaveLength(0); });
-  test("hard allergy and unavailable cookware always exclude a recipe", () => { const recipe=brandSafeRecipes[0]; expect(evaluateRecipe(recipe,{restrictions:[{id:"egg",label:"蛋過敏",kind:"allergy",ingredientKeys:["蛋"],isHardLimit:true}],cookwareTypes:["電磁爐"],dailyBudget:999,energyLevel:"normal"}).eligible).toBeFalse(); expect(evaluateRecipe(recipe,{restrictions:[],cookwareTypes:["微波爐"],dailyBudget:999,energyLevel:"normal"}).eligible).toBeFalse(); });
-  test("today ranking prioritizes expiring inventory", () => expect(rankRecipes(brandSafeRecipes,{restrictions:[],cookwareTypes:["電磁爐"],dailyBudget:999,energyLevel:"normal"},[{ingredientKey:"番茄",daysLeft:1}])[0].recipe.title).toBe("番茄滑蛋飯"));
-  test("overlap and inventory coverage remain separate", () => { const meals=[plannedMeal("a",[ingredient("番茄",true),ingredient("鹽",false,true)]),plannedMeal("b",[ingredient("番茄"),ingredient("蛋")])]; expect(calculateIngredientOverlap(meals)).toBe(.5); expect(calculateInventoryCoverage(meals)).toBe(1/3); });
-  test("postpones a meal to the next open slot", () => { const plan:MealPlan={id:"p",weekStart:"2026-09-07",meals:[plannedMeal("a",[ingredient("番茄")])],overlapRate:0,inventoryCoverageRate:0,updatedAt:new Date(0).toISOString()}; expect(postponeMeal(plan,"a",{kind:"next_slot"}).meals[0]).toMatchObject({date:"2026-09-12",slot:"breakfast"}); });
-  test("completion creates eaten and prepared servings plus optional cost only", () => { const result=completeCookingSession({completedOperationIds:[],servings:[],cookingCosts:[]},{operationId:"op-1",sessionId:"session-1",servingsCooked:2,servingsEaten:1,ingredientCost:60,comparisonMealPrice:150,trackCost:true},"2026-09-11T00:00:00.000Z"); expect(result.servings.map((item)=>item.status)).toEqual(["eaten","prepared_inventory"]); expect(result.cookingCosts[0]?.difference).toBe(90); });
-  test("eating a prepared serving awards 10 EXP once", () => { const state=createSeedState();state.mealServings=[{id:"serving-1",cookingSessionId:"session-1",status:"prepared_inventory",eatenAt:null,vegetableKeys:[]}];const repository:StateRepository&{value:typeof state}={value:state,read(){return this.value},write(value){this.value=value},reset(){return this.value}};const service=new CooCooService(repository,{now:()=>new Date("2026-09-11T00:00:00.000Z"),id:()=>"id"});expect(service.eatPreparedServing("serving-1","operation-1")).toMatchObject({accepted:true,expAwarded:10});expect(service.eatPreparedServing("serving-1","operation-1")).toMatchObject({accepted:false,reason:"duplicate"});expect(repository.value.growth.totalExp).toBe(10); });
-  test("inventory rescue and restock remain atomic", () => { const repository:StateRepository & {value:ReturnType<typeof createSeedState>}={value:createSeedState(),read(){return this.value},write(value){this.value=value},reset(){this.value=createSeedState();return this.value}}; expect(getRescuePlan(repository.value.inventory[0]).preserve.packages).toBe(2); const service=new CooCooService(repository); expect(service.restock().count).toBe(1); expect(repository.value.inventory.some((item)=>item.name==="富士蘋果")).toBeTrue(); });
-  test("confirming one inventory batch updates only its trustworthy timestamp", () => { const state=createSeedState();const repository:StateRepository&{value:typeof state}={value:state,read(){return this.value},write(value){this.value=value},reset(){return this.value}};const service=new CooCooService(repository,{now:()=>new Date("2026-09-13T12:00:00.000Z"),id:()=>"id"});const other=state.inventory[1].lastConfirmedAt;expect(service.confirmInventory("i1").lastConfirmedAt).toBe("2026-09-13T12:00:00.000Z");expect(repository.value.inventory[1].lastConfirmedAt).toBe(other); });
-  test("partial restock keeps MealTask open until the remaining quantity is bought", () => { const state=createSeedState();const recipe={...brandSafeRecipes[0],ingredients:[brandSafeRecipes[0].ingredients[0]]};state.inventory=[];state.shoppingItems=[{id:"partial-eggs",name:"雞蛋",category:"protein",qty:1,unit:"顆",checked:true,status:"needed",estCost:15}];state.mealTasks=[createMealTask({operationId:"meal-task-partial",recipePackageId:recipe.recipeId,currentMeal:{date:"2026-09-11",slot:"dinner",servings:1},nextMeal:{strategy:"skip"}},recipe,[],[])];const repository:StateRepository&{value:typeof state}={value:state,read(){return this.value},write(value){this.value=value},reset(){return this.value}};const service=new CooCooService(repository);service.restock();expect(repository.value.mealTasks?.[0]).toMatchObject({status:"needs_shopping",shortages:[{quantity:1,resolution:"needed"}]});service.saveShopping({name:"雞蛋",category:"protein",qty:1,unit:"顆",checked:true,status:"needed",estCost:15});service.restock();expect(repository.value.mealTasks?.[0].status).toBe("ready"); });
-  test("parses Chinese shopping quantities", () => expect(parseShoppingText("雞蛋兩盒、番茄3顆").map((item)=>item.qty)).toEqual([2,3]));
+  test("onboarding creates a weekly habit goal and persists an explicitly confirmed empty fridge", () => {
+    const state = applyOnboardingProfile(createSeedState(), profile, {
+      now: new Date("2026-09-11T00:00:00.000Z"),
+    });
+    expect(state.weeklyGoal).toMatchObject({ metric: "cooking_sessions", target: 2 });
+    expect(state.onboardingProfile).toEqual(profile);
+    expect(state.inventory).toHaveLength(0);
+  });
+  test("hard allergy and unavailable cookware always exclude a recipe", () => {
+    const recipe = brandSafeRecipes[0];
+    expect(
+      evaluateRecipe(recipe, {
+        restrictions: [
+          {
+            id: "egg",
+            label: "蛋過敏",
+            kind: "allergy",
+            ingredientKeys: ["蛋"],
+            isHardLimit: true,
+          },
+        ],
+        cookwareTypes: ["電磁爐"],
+        dailyBudget: 999,
+        energyLevel: "normal",
+      }).eligible,
+    ).toBeFalse();
+    expect(
+      evaluateRecipe(recipe, {
+        restrictions: [],
+        cookwareTypes: ["微波爐"],
+        dailyBudget: 999,
+        energyLevel: "normal",
+      }).eligible,
+    ).toBeFalse();
+  });
+  test("today ranking prioritizes expiring inventory", () =>
+    expect(
+      rankRecipes(
+        brandSafeRecipes,
+        { restrictions: [], cookwareTypes: ["電磁爐"], dailyBudget: 999, energyLevel: "normal" },
+        [{ ingredientKey: "番茄", daysLeft: 1 }],
+      )[0].recipe.title,
+    ).toBe("番茄滑蛋飯"));
+  test("overlap and inventory coverage remain separate", () => {
+    const meals = [
+      plannedMeal("a", [ingredient("番茄", true), ingredient("鹽", false, true)]),
+      plannedMeal("b", [ingredient("番茄"), ingredient("蛋")]),
+    ];
+    expect(calculateIngredientOverlap(meals)).toBe(0.5);
+    expect(calculateInventoryCoverage(meals)).toBe(1 / 3);
+  });
+  test("postpones a meal to the next open slot", () => {
+    const plan: MealPlan = {
+      id: "p",
+      weekStart: "2026-09-07",
+      meals: [plannedMeal("a", [ingredient("番茄")])],
+      overlapRate: 0,
+      inventoryCoverageRate: 0,
+      updatedAt: new Date(0).toISOString(),
+    };
+    expect(postponeMeal(plan, "a", { kind: "next_slot" }).meals[0]).toMatchObject({
+      date: "2026-09-12",
+      slot: "breakfast",
+    });
+  });
+  test("completion creates eaten and prepared servings plus optional cost only", () => {
+    const result = completeCookingSession(
+      { completedOperationIds: [], servings: [], cookingCosts: [] },
+      {
+        operationId: "op-1",
+        sessionId: "session-1",
+        servingsCooked: 2,
+        servingsEaten: 1,
+        ingredientCost: 60,
+        comparisonMealPrice: 150,
+        trackCost: true,
+      },
+      "2026-09-11T00:00:00.000Z",
+    );
+    expect(result.servings.map((item) => item.status)).toEqual(["eaten", "prepared_inventory"]);
+    expect(result.cookingCosts[0]?.difference).toBe(90);
+  });
+  test("eating a prepared serving awards 10 EXP once", () => {
+    const state = createSeedState();
+    state.mealServings = [
+      {
+        id: "serving-1",
+        cookingSessionId: "session-1",
+        status: "prepared_inventory",
+        eatenAt: null,
+        vegetableKeys: [],
+      },
+    ];
+    const repository: StateRepository & { value: typeof state } = {
+      value: state,
+      read() {
+        return this.value;
+      },
+      write(value) {
+        this.value = value;
+      },
+      reset() {
+        return this.value;
+      },
+    };
+    const service = new CooCooService(repository, {
+      now: () => new Date("2026-09-11T00:00:00.000Z"),
+      id: () => "id",
+    });
+    expect(service.eatPreparedServing("serving-1", "operation-1")).toMatchObject({
+      accepted: true,
+      expAwarded: 10,
+    });
+    expect(service.eatPreparedServing("serving-1", "operation-1")).toMatchObject({
+      accepted: false,
+      reason: "duplicate",
+    });
+    expect(repository.value.growth.totalExp).toBe(10);
+  });
+  test("inventory rescue and restock remain atomic", () => {
+    const repository: StateRepository & { value: ReturnType<typeof createSeedState> } = {
+      value: createSeedState(),
+      read() {
+        return this.value;
+      },
+      write(value) {
+        this.value = value;
+      },
+      reset() {
+        this.value = createSeedState();
+        return this.value;
+      },
+    };
+    expect(getRescuePlan(repository.value.inventory[0]).preserve.packages).toBe(2);
+    const service = new CooCooService(repository);
+    expect(service.restock().count).toBe(1);
+    expect(repository.value.inventory.some((item) => item.name === "富士蘋果")).toBeTrue();
+  });
+  test("confirming one inventory batch updates only its trustworthy timestamp", () => {
+    const state = createSeedState();
+    const repository: StateRepository & { value: typeof state } = {
+      value: state,
+      read() {
+        return this.value;
+      },
+      write(value) {
+        this.value = value;
+      },
+      reset() {
+        return this.value;
+      },
+    };
+    const service = new CooCooService(repository, {
+      now: () => new Date("2026-09-13T12:00:00.000Z"),
+      id: () => "id",
+    });
+    const other = state.inventory[1].lastConfirmedAt;
+    expect(service.confirmInventory("i1").lastConfirmedAt).toBe("2026-09-13T12:00:00.000Z");
+    expect(repository.value.inventory[1].lastConfirmedAt).toBe(other);
+  });
+  test("partial restock keeps MealTask open until the remaining quantity is bought", () => {
+    const state = createSeedState();
+    const recipe = { ...brandSafeRecipes[0], ingredients: [brandSafeRecipes[0].ingredients[0]] };
+    state.inventory = [];
+    state.shoppingItems = [
+      {
+        id: "partial-eggs",
+        name: "雞蛋",
+        category: "protein",
+        qty: 1,
+        unit: "顆",
+        checked: true,
+        status: "needed",
+        estCost: 15,
+      },
+    ];
+    state.mealTasks = [
+      createMealTask(
+        {
+          operationId: "meal-task-partial",
+          recipePackageId: recipe.recipeId,
+          currentMeal: { date: "2026-09-11", slot: "dinner", servings: 1 },
+          nextMeal: { strategy: "skip" },
+        },
+        recipe,
+        [],
+        [],
+      ),
+    ];
+    const repository: StateRepository & { value: typeof state } = {
+      value: state,
+      read() {
+        return this.value;
+      },
+      write(value) {
+        this.value = value;
+      },
+      reset() {
+        return this.value;
+      },
+    };
+    const service = new CooCooService(repository);
+    service.restock();
+    expect(repository.value.mealTasks?.[0]).toMatchObject({
+      status: "needs_shopping",
+      shortages: [{ quantity: 1, resolution: "needed" }],
+    });
+    service.saveShopping({
+      name: "雞蛋",
+      category: "protein",
+      qty: 1,
+      unit: "顆",
+      checked: true,
+      status: "needed",
+      estCost: 15,
+    });
+    service.restock();
+    expect(repository.value.mealTasks?.[0].status).toBe("ready");
+  });
+  test("parses Chinese shopping quantities", () =>
+    expect(parseShoppingText("雞蛋兩盒、番茄3顆").map((item) => item.qty)).toEqual([2, 3]));
 });

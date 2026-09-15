@@ -9,19 +9,23 @@ interface ChefAvatarProps {
 const moodConfig: Record<ChefMood, { text: string; className: string }> = {
   listen: {
     text: "聆聽日常",
-    className: "text-[10px] font-bold text-amber-900 bg-amber-100 border border-amber-200/80 px-2 py-0.5 rounded-full",
+    className:
+      "text-[10px] font-bold text-amber-900 bg-amber-100 border border-amber-200/80 px-2 py-0.5 rounded-full",
   },
   applause: {
     text: "CooCoo 給讚！",
-    className: "text-[10px] font-bold text-emerald-900 bg-emerald-100 border border-emerald-200/80 px-2 py-0.5 rounded-full",
+    className:
+      "text-[10px] font-bold text-emerald-900 bg-emerald-100 border border-emerald-200/80 px-2 py-0.5 rounded-full",
   },
   care: {
     text: "最高防線確認",
-    className: "text-[10px] font-bold text-red-900 bg-red-100 border border-red-200/80 px-2 py-0.5 rounded-full",
+    className:
+      "text-[10px] font-bold text-red-900 bg-red-100 border border-red-200/80 px-2 py-0.5 rounded-full",
   },
   sealed: {
     text: "立約見證完成",
-    className: "text-[10px] font-bold text-amber-950 bg-amber-200 border border-amber-300/80 px-2 py-0.5 rounded-full",
+    className:
+      "text-[10px] font-bold text-amber-950 bg-amber-200 border border-amber-300/80 px-2 py-0.5 rounded-full",
   },
 };
 

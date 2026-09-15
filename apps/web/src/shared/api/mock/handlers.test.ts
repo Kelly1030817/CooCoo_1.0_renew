@@ -3,8 +3,7 @@ import { setupServer } from "msw/node";
 import type { OnboardingProfile } from "@coocoo/contracts";
 
 let server: ReturnType<typeof setupServer>;
-const api = (path: string, init?: RequestInit) =>
-  fetch(`http://localhost/api/v1${path}`, init);
+const api = (path: string, init?: RequestInit) => fetch(`http://localhost/api/v1${path}`, init);
 const completedProfile: OnboardingProfile = {
   status: "complete",
   currentStep: 5,
@@ -22,7 +21,15 @@ const completedProfile: OnboardingProfile = {
   plannedMealSlots: ["dinner"],
   primaryGoalMetric: "cooking_sessions",
   weeklyGoalTarget: 3,
-  reminders: { expiringIngredients: true, plannedMeals: true, weeklyRhythm: true, pushEnabled: false, quietHoursStart: "21:00", quietHoursEnd: "09:00", weeklyLimit: 3 },
+  reminders: {
+    expiringIngredients: true,
+    plannedMeals: true,
+    weeklyRhythm: true,
+    pushEnabled: false,
+    quietHoursStart: "21:00",
+    quietHoursEnd: "09:00",
+    weeklyLimit: 3,
+  },
   completedAt: "2026-08-28T00:00:00.000Z",
 };
 
@@ -155,11 +162,14 @@ describe("MSW contract adapter", () => {
     });
   });
 
-
   test("labels preview shopping advice as rules instead of AI", async () => {
     const response = await api("/shopping/analyze", { method: "POST" });
     const body = (await response.json()) as {
-      data: { source: string; notice: string; recommendations: Array<{ item: { id: string }; reason: string }> };
+      data: {
+        source: string;
+        notice: string;
+        recommendations: Array<{ item: { id: string }; reason: string }>;
+      };
     };
     expect(body.data.source).toBe("rules");
     expect(body.data.notice).toContain("OpenRouter");
@@ -167,19 +177,24 @@ describe("MSW contract adapter", () => {
   });
 
   test("serves the today decision and persists one weekly preview plan", async () => {
-    const decision = await (await api("/meal-decisions/today?date=2026-09-07&energy=low")).json() as {
+    const decision = (await (
+      await api("/meal-decisions/today?date=2026-09-07&energy=low")
+    ).json()) as {
       data: { primary: { title: string; steps: unknown[] } | null };
     };
     expect(decision.data.primary?.title).toBeTruthy();
     expect(decision.data.primary?.steps.length).toBeGreaterThan(0);
 
-    const create = () => api("/meal-plans", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ weekStart: "2026-09-07" }),
-    });
-    const first = await (await create()).json() as { data: { plan: { id: string; meals: unknown[] } } };
-    const second = await (await create()).json() as { data: { plan: { id: string } } };
+    const create = () =>
+      api("/meal-plans", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ weekStart: "2026-09-07" }),
+      });
+    const first = (await (await create()).json()) as {
+      data: { plan: { id: string; meals: unknown[] } };
+    };
+    const second = (await (await create()).json()) as { data: { plan: { id: string } } };
     expect(first.data.plan.meals).toHaveLength(1);
     expect(second.data.plan.id).toBe(first.data.plan.id);
   });
@@ -190,7 +205,9 @@ describe("MSW contract adapter", () => {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ ingredientIds: ["i4"], style: "台式" }),
     });
-    const body = await response.json() as { data: { source: string; recipe: { ingredients: unknown[]; steps: unknown[] } } };
+    const body = (await response.json()) as {
+      data: { source: string; recipe: { ingredients: unknown[]; steps: unknown[] } };
+    };
     expect(response.status).toBe(200);
     expect(body.data.source).toBe("brand_safe");
     expect(body.data.recipe.ingredients.length).toBeGreaterThan(0);
@@ -198,7 +215,9 @@ describe("MSW contract adapter", () => {
   });
 
   test("serves recipe settings and small purchase recommendations", async () => {
-    const settings = await (await api("/settings/recipes")).json() as { data: { purchaseBudget: number } };
+    const settings = (await (await api("/settings/recipes")).json()) as {
+      data: { purchaseBudget: number };
+    };
     expect(settings.data.purchaseBudget).toBe(100);
 
     const recsResponse = await api("/recipes/recommendations", {
@@ -207,10 +226,14 @@ describe("MSW contract adapter", () => {
       body: JSON.stringify({ mode: "small_purchase", purchaseBudget: 100, allowRepeat: false }),
     });
     expect(recsResponse.status).toBe(200);
-    const recs = await recsResponse.json() as {
+    const recs = (await recsResponse.json()) as {
       data: {
         mode: string;
-        eligible: Array<{ recipe: { title: string }; missing: unknown[]; estimatedPurchaseCost: number | null }>;
+        eligible: Array<{
+          recipe: { title: string };
+          missing: unknown[];
+          estimatedPurchaseCost: number | null;
+        }>;
       };
     };
     expect(recs.data.mode).toBe("small_purchase");
@@ -218,77 +241,247 @@ describe("MSW contract adapter", () => {
   });
 
   test("confirms an adjustment, restocks the MealTask, and closes it after cooking", async () => {
-    const recipeId="11111111-1111-4111-8111-111111111111";
-    const previewId=crypto.randomUUID();
-    const previewResponse=await api(`/recipes/${recipeId}/adjustments/preview`,{
-      method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({operationId:previewId,servings:2,replacementRequests:[],context:"兩人晚餐"}),
+    const recipeId = "11111111-1111-4111-8111-111111111111";
+    const previewId = crypto.randomUUID();
+    const previewResponse = await api(`/recipes/${recipeId}/adjustments/preview`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        operationId: previewId,
+        servings: 2,
+        replacementRequests: [],
+        context: "兩人晚餐",
+      }),
     });
     expect(previewResponse.status).toBe(200);
-    const taskId=crypto.randomUUID();
-    const taskResponse=await api("/meal-tasks",{
-      method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({operationId:taskId,recipePackageId:recipeId,adjustmentPreviewId:previewId,currentMeal:{date:"2026-09-11",slot:"dinner",servings:2},nextMeal:{strategy:"skip"}}),
+    const taskId = crypto.randomUUID();
+    const taskResponse = await api("/meal-tasks", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        operationId: taskId,
+        recipePackageId: recipeId,
+        adjustmentPreviewId: previewId,
+        currentMeal: { date: "2026-09-11", slot: "dinner", servings: 2 },
+        nextMeal: { strategy: "skip" },
+      }),
     });
-    const task=(await taskResponse.json()) as {data:{recipe:{servings:number};status:string;shortages:Array<{name:string;quantity:number;unit:string}>}};
+    const task = (await taskResponse.json()) as {
+      data: {
+        recipe: { servings: number };
+        status: string;
+        shortages: Array<{ name: string; quantity: number; unit: string }>;
+      };
+    };
     expect(task.data.recipe.servings).toBe(2);
     expect(task.data.status).toBe("needs_shopping");
-    for(const shortage of task.data.shortages){
-      const saved=await api("/shopping-items",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({name:shortage.name,qty:shortage.quantity,unit:shortage.unit,checked:true,status:"MealTask 缺料",estCost:0})});
+    for (const shortage of task.data.shortages) {
+      const saved = await api("/shopping-items", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          name: shortage.name,
+          qty: shortage.quantity,
+          unit: shortage.unit,
+          checked: true,
+          status: "MealTask 缺料",
+          estCost: 0,
+        }),
+      });
       expect(saved.status).toBe(201);
     }
-    await api("/shopping/restock",{method:"POST"});
-    let tasks=(await (await api("/meal-tasks")).json()) as {data:Array<{id:string;status:string}>};
-    expect(tasks.data.find((item)=>item.id===taskId)?.status).toBe("ready");
-    const cookingResponse=await api("/cooking/outcomes",{
-      method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({completionKey:crypto.randomUUID(),mealTaskId:taskId,recipe:{id:crypto.randomUUID(),title:"番茄滑蛋飯",style:"台式",prepTime:"20 分鐘",estCost:"NT$ 72",scientificPrinciple:"充分加熱",ingredients:[],steps:["完成料理"]},ingredientIds:[],ingredientCost:72,trackCost:false,foodSafe:true,vegetables:true,lowOil:false,mindfulSeasoning:false,usedExpiringIngredient:false,completedDoubleMeal:false,servingsCooked:2,servingsEaten:1}),
+    await api("/shopping/restock", { method: "POST" });
+    let tasks = (await (await api("/meal-tasks")).json()) as {
+      data: Array<{ id: string; status: string }>;
+    };
+    expect(tasks.data.find((item) => item.id === taskId)?.status).toBe("ready");
+    const cookingResponse = await api("/cooking/outcomes", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        completionKey: crypto.randomUUID(),
+        mealTaskId: taskId,
+        recipe: {
+          id: crypto.randomUUID(),
+          title: "番茄滑蛋飯",
+          style: "台式",
+          prepTime: "20 分鐘",
+          estCost: "NT$ 72",
+          scientificPrinciple: "充分加熱",
+          ingredients: [],
+          steps: ["完成料理"],
+        },
+        ingredientIds: [],
+        ingredientCost: 72,
+        trackCost: false,
+        foodSafe: true,
+        vegetables: true,
+        lowOil: false,
+        mindfulSeasoning: false,
+        usedExpiringIngredient: false,
+        completedDoubleMeal: false,
+        servingsCooked: 2,
+        servingsEaten: 1,
+      }),
     });
     expect(cookingResponse.status).toBe(201);
-    tasks=(await (await api("/meal-tasks")).json()) as {data:Array<{id:string;status:string}>};
-    expect(tasks.data.find((item)=>item.id===taskId)?.status).toBe("complete");
+    tasks = (await (await api("/meal-tasks")).json()) as {
+      data: Array<{ id: string; status: string }>;
+    };
+    expect(tasks.data.find((item) => item.id === taskId)?.status).toBe("complete");
   });
   test("shortage bridge is idempotent and command restock replays without double intake", async () => {
     const recipeId = "11111111-1111-4111-8111-111111111111";
     const taskResponse = await api("/meal-tasks", {
-      method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ operationId: crypto.randomUUID(), recipePackageId: recipeId, currentMeal: { date: "2026-09-13", slot: "dinner", servings: 1 }, nextMeal: { strategy: "skip" } }),
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        operationId: crypto.randomUUID(),
+        recipePackageId: recipeId,
+        currentMeal: { date: "2026-09-13", slot: "dinner", servings: 1 },
+        nextMeal: { strategy: "skip" },
+      }),
     });
-    const task = (await taskResponse.json()) as { data: { id: string; revision: number; status: string; shortages: Array<{ id: string; name: string; quantity: number; unit: string }> } };
+    const task = (await taskResponse.json()) as {
+      data: {
+        id: string;
+        revision: number;
+        status: string;
+        shortages: Array<{ id: string; name: string; quantity: number; unit: string }>;
+      };
+    };
     expect(task.data.status).toBe("needs_shopping");
     const shortage = task.data.shortages[0];
-    const first = await api("/shopping-items", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: shortage.name, qty: shortage.quantity, unit: shortage.unit, checked: false, status: "MealTask 缺料", estCost: 40, shortageId: shortage.id, source: "task" }) });
-    const second = await api("/shopping-items", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: shortage.name, qty: shortage.quantity, unit: shortage.unit, checked: false, status: "MealTask 缺料", estCost: 40, shortageId: shortage.id, source: "task" }) });
+    const first = await api("/shopping-items", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        name: shortage.name,
+        qty: shortage.quantity,
+        unit: shortage.unit,
+        checked: false,
+        status: "MealTask 缺料",
+        estCost: 40,
+        shortageId: shortage.id,
+        source: "task",
+      }),
+    });
+    const second = await api("/shopping-items", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        name: shortage.name,
+        qty: shortage.quantity,
+        unit: shortage.unit,
+        checked: false,
+        status: "MealTask 缺料",
+        estCost: 40,
+        shortageId: shortage.id,
+        source: "task",
+      }),
+    });
     const firstBody = (await first.json()) as { data: { id: string; shortageId: string } };
     const secondBody = (await second.json()) as { data: { id: string; shortageId: string } };
     expect(secondBody.data.id).toBe(firstBody.data.id);
     const purchasedItems = [];
     for (const item of task.data.shortages) {
-      const created = await api("/shopping-items", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: item.name, qty: item.quantity, unit: item.unit, checked: false, status: "MealTask 缺料", estCost: 40, shortageId: item.id, source: "task" }) });
+      const created = await api("/shopping-items", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          name: item.name,
+          qty: item.quantity,
+          unit: item.unit,
+          checked: false,
+          status: "MealTask 缺料",
+          estCost: 40,
+          shortageId: item.id,
+          source: "task",
+        }),
+      });
       const createdBody = (await created.json()) as { data: { id: string } };
-      await api(`/shopping-items/${createdBody.data.id}`, { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: item.name, qty: item.quantity, unit: item.unit, checked: true, status: "MealTask 缺料", estCost: 40, shortageId: item.id, source: "task" }) });
-      purchasedItems.push({ shoppingItemId: createdBody.data.id, shortageId: item.id, actualQuantity: item.quantity, actualUnit: item.unit, actualPrice: 40, storageLocation: "cold", expiresOn: "2026-09-20" });
+      await api(`/shopping-items/${createdBody.data.id}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          name: item.name,
+          qty: item.quantity,
+          unit: item.unit,
+          checked: true,
+          status: "MealTask 缺料",
+          estCost: 40,
+          shortageId: item.id,
+          source: "task",
+        }),
+      });
+      purchasedItems.push({
+        shoppingItemId: createdBody.data.id,
+        shortageId: item.id,
+        actualQuantity: item.quantity,
+        actualUnit: item.unit,
+        actualPrice: 40,
+        storageLocation: "cold",
+        expiresOn: "2026-09-20",
+      });
     }
     const operationId = crypto.randomUUID();
-    const command = { operationId, mealTaskId: task.data.id, shortageRevision: task.data.revision, purchasedItems };
-    const restockResponse = await api("/shopping/restock", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(command) });
-    const restockBody = (await restockResponse.json()) as { data: { replayed: boolean; count: number; mealTaskStatus: string; nextActions: string[] } };
-    expect(restockBody.data).toMatchObject({ replayed: false, mealTaskStatus: "ready", nextActions: ["return_to_task", "start_cooking"] });
-    const replay = await api("/shopping/restock", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(command) });
+    const command = {
+      operationId,
+      mealTaskId: task.data.id,
+      shortageRevision: task.data.revision,
+      purchasedItems,
+    };
+    const restockResponse = await api("/shopping/restock", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(command),
+    });
+    const restockBody = (await restockResponse.json()) as {
+      data: { replayed: boolean; count: number; mealTaskStatus: string; nextActions: string[] };
+    };
+    expect(restockBody.data).toMatchObject({
+      replayed: false,
+      mealTaskStatus: "ready",
+      nextActions: ["return_to_task", "start_cooking"],
+    });
+    const replay = await api("/shopping/restock", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(command),
+    });
     const replayBody = (await replay.json()) as { data: { replayed: boolean; count: number } };
     expect(replayBody.data).toMatchObject({ replayed: true, count: restockBody.data.count });
-    const conflict = await api("/shopping/restock", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...command, operationId: crypto.randomUUID(), shortageRevision: task.data.revision + 5 }) });
+    const conflict = await api("/shopping/restock", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        ...command,
+        operationId: crypto.randomUUID(),
+        shortageRevision: task.data.revision + 5,
+      }),
+    });
     expect(conflict.status).toBe(409);
   });
 
   test("lists only the latest ten chef chats and deletes one", async () => {
-    for(let index=0;index<11;index+=1){
-      const response=await api("/chef-chat/sessions",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({operationId:crypto.randomUUID(),message:`相談 ${index+1}`})});
+    for (let index = 0; index < 11; index += 1) {
+      const response = await api("/chef-chat/sessions", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ operationId: crypto.randomUUID(), message: `相談 ${index + 1}` }),
+      });
       expect(response.status).toBe(201);
     }
-    const list=(await (await api("/chef-chat/sessions")).json()) as {data:Array<{id:string;title:string}>};
+    const list = (await (await api("/chef-chat/sessions")).json()) as {
+      data: Array<{ id: string; title: string }>;
+    };
     expect(list.data).toHaveLength(10);
     expect(list.data[0].title).toBe("相談 11");
-    const deleted=list.data[0].id;
-    expect((await api(`/chef-chat/sessions/${deleted}`,{method:"DELETE"})).status).toBe(200);
-    const after=(await (await api("/chef-chat/sessions")).json()) as {data:Array<{id:string}>};
-    expect(after.data.some((session)=>session.id===deleted)).toBe(false);
+    const deleted = list.data[0].id;
+    expect((await api(`/chef-chat/sessions/${deleted}`, { method: "DELETE" })).status).toBe(200);
+    const after = (await (await api("/chef-chat/sessions")).json()) as {
+      data: Array<{ id: string }>;
+    };
+    expect(after.data.some((session) => session.id === deleted)).toBe(false);
   });
 });

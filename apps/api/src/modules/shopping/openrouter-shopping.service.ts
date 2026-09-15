@@ -10,11 +10,7 @@ import type {
 const ModelRecommendationSchema = Type.Object(
   {
     itemId: Type.String({ minLength: 1 }),
-    action: Type.Union([
-      Type.Literal("buy_now"),
-      Type.Literal("buy_later"),
-      Type.Literal("skip"),
-    ]),
+    action: Type.Union([Type.Literal("buy_now"), Type.Literal("buy_later"), Type.Literal("skip")]),
     reason: Type.String({ minLength: 1, maxLength: 120 }),
   },
   { additionalProperties: false },
@@ -75,7 +71,9 @@ export class OpenRouterShoppingModel implements ShoppingAnalysisModel {
       headers: {
         authorization: `Bearer ${this.apiKey}`,
         "content-type": "application/json",
-        ...(process.env.OPENROUTER_SITE_URL ? { "http-referer": process.env.OPENROUTER_SITE_URL } : {}),
+        ...(process.env.OPENROUTER_SITE_URL
+          ? { "http-referer": process.env.OPENROUTER_SITE_URL }
+          : {}),
         "x-title": process.env.OPENROUTER_APP_NAME || "CooCoo",
       },
       body: JSON.stringify({
@@ -111,7 +109,10 @@ export class OpenRouterShoppingModel implements ShoppingAnalysisModel {
     if (!Value.Check(ModelShoppingAnalysisSchema, parsed)) {
       throw new Error("OPENROUTER_SCHEMA_INVALID");
     }
-    return { ...parsed, ...(typeof body.usage?.cost === "number" ? { costUsd: body.usage.cost } : {}) };
+    return {
+      ...parsed,
+      ...(typeof body.usage?.cost === "number" ? { costUsd: body.usage.cost } : {}),
+    };
   }
 }
 
@@ -124,7 +125,9 @@ function blockedByRestriction(item: ShoppingItem, restrictions: DietaryRestricti
     .some((restriction) =>
       restriction.ingredientKeys.some((key) => {
         const normalizedKey = normalize(key);
-        return normalizedKey.length > 0 && (name.includes(normalizedKey) || normalizedKey.includes(name));
+        return (
+          normalizedKey.length > 0 && (name.includes(normalizedKey) || normalizedKey.includes(name))
+        );
       }),
     );
 }
@@ -148,12 +151,15 @@ export function buildShoppingPrompt(context: ShoppingAnalysisContext) {
 }
 
 function rulesFallback(context: ShoppingAnalysisContext, notice: string | null): ShoppingAnalysis {
-  const inventoryNames = new Set(context.inventory.filter((item) => item.qty > 0).map((item) => normalize(item.name)));
+  const inventoryNames = new Set(
+    context.inventory.filter((item) => item.qty > 0).map((item) => normalize(item.name)),
+  );
   const candidates = context.shoppingItems
     .filter((item) => !item.checked)
     .slice()
     .sort((left, right) => {
-      const rank = (item: ShoppingItem) => item.category === "produce" ? 0 : item.category === "protein" ? 1 : 2;
+      const rank = (item: ShoppingItem) =>
+        item.category === "produce" ? 0 : item.category === "protein" ? 1 : 2;
       return rank(left) - rank(right);
     })
     .slice(0, 5)
@@ -162,22 +168,36 @@ function rulesFallback(context: ShoppingAnalysisContext, notice: string | null):
         return { item, action: "skip" as const, reason: "與你的過敏或禁食設定衝突，先不要購買。" };
       }
       if (inventoryNames.has(normalize(item.name))) {
-        return { item, action: "buy_later" as const, reason: "冰箱已有相同食材，先確認剩餘份量再補貨。" };
+        return {
+          item,
+          action: "buy_later" as const,
+          reason: "冰箱已有相同食材，先確認剩餘份量再補貨。",
+        };
       }
       return {
         item,
         action: "buy_now" as const,
-        reason: item.category === "produce" ? "優先補足本週自煮需要的新鮮蔬菜。" : "採買單仍需要這項食材。",
+        reason:
+          item.category === "produce"
+            ? "優先補足本週自煮需要的新鮮蔬菜。"
+            : "採買單仍需要這項食材。",
       };
     });
-  const estimatedTotal = candidates.reduce((total, recommendation) =>
-    recommendation.action === "buy_now" ? total + recommendation.item.estCost : total, 0);
+  const estimatedTotal = candidates.reduce(
+    (total, recommendation) =>
+      recommendation.action === "buy_now" ? total + recommendation.item.estCost : total,
+    0,
+  );
   const budget = weeklyBudget(context);
   return {
-    summary: candidates.length > 0 ? "先買真正缺少的食材；已有庫存或不符合飲食限制的品項先保留。" : "目前沒有需要分析的未完成採買品項。",
+    summary:
+      candidates.length > 0
+        ? "先買真正缺少的食材；已有庫存或不符合飲食限制的品項先保留。"
+        : "目前沒有需要分析的未完成採買品項。",
     recommendations: candidates,
     estimatedTotal,
-    budgetStatus: budget === null ? "unknown" : estimatedTotal <= budget ? "within_budget" : "over_budget",
+    budgetStatus:
+      budget === null ? "unknown" : estimatedTotal <= budget ? "within_budget" : "over_budget",
     source: "rules",
     model: null,
     notice,
@@ -186,7 +206,9 @@ function rulesFallback(context: ShoppingAnalysisContext, notice: string | null):
 
 export async function analyzeShopping(
   context: ShoppingAnalysisContext,
-  model: ShoppingAnalysisModel | null = process.env.OPENROUTER_API_KEY ? new OpenRouterShoppingModel() : null,
+  model: ShoppingAnalysisModel | null = process.env.OPENROUTER_API_KEY
+    ? new OpenRouterShoppingModel()
+    : null,
 ): Promise<ShoppingAnalysis> {
   if (!model) return rulesFallback(context, "尚未設定 OpenRouter，已改用安全採買規則。");
   const prompt = buildShoppingPrompt(context);
@@ -199,24 +221,33 @@ export async function analyzeShopping(
         const item = byId.get(priority.itemId);
         if (!item || item.checked || seen.has(item.id)) return [];
         seen.add(item.id);
-        return [{
-          item,
-          action: blockedByRestriction(item, context.restrictions) ? "skip" as const : priority.action,
-          reason: blockedByRestriction(item, context.restrictions)
-            ? "與你的過敏或禁食設定衝突，先不要購買。"
-            : priority.reason,
-        }];
+        return [
+          {
+            item,
+            action: blockedByRestriction(item, context.restrictions)
+              ? ("skip" as const)
+              : priority.action,
+            reason: blockedByRestriction(item, context.restrictions)
+              ? "與你的過敏或禁食設定衝突，先不要購買。"
+              : priority.reason,
+          },
+        ];
       });
       return {
         summary: result.summary,
         recommendations,
-        estimatedTotal: recommendations.reduce((total, recommendation) =>
-          recommendation.action === "buy_now" ? total + recommendation.item.estCost : total, 0),
+        estimatedTotal: recommendations.reduce(
+          (total, recommendation) =>
+            recommendation.action === "buy_now" ? total + recommendation.item.estCost : total,
+          0,
+        ),
         budgetStatus: result.budgetStatus,
         source: "openrouter",
         model: model.model,
         notice: null,
-        ...("costUsd" in result && typeof result.costUsd === "number" ? { costUsd: result.costUsd } : {}),
+        ...("costUsd" in result && typeof result.costUsd === "number"
+          ? { costUsd: result.costUsd }
+          : {}),
       };
     } catch {
       // One bounded retry handles transient provider and structured-output failures.

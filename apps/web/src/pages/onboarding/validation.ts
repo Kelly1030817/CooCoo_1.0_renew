@@ -1,9 +1,6 @@
 import type { OnboardingProfile } from "@coocoo/contracts";
 
-export function isOnboardingStepValid(
-  step: number,
-  profile: OnboardingProfile,
-) {
+export function isOnboardingStepValid(step: number, profile: OnboardingProfile) {
   return step === 1
     ? profile.plannedMealSlots.length > 0
     : step === 2
@@ -11,7 +8,10 @@ export function isOnboardingStepValid(
       : true;
 }
 
-export function completeOnboardingProfile(profile: OnboardingProfile, completedAt: string): OnboardingProfile {
+export function completeOnboardingProfile(
+  profile: OnboardingProfile,
+  completedAt: string,
+): OnboardingProfile {
   return {
     ...profile,
     status: "complete",

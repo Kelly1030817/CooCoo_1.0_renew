@@ -1,11 +1,15 @@
-import type { ApiErrorBody, ApiSuccess } from '@coocoo/contracts'
-import { supabase } from '../auth/supabase'
-import { isApiErrorBody, isApiSuccess, parseJsonText } from '../lib/api-body'
+import type { ApiErrorBody, ApiSuccess } from "@coocoo/contracts";
+import { supabase } from "../auth/supabase";
+import { isApiErrorBody, isApiSuccess, parseJsonText } from "../lib/api-body";
 
 export class ApiError extends Error {
-  readonly status: number
-  readonly body: ApiErrorBody
-  constructor(status: number, body: ApiErrorBody) { super(body.error.message);this.status=status;this.body=body }
+  readonly status: number;
+  readonly body: ApiErrorBody;
+  constructor(status: number, body: ApiErrorBody) {
+    super(body.error.message);
+    this.status = status;
+    this.body = body;
+  }
 }
 
 const fallbackMessages: Record<string, string> = {
@@ -44,8 +48,8 @@ async function readResponse<T>(response: Response): Promise<ApiSuccess<T> | ApiE
   }
 }
 
-type AccessTokenReader = () => Promise<string | null>
-type Fetcher = typeof fetch
+type AccessTokenReader = () => Promise<string | null>;
+type Fetcher = typeof fetch;
 
 function buildRequestHeaders(
   init: RequestInit | undefined,
@@ -62,33 +66,38 @@ function buildRequestHeaders(
   return headers;
 }
 
-export function createApiClient(
-  readAccessToken: AccessTokenReader,
-  fetcher: Fetcher = fetch,
-) {
+export function createApiClient(readAccessToken: AccessTokenReader, fetcher: Fetcher = fetch) {
   return async function request<T>(path: string, init?: RequestInit): Promise<T> {
-    const accessToken = await readAccessToken()
-    const isFormData = init?.body instanceof FormData
+    const accessToken = await readAccessToken();
+    const isFormData = init?.body instanceof FormData;
     const response = await fetcher(`/api/v1${path}`, {
       ...init,
       headers: buildRequestHeaders(init, accessToken, isFormData),
-    })
-    const body = await readResponse<T>(response)
+    });
+    const body = await readResponse<T>(response);
     if (!response.ok || isApiErrorBody(body)) {
-      throw new ApiError(response.status, isApiErrorBody(body) ? body : {
-        error: {
-          code: `HTTP_${response.status}`,
-          message: "操作未完成，請稍後再試。",
-          requestId: response.headers.get("x-request-id") || "client-response",
-        },
-      })
+      throw new ApiError(
+        response.status,
+        isApiErrorBody(body)
+          ? body
+          : {
+              error: {
+                code: `HTTP_${response.status}`,
+                message: "操作未完成，請稍後再試。",
+                requestId: response.headers.get("x-request-id") || "client-response",
+              },
+            },
+      );
     }
-    return body.data
-  }
+    return body.data;
+  };
 }
 
-export const api = createApiClient(async () =>
-  (await supabase?.auth.getSession())?.data.session?.access_token ?? null,
-)
+export const api = createApiClient(
+  async () => (await supabase?.auth.getSession())?.data.session?.access_token ?? null,
+);
 
-export const json = (method:string, value:unknown):RequestInit => ({method,body:JSON.stringify(value)})
+export const json = (method: string, value: unknown): RequestInit => ({
+  method,
+  body: JSON.stringify(value),
+});

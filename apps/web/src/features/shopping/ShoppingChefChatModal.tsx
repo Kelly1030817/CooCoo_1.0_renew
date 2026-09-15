@@ -7,7 +7,12 @@ export interface ShoppingChefChatModalProps {
   onClose: () => void;
   activeTask?: MealTask | null;
   rescuedItems?: InventoryItem[];
-  onApplyReplacement?: (shortageId: string, replacementName: string, qty: number, unit: string) => Promise<void>;
+  onApplyReplacement?: (
+    shortageId: string,
+    replacementName: string,
+    qty: number,
+    unit: string,
+  ) => Promise<void>;
 }
 
 export function ShoppingChefChatModal({
@@ -93,7 +98,7 @@ export function ShoppingChefChatModal({
         json("POST", {
           operationId: crypto.randomUUID(),
           message: textToSend,
-        })
+        }),
       );
       await refetch();
       await queryClient.invalidateQueries({ queryKey: ["chef-chat-sessions"] });
@@ -125,7 +130,7 @@ export function ShoppingChefChatModal({
           candidateShortage.id,
           suggestedReplacement.name,
           suggestedReplacement.qty,
-          suggestedReplacement.unit
+          suggestedReplacement.unit,
         );
       }
       setAdoptedShortageId(candidateShortage.id);
@@ -143,7 +148,7 @@ export function ShoppingChefChatModal({
       s.messages.map((m) => ({
         ...m,
         source: s.source,
-      }))
+      })),
     );
   }, [sessions]);
 
@@ -189,8 +194,13 @@ export function ShoppingChefChatModal({
 
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="text-xs font-black text-stone-900 tracking-tight">主廚 CooCoo</span>
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" title="AI 連線在線" />
+                  <span className="text-xs font-black text-stone-900 tracking-tight">
+                    主廚 CooCoo
+                  </span>
+                  <span
+                    className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"
+                    title="AI 連線在線"
+                  />
                   <span className="text-[9px] font-bold text-amber-900 bg-amber-100 px-1.5 py-0.2 rounded-full border border-amber-200">
                     聆聽日常
                   </span>
@@ -237,7 +247,10 @@ export function ShoppingChefChatModal({
                 <p className="m-0 font-medium">
                   {activeTask ? (
                     <>
-                      嗨！我看到你這次的任務是「<strong className="text-[#9a442d] font-bold">{activeTask.recipe.title}</strong>
+                      嗨！我看到你這次的任務是「
+                      <strong className="text-[#9a442d] font-bold">
+                        {activeTask.recipe.title}
+                      </strong>
                       」，目前尚缺{" "}
                       <strong className="text-[#9a442d]">
                         {activeTask.shortages.map((s) => s.name).join("、")}
@@ -281,7 +294,8 @@ export function ShoppingChefChatModal({
                           主廚現場替代提案
                         </span>
                         <span className="text-[9px] text-[#716b60]">
-                          預估差額 <b className="text-[#9a442d]">NT$ {suggestedReplacement.estCost}</b>
+                          預估差額{" "}
+                          <b className="text-[#9a442d]">NT$ {suggestedReplacement.estCost}</b>
                         </span>
                       </div>
 

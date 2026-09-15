@@ -26,8 +26,6 @@ test("onboarding step 3 local preview copy aria tree", async ({ page }) => {
   await expect(page.getByRole("button", { name: "電磁爐" })).toBeVisible();
   await page.getByRole("button", { name: "電磁爐" }).click();
   await page.getByRole("button", { name: "繼續 ›" }).click();
-  await expect(
-    page.getByText("本機 Preview 使用測試資料；正式環境會先要求登入。"),
-  ).toBeVisible();
+  await expect(page.getByText("本機 Preview 使用測試資料；正式環境會先要求登入。")).toBeVisible();
   await expect(page.locator("body")).toMatchAriaSnapshot({ name: "onboarding-step-3" });
 });

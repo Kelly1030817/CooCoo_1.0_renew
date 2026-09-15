@@ -48,7 +48,11 @@ export const LOW_ENERGY_EMERGENCY_RECIPE: RecipePackage = {
       order: 1,
       instruction: "單鍋熱鍋下麻油，打入雞蛋中火煎至邊緣微焦香酥脆（約 2 分鐘）。",
       compactInstruction: "麻油中火煎蛋 2 分鐘，直到邊緣微焦且蛋白蛋黃完全凝固。",
-      guidance: { successCue: "雞蛋邊緣微焦，蛋白與蛋黃都已完全凝固。", why: "先煎蛋能替湯底增加焦香。", rescueTip: "油花太大時立刻轉小火並用鍋蓋遮擋。" },
+      guidance: {
+        successCue: "雞蛋邊緣微焦，蛋白與蛋黃都已完全凝固。",
+        why: "先煎蛋能替湯底增加焦香。",
+        rescueTip: "油花太大時立刻轉小火並用鍋蓋遮擋。",
+      },
       voiceText: "單鍋熱鍋下麻油，打入雞蛋中火煎至邊緣微焦香酥脆",
       timerSeconds: 120,
       safetyNote: "熱油留意油花噴濺，下蛋後轉中小火",
@@ -58,7 +62,11 @@ export const LOW_ENERGY_EMERGENCY_RECIPE: RecipePackage = {
       order: 2,
       instruction: "免換鍋！直接沖入 400ml 熱開水，大火滾煮 1 分鐘激發濃郁白湯底。",
       compactInstruction: "同鍋加入 400 毫升熱水，大火煮滾 1 分鐘。",
-      guidance: { successCue: "湯持續冒大泡並呈現淡白色。", why: "熱水能縮短再次煮滾的時間。", rescueTip: "湯快溢出時立即轉中火。" },
+      guidance: {
+        successCue: "湯持續冒大泡並呈現淡白色。",
+        why: "熱水能縮短再次煮滾的時間。",
+        rescueTip: "湯快溢出時立即轉中火。",
+      },
       voiceText: "免換鍋，直接沖入熱開水，大火滾煮激發濃郁白湯底",
       timerSeconds: 60,
       safetyNote: null,
@@ -68,7 +76,11 @@ export const LOW_ENERGY_EMERGENCY_RECIPE: RecipePackage = {
       order: 3,
       instruction: "放入烏龍麵與青菜，中火燜煮 3 分鐘，加少許鹽與白胡椒調味。",
       compactInstruction: "放入烏龍麵與青菜，中火煮 3 分鐘後調味。",
-      guidance: { successCue: "麵條散開無硬芯，青菜熟軟。", why: "同鍋煮能減少清洗與備料負擔。", rescueTip: "麵仍偏硬時延長 30 秒再確認。" },
+      guidance: {
+        successCue: "麵條散開無硬芯，青菜熟軟。",
+        why: "同鍋煮能減少清洗與備料負擔。",
+        rescueTip: "麵仍偏硬時延長 30 秒再確認。",
+      },
       voiceText: "放入烏龍麵與青菜，中火燜煮三分鐘，加少許鹽與白胡椒調味",
       timerSeconds: 180,
       safetyNote: null,
@@ -78,7 +90,11 @@ export const LOW_ENERGY_EMERGENCY_RECIPE: RecipePackage = {
       order: 4,
       instruction: "整鍋端起即可享用！全程僅用 1 個鍋子，美味暖胃又免洗多餘碗盤。",
       compactInstruction: "關火，將鍋子放上隔熱墊後即可食用。",
-      guidance: { successCue: "爐火已關閉，鍋具放置穩固。", why: null, rescueTip: "鍋柄或鍋身過熱時不要直接端起。" },
+      guidance: {
+        successCue: "爐火已關閉，鍋具放置穩固。",
+        why: null,
+        rescueTip: "鍋柄或鍋身過熱時不要直接端起。",
+      },
       voiceText: "整鍋端起即可享用，全程僅用一個鍋子",
       timerSeconds: null,
       safetyNote: null,
@@ -129,9 +145,7 @@ export function hasCompatibleEmergencyCookware(cookwareTypes: string[] = []) {
   );
 }
 
-export function findEmergencyRecipeRestriction(
-  restrictions: DietaryRestriction[] = [],
-) {
+export function findEmergencyRecipeRestriction(restrictions: DietaryRestriction[] = []) {
   return restrictions.find((restriction) => {
     if (!restriction.isHardLimit) return false;
     const tokens = [restriction.label, ...restriction.ingredientKeys]

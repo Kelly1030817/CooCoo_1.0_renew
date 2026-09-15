@@ -51,7 +51,13 @@ export function ChefSignature({ runAnimation = false }: ChefSignatureProps) {
             </linearGradient>
 
             <filter id="goldInkSpread" x="-10%" y="-10%" width="120%" height="120%">
-              <feDropShadow dx="0" dy="0.5" stdDeviation="0.4" floodColor="#b45309" floodOpacity="0.35" />
+              <feDropShadow
+                dx="0"
+                dy="0.5"
+                stdDeviation="0.4"
+                floodColor="#b45309"
+                floodOpacity="0.35"
+              />
             </filter>
           </defs>
 

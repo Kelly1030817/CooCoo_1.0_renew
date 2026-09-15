@@ -40,7 +40,9 @@ export function BottomNav({
             aria-current={active === id ? "page" : undefined}
             className={active === id ? "active" : ""}
           >
-            <span className={`material-symbols-outlined ${active === id ? "fill" : ""}`}>{icon}</span>
+            <span className={`material-symbols-outlined ${active === id ? "fill" : ""}`}>
+              {icon}
+            </span>
             <span>{label}</span>
             {id === "fridge" && urgent > 0 && <b>{urgent}</b>}
             {id === "shopping" && shopping > 0 && <b>{shopping}</b>}
