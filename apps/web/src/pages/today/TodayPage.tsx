@@ -7,6 +7,30 @@ import type {
   TodayDecision,
 } from "@coocoo/contracts";
 import { CHEF_RANKS, EXP_POINTS, dateInTimeZone, todayMealNumberLabel } from "@coocoo/core";
+import {
+  ArrowLeftRight,
+  Award,
+  CalendarDays,
+  Check,
+  CheckCircle2,
+  ChevronRight,
+  Clock,
+  CookingPot,
+  Flag,
+  Flame,
+  GitBranch,
+  Info,
+  ListOrdered,
+  MoreHorizontal,
+  Refrigerator,
+  RefreshCw,
+  ShoppingCart,
+  SlidersHorizontal,
+  Soup,
+  UtensilsCrossed,
+  Wallet,
+  X,
+} from "lucide-react";
 import { useAppState, stateQueryKey } from "@/entities/app-state/model";
 import { useUi } from "@/app/ui-context";
 import { RecipePackageModal } from "@/features/cooking/RecipeModal";
@@ -19,7 +43,6 @@ import {
 } from "@/features/cooking/emergencyRecipe";
 import { api, json } from "@/shared/api/client";
 import { shouldAutoSwitchToPurchase } from "./recommendationMode";
-import "./TodayPage.css";
 
 const subtitles: Record<string, string> = {
   番茄滑蛋飯: "先用掉冰箱裡的蛋與番茄，一鍋到底滑嫩起鍋",
@@ -223,7 +246,7 @@ export function TodayPage() {
           </div>
         </section>
         <div className="today-loading-card" role="status">
-          <span className="material-symbols-outlined spinning">sync</span>
+          <RefreshCw aria-hidden="true" className="animate-spin" />
           <p>正在依你的廚具、時間與庫存檢核今日餐點…</p>
         </div>
       </div>
@@ -316,8 +339,8 @@ export function TodayPage() {
       <section className="today-hud" aria-label="主廚職階與 EXP">
         <div className="hud-row">
           <div className="hud-chef">
-            <span className="hud-avatar material-symbols-outlined" aria-hidden="true">
-              local_fire_department
+            <span className="hud-avatar" aria-hidden="true">
+              <Flame />
             </span>
             <div className="hud-chef-text">
               <strong>{rank.name}</strong>
@@ -405,12 +428,14 @@ export function TodayPage() {
                   <small>檢核</small>
                   <strong>!</strong>
                 </div>
-                <span className="material-symbols-outlined stub-icon">tune</span>
+                <span className="stub-icon" aria-hidden="true">
+                  <SlidersHorizontal />
+                </span>
               </div>
               <div className="ticket-body">
                 <div className="meal-tags">
                   <span className="tag-warning">
-                    <span className="material-symbols-outlined">info</span>
+                    <Info aria-hidden="true" />
                     {ticketMode === "purchase" ? "少量補買條件檢核" : "冰箱現有庫存檢核"}
                   </span>
                 </div>
@@ -435,16 +460,16 @@ export function TodayPage() {
                       className="diag-action-btn primary highlight-switch"
                       onClick={() => setTicketMode("purchase")}
                     >
-                      <span className="material-symbols-outlined">shopping_cart</span>
+                      <ShoppingCart aria-hidden="true" />
                       查看「少量補買」候選（{purchaseChoices.length} 道）
                     </button>
                   )}
                   <a href="/fridge" className="diag-action-btn secondary">
-                    <span className="material-symbols-outlined">kitchen</span>
+                    <Refrigerator aria-hidden="true" />
                     前往「冰箱」新增或盤點食材
                   </a>
                   <a href="/me" className="diag-action-btn text">
-                    <span className="material-symbols-outlined">skillet</span>
+                    <CookingPot aria-hidden="true" />
                     前往「我的」新增或調整廚具
                   </a>
                 </div>
@@ -465,7 +490,9 @@ export function TodayPage() {
                     ))}
                   </span>
                 </div>
-                <span className="material-symbols-outlined stub-icon">restaurant</span>
+                <span className="stub-icon" aria-hidden="true">
+                  <UtensilsCrossed />
+                </span>
               </div>
 
               <div className="ticket-body">
@@ -481,7 +508,7 @@ export function TodayPage() {
                         setEnergyLow(false);
                       }}
                     >
-                      <span className="material-symbols-outlined">kitchen</span>
+                      <Refrigerator aria-hidden="true" />
                       冰箱就能煮{choices.length > 0 ? `（${choices.length}）` : "（0）"}
                     </button>
                     <button
@@ -494,7 +521,7 @@ export function TodayPage() {
                         setEnergyLow(false);
                       }}
                     >
-                      <span className="material-symbols-outlined">shopping_cart</span>
+                      <ShoppingCart aria-hidden="true" />
                       補買{purchaseLoading ? "…" : `（${purchaseChoices.length}）`}
                     </button>
                   </div>
@@ -502,19 +529,21 @@ export function TodayPage() {
 
                 <div className="meal-tags">
                   <span className="tag-time">
-                    <span className="material-symbols-outlined">schedule</span>
+                    <Clock aria-hidden="true" />
                     {totalMinutes <= 15 ? "15 分快手" : `${totalMinutes} 分鐘`}
                   </span>
                   <span
                     className={`tag-coverage ${ticketMode !== "purchase" ? "tag-covered" : "tag-purchase"}`}
                   >
-                    <span className="material-symbols-outlined">
-                      {missingCount > 0 ? "shopping_cart" : "check_circle"}
-                    </span>
+                    {missingCount > 0 ? (
+                      <ShoppingCart aria-hidden="true" />
+                    ) : (
+                      <CheckCircle2 aria-hidden="true" />
+                    )}
                     {missingCount > 0 ? `需補 ${missingCount} 樣` : "庫存足夠"}
                   </span>
                   <span className="tag-cost">
-                    <span className="material-symbols-outlined">payments</span>
+                    <Wallet aria-hidden="true" />
                     NT$ {recommended.estimatedCost}
                   </span>
                 </div>
@@ -523,15 +552,15 @@ export function TodayPage() {
 
                 <div className="ticket-stats">
                   <div className="tstat">
-                    <span className="material-symbols-outlined">skillet</span>
+                    <CookingPot aria-hidden="true" />
                     <b>{cookwareLabel}</b>
                   </div>
                   <div className="tstat">
-                    <span className="material-symbols-outlined">format_list_numbered</span>
+                    <ListOrdered aria-hidden="true" />
                     <b>{stepCount}</b>
                   </div>
                   <div className="tstat">
-                    <span className="material-symbols-outlined">schedule</span>
+                    <Clock aria-hidden="true" />
                     <b>{totalMinutes}m</b>
                   </div>
                 </div>
@@ -550,9 +579,11 @@ export function TodayPage() {
                           key={item.ingredientKey}
                           className={`route-chip ${isMissing ? "missing" : item.coveredByInventory ? "covered" : ""}`}
                         >
-                          <span className="material-symbols-outlined">
-                            {isMissing ? "shopping_cart" : "check"}
-                          </span>
+                          {isMissing ? (
+                            <ShoppingCart aria-hidden="true" />
+                          ) : (
+                            <Check aria-hidden="true" />
+                          )}
                           {item.name}
                         </span>
                       );
@@ -561,12 +592,11 @@ export function TodayPage() {
 
                 <div className="ticket-rewards">
                   <span className="reward-chip xp">
-                    <span className="material-symbols-outlined">local_fire_department</span>+
-                    {EXP_POINTS.cooking_completed} EXP
+                    <Flame aria-hidden="true" />+{EXP_POINTS.cooking_completed} EXP
                   </span>
                   {nextBadge && (
                     <span className="reward-chip badge">
-                      <span className="material-symbols-outlined">military_tech</span>
+                      <Award aria-hidden="true" />
                       {nextBadge.title} {nextBadge.current}/{nextBadge.target}
                     </span>
                   )}
@@ -586,7 +616,7 @@ export function TodayPage() {
                     }}
                   >
                     <span className="cook-choice-label">
-                      <span className="material-symbols-outlined">local_fire_department</span>
+                      <Flame aria-hidden="true" />
                       {ticketMode === "purchase" && missingCount > 0 ? "補買前確認" : "就煮這道"}
                     </span>
                   </button>
@@ -596,7 +626,7 @@ export function TodayPage() {
                     aria-label="更多細節"
                     onClick={() => setDetailOpen(true)}
                   >
-                    <span className="material-symbols-outlined">more_horiz</span>
+                    <MoreHorizontal aria-hidden="true" />
                   </button>
                 </div>
               </div>
@@ -611,7 +641,7 @@ export function TodayPage() {
                       onClick={() => setDetailOpen(false)}
                       aria-label="關閉"
                     >
-                      <span className="material-symbols-outlined">close</span>
+                      <X aria-hidden="true" />
                     </button>
                   </div>
                   <p className="detail-why">
@@ -641,7 +671,8 @@ export function TodayPage() {
           {ticketMode !== "purchase" && alternativeMeals.length > 0 && (
             <section className="alt-stubs" aria-label="三個可行方向">
               <h4>
-                <span className="material-symbols-outlined">alt_route</span>三個可行方向
+                <GitBranch aria-hidden="true" />
+                三個可行方向
               </h4>
               {alternativeMeals.map((meal, index) => (
                 <button
@@ -655,22 +686,24 @@ export function TodayPage() {
                     <strong>{meal.title}</strong>
                     <span className="mmeta">
                       <span>
-                        <span className="material-symbols-outlined">payments</span>NT${" "}
-                        {meal.estimatedCost}
+                        <Wallet aria-hidden="true" />
+                        NT$ {meal.estimatedCost}
                       </span>
                       {meal.ingredients.some((i) => !i.isPantryStaple && !i.coveredByInventory) ? (
                         <span>
-                          <span className="material-symbols-outlined">shopping_cart</span>需補
+                          <ShoppingCart aria-hidden="true" />
+                          需補
                         </span>
                       ) : (
                         <span>
-                          <span className="material-symbols-outlined">check_circle</span>現有
+                          <CheckCircle2 aria-hidden="true" />
+                          現有
                         </span>
                       )}
                     </span>
                   </span>
-                  <span className="mside">
-                    <span className="material-symbols-outlined">swap_horiz</span>
+                  <span className="mside" aria-hidden="true">
+                    <ArrowLeftRight />
                   </span>
                 </button>
               ))}
@@ -681,7 +714,8 @@ export function TodayPage() {
           {ticketMode === "purchase" && purchaseAlternatives.length > 0 && (
             <section className="alt-stubs" aria-label="其他補買候選">
               <h4>
-                <span className="material-symbols-outlined">shopping_cart</span>其他補買候選
+                <ShoppingCart aria-hidden="true" />
+                其他補買候選
               </h4>
               {purchaseAlternatives.map((item) => (
                 <button
@@ -695,19 +729,19 @@ export function TodayPage() {
                     <strong>{item.recipe.title}</strong>
                     <span className="mmeta">
                       <span>
-                        <span className="material-symbols-outlined">payments</span>NT${" "}
-                        {item.recipe.estimatedCost}
+                        <Wallet aria-hidden="true" />
+                        NT$ {item.recipe.estimatedCost}
                       </span>
                       {item.missing.length > 0 && (
                         <span>
-                          <span className="material-symbols-outlined">shopping_cart</span>
+                          <ShoppingCart aria-hidden="true" />
                           {item.missing.length}
                         </span>
                       )}
                     </span>
                   </span>
-                  <span className="mside">
-                    <span className="material-symbols-outlined">swap_horiz</span>
+                  <span className="mside" aria-hidden="true">
+                    <ArrowLeftRight />
                   </span>
                 </button>
               ))}
@@ -719,7 +753,7 @@ export function TodayPage() {
             <div className="cooked-inventory-capsule" role="status">
               <div className="cooked-capsule-info">
                 <span className="cooked-capsule-icon" aria-hidden="true">
-                  <span className="material-symbols-outlined">ramen_dining</span>
+                  <Soup />
                 </span>
                 <div className="cooked-capsule-text">
                   <div className="cooked-capsule-header">
@@ -742,12 +776,13 @@ export function TodayPage() {
           {/* 今日任務 */}
           <section className="mission-list" aria-label="今日任務">
             <h4>
-              <span className="material-symbols-outlined">flag</span>今日任務
+              <Flag aria-hidden="true" />
+              今日任務
             </h4>
             {missions.map((mission) => (
               <div className={`mrow ${mission.done ? "done" : ""}`} key={mission.key}>
                 <span className="mmark">
-                  <span className="material-symbols-outlined">check</span>
+                  <Check aria-hidden="true" />
                 </span>
                 <span className="mlabel">
                   {mission.label}
@@ -763,12 +798,14 @@ export function TodayPage() {
                 </span>
                 <span className="rw">{mission.done ? "已入帳" : `+${mission.reward}`}</span>
                 {!mission.done && (
-                  <span className="mgo material-symbols-outlined" aria-hidden="true">
-                    {mission.key === "cook_today"
-                      ? "local_fire_department"
-                      : mission.key === "eat_prepared"
-                        ? "ramen_dining"
-                        : "schedule"}
+                  <span className="mgo" aria-hidden="true">
+                    {mission.key === "cook_today" ? (
+                      <Flame />
+                    ) : mission.key === "eat_prepared" ? (
+                      <Soup />
+                    ) : (
+                      <Clock />
+                    )}
                   </span>
                 )}
               </div>
@@ -779,8 +816,8 @@ export function TodayPage() {
 
       {/* 本週節奏（單行進度） */}
       <div className="weekstrip">
-        <span className="wk">
-          <span className="material-symbols-outlined">calendar_month</span>
+        <span className="wk" aria-hidden="true">
+          <CalendarDays />
         </span>
         <div className="wtxt">
           <b>
@@ -795,7 +832,7 @@ export function TodayPage() {
           </div>
         </div>
         <a className="wgo" href="/me" aria-label="前往我的">
-          <span className="material-symbols-outlined">chevron_right</span>
+          <ChevronRight aria-hidden="true" />
         </a>
       </div>
 

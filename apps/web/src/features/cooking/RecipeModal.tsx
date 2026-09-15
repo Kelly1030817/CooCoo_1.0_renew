@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Recipe, RecipeGeneration, RecipePackage } from "@coocoo/contracts";
+import { Sparkles } from "lucide-react";
 import { api, json, ApiError } from "@/shared/api/client";
 import { Modal, ModalHeader } from "@/shared/ui/Modal";
 import { useUi } from "@/app/ui-context";
@@ -59,9 +60,7 @@ export function RecipeModal({
     return (
       <Modal label="食譜準備中" onClose={onClose}>
         <div className="py-xl text-center">
-          <span className="material-symbols-outlined animate-pulse text-5xl text-secondary">
-            auto_awesome
-          </span>
+          <Sparkles aria-hidden="true" className="mx-auto size-12 animate-pulse text-secondary" />
           <h3 className="mt-md font-extrabold text-slate-blue">正在依設定整理料理</h3>
         </div>
       </Modal>

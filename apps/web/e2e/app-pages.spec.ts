@@ -25,6 +25,9 @@ test("/today aria tree", async ({ page }) => {
   await page.goto("/today");
   await expect(page.getByRole("region", { name: "今日任務" })).toBeVisible();
   await expect(page.locator("body")).toMatchAriaSnapshot({ name: "today" });
+  await assertNoHorizontalOverflow(page);
+  await page.setViewportSize({ width: 320, height: 844 });
+  await assertNoHorizontalOverflow(page);
 });
 
 test("/shopping aria tree", async ({ page }) => {
