@@ -10,19 +10,13 @@
     - text: /職階進度 0 \/ \d+/
   - paragraph: GROCERY & MEALTASKS
   - heading "採買清單" [level=2]
-  - button "add 新增品項"
-  - button /auto_awesome AI 陪我逛 每日 \d+ 則 · 雙向對話/:
-    - text: ""
+  - button "新增品項"
+  - button /AI 陪我逛 每日 \d+ 則 · 雙向對話/:
     - strong: AI 陪我逛
-    - text: ""
-  - button "document_scanner 掃描發票 逐項確認後直接入庫":
-    - text: ""
+  - button "掃描發票 逐項確認後直接入庫":
     - strong: 掃描發票
-    - text: ""
-  - button "mic 用說的新增 也可以直接打字":
-    - text: ""
+  - button "用說的新增 也可以直接打字":
     - strong: 用說的新增
-    - text: ""
   - strong: 0 % 任務補齊度
   - heading "先選一道料理開始" [level=2]
   - paragraph: 確認料理後，必要食材會自動成為任務票上的章格。
@@ -43,7 +37,7 @@
   - strong: 這次採買算到哪裡？
   - text: 等待確認料理任務
   - button "查看依據"
-  - text: 這一餐 · 待確認 尚未選擇 到今日選擇料理 下一餐 · 待確認 待確認 不納入計算 不自動加購 尚未選定的料理不會進入 MealTask；確認菜色與份數後才重新計算缺口。 shopping_basket 1 已勾選 1 項 · 任務 0/0 · 預估
+  - text: 這一餐 · 待確認 尚未選擇 到今日選擇料理 下一餐 · 待確認 待確認 不納入計算 不自動加購 尚未選定的料理不會進入 MealTask；確認菜色與份數後才重新計算缺口。 已勾選 1 項 · 任務 0/0 · 預估
   - strong: /NT\$ \d+/
   - button "完成這次採買"
 - navigation "主要功能":

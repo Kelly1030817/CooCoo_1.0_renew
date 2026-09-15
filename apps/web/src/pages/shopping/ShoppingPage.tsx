@@ -1,4 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  ArrowRight,
+  BadgeCheck,
+  Flame,
+  Mic,
+  Plus,
+  ScanLine,
+  ShoppingBasket,
+  Sparkles,
+} from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import type {
   InventoryItem,
@@ -22,7 +32,6 @@ import { RecipePackageModal } from "@/features/cooking/RecipeModal";
 import { IngredientIcon } from "@/shared/ui/IngredientIcon";
 import { useAppRoute } from "@/app/routing/useAppRoute";
 import { CHEF_RANKS } from "@coocoo/core";
-import "./ShoppingPage.css";
 
 type DraftLine = {
   item: ShoppingItem;
@@ -428,8 +437,8 @@ export function ShoppingPage() {
       <section className="shopping-hud" aria-label="主廚職階進度">
         <div className="hud-row">
           <div className="hud-chef">
-            <span className="hud-avatar material-symbols-outlined" aria-hidden="true">
-              local_fire_department
+            <span className="hud-avatar" aria-hidden="true">
+              <Flame />
             </span>
             <div>
               <strong>{growth.rank.name}</strong>
@@ -463,9 +472,7 @@ export function ShoppingPage() {
               <h2>採買清單</h2>
             </div>
             <button type="button" onClick={() => ui.open(addShoppingModalNode(ui.close))}>
-              <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>
-                add
-              </span>
+              <Plus aria-hidden="true" />
               <span>新增品項</span>
             </button>
           </section>
@@ -477,17 +484,23 @@ export function ShoppingPage() {
                 ui.open(shoppingChefChatModalNode(ui.close, activeTask, rescued, applyReplacement))
               }
             >
-              <span className="material-symbols-outlined">auto_awesome</span>
+              <span aria-hidden="true">
+                <Sparkles />
+              </span>
               <strong>AI 陪我逛</strong>
               <small>每日 30 則 · 雙向對話</small>
             </button>
             <button type="button" onClick={() => ui.open(invoiceModalNode(ui.close))}>
-              <span className="material-symbols-outlined">document_scanner</span>
+              <span aria-hidden="true">
+                <ScanLine />
+              </span>
               <strong>掃描發票</strong>
               <small>逐項確認後直接入庫</small>
             </button>
             <button type="button" onClick={() => ui.open(voiceInputModalNode(ui.close))}>
-              <span className="material-symbols-outlined">mic</span>
+              <span aria-hidden="true">
+                <Mic />
+              </span>
               <strong>用說的新增</strong>
               <small>也可以直接打字</small>
             </button>
@@ -512,8 +525,8 @@ export function ShoppingPage() {
               className={`meal-task-ticket ${activeTask.status === "ready" ? "sealed" : ""}`}
             >
               <div className="ticket-stub">
-                <span className="material-symbols-outlined" aria-hidden="true">
-                  {activeTask.status === "ready" ? "verified" : "local_fire_department"}
+                <span aria-hidden="true">
+                  {activeTask.status === "ready" ? <BadgeCheck /> : <Flame />}
                 </span>
                 <div>
                   <small>任務進度</small>
@@ -711,8 +724,8 @@ export function ShoppingPage() {
                     : "到今日選擇料理"}
                 </i>
               </div>
-              <span className="scope-arrow material-symbols-outlined" aria-hidden="true">
-                arrow_forward
+              <span className="scope-arrow" aria-hidden="true">
+                <ArrowRight />
               </span>
               <div className="scope-card">
                 <span>
@@ -746,8 +759,9 @@ export function ShoppingPage() {
       </div>
 
       <footer className="shopping-basket" aria-live="polite">
-        <span className="basket-icon material-symbols-outlined">
-          shopping_basket<i>{checked.length}</i>
+        <span className="basket-icon" aria-hidden="true">
+          <ShoppingBasket />
+          <i>{checked.length}</i>
         </span>
         <div>
           <small>

@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useMemo, type FormEvent } from "react";
+import { ArrowLeftRight, ArrowUp, BadgeCheck, Info, Sparkles, X } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ChefChatSession, InventoryItem, MealTask } from "@coocoo/contracts";
 import { api, json } from "../../shared/api/client";
@@ -219,7 +220,7 @@ export function ShoppingChefChatModal({
                 }`}
                 title="每日對話上限 30 則"
               >
-                <span className="material-symbols-outlined text-xs">auto_awesome</span>
+                <Sparkles aria-hidden="true" className="size-3" />
                 <span>{remainingQuota} / 30 則</span>
               </span>
 
@@ -229,7 +230,7 @@ export function ShoppingChefChatModal({
                 aria-label="關閉對話"
                 className="w-7 h-7 rounded-full bg-stone-100 hover:bg-stone-200 border border-stone-200 text-stone-600 flex items-center justify-center transition-colors"
               >
-                <span className="material-symbols-outlined text-sm font-bold">close</span>
+                <X aria-hidden="true" className="size-3.5" />
               </button>
             </div>
           </div>
@@ -284,7 +285,7 @@ export function ShoppingChefChatModal({
                 >
                   {adoptedShortageId === candidateShortage.id ? (
                     <div className="flex items-center gap-1.5 text-[#386753] font-black text-xs">
-                      <span className="material-symbols-outlined text-sm font-bold">verified</span>
+                      <BadgeCheck aria-hidden="true" className="size-3.5" />
                       <span>已成功採納！任務已記錄替代為「{suggestedReplacement.name} 1 顆」</span>
                     </div>
                   ) : (
@@ -315,7 +316,7 @@ export function ShoppingChefChatModal({
                         disabled={adopting}
                         className="w-full py-1.5 rounded-lg bg-[#34465b] text-white text-[11px] font-black hover:bg-[#202d3c] transition-all flex items-center justify-center gap-1 shadow-2xs"
                       >
-                        <span className="material-symbols-outlined text-sm">swap_horiz</span>
+                        <ArrowLeftRight aria-hidden="true" className="size-3.5" />
                         <span>
                           {adopting
                             ? "正在更新任務…"
@@ -380,7 +381,7 @@ export function ShoppingChefChatModal({
 
           {errorMessage && (
             <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-sm text-amber-700">info</span>
+              <Info aria-hidden="true" className="size-3.5 text-amber-700" />
               <span>{errorMessage}</span>
             </div>
           )}
@@ -444,7 +445,7 @@ export function ShoppingChefChatModal({
                 className="w-9 h-9 rounded-full bg-[#9a442d] text-white flex items-center justify-center shrink-0 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#833824] transition-colors shadow-2xs"
                 aria-label="發送訊息"
               >
-                <span className="material-symbols-outlined text-base">arrow_upward</span>
+                <ArrowUp aria-hidden="true" className="size-4" />
               </button>
             </form>
           )}

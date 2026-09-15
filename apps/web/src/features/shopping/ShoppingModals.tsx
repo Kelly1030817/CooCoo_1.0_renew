@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Mic, ScanLine } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ShoppingAnalysis, ShoppingItem } from "@coocoo/contracts";
 import { useUi } from "@/app/ui-context";
@@ -132,7 +133,7 @@ export function VoiceInputModal({ onClose }: VoiceInputModalProps) {
     <Modal label="語音輸入採買" onClose={onClose}>
       <ModalHeader title="用說的建立採買單" onClose={onClose} />
       <button onClick={listen} className="voice-capture">
-        <span className="material-symbols-outlined">mic</span>
+        <Mic aria-hidden="true" />
         <strong>{status}</strong>
       </button>
       <textarea
@@ -250,7 +251,7 @@ export function InvoiceModal({ onClose, onConfirmed }: InvoiceModalProps) {
       {!receipt && (
         <>
           <label className="receipt-drop">
-            <span className="material-symbols-outlined">document_scanner</span>
+            <ScanLine aria-hidden="true" />
             <strong>{file?.name || "拍照或選擇發票圖片"}</strong>
             <small>JPEG、PNG、WebP，最多 10MB；純 QR 與手寫單不支援</small>
             <input

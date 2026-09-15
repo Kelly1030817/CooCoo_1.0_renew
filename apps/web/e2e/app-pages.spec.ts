@@ -34,6 +34,9 @@ test("/shopping aria tree", async ({ page }) => {
   await page.goto("/shopping");
   await expect(page.getByRole("heading", { name: "採買清單" })).toBeVisible();
   await expect(page.locator("body")).toMatchAriaSnapshot({ name: "shopping" });
+  await assertNoHorizontalOverflow(page);
+  await page.setViewportSize({ width: 320, height: 844 });
+  await assertNoHorizontalOverflow(page);
 });
 
 test("/fridge aria tree", async ({ page }) => {
