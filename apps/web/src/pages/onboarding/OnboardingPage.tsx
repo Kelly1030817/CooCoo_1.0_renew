@@ -1,83 +1,21 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import type { HabitBarrier, OnboardingProfile } from "@coocoo/contracts";
 import { api, json } from "@/shared/api/client";
 import { stateQueryKey } from "@/entities/app-state/model";
-import {
-  emptyOnboardingDraft,
-  readOnboardingDraft,
-  saveOnboardingDraft,
-} from "@/shared/model/onboarding-draft";
+import { saveOnboardingDraft } from "@/shared/model/onboarding-draft";
 import { queryClient } from "@/app/query-client";
 import { authSessionQueryKey, useAuthSession } from "@/shared/auth/session";
 import { onboardingRedirectTo, startGoogleAuth, supabase } from "@/shared/auth/supabase";
-import { ChefAvatar, type ChefMood } from "./ChefAvatar";
-import { PassportTicket } from "./PassportTicket";
+import { ChefAvatar, type ChefMood } from "@/widgets/onboarding/ChefAvatar";
+import { OnboardingStep1 } from "@/widgets/onboarding/OnboardingStep1";
+import { OnboardingStep2 } from "@/widgets/onboarding/OnboardingStep2";
+import { OnboardingStep3 } from "@/widgets/onboarding/OnboardingStep3";
+import { useOnboardingDraft } from "@/widgets/onboarding/useOnboardingDraft";
+import { useOnboardingStep } from "@/widgets/onboarding/useOnboardingStep";
 import { completeOnboardingProfile, isOnboardingStepValid } from "./validation";
-import {
-  addCustomRestriction,
-  hasRestriction,
-  restrictionQuickOptions,
-  toggleRestriction,
-} from "./restrictions";
 import "./OnboardingPage.css";
 
-interface ChoiceProps {
-  selected: boolean;
-  onClick: () => void;
-  children: ReactNode;
-}
-
-interface StepCardProps {
-  title: string;
-  description?: string;
-  children: ReactNode;
-  className?: string;
-}
-
-const barriers: Array<[HabitBarrier, string]> = [
-  ["no_ideas", "常常沒想法"],
-  ["low_energy", "下班沒力氣"],
-  ["no_time", "時間不固定"],
-  ["ingredients_waste", "食材容易放壞"],
-  ["cleanup", "不想收拾"],
-];
-const cookwareOptions = ["電磁爐", "瓦斯爐", "電鍋", "快煮鍋", "氣炸鍋", "微波爐"];
 const stepTitles = ["口味與飲食安全", "餐桌與廚具", "登入與通行證"];
-
-function Tick() {
-  return (
-    <span className="choice-tick" aria-hidden="true">
-      ✓
-    </span>
-  );
-}
-
-function Choice({ selected, onClick, children }: ChoiceProps) {
-  let className = "onboarding-choice";
-
-  if (selected) {
-    className += " selected";
-  }
-  return (
-    <button type="button" className={className} onClick={onClick} aria-pressed={selected}>
-      <span>{children}</span>
-      <Tick />
-    </button>
-  );
-}
-
-function StepCard({ title, description, children, className = "" }: StepCardProps) {
-  return (
-    <section className={`onboarding-step-card ${className}`}>
-      <header>
-        <h2>{title}</h2>
-        {description && <p>{description}</p>}
-      </header>
-      {children}
-    </section>
-  );
-}
 
 export type OnboardingPageProps = {
   onComplete: () => void;
@@ -93,32 +31,17 @@ export function OnboardingPage({
   initialStep,
 }: OnboardingPageProps) {
   const query = useQueryClient();
-  const saved = readOnboardingDraft();
-  const urlStep = Number(new URLSearchParams(window.location.search).get("step"));
-  const fromQuery = Number.isInteger(urlStep) && urlStep >= 1 && urlStep <= 3 ? urlStep : undefined;
-  const startingStep = Math.min(3, Math.max(1, fromQuery ?? initialStep ?? saved.currentStep));
-  const [profile, setProfile] = useState<OnboardingProfile>({
-    ...emptyOnboardingDraft,
-    ...saved,
-    currentStep: startingStep,
-  });
+  const draft = useOnboardingDraft({ initialStep });
+  const { profile, update } = draft;
+  const step = profile.currentStep;
+  useOnboardingStep(step);
   const { status: authStatus, callbackIssue } = useAuthSession();
-  const [customCookware, setCustomCookware] = useState("");
-  const [restrictionInput, setRestrictionInput] = useState("");
-  const [flavorInput, setFlavorInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [mood, setMood] = useState<ChefMood>("listen");
   const [nodding, setNodding] = useState(false);
   const [stamped, setStamped] = useState(false);
   const [sealDropped, setSealDropped] = useState(false);
   const [error, setError] = useState("");
-  const step = profile.currentStep;
-
-  const update = (patch: Partial<OnboardingProfile>) => {
-    const next = { ...profile, ...patch };
-    setProfile(next);
-    saveOnboardingDraft(next);
-  };
   const cheer = (nextMood: ChefMood) => {
     setMood(nextMood);
     setNodding(false);
@@ -136,20 +59,6 @@ export function OnboardingPage({
     return () => window.clearTimeout(timer);
   }, [stamped]);
 
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [step]);
-
-  useEffect(() => {
-    const url = new URL(window.location.href);
-    url.pathname = "/onboarding";
-    url.searchParams.set("step", String(step));
-    const next = `${url.pathname}${url.search}${url.hash}`;
-    if (`${window.location.pathname}${window.location.search}${window.location.hash}` !== next) {
-      window.history.replaceState(window.history.state, "", next);
-    }
-  }, [step]);
-
   const finish = async () => {
     setBusy(true);
     setError("");
@@ -166,55 +75,6 @@ export function OnboardingPage({
     }
   };
 
-  const toggleBarrier = (value: HabitBarrier) => {
-    cheer("listen");
-    update({
-      habitBarriers: profile.habitBarriers.includes(value)
-        ? profile.habitBarriers.filter((item) => item !== value)
-        : [...profile.habitBarriers, value],
-    });
-  };
-  const toggleCookware = (value: string) => {
-    cheer("applause");
-    update({
-      cookware: profile.cookware.some((item) => item.type === value)
-        ? profile.cookware.filter((item) => item.type !== value)
-        : [
-            ...profile.cookware,
-            {
-              type: value,
-              limitations: [],
-            },
-          ],
-    });
-  };
-  const addCustomCookware = () => {
-    const value = customCookware.trim();
-    if (!value || profile.cookware.some((item) => item.type === value)) return;
-    toggleCookware(value);
-    setCustomCookware("");
-  };
-  const toggleHardRestriction = (option: (typeof restrictionQuickOptions)[number]) => {
-    cheer("care");
-    update({ restrictions: toggleRestriction(profile.restrictions, option) });
-  };
-  const addRestriction = () => {
-    const next = addCustomRestriction(profile.restrictions, restrictionInput);
-    if (next === profile.restrictions) return;
-    cheer("care");
-    update({ restrictions: next });
-    setRestrictionInput("");
-  };
-  const addFlavor = () => {
-    const value = flavorInput.trim();
-    if (!value || profile.preferredFlavors.includes(value)) return;
-    update({ preferredFlavors: [...profile.preferredFlavors, value] });
-    setFlavorInput("");
-  };
-  const next = () => {
-    cheer(step === 1 ? "applause" : step === 2 ? "care" : "listen");
-    update({ currentStep: Math.min(3, step + 1) });
-  };
   const confirmSignedIn = async () => {
     if (!supabase || authStatus === "signed-in") return true;
     setBusy(true);
@@ -235,6 +95,7 @@ export function OnboardingPage({
       setBusy(false);
     }
   };
+
   const stampOrFinish = async () => {
     if (!stamped) {
       if (!(await confirmSignedIn())) return;
@@ -276,318 +137,58 @@ export function OnboardingPage({
         <div className="onboarding-content">
           <div className={`onboarding-stack onboarding-step-${step} step-slide-down`} key={step}>
             {step === 1 && (
-              <>
-                <div className="chef-open">
-                  <span className="chef-open-icon material-symbols-outlined" aria-hidden="true">
-                    restaurant
-                  </span>
-                  <div>
-                    <strong>Hi！我是你的專屬主廚 CooCoo。</strong>
-                    <p>
-                      沒有標準答案，我們只想讓第一次推薦更可行。你的回答會決定我怎麼挑菜、怎麼排餐。
-                    </p>
-                  </div>
-                </div>
-                <StepCard title="平常可用時間">
-                  <div className="slider-row">
-                    <input
-                      name="available-minutes"
-                      type="range"
-                      min="5"
-                      max="180"
-                      step="5"
-                      value={profile.availableMinutes}
-                      onChange={(event) => update({ availableMinutes: Number(event.target.value) })}
-                    />
-                    <strong>{profile.availableMinutes} 分鐘</strong>
-                  </div>
-                </StepCard>
-                <StepCard title="常用餐期">
-                  <div className="choices three">
-                    {(
-                      [
-                        ["breakfast", "早餐"],
-                        ["lunch", "午餐"],
-                        ["dinner", "晚餐"],
-                      ] as const
-                    ).map(([value, label]) => (
-                      <Choice
-                        key={value}
-                        selected={profile.plannedMealSlots.includes(value)}
-                        onClick={() =>
-                          update({
-                            plannedMealSlots: profile.plannedMealSlots.includes(value)
-                              ? profile.plannedMealSlots.filter((item) => item !== value)
-                              : [...profile.plannedMealSlots, value],
-                          })
-                        }
-                      >
-                        {label}
-                      </Choice>
-                    ))}
-                  </div>
-                </StepCard>
-                <StepCard title="喜歡的口味">
-                  <div className="tag-input">
-                    <input
-                      value={flavorInput}
-                      placeholder="例如：清爽、台式、微辣"
-                      onChange={(event) => setFlavorInput(event.target.value)}
-                    />
-                    <button type="button" disabled={!flavorInput.trim()} onClick={addFlavor}>
-                      ＋
-                    </button>
-                  </div>
-                  <div className="tag-list">
-                    {profile.preferredFlavors.map((flavor) => (
-                      <span className="tag" key={flavor}>
-                        {flavor}
-                        <button
-                          type="button"
-                          aria-label={`移除 ${flavor}`}
-                          onClick={() =>
-                            update({
-                              preferredFlavors: profile.preferredFlavors.filter(
-                                (item) => item !== flavor,
-                              ),
-                            })
-                          }
-                        >
-                          ×
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                </StepCard>
-                <StepCard
-                  title="過敏原或絕對不吃"
-                  description="可多選常見過敏原，其他項目也能自行新增；全部都會成為硬限制。"
-                >
-                  <div className="restriction-chip-grid" aria-label="常見過敏原快選">
-                    {restrictionQuickOptions.map((option) => {
-                      const selected = hasRestriction(profile.restrictions, option);
-                      return (
-                        <button
-                          type="button"
-                          className={`restriction-chip ${selected ? "selected" : ""}`}
-                          aria-pressed={selected}
-                          key={option.id}
-                          onClick={() => toggleHardRestriction(option)}
-                        >
-                          <span>{option.label}</span>
-                          <i aria-hidden="true">✓</i>
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <div className="tag-input restriction-input">
-                    <input
-                      name="dietary-restrictions"
-                      maxLength={24}
-                      placeholder="其他不能吃，例如：香菜"
-                      value={restrictionInput}
-                      onChange={(event) => setRestrictionInput(event.target.value)}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter") {
-                          event.preventDefault();
-                          addRestriction();
-                        }
-                      }}
-                    />
-                    <button
-                      type="button"
-                      disabled={!restrictionInput.trim()}
-                      aria-label="新增其他不能吃的食物"
-                      onClick={addRestriction}
-                    >
-                      ＋
-                    </button>
-                  </div>
-                  <div className="tag-list">
-                    {profile.restrictions
-                      .filter(
-                        (item) =>
-                          !restrictionQuickOptions.some(
-                            (option) => option.id === item.id || option.label === item.label,
-                          ),
-                      )
-                      .map((item) => (
-                        <span className="tag" key={item.id}>
-                          {item.label}
-                          <button
-                            type="button"
-                            aria-label={`移除 ${item.label}`}
-                            onClick={() =>
-                              update({
-                                restrictions: profile.restrictions.filter(
-                                  (restriction) => restriction.id !== item.id,
-                                ),
-                              })
-                            }
-                          >
-                            ×
-                          </button>
-                        </span>
-                      ))}
-                  </div>
-                  <p className="safety-note">
-                    硬限制會寫入 dietary_restrictions，所有推薦與 AI 調整都必須遵守。
-                  </p>
-                </StepCard>
-              </>
+              <OnboardingStep1
+                profile={profile}
+                flavorInput={draft.flavorInput}
+                restrictionInput={draft.restrictionInput}
+                onUpdate={update}
+                onFlavorInputChange={draft.setFlavorInput}
+                onAddFlavor={() => {
+                  draft.addFlavor();
+                }}
+                onToggleHardRestriction={(option) => {
+                  cheer("care");
+                  draft.toggleHardRestriction(option);
+                }}
+                onRestrictionInputChange={draft.setRestrictionInput}
+                onAddRestriction={() => {
+                  if (draft.addRestriction()) cheer("care");
+                }}
+              />
             )}
-
             {step === 2 && (
-              <>
-                <div className="chef-open">
-                  <span className="chef-open-icon material-symbols-outlined" aria-hidden="true">
-                    skillet
-                  </span>
-                  <div>
-                    <strong>我先確認你真的能用什麼來煮。</strong>
-                    <p>份量、廚具與日常卡點會直接影響我能推薦哪些料理。</p>
-                  </div>
-                </div>
-                <StepCard className="step2-household" title="通常幾人吃？">
-                  <div className="onboarding-counter">
-                    <span>人份</span>
-                    <div>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          update({ householdServings: Math.max(1, profile.householdServings - 1) })
-                        }
-                      >
-                        −
-                      </button>
-                      <strong>{profile.householdServings}</strong>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          update({ householdServings: Math.min(12, profile.householdServings + 1) })
-                        }
-                      >
-                        +
-                      </button>
-                    </div>
-                  </div>
-                </StepCard>
-                <StepCard
-                  className="step2-cookware"
-                  title="可用廚具"
-                  description="至少選一項；其他廚具也能自行新增。"
-                >
-                  <div className="choices">
-                    {cookwareOptions.map((value) => (
-                      <Choice
-                        key={value}
-                        selected={profile.cookware.some((item) => item.type === value)}
-                        onClick={() => toggleCookware(value)}
-                      >
-                        {value}
-                      </Choice>
-                    ))}
-                  </div>
-                  <div className="tag-input">
-                    <input
-                      name="custom-cookware"
-                      maxLength={24}
-                      placeholder="例如：卡式爐、蒸烤箱"
-                      value={customCookware}
-                      onChange={(event) => setCustomCookware(event.target.value)}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter") {
-                          event.preventDefault();
-                          addCustomCookware();
-                        }
-                      }}
-                    />
-                    <button
-                      type="button"
-                      disabled={!customCookware.trim()}
-                      onClick={addCustomCookware}
-                    >
-                      ＋
-                    </button>
-                  </div>
-                  <div className="tag-list">
-                    {profile.cookware
-                      .filter((item) => !cookwareOptions.includes(item.type))
-                      .map((item) => (
-                        <span className="tag" key={item.type}>
-                          {item.type}
-                          <button
-                            type="button"
-                            aria-label={`移除 ${item.type}`}
-                            onClick={() => toggleCookware(item.type)}
-                          >
-                            ×
-                          </button>
-                        </span>
-                      ))}
-                  </div>
-                </StepCard>
-                <StepCard title="最常卡在哪裡？" description="可多選。這會決定我第一則提醒的方式。">
-                  <div className="choices">
-                    {barriers.map(([value, label]) => (
-                      <Choice
-                        key={value}
-                        selected={profile.habitBarriers.includes(value)}
-                        onClick={() => toggleBarrier(value)}
-                      >
-                        {label}
-                      </Choice>
-                    ))}
-                  </div>
-                </StepCard>
-              </>
+              <OnboardingStep2
+                profile={profile}
+                cookwareOptions={draft.cookwareOptions}
+                customCookware={draft.customCookware}
+                onUpdate={update}
+                onToggleCookware={(value) => {
+                  cheer("applause");
+                  draft.toggleCookware(value);
+                }}
+                onCustomCookwareChange={draft.setCustomCookware}
+                onAddCustomCookware={() => {
+                  cheer("applause");
+                  draft.addCustomCookware();
+                }}
+                onToggleBarrier={(value) => {
+                  cheer("listen");
+                  draft.toggleBarrier(value);
+                }}
+              />
             )}
-
             {step === 3 && (
-              <>
-                <div className="chef-open">
-                  <span className="chef-open-icon material-symbols-outlined" aria-hidden="true">
-                    military_tech
-                  </span>
-                  <div>
-                    <strong>最後一步，登入並成立你的主廚檔案。</strong>
-                    <p>同步設定後蓋章啟程；這一步不會建立、清空或修改冰箱庫存。</p>
-                  </div>
-                </div>
-                <StepCard
-                  title="登入並同步主廚檔案"
-                  description="設定會跟著帳號，不會只留在這台裝置。"
-                >
-                  {supabase && authStatus === "loading" && (
-                    <p className="safety-note">正在確認登入狀態…</p>
-                  )}
-                  {supabase && authStatus === "signed-out" && (
-                    <button
-                      type="button"
-                      className="wide-action"
-                      onClick={() => void startGoogleAuth(onboardingRedirectTo(step))}
-                    >
-                      <span>使用 Google 登入</span>
-                      <span>›</span>
-                    </button>
-                  )}
-                  {authStatus === "signed-in" && (
-                    <p className="safety-note safe">
-                      {supabase
-                        ? "登入完成，主廚設定可以安全同步。"
-                        : "本機 Preview 使用測試資料；正式環境會先要求登入。"}
-                    </p>
-                  )}
-                </StepCard>
-                <p className="safety-note safe">
-                  食材與保存期限請在完成設定後，前往「冰箱」頁新增或管理。
-                </p>
-                <PassportTicket
-                  profile={{ ...profile, weeklyGoalTarget: 1 }}
-                  isStamped={stamped}
-                  isSealDropped={sealDropped}
-                />
-              </>
+              <OnboardingStep3
+                profile={profile}
+                authStatus={authStatus}
+                supabaseConfigured={Boolean(supabase)}
+                step={step}
+                stamped={stamped}
+                sealDropped={sealDropped}
+                onGoogleSignIn={(currentStep) => {
+                  void startGoogleAuth(onboardingRedirectTo(currentStep));
+                }}
+              />
             )}
             {error && (
               <p role="alert" className="onboarding-error">
@@ -625,7 +226,10 @@ export function OnboardingPage({
                 ? () => {
                     void stampOrFinish();
                   }
-                : next
+                : () => {
+                    cheer(step === 1 ? "applause" : "care");
+                    update({ currentStep: Math.min(3, step + 1) });
+                  }
             }
           >
             {busy

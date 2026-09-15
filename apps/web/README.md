@@ -43,6 +43,8 @@ bun run --cwd apps/web test:e2e -- --update-snapshots
 | `src/entities` | shared                                   | pages、widgets、features |
 | `src/shared`   | shared                                   | 以上各層                 |
 
+Onboarding 三步 UI 在 `src/widgets/onboarding/`；`pages/onboarding/OnboardingPage.tsx` 只組裝草稿、登入與蓋章。widgets 不得 import pages。
+
 各目錄短 README 會隨後續重構補上。
 
 ## 樣式與 auth
