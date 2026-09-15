@@ -9,7 +9,8 @@
     "build": "bun run --cwd apps/web build && bun run --cwd apps/api typecheck",
     "lint": "bun run --cwd apps/web lint",
     "test": "bun test packages/core apps/api apps/web",
-    "verify": "bun run lint && bun run test && bun run build"
+    "verify": "bun run lint && bun run test && bun run build && bun run --cwd apps/web test:e2e",
+    "dev": "bun run --cwd apps/api dev && bun run --cwd apps/web dev -- --host 127.0.0.1"
   },
   "msw": {
     "workerDirectory": [

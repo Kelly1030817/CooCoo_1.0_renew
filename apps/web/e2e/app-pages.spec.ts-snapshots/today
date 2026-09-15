@@ -1,0 +1,52 @@
+- banner:
+  - button "CooCoo 煮煮 首頁":
+    - heading "CooCoo 煮煮" [level=1]
+  - button "重設範例資料": restart_alt
+- main:
+  - region "主廚職階與 EXP":
+    - strong: 初火學徒
+    - text: 下一枚 · 第一道火光 0/1
+    - button "EXP 0"
+    - text: /職階進度 0 \/ \d+/
+  - heading "先別想一整週， 決定下一餐就好。" [level=2]
+  - button "切換低體力模式": 今日有點累
+  - article:
+    - text: TODAY 今日餐點
+    - strong: 0/3
+    - text: restaurant
+    - tablist "今日推薦模式切換":
+      - tab "kitchen 冰箱就能煮（3）" [selected]
+      - tab "shopping_cart 補買（0）"
+    - text: /schedule \d+ 分快手 check_circle 庫存足夠 payments NT\$ \d+/
+    - heading "味噌蔬菜烏龍麵" [level=3]
+    - text: /skillet 電磁爐 format_list_numbered 3 schedule [\d,.]+[bkmBKM]+ check 青花菜 check 雞蛋 check 冷凍烏龍麵 local_fire_department \+\d+ EXP military_tech 第一道火光 0\/1/
+    - button "local_fire_department 就煮這道"
+    - button "更多細節": more_horiz
+  - region "三個可行方向":
+    - heading "alt_route 三個可行方向" [level=4]
+    - button /\d+ 番茄滑蛋飯 payments NT\$ \d+ shopping_cart 需補 swap_horiz/:
+      - text: ""
+      - strong: 番茄滑蛋飯
+      - text: ""
+    - button /\d+ 胡麻雞絲拌麵 payments NT\$ \d+ shopping_cart 需補 swap_horiz/:
+      - text: ""
+      - strong: 胡麻雞絲拌麵
+      - text: ""
+  - region "今日任務":
+    - heading "flag 今日任務" [level=4]
+    - text: /check 完成今天的料理 就煮這道 \+\d+ check 吃掉 1 份熟食 到冰箱加熱 \+\d+ check 用掉即期食材 用即期食材煮 · 庫存 2 項即期 \+\d+/
+  - text: calendar_month 本週 0 / 1 餐
+  - link "前往我的":
+    - /url: /me
+    - text: chevron_right
+- navigation "主要功能":
+  - link "today 今日":
+    - /url: /today
+  - link "shopping_bag 採買 4":
+    - /url: /shopping
+  - link "kitchen 冰箱 1":
+    - /url: /fridge
+  - link "menu_book 食譜":
+    - /url: /recipes
+  - link "person 我的":
+    - /url: /me

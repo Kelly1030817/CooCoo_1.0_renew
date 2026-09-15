@@ -1,32 +1,44 @@
-# React + TypeScript + Vite
+# apps/web
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+CooCoo 手機網頁。固定五頁：今日、採買、冰箱、食譜、我的。Onboarding 在完成主廚檔案前攔截。
 
-Currently, two official plugins are available:
+## 開發
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+bun install
+bun run --cwd apps/web dev -- --host 127.0.0.1
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+本機未設 Supabase 時會走 MSW mock API。設 `VITE_USE_REAL_API=true` 才打真實 `/api`。
+
+## 驗證
+
+```bash
+bun run --cwd apps/web lint
+bun run --cwd apps/web test
+bun run --cwd apps/web test:e2e
+bun run verify
+```
+
+Playwright 以 headless Chromium 比對無障礙樹（`toMatchAriaSnapshot`），不截圖。基準在 `e2e/**/*.spec.ts` 旁的 snapshot 檔。更新基準：
+
+```bash
+bun run --cwd apps/web test:e2e -- --update-snapshots
+```
+
+## 分層（FSD）
+
+| 目錄 | 可以 import | 不可 import |
+| --- | --- | --- |
+| `src/app` | 各層 | — |
+| `src/pages` | widgets、features、entities、shared、app | 其他 pages |
+| `src/widgets` | features、entities、shared | pages |
+| `src/features` | entities、shared | pages、widgets |
+| `src/entities` | shared | pages、widgets、features |
+| `src/shared` | shared | 以上各層 |
+
+各目錄短 README 會隨後續重構補上。
+
+## 樣式與 auth
+
+目前仍有頁面級 CSS；後續改為 Tailwind v4，全域設定留在 `src/index.css`。Auth 仍由 `App.tsx` 與 Onboarding 各訂閱一次，後續會收成單一 session query。

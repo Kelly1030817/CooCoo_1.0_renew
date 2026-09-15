@@ -49,3 +49,9 @@ package-lock.json
 /coocoo-webapp/
 /marketing-site/
 .playwright-cli/
+/test-results/
+/playwright-report/
+/blob-report/
+**/playwright/.cache/
+apps/web/test-results/
+apps/web/playwright-report/

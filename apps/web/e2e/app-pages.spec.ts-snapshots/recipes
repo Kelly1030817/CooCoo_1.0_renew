@@ -1,0 +1,59 @@
+- banner:
+  - button "CooCoo 煮煮 首頁":
+    - heading "CooCoo 煮煮" [level=1]
+  - button "重設範例資料": restart_alt
+- main:
+  - paragraph: RECIPE LIBRARY
+  - heading "今天想煮什麼？" [level=2]
+  - paragraph: 可靠食譜優先；AI 只在你確認差異後調整份數、替代與情境。
+  - tablist "食譜模式":
+    - tab "找食譜" [selected]
+    - tab "自由搭配"
+  - textbox "搜尋食譜或食材":
+    - /placeholder: 搜尋食譜或多種食材…
+  - button "全部"
+  - button /\d+ 分鐘/
+  - button "冰箱救援"
+  - button "新口味"
+  - button "收藏"
+  - article:
+    - text: 部分符合／需補買
+    - button "加入收藏"
+    - heading "番茄滑蛋飯" [level=3]
+    - paragraph: /\d+ 分鐘 · 1 人份/
+    - list:
+      - listitem: 雞蛋 2顆
+      - listitem: /番茄 \d+克/
+      - listitem: 白飯 1碗
+    - button "查看並調整"
+  - article:
+    - text: 部分符合／需補買
+    - button "加入收藏"
+    - heading "味噌蔬菜烏龍麵" [level=3]
+    - paragraph: /\d+ 分鐘 · 1 人份/
+    - list:
+      - listitem: /青花菜 \d+克/
+      - listitem: 雞蛋 1顆
+      - listitem: 冷凍烏龍麵 1包
+    - button "查看並調整"
+  - article:
+    - text: 部分符合／需補買
+    - button "加入收藏"
+    - heading "胡麻雞絲拌麵" [level=3]
+    - paragraph: /\d+ 分鐘 · 1 人份/
+    - list:
+      - listitem: /青花菜 \d+克/
+      - listitem: /雞胸肉 \d+克/
+      - listitem: /麵條 \d+克/
+    - button "查看並調整"
+- navigation "主要功能":
+  - link "today 今日":
+    - /url: /today
+  - link "shopping_bag 採買 4":
+    - /url: /shopping
+  - link "kitchen 冰箱 1":
+    - /url: /fridge
+  - link "menu_book 食譜":
+    - /url: /recipes
+  - link "person 我的":
+    - /url: /me

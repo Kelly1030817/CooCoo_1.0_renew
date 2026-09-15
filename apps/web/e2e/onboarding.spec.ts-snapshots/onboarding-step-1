@@ -1,0 +1,32 @@
+- main:
+  - button "口袋主廚 CooCoo"
+  - text: /主廚 CooCoo 聆聽日常 口袋自煮夥伴 \d+ \/ \d+/
+  - paragraph: /首次設定 · \d+ 口味與飲食安全/
+  - progressbar "第 1 步，共 3 步"
+  - strong: Hi！我是你的專屬主廚 CooCoo。
+  - paragraph: 沒有標準答案，我們只想讓第一次推薦更可行。你的回答會決定我怎麼挑菜、怎麼排餐。
+  - heading "平常可用時間" [level=2]
+  - slider: /\d+/
+  - strong: /\d+ 分鐘/
+  - heading "常用餐期" [level=2]
+  - button "早餐"
+  - button "午餐"
+  - button "晚餐"
+  - heading "喜歡的口味" [level=2]
+  - textbox "例如：清爽、台式、微辣"
+  - button "＋" [disabled]
+  - heading "過敏原或絕對不吃" [level=2]
+  - paragraph: 可多選常見過敏原，其他項目也能自行新增；全部都會成為硬限制。
+  - button "花生"
+  - button "堅果"
+  - button "蝦蟹"
+  - button "魚"
+  - button "蛋"
+  - button "牛奶"
+  - button "小麥／麩質"
+  - button "黃豆"
+  - textbox "其他不能吃，例如：香菜"
+  - button "新增其他不能吃的食物" [disabled]: ＋
+  - paragraph: 硬限制會寫入 dietary_restrictions，所有推薦與 AI 調整都必須遵守。
+  - button "‹ 上一步" [disabled]
+  - button "繼續 ›"
