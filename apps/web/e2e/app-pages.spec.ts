@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { preparePage, seedCompletedOnboarding } from "./helpers/draft";
+import { preparePage, seedCompletedOnboarding, assertNoHorizontalOverflow } from "./helpers/draft";
 
 test.beforeEach(async ({ page }) => {
   await preparePage(page);
@@ -16,6 +16,9 @@ test("bottom nav names stay the five approved pages", async ({ page }) => {
   await expect(nav.getByRole("link", { name: "食譜" })).toBeVisible();
   await expect(nav.getByRole("link", { name: "我的" })).toBeVisible();
   await expect(page.locator("body")).toMatchAriaSnapshot({ name: "bottom-nav-today" });
+  await assertNoHorizontalOverflow(page);
+  await page.setViewportSize({ width: 320, height: 844 });
+  await assertNoHorizontalOverflow(page);
 });
 
 test("/today aria tree", async ({ page }) => {

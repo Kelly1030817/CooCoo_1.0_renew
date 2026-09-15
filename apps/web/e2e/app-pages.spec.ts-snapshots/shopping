@@ -1,7 +1,7 @@
 - banner:
   - button "CooCoo 煮煮 首頁":
     - heading "CooCoo 煮煮" [level=1]
-  - button "重設範例資料": restart_alt
+  - button "重設範例資料"
 - main:
   - region "主廚職階進度":
     - strong: 初火學徒
@@ -47,13 +47,13 @@
   - strong: /NT\$ \d+/
   - button "完成這次採買"
 - navigation "主要功能":
-  - link "today 今日":
+  - link "今日":
     - /url: /today
-  - link "shopping_bag 採買 4":
+  - link "採買 4":
     - /url: /shopping
-  - link "kitchen 冰箱 1":
+  - link "冰箱 1":
     - /url: /fridge
-  - link "menu_book 食譜":
+  - link "食譜":
     - /url: /recipes
-  - link "person 我的":
+  - link "我的":
     - /url: /me

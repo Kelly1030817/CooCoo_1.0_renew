@@ -1,4 +1,5 @@
 import type { Page } from "@playwright/test";
+import { expect } from "@playwright/test";
 
 export const ONBOARDING_DRAFT_STORAGE_KEY = "coocoo:onboarding-draft:v2";
 
@@ -43,4 +44,11 @@ export async function seedCompletedOnboarding(page: Page) {
 
 export async function preparePage(page: Page) {
   await page.emulateMedia({ reducedMotion: "reduce" });
+}
+
+export async function assertNoHorizontalOverflow(page: Page) {
+  const overflowed = await page.evaluate(
+    () => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+  );
+  expect(overflowed).toBe(false);
 }

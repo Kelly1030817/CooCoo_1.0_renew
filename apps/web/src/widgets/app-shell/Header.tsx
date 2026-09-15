@@ -9,6 +9,7 @@ import { BrandLogo } from "../../shared/ui/BrandLogo";
 import { currentPageRedirectTo, supabase, startGoogleAuth } from "../../shared/auth/supabase";
 import { readOnboardingDraft } from "../../shared/model/onboarding-draft";
 
+import { RotateCcw, CookingPot } from "lucide-react";
 import type { AppRoute } from "../../app/routing/routes";
 
 function catalogAdminModalNode(onClose: () => void) {
@@ -48,7 +49,7 @@ export function Header({ enabled = true, onNavigate }: HeaderProps) {
               aria-label="重設範例資料"
               className="flex items-center justify-center rounded-full p-2 text-on-surface-variant hover:bg-surface-container-high/40"
             >
-              <span className="material-symbols-outlined text-xl">restart_alt</span>
+              <RotateCcw aria-hidden="true" className="size-5" />
             </button>
           )}
           {import.meta.env.DEV && access.data?.owner && (
@@ -240,7 +241,7 @@ export function CookwareModal({ onClose, enabled = true }: CookwareModalProps) {
       <div className="space-y-sm">
         {data?.cookware.map((item) => (
           <div key={item.id} className="rounded-2xl bg-surface-container-low p-md">
-            <span className="material-symbols-outlined text-secondary">skillet</span>
+            <CookingPot aria-hidden="true" className="inline size-5 text-secondary" />
             <strong className="ml-2 text-sm text-slate-blue">{item.name}</strong>
             <p className="mt-1 text-[10px] text-on-surface-variant">
               {item.brand} {item.model} · {item.capacity || `${item.wattage}W`}
