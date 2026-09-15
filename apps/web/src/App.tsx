@@ -1,7 +1,6 @@
 import { lazy, Suspense, useContext, useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { AppState } from "@coocoo/contracts";
-import { isApiSuccess } from "@/shared/lib/api-body";
 import type { Session } from "@supabase/supabase-js";
 import { stateQueryKey, useAppState } from "@/entities/app-state/model";
 import { useAppRoute } from "@/app/routing/useAppRoute";
@@ -9,7 +8,8 @@ import { Header } from "@/widgets/app-shell/Header";
 import { BottomNav } from "@/widgets/app-shell/BottomNav";
 import { OnboardingPage } from "@/pages/onboarding/OnboardingPage";
 import { readOnboardingDraft } from "@/shared/model/onboarding-draft";
-import { startGoogleAuth, supabase } from "@/shared/auth/supabase";
+import { api } from "@/shared/api/client";
+import { currentPageRedirectTo, startGoogleAuth, supabase } from "@/shared/auth/supabase";
 import { AuthRecoveryPanel } from "@/shared/auth/AuthRecoveryPanel";
 import { UiContext } from "@/app/ui-context";
 
@@ -48,14 +48,9 @@ export default function App() {
       setAuthStatus(session ? "signed-in" : "signed-out");
       if (!session) return;
       try {
-        const response = await fetch("/api/v1/state", {
-          headers: { authorization: `Bearer ${session.access_token}` },
-        });
-        if (!response.ok) throw new Error("STATE_RESTORE_FAILED");
-        const payload: unknown = await response.json();
-        if (!isApiSuccess<AppState>(payload)) throw new Error("STATE_RESTORE_FAILED");
-        queryClient.setQueryData(stateQueryKey, payload.data);
-        if (active && payload.data.onboardingProfile?.status === "complete") {
+        const state = await api<AppState>("/state");
+        queryClient.setQueryData(stateQueryKey, state);
+        if (active && state.onboardingProfile?.status === "complete") {
           setOnboardingComplete(true);
         }
       } catch {
@@ -79,7 +74,7 @@ export default function App() {
     setReauthBusy(true);
     setReauthError("");
     try {
-      await startGoogleAuth();
+      await startGoogleAuth(currentPageRedirectTo());
     } catch (reason) {
       setReauthBusy(false);
       setReauthError(
