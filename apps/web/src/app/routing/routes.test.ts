@@ -21,7 +21,7 @@ describe("CooCoo app routes", () => {
   it("uses today as the safe entry page for root and unknown paths", () => {
     expect(routeFromPathname("/")).toBe("today");
     expect(routeFromPathname("/not-a-page")).toBe("today");
-    expect(isAppPath("/")).toBe(false);
+    expect(isAppPath("/")).toBe(true);
     expect(isAppPath("/not-a-page")).toBe(false);
   });
 });

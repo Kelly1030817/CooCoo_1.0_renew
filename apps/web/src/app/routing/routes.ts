@@ -14,6 +14,7 @@ const routesByPath: Record<string, AppRoute> = {};
 for (const route of APP_ROUTES) {
   routesByPath[appRoutePaths[route]] = route;
 }
+routesByPath["/"] = "today";
 
 function normalizePathname(pathname: string) {
   if (!pathname || pathname === "/") return "/";
