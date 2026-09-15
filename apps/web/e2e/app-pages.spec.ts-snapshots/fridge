@@ -6,17 +6,12 @@
   - paragraph: FRIDGE INVENTORY
   - heading "食材庫存" [level=2]
   - paragraph: 管理數量、存放位置與使用期限
-  - button "新增食材":
-    - img
-    - text: ""
+  - button "新增食材"
   - heading "保鮮沙漏警報：2 件即將到期" [level=3]
   - text: 優先使用可減少浪費
   - paragraph: 酪梨(剩0天)、胡蘿蔔(剩3天) 即將過期，建議優先帶入自由搭配備料盤！
-  - button "一鍵將即期品帶入自由搭配備料盤":
-    - text: ""
-    - img
+  - button "一鍵將即期品帶入自由搭配備料盤"
   - button "冷藏室（點擊收合）" [expanded]:
-    - img
     - heading "冷藏室" [level=3]
     - paragraph: 4°C
     - text: 4 種 · 4 批
@@ -41,7 +36,6 @@
     - paragraph: /最近期限剩 \d+ 天 · 1 批次/
     - text: /1 批待確認 已記錄 NT\$\d+ 批次＋/
   - button "冷凍庫（點擊收合）" [expanded]:
-    - img
     - heading "冷凍庫" [level=3]
     - paragraph: /-\d+°C/
     - text: 2 種 · 2 批
@@ -56,12 +50,10 @@
     - paragraph: /最近期限剩 \d+ 天 · 1 批次/
     - text: /1 批待確認 已記錄 NT\$\d+ 批次＋/
   - button "常溫櫃（點擊收合）" [expanded]:
-    - img
     - heading "常溫櫃" [level=3]
     - paragraph: 乾燥避光
     - text: 0 種 · 0 批
   - text: 常溫櫃目前無庫存食材
-  - img
   - heading "食安與延展保存中心" [level=3]
   - text: POST /inventory/:id/rescue
   - paragraph: /今天吃不完？點選即期食材執行「分裝冷凍」延長 \d+ 天保存期，或檢核氣味進行過期處置。/

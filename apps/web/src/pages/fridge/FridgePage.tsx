@@ -1,4 +1,13 @@
 import { useState } from "react";
+import {
+  ArrowRight,
+  ChevronDown,
+  Package,
+  Plus,
+  Shield,
+  Snowflake,
+  ThermometerSnowflake,
+} from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { InventoryItem } from "@coocoo/contracts";
 import { useUi } from "@/app/ui-context";
@@ -10,7 +19,6 @@ import { Modal, ModalHeader } from "@/shared/ui/Modal";
 import { IngredientIcon } from "@/shared/ui/IngredientIcon";
 import { usePrepTray } from "@/features/kitchen/prep-tray";
 import { groupInventory, needsInventoryConfirmation, type InventoryGroup } from "./inventory-view";
-import "./FridgePage.css";
 
 function addInventoryModalNode(onClose: () => void) {
   return <AddInventoryModal onClose={onClose} />;
@@ -105,18 +113,7 @@ export function FridgePage() {
           onClick={() => ui.open(addInventoryModalNode(ui.close))}
           className="fridge-add-btn"
         >
-          <svg
-            className="h-3.5 w-3.5"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
+          <Plus aria-hidden="true" />
           <span>新增食材</span>
         </button>
       </div>
@@ -145,18 +142,7 @@ export function FridgePage() {
             className="urgent-btn flex w-full items-center justify-center gap-1.5 rounded-xl py-2 text-xs shadow-xs"
           >
             <span>一鍵將即期品帶入自由搭配備料盤</span>
-            <svg
-              className="h-3.5 w-3.5"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <line x1="5" y1="12" x2="19" y2="12" />
-              <polyline points="12 5 19 12 12 19" />
-            </svg>
+            <ArrowRight aria-hidden="true" />
           </button>
         </section>
       )}
@@ -235,17 +221,7 @@ export function FridgePage() {
         <section className="rescue-center space-y-2.5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5">
-              <svg
-                className="h-4 w-4 text-amber-600"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-              </svg>
+              <Shield className="text-amber-600" aria-hidden="true" />
               <h3 className="text-xs font-black text-stone-900">食安與延展保存中心</h3>
             </div>
             <span className="text-[10px] text-stone-500 font-mono">POST /inventory/:id/rescue</span>
@@ -328,18 +304,10 @@ function InventoryChamberSection({
           <span className="text-[10px] font-bold chamber-title">
             {groups.length} 種 · {batchCount} 批
           </span>
-          <svg
-            className={`w-3.5 h-3.5 chamber-title transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+          <ChevronDown
+            className={`chamber-title transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
             aria-hidden="true"
-          >
-            <polyline points="6 9 12 15 18 9" />
-          </svg>
+          />
         </div>
       </button>
       {isOpen &&
@@ -450,32 +418,8 @@ function InventoryChamberSection({
 }
 
 function ChamberIcon({ tone }: { tone: "cold" | "frozen" | "pantry" }) {
-  if (tone === "pantry")
-    return (
-      <svg
-        className="chamber-icon"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.8"
-      >
-        <path d="M4 7h16v13H4z" />
-        <path d="M7 4h10l3 3H4z" />
-        <path d="M8 12h8M8 16h5" />
-      </svg>
-    );
-  return (
-    <svg
-      className="chamber-icon"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-    >
-      <path d="M12 2v20M4.9 4.9l14.2 14.2M2 12h20M19.1 4.9 4.9 19.1" />
-      {tone === "frozen" && <circle cx="12" cy="12" r="9" />}
-    </svg>
-  );
+  const Icon = tone === "pantry" ? Package : tone === "frozen" ? ThermometerSnowflake : Snowflake;
+  return <Icon className="chamber-icon" aria-hidden="true" strokeWidth={1.8} />;
 }
 
 function expiryLabel(daysLeft: number) {
