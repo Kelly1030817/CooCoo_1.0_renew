@@ -1,5 +1,11 @@
-import { useState } from "react";
-import type { HabitBarrier, OnboardingProfile } from "@coocoo/contracts";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { typeboxResolver } from "@hookform/resolvers/typebox";
+import {
+  OnboardingProfileSchema,
+  type HabitBarrier,
+  type OnboardingProfile,
+} from "@coocoo/contracts";
 import {
   emptyOnboardingDraft,
   readOnboardingDraft,
@@ -10,6 +16,10 @@ import { resolveOnboardingStep } from "./useOnboardingStep";
 
 const cookwareOptions = ["電磁爐", "瓦斯爐", "電鍋", "快煮鍋", "氣炸鍋", "微波爐"];
 
+function isOnboardingProfileKey(key: string): key is keyof OnboardingProfile {
+  return key in emptyOnboardingDraft;
+}
+
 export type UseOnboardingDraftOptions = {
   initialStep?: number;
 };
@@ -17,19 +27,34 @@ export type UseOnboardingDraftOptions = {
 export function useOnboardingDraft({ initialStep }: UseOnboardingDraftOptions = {}) {
   const saved = readOnboardingDraft();
   const startingStep = resolveOnboardingStep(initialStep, saved.currentStep);
-  const [profile, setProfile] = useState<OnboardingProfile>({
-    ...emptyOnboardingDraft,
-    ...saved,
-    currentStep: startingStep,
+  const form = useForm<OnboardingProfile>({
+    resolver: typeboxResolver(OnboardingProfileSchema),
+    defaultValues: {
+      ...emptyOnboardingDraft,
+      ...saved,
+      currentStep: startingStep,
+    },
+    mode: "onSubmit",
   });
+  const profile = form.watch();
   const [customCookware, setCustomCookware] = useState("");
   const [restrictionInput, setRestrictionInput] = useState("");
   const [flavorInput, setFlavorInput] = useState("");
 
+  useEffect(() => {
+    const { unsubscribe } = form.watch(() => {
+      saveOnboardingDraft({ ...emptyOnboardingDraft, ...form.getValues() });
+    });
+    return unsubscribe;
+  }, [form]);
+
   const update = (patch: Partial<OnboardingProfile>) => {
-    const next = { ...profile, ...patch };
-    setProfile(next);
-    saveOnboardingDraft(next);
+    for (const key of Object.keys(patch)) {
+      if (!isOnboardingProfileKey(key)) continue;
+      const value = patch[key];
+      if (value === undefined) continue;
+      form.setValue(key, value, { shouldDirty: true });
+    }
   };
 
   const addFlavor = () => {
@@ -61,9 +86,9 @@ export function useOnboardingDraft({ initialStep }: UseOnboardingDraftOptions = 
   };
 
   const addCustomCookware = () => {
-    const value = customCookware.trim();
-    if (!value || profile.cookware.some((item) => item.type === value)) return;
-    toggleCookware(value);
+    const cookwareName = customCookware.trim();
+    if (!cookwareName || profile.cookware.some((item) => item.type === cookwareName)) return;
+    toggleCookware(cookwareName);
     setCustomCookware("");
   };
 
@@ -76,6 +101,7 @@ export function useOnboardingDraft({ initialStep }: UseOnboardingDraftOptions = 
   };
 
   return {
+    form,
     profile,
     update,
     customCookware,

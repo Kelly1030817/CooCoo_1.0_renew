@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { preparePage } from "./helpers/draft";
+import { ONBOARDING_DRAFT_STORAGE_KEY, preparePage } from "./helpers/draft";
 
 test.beforeEach(async ({ page }) => {
   await preparePage(page);
@@ -55,4 +55,42 @@ test("oauth callback error is announced", async ({ page }) => {
   await expect(toast).toContainText("這封驗證信已使用或過期");
   const background = await toast.evaluate((node) => getComputedStyle(node).backgroundColor);
   expect(background).toBe("rgb(186, 26, 26)");
+});
+
+test("draft is saved after continuing to step 2", async ({ page }) => {
+  await page.goto("/onboarding");
+  await page.getByRole("button", { name: "繼續 ›" }).click();
+  await expect(page.getByText("我先確認你真的能用什麼來煮。")).toBeVisible();
+  const raw = await page.evaluate(
+    (key) => window.localStorage.getItem(key),
+    ONBOARDING_DRAFT_STORAGE_KEY,
+  );
+  expect(raw).toBeTruthy();
+  expect(JSON.parse(raw ?? "{}")).toMatchObject({ currentStep: 2, status: "draft" });
+});
+
+test("step 1 continue is disabled without a meal slot", async ({ page }) => {
+  await page.goto("/onboarding");
+  await page.getByRole("button", { name: "晚餐" }).click();
+  await expect(page.getByRole("button", { name: "繼續 ›" })).toBeDisabled();
+});
+
+test("completing onboarding keeps inventory flags false", async ({ page }) => {
+  await page.goto("/onboarding");
+  await page.getByRole("button", { name: "繼續 ›" }).click();
+  await page.getByRole("button", { name: "電磁爐" }).click();
+  await page.getByRole("button", { name: "繼續 ›" }).click();
+  await expect(page.getByText("本機 Preview 使用測試資料；正式環境會先要求登入。")).toBeVisible();
+  const requestPromise = page.waitForRequest(
+    (request) => request.url().includes("/api/v1/onboarding") && request.method() === "PUT",
+  );
+  await page.getByRole("button", { name: "蓋章，成立主廚檔案" }).click();
+  await expect(page.getByRole("button", { name: "啟程！進入今日" })).toBeEnabled({ timeout: 3000 });
+  await page.getByRole("button", { name: "啟程！進入今日" }).click();
+  const request = await requestPromise;
+  expect(JSON.parse(request.postData() ?? "{}")).toMatchObject({
+    inventoryReviewed: false,
+    hasNoInventory: false,
+    status: "complete",
+  });
 });
