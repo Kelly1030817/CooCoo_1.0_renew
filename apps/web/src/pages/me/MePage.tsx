@@ -1,4 +1,4 @@
-import { useContext, useState } from "react";
+import { useContext, useState, type CSSProperties } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
   CookingCostRecord,
@@ -32,6 +32,30 @@ const defaultReminders: ReminderPreferences = {
   quietHoursEnd: "09:00",
   weeklyLimit: 3,
 };
+
+function historyModalNode(outcomes: CookingOutcome[], onClose: () => void) {
+  return <HistoryModal outcomes={outcomes} onClose={onClose} />;
+}
+
+function costModalNode(costs: CookingCostRecord[], onClose: () => void) {
+  return <CostModal costs={costs} onClose={onClose} />;
+}
+
+function reminderModalNode(initial: ReminderPreferences, onClose: () => void) {
+  return <ReminderSettingsModal initial={initial} onClose={onClose} />;
+}
+
+function profileModalNode(onClose: () => void, onReplayOnboarding: () => void) {
+  return <ProfileModal onClose={onClose} onReplayOnboarding={onReplayOnboarding} />;
+}
+
+function chefChatModalNode(onClose: () => void) {
+  return <ChefChatModal onClose={onClose} />;
+}
+
+function cookwareModalNode(onClose: () => void) {
+  return <CookwareModal onClose={onClose} />;
+}
 
 export function MePage() {
   const { data } = useAppState();
@@ -184,7 +208,7 @@ export function MePage() {
             {weeklyGoal.progress} / {weeklyGoal.target}
           </strong>
         </div>
-        <div className="goal-ring" style={{ "--progress": `${percent}%` } as React.CSSProperties}>
+        <div className="goal-ring" style={{ "--progress": `${percent}%` } satisfies CSSProperties & Record<"--progress", string>}>
           {percent}%
         </div>
         <label>
@@ -278,51 +302,28 @@ export function MePage() {
 
       <section className="me-settings">
         <h3>更多</h3>
-        <button
-          type="button"
-          onClick={() => ui.open(<HistoryModal outcomes={data.cookingOutcomes} onClose={ui.close} />)}
-        >
+        <button type="button" onClick={() => ui.open(historyModalNode(data.cookingOutcomes, ui.close))}>
           料理歷程
         </button>
-        <button
-          type="button"
-          onClick={() => ui.open(<CostModal costs={data.cookingCosts ?? []} onClose={ui.close} />)}
-        >
+        <button type="button" onClick={() => ui.open(costModalNode(data.cookingCosts ?? [], ui.close))}>
           成本統計（選用）
         </button>
         <button
           type="button"
-          onClick={() =>
-            ui.open(
-              <ReminderSettingsModal
-                initial={data.reminderPreferences ?? defaultReminders}
-                onClose={ui.close}
-              />,
-            )
-          }
+          onClick={() => ui.open(reminderModalNode(data.reminderPreferences ?? defaultReminders, ui.close))}
         >
           提醒設定
         </button>
-        <button
-          type="button"
-          onClick={() => ui.open(<CookwareModal onClose={ui.close} />)}
-        >
+        <button type="button" onClick={() => ui.open(cookwareModalNode(ui.close))}>
           廚具設定
         </button>
         <button
           type="button"
-          onClick={() =>
-            ui.open(
-              <ProfileModal
-                onClose={ui.close}
-                onReplayOnboarding={replayOnboarding}
-              />,
-            )
-          }
+          onClick={() => ui.open(profileModalNode(ui.close, replayOnboarding))}
         >
           帳號與主廚檔案
         </button>
-        <button type="button" onClick={() => ui.open(<ChefChatModal onClose={ui.close} />)}>
+        <button type="button" onClick={() => ui.open(chefChatModalNode(ui.close))}>
           主廚相談室 <small>每日 30 則 · 最近 10 次</small>
         </button>
       </section>

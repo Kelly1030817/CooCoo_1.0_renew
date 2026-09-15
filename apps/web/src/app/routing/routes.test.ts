@@ -4,13 +4,16 @@ import {
   isAppPath,
   pathForRoute,
   routeFromPathname,
+  type AppRoute,
 } from "./routes";
 
+const appRoutes: AppRoute[] = ["today", "shopping", "fridge", "recipes", "me", "onboarding"];
+
 describe("CooCoo app routes", () => {
-  it.each(Object.entries(appRoutePaths))(
+  it.each(appRoutes.map((route) => [route, appRoutePaths[route]] as const))(
     "maps %s to %s and back",
     (route, path) => {
-      expect(pathForRoute(route as keyof typeof appRoutePaths)).toBe(path);
+      expect(pathForRoute(route)).toBe(path);
       expect(routeFromPathname(path)).toBe(route);
       expect(isAppPath(path)).toBe(true);
     },

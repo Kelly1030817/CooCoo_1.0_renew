@@ -6,6 +6,16 @@ const STORE = "recipe-packages";
 const OPERATIONS_STORE = "offline-operations";
 const IMAGE_CACHE = "coocoo-recipe-images-v1";
 
+export interface QueuedOperation { userId?:string; id: string; kind: "cooking_complete"; payload: unknown; createdAt: string }
+
+function isRecipePackage(value: unknown): value is RecipePackage {
+  return typeof value === "object" && value !== null && "id" in value && "steps" in value;
+}
+
+function isQueuedOperation(value: unknown): value is QueuedOperation {
+  return typeof value === "object" && value !== null && "id" in value && "kind" in value;
+}
+
 function openDatabase() {
   return new Promise<IDBDatabase>((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
@@ -44,7 +54,10 @@ export async function getRecipePackage(id: string): Promise<RecipePackage | null
   return new Promise((resolve, reject) => {
     const transaction = database.transaction(STORE, "readonly");
     const request = transaction.objectStore(STORE).get(id);
-    request.onsuccess = () => resolve((request.result as RecipePackage | undefined) ?? null);
+    request.onsuccess = () => {
+      const result: unknown = request.result;
+      resolve(isRecipePackage(result) ? result : null);
+    };
     request.onerror = () => reject(request.error);
   });
 }
@@ -54,14 +67,17 @@ export async function registerServiceWorker() {
   return navigator.serviceWorker.register("/sw.js");
 }
 
-export interface QueuedOperation { userId?:string; id: string; kind: "cooking_complete"; payload: unknown; createdAt: string }
+function readQueuedOperations(values: unknown): QueuedOperation[] {
+  if (!Array.isArray(values)) return [];
+  return values.filter(isQueuedOperation);
+}
 export async function enqueueOperation(operation: QueuedOperation) {
   const database = await openDatabase();
   await new Promise<void>((resolve, reject) => { const transaction = database.transaction(OPERATIONS_STORE, "readwrite"); transaction.objectStore(OPERATIONS_STORE).put(operation); transaction.oncomplete = () => resolve(); transaction.onerror = () => reject(transaction.error); });
 }
 export async function pendingOperations(): Promise<QueuedOperation[]> {
   const database = await openDatabase();
-  return new Promise((resolve, reject) => { const transaction = database.transaction(OPERATIONS_STORE, "readonly"); const request = transaction.objectStore(OPERATIONS_STORE).getAll(); request.onsuccess = () => resolve(request.result as QueuedOperation[]); request.onerror = () => reject(request.error); });
+  return new Promise((resolve, reject) => { const transaction = database.transaction(OPERATIONS_STORE, "readonly"); const request = transaction.objectStore(OPERATIONS_STORE).getAll(); request.onsuccess = () => resolve(readQueuedOperations(request.result)); request.onerror = () => reject(request.error); });
 }
 export async function removeOperation(id: string) {
   const database = await openDatabase();

@@ -3,21 +3,23 @@ import { createApiClient } from "./client";
 
 describe("API authentication adapter", () => {
   test("sends the Supabase access token to the API", async () => {
-    const fetchMock = mock(async () => Response.json({ data: { ok: true } }));
-    const api = createApiClient(async () => "session-token", fetchMock as typeof fetch);
+    const fetchImpl: typeof fetch = async () => Response.json({ data: { ok: true } });
+    const fetchMock = mock(fetchImpl);
+    const api = createApiClient(async () => "session-token", fetchMock);
 
     await expect(api<{ ok: boolean }>("/state")).resolves.toEqual({ ok: true });
-    expect(fetchMock).toHaveBeenCalledWith(
-      "/api/v1/state",
-      expect.objectContaining({ headers: expect.objectContaining({ authorization: "Bearer session-token" }) }),
-    );
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const call = fetchMock.mock.calls[0];
+    expect(call?.[0]).toBe("/api/v1/state");
+    const init = call?.[1];
+    expect(init).toBeDefined();
+    const headers = new Headers(init?.headers);
+    expect(headers.get("authorization")).toBe("Bearer session-token");
   });
 
   test("turns a plain-text AUTH_REQUIRED response into an actionable API error", async () => {
-    const api = createApiClient(
-      async () => null,
-      mock(async () => new Response("AUTH_REQUIRED", { status: 401 })) as typeof fetch,
-    );
+    const fetchImpl: typeof fetch = async () => new Response("AUTH_REQUIRED", { status: 401 });
+    const api = createApiClient(async () => null, fetchImpl);
 
     await expect(api("/state")).rejects.toMatchObject({
       status: 401,

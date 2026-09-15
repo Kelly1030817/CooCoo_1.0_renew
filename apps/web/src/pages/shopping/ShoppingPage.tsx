@@ -1,9 +1,10 @@
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import type { MealTask, MealTaskRestockResult, RecipeAdjustmentPreview, RestockPurchasedItem, ShoppingItem } from "@coocoo/contracts";
+import type { InventoryItem, MealTask, MealTaskRestockResult, RecipeAdjustmentPreview, RestockPurchasedItem, ShoppingItem } from "@coocoo/contracts";
 import { useAppState, stateQueryKey } from "@/entities/app-state/model";
 import { UiContext } from "@/app/ui-context";
-import { api, json } from "@/shared/api/client";
+import { api, json, ApiError } from "@/shared/api/client";
+import { parseStorageLocationOrDefault } from "@/shared/lib/storage-location";
 import { AddShoppingModal, InvoiceModal, ShoppingChefChatModal, VoiceInputModal } from "@/features/shopping/ShoppingModals";
 import { RecipePackageModal } from "@/features/cooking/RecipeModal";
 import { IngredientIcon } from "@/shared/ui/IngredientIcon";
@@ -15,6 +16,60 @@ type DraftLine={item:ShoppingItem;actualQuantity:number;actualUnit:string;actual
 const defaultLocation=(item:ShoppingItem):DraftLine["storageLocation"]=>item.category==="pantry"?"pantry":"cold";
 const slotLabel={breakfast:"早餐",lunch:"午餐",dinner:"晚餐"} as const;
 const shortDate=(date?:string)=>date?date.slice(5).replace("-","/"):"待確認";
+
+function ShoppingReadySheet({
+  recipeTitle,
+  onReturn,
+  onStart,
+}: {
+  recipeTitle?: string;
+  onReturn: () => void;
+  onStart: () => void;
+}) {
+  return (
+    <div className="shopping-ready-sheet">
+      <p className="eyebrow">MealTask · ready</p>
+      <h3>{recipeTitle ?? "料理"} 可以開始了</h3>
+      <p>任務必要食材均已入庫。完成採買不會發 EXP，也不代表料理完成。</p>
+      <div className="ready-actions">
+        <button type="button" className="ghost-btn" onClick={onReturn}>
+          返回任務
+        </button>
+        <button type="button" className="primary-btn" onClick={onStart}>
+          直接開始料理
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function addShoppingModalNode(onClose: () => void) {
+  return <AddShoppingModal onClose={onClose} />;
+}
+
+function shoppingChefChatModalNode(
+  onClose: () => void,
+  activeTask: MealTask | undefined,
+  rescuedItems: InventoryItem[],
+  onApplyReplacement: (shortageId: string, replacementName: string, qty: number, unit: string) => Promise<void>,
+) {
+  return (
+    <ShoppingChefChatModal
+      onClose={onClose}
+      activeTask={activeTask}
+      rescuedItems={rescuedItems}
+      onApplyReplacement={onApplyReplacement}
+    />
+  );
+}
+
+function invoiceModalNode(onClose: () => void) {
+  return <InvoiceModal onClose={onClose} />;
+}
+
+function voiceInputModalNode(onClose: () => void) {
+  return <VoiceInputModal onClose={onClose} />;
+}
 
 export function ShoppingPage(){
   const {data}=useAppState();const {navigate}=useAppRoute();const ui=useContext(UiContext);const query=useQueryClient();
@@ -34,7 +89,7 @@ export function ShoppingPage(){
   const checked=data.shoppingItems.filter(item=>item.checked&&(!item.shortageId||activeTask?.shortages.some(sh=>sh.id===item.shortageId)));
   const remaining=activeTask?.shortages.filter(sh=>!["bought","replaced"].includes(sh.resolution))??[];
   const requirements=activeTask?.recipe.ingredients.filter(i=>!i.isPantryStaple)??[];
-  const coverage=activeTask&&requirements.length?Math.round(100*requirements.reduce((total,item)=>{const sh=remaining.find(sh=>sh.ingredientKey===item.ingredientKey);const required=item.quantity*activeTask.plannedTotalServings/activeTask.recipe.servings;return total+(sh?Math.max(0,1-sh.quantity/Math.max(required,0.001)):1)},0)/requirements.length):activeTask?100:0;
+  const coverage=activeTask&&requirements.length?Math.round(100*requirements.reduce((total,item)=>{const openShortage=remaining.find((shortage)=>shortage.ingredientKey===item.ingredientKey);const required=item.quantity*activeTask.plannedTotalServings/activeTask.recipe.servings;return total+(openShortage?Math.max(0,1-openShortage.quantity/Math.max(required,0.001)):1)},0)/requirements.length):activeTask?100:0;
   const rescued=data.inventory.filter(item=>item.qty>0&&item.expiresOn&&item.daysLeft<=3);
   const taskDone=activeTask?.shortages.filter((item)=>item.resolution==="bought"||item.resolution==="replaced").length??0;
   const taskTotal=activeTask?.shortages.length??0;
@@ -74,15 +129,21 @@ export function ShoppingPage(){
       const result=await api<MealTaskRestockResult>("/shopping/restock",json("POST",command));
       setDraft(null);await refresh();
       if(result.mealTaskStatus==="ready"){
-        ui.open(<div className="shopping-ready-sheet"><p className="eyebrow">MealTask · ready</p><h3>{activeTask?.recipe.title} 可以開始了</h3>
-          <p>任務必要食材均已入庫。完成採買不會發 EXP，也不代表料理完成。</p>
-          <div className="ready-actions"><button className="ghost-btn" onClick={()=>{goToday()}}>返回任務</button>
-          <button className="primary-btn" onClick={()=>{ui.close();if(activeTask)startTask(activeTask)}}>直接開始料理</button></div></div>);
+        ui.open(
+          <ShoppingReadySheet
+            recipeTitle={activeTask?.recipe.title}
+            onReturn={goToday}
+            onStart={() => {
+              ui.close();
+              if (activeTask) startTask(activeTask);
+            }}
+          />,
+        );
       }else{
         ui.toast(result.mealTaskStatus?`已入庫 ${result.count} 項；仍缺 ${result.remainingShortages.length} 項，缺口已保留`:`已入庫 ${result.count} 項`,result.mealTaskStatus?"warning":"success");
       }
     }catch(reason){
-      const status=(reason as {status?:number})?.status;
+      const status=reason instanceof ApiError ? reason.status : undefined;
       if(status===409){setDraft(null);operation.current=null;}
       ui.toast(status===409?"任務已更新，清單已刷新；請重新確認後再入庫":"入庫尚未確認，已保留明細；可用相同操作重試","error");
       await refresh();
@@ -119,27 +180,35 @@ export function ShoppingPage(){
             <p className="eyebrow">GROCERY & MEALTASKS</p>
             <h2>採買清單</h2>
           </div>
-          <button type="button" onClick={()=>ui.open(<AddShoppingModal onClose={ui.close}/>)}>
+          <button type="button" onClick={() => ui.open(addShoppingModalNode(ui.close))}>
             <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>add</span>
             <span>新增品項</span>
           </button>
         </section>
 
         <section className="shopping-entry-grid">
-          <button onClick={()=>ui.open(
-            <ShoppingChefChatModal
-              onClose={ui.close}
-              activeTask={activeTask}
-              rescuedItems={rescued}
-              onApplyReplacement={applyReplacement}
-            />
-          )}>
+          <button
+            type="button"
+            onClick={() =>
+              ui.open(
+                shoppingChefChatModalNode(ui.close, activeTask, rescued, applyReplacement),
+              )
+            }
+          >
             <span className="material-symbols-outlined">auto_awesome</span>
             <strong>AI 陪我逛</strong>
             <small>每日 30 則 · 雙向對話</small>
           </button>
-          <button onClick={()=>ui.open(<InvoiceModal onClose={ui.close}/>)}><span className="material-symbols-outlined">document_scanner</span><strong>掃描發票</strong><small>逐項確認後直接入庫</small></button>
-          <button onClick={()=>ui.open(<VoiceInputModal onClose={ui.close}/>)}><span className="material-symbols-outlined">mic</span><strong>用說的新增</strong><small>也可以直接打字</small></button>
+          <button type="button" onClick={() => ui.open(invoiceModalNode(ui.close))}>
+            <span className="material-symbols-outlined">document_scanner</span>
+            <strong>掃描發票</strong>
+            <small>逐項確認後直接入庫</small>
+          </button>
+          <button type="button" onClick={() => ui.open(voiceInputModalNode(ui.close))}>
+            <span className="material-symbols-outlined">mic</span>
+            <strong>用說的新增</strong>
+            <small>也可以直接打字</small>
+          </button>
         </section>
 
         {tasks.length>1&&<label className="task-selector">切換採買任務<select value={activeTask?.id} onChange={e=>setSelectedTaskId(e.target.value)}>{tasks.map(t=><option key={t.id} value={t.id}>{t.recipe.title} · {shortDate(t.currentMeal.date)} {slotLabel[t.currentMeal.slot]}</option>)}</select></label>}
@@ -175,7 +244,7 @@ export function ShoppingPage(){
         <label>數量<input type="number" min="0" step="0.5" value={line.actualQuantity} onChange={(event)=>patchDraft(line.item.id,{actualQuantity:Number(event.target.value)||0})}/></label>
         <label>單位<input value={line.actualUnit} onChange={(event)=>patchDraft(line.item.id,{actualUnit:event.target.value})}/></label>
         <label>實付<input type="number" min="0" value={line.actualPrice} onChange={(event)=>patchDraft(line.item.id,{actualPrice:Number(event.target.value)||0})}/></label>
-        <label>保存<select value={line.storageLocation} onChange={(event)=>patchDraft(line.item.id,{storageLocation:event.target.value as DraftLine["storageLocation"]})}><option value="cold">冷藏</option><option value="frozen">冷凍</option><option value="pantry">常溫</option></select></label>
+        <label>保存<select value={line.storageLocation} onChange={(event)=>patchDraft(line.item.id,{storageLocation:parseStorageLocationOrDefault(event.target.value)})}><option value="cold">冷藏</option><option value="frozen">冷凍</option><option value="pantry">常溫</option></select></label>
         <label>期限<input type="date" value={line.expiresOn} onChange={(event)=>patchDraft(line.item.id,{expiresOn:event.target.value})}/></label>
         {line.item.shortageId&&!line.expiresOn&&<small className="settle-warn">請確認期限，才能判斷是否可用於這一餐</small>}</div>)}
       <div className="settle-actions"><button className="ghost-btn" onClick={()=>setDraft(null)}>回清單調整</button><button className="primary-btn" disabled={busy||missingExpiry.length>0||draft.some((line)=>line.actualQuantity<=0)} onClick={commit}>確認入庫這 {draft.length} 項</button></div></section></div>}

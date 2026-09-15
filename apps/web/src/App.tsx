@@ -1,6 +1,7 @@
 import { lazy, Suspense, useContext, useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import type { ApiSuccess, AppState } from "@coocoo/contracts";
+import type { AppState } from "@coocoo/contracts";
+import { isApiSuccess } from "@/shared/lib/api-body";
 import type { Session } from "@supabase/supabase-js";
 import { stateQueryKey, useAppState } from "@/entities/app-state/model";
 import { useAppRoute } from "@/app/routing/useAppRoute";
@@ -38,7 +39,7 @@ export default function App() {
   const [reauthBusy, setReauthBusy] = useState(false);
   const [reauthError, setReauthError] = useState("");
   useEffect(() => {
-    if (!supabase) return;
+    if (!supabase) return undefined;
     let active = true;
     const applySession = async (session: Session | null) => {
       if (!active) return;
@@ -49,9 +50,10 @@ export default function App() {
           headers: { authorization: `Bearer ${session.access_token}` },
         });
         if (!response.ok) throw new Error("STATE_RESTORE_FAILED");
-        const { data: state } = await response.json() as ApiSuccess<AppState>;
-        queryClient.setQueryData(stateQueryKey, state);
-        if (active && state.onboardingProfile?.status === "complete") {
+        const payload: unknown = await response.json();
+        if (!isApiSuccess<AppState>(payload)) throw new Error("STATE_RESTORE_FAILED");
+        queryClient.setQueryData(stateQueryKey, payload.data);
+        if (active && payload.data.onboardingProfile?.status === "complete") {
           setOnboardingComplete(true);
         }
       } catch {

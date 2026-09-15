@@ -13,7 +13,7 @@ async function enableMocking(){
   await worker.start({onUnhandledRequest:'bypass',quiet:true})
 }
 
-enableMocking().then(()=>{
+void enableMocking().then(()=>{
   if(import.meta.env.PROD)void registerServiceWorker()
   void syncOfflineOperations()
   window.addEventListener('online',()=>{void syncOfflineOperations()})

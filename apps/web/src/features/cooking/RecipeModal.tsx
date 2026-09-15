@@ -79,7 +79,8 @@ function getChefTip(instruction: string, safetyNote: string | null) {
 
 function playTimerChime() {
   try {
-    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    const extendedWindow = window as Window & { webkitAudioContext?: typeof AudioContext };
+    const AudioCtx = window.AudioContext ?? extendedWindow.webkitAudioContext;
     if (!AudioCtx) return;
     const ctx = new AudioCtx();
     const osc = ctx.createOscillator();
@@ -138,7 +139,7 @@ function CookingMode({ recipePackage, ingredientIds, mealTaskId, onClose, onComp
   }, []);
 
   useEffect(() => {
-    if (!timerRunning || secondsLeft === null || secondsLeft <= 0) return;
+    if (!timerRunning || secondsLeft === null || secondsLeft <= 0) return undefined;
     const timer = window.setInterval(() => {
       setSecondsLeft((prev) => {
         if (prev === null) return null;

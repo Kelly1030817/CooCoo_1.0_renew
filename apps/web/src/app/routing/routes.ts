@@ -9,9 +9,11 @@ export const appRoutePaths = {
 
 export type AppRoute = keyof typeof appRoutePaths;
 
-const routesByPath = Object.fromEntries(
-  Object.entries(appRoutePaths).map(([route, path]) => [path, route]),
-) as Record<string, AppRoute>;
+const APP_ROUTES: AppRoute[] = ["today", "shopping", "fridge", "recipes", "me", "onboarding"];
+const routesByPath: Record<string, AppRoute> = {};
+for (const route of APP_ROUTES) {
+  routesByPath[appRoutePaths[route]] = route;
+}
 
 function normalizePathname(pathname: string) {
   if (!pathname || pathname === "/") return "/";

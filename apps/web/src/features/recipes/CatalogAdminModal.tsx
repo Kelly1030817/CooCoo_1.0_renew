@@ -50,7 +50,7 @@ export function CatalogAdminModal({ onClose }: { onClose: () => void }) {
         <p className="text-xs">失敗工作 {q.data.failedJobCount} · 過期價格 {q.data.stalePriceCount} · 7 天內到期 {q.data.expiringPriceCount}</p>
       </section>
       {q.data.alerts.map(alert => <p key={alert} role="alert" className="text-error">{alert}</p>)}
-      <button className="primary-btn" disabled={busy} onClick={() => void act('/admin/recipes/control', { paused: !q.data!.paused }, 'PUT')}>
+      <button className="primary-btn" disabled={busy} onClick={() => void act('/admin/recipes/control', { paused: !q.data.paused }, 'PUT')}>
         {q.data.paused ? '啟用已部署的排程' : '暫停新增生成'}
       </button>
 

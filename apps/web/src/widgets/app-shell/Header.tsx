@@ -11,6 +11,10 @@ import { readOnboardingDraft } from "../../shared/model/onboarding-draft";
 
 import type { AppRoute } from "../../app/routing/routes";
 
+function catalogAdminModalNode(onClose: () => void) {
+  return <CatalogAdminModal onClose={onClose} />;
+}
+
 export function Header({
   enabled = true,
   onNavigate,
@@ -51,7 +55,11 @@ export function Header({
             </button>
           )}
           {import.meta.env.DEV && access.data?.owner && (
-            <button className="text-xs text-on-surface-variant hover:text-primary px-2 py-1 rounded-lg border border-outline-variant/50" onClick={() => ui.open(<CatalogAdminModal onClose={ui.close} />)}>
+            <button
+              type="button"
+              className="text-xs text-on-surface-variant hover:text-primary px-2 py-1 rounded-lg border border-outline-variant/50"
+              onClick={() => ui.open(catalogAdminModalNode(ui.close))}
+            >
               食譜管理
             </button>
           )}

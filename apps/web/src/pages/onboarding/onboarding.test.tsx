@@ -106,11 +106,14 @@ describe("Chef Consultation Components", () => {
     const store = new Map<string, string>();
     const mockStorage = {
       getItem: (k: string) => store.get(k) ?? null,
-      setItem: (k: string, v: string) => { store.set(k, String(v)); },
+      setItem: (k: string, v: string) => { store.set(k, v); },
       removeItem: (k: string) => { store.delete(k); },
       clear: () => { store.clear(); },
     };
-    (globalThis as any).localStorage = mockStorage;
+    Object.defineProperty(globalThis, "localStorage", {
+      configurable: true,
+      value: mockStorage,
+    });
 
     const { hasSavedOnboardingDraft, saveOnboardingDraft, ONBOARDING_DRAFT_STORAGE_KEY } = await import(
       "../../shared/model/onboarding-draft"

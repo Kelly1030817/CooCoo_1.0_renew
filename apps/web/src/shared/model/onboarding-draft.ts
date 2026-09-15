@@ -31,12 +31,20 @@ export const emptyOnboardingDraft: OnboardingProfile = {
   completedAt: null,
 };
 
+function isOnboardingDraftRecord(value: unknown): value is Partial<OnboardingProfile> & { version?: number } {
+  return typeof value === "object" && value !== null;
+}
+
+function hasDraftVersion(value: unknown): value is { version: number } {
+  return isOnboardingDraftRecord(value) && value.version === 2;
+}
+
 export function readOnboardingDraft(): OnboardingProfile {
   try {
     const raw = localStorage.getItem(ONBOARDING_DRAFT_STORAGE_KEY);
     if (!raw) return emptyOnboardingDraft;
-    const parsed = JSON.parse(raw) as Partial<OnboardingProfile> & { version?: number };
-    if (parsed.version !== 2) return emptyOnboardingDraft;
+    const parsed: unknown = JSON.parse(raw);
+    if (!isOnboardingDraftRecord(parsed) || parsed.version !== 2) return emptyOnboardingDraft;
     return { ...emptyOnboardingDraft, ...parsed };
   } catch {
     return emptyOnboardingDraft;
@@ -51,8 +59,8 @@ export function hasSavedOnboardingDraft(): boolean {
   try {
     const raw = localStorage.getItem(ONBOARDING_DRAFT_STORAGE_KEY);
     if (!raw) return false;
-    const parsed = JSON.parse(raw) as { version?: number };
-    return Boolean(parsed && parsed.version === 2);
+    const parsed: unknown = JSON.parse(raw);
+    return hasDraftVersion(parsed);
   } catch {
     return false;
   }

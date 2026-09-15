@@ -11,6 +11,12 @@ bun run --cwd apps/web dev -- --host 127.0.0.1
 
 本機未設 Supabase 時會走 MSW mock API。設 `VITE_USE_REAL_API=true` 才打真實 `/api`。
 
+## Lint（oxlint）
+
+`bun run --cwd apps/web lint` 使用 `.oxlintrc.json`：`correctness` / `suspicious` 為 error，並啟用 `options.typeAware`（需 `oxlint-tsgolint`）。`react/react-in-jsx-scope` 關閉（Vite 新 JSX 轉換）。
+
+MSW 合約測試 `src/shared/api/mock/handlers.test.ts` 仍大量使用 `response.json()` 斷言；在 C13 契約型別收斂前，該檔以 override 關閉 `typescript/no-unsafe-type-assertion`，避免與生產程式碼混用同一套 `as` 修復節奏。
+
 ## 驗證
 
 ```bash

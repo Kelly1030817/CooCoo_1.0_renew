@@ -11,20 +11,32 @@ const storage = () =>
         setItem: (key: string, value: string) => nodeStorage.set(key, value),
       }
     : localStorage;
+
+function isOnboardingProfile(value: unknown): value is OnboardingProfile {
+  if (typeof value !== "object" || value === null) return false;
+  return (
+    "status" in value &&
+    value.status === "complete" &&
+    "currentStep" in value &&
+    typeof value.currentStep === "number" &&
+    value.currentStep >= 3 &&
+    "weeklyGoalTarget" in value &&
+    Boolean(value.weeklyGoalTarget)
+  );
+}
+
 function completedOnboardingProfile(value: unknown): OnboardingProfile | null {
-  if (!value || typeof value !== "object") return null;
-  const profile = value as Partial<OnboardingProfile>;
-  if (profile.status !== "complete" || profile.currentStep == null || profile.currentStep < 3 || !profile.weeklyGoalTarget) return null;
-  return profile as OnboardingProfile;
+  return isOnboardingProfile(value) ? value : null;
+}
+
+function isAppState(value: unknown): value is AppState {
+  return typeof value === "object" && value !== null && "version" in value;
 }
 
 export function migrateMockState(value: unknown, onboardingValue?: unknown): AppState | null {
-  if (!value || typeof value !== "object") return null;
-  const candidate = value as Partial<AppState>;
-  const version = (value as { version?: number }).version;
-  let migrated: AppState | null = null;
-  if (version === 2) migrated = { ...createSeedState(), ...candidate, version: 2 } as AppState;
-  if (!migrated) return null;
+  if (!isAppState(value)) return null;
+  if (value.version !== 2) return null;
+  let migrated: AppState = { ...createSeedState(), ...value, version: 2 };
   const profile = completedOnboardingProfile(onboardingValue);
   if (!profile || migrated.onboardingProfile?.status === "complete") return migrated;
   const completedAt = profile.completedAt ? new Date(profile.completedAt) : new Date(0);

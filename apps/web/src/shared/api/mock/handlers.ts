@@ -3,7 +3,7 @@ import { FormatRegistry } from "@sinclair/typebox";
 import { Value } from "@sinclair/typebox/value";
 import type { TSchema, Static } from "@sinclair/typebox";
 import { brandSafeRecipes, CooCooService, createMealTask, getRescuePlan, parseShoppingText, searchRecipes, withTodayMissions } from "@coocoo/core";
-import { ContractSchemas, type IngredientPrice, type MealPostpone, type MealSlot } from "@coocoo/contracts";
+import { ContractSchemas, type IngredientPrice, type MealSlot } from "@coocoo/contracts";
 import { createMealPlan, createTodayDecision, refreshAvailability, rescheduleMeal, weekOf, type MealPlanningContext } from "../../../../../api/src/modules/meal-plans/meal-planning";
 import { MemoryPlanningRepository } from "../../../../../api/src/modules/meal-plans/memory-planning.repository";
 import { recommend } from "../../../../../api/src/modules/catalog/recommendations";
@@ -50,7 +50,7 @@ let mockRecipeSettings = { purchaseBudget: 100, confirmed: true, version: 1 };
 const planningContext = (weekStart: string, energyLevel: "low" | "normal" = "normal"): MealPlanningContext => {
   const state = service.state();
   const profile = state.onboardingProfile;
-  const mealSlots = (profile?.plannedMealSlots?.length ? profile.plannedMealSlots : ["dinner"]) as MealSlot[];
+  const mealSlots: MealSlot[] = profile?.plannedMealSlots?.length ? profile.plannedMealSlots : ["dinner"];
   const cookwareTypes = profile?.cookware.map((item) => item.type) ?? state.cookware.flatMap((item) => [item.type, item.name]);
   return {
     weekStart,
@@ -64,7 +64,7 @@ const planningContext = (weekStart: string, energyLevel: "low" | "normal" = "nor
     energyLevel,
   };
 };
-const ok = <T>(data: T, status = 200) =>
+const ok = (data: unknown, status = 200) =>
   HttpResponse.json({ data }, { status });
 const error = (cause: unknown, status = 422) => {
   const code = cause instanceof Error ? cause.message : "UNKNOWN_ERROR";
@@ -87,8 +87,38 @@ const error = (cause: unknown, status = 422) => {
 };
 const validated = <T extends TSchema>(schema: T, value: unknown): Static<T> => {
   if (!Value.Check(schema, value)) throw new Error("VALIDATION_ERROR");
-  return value as Static<T>;
+  return Value.Decode(schema, value);
 };
+
+function recommendationRequest(value: unknown): {
+  mode: "inventory_only" | "small_purchase";
+  purchaseBudget: number;
+  allowRepeat?: boolean;
+  energy?: "low" | "normal";
+} {
+  if (typeof value !== "object" || value === null) throw new Error("VALIDATION_ERROR");
+  const mode = "mode" in value ? value.mode : undefined;
+  const purchaseBudget = "purchaseBudget" in value ? value.purchaseBudget : undefined;
+  if (mode !== "inventory_only" && mode !== "small_purchase") throw new Error("VALIDATION_ERROR");
+  if (typeof purchaseBudget !== "number") throw new Error("VALIDATION_ERROR");
+  const allowRepeat =
+    "allowRepeat" in value && typeof value.allowRepeat === "boolean" ? value.allowRepeat : undefined;
+  const energy =
+    "energy" in value && (value.energy === "low" || value.energy === "normal") ? value.energy : undefined;
+  return { mode, purchaseBudget, allowRepeat, energy };
+}
+
+function isRestockCommandPayload(
+  value: unknown,
+): value is Record<string, unknown> & { operationId: unknown; purchasedItems: unknown[] } {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "operationId" in value &&
+    "purchasedItems" in value &&
+    Array.isArray(value.purchasedItems)
+  );
+}
 
 export const handlers = [
   http.get("/api/v1/state", () => ok(withTodayMissions(service.state()))),
@@ -214,7 +244,7 @@ export const handlers = [
   http.post("/api/v1/meal-tasks",async({request})=>{try{const body=validated(ContractSchemas.MealTaskCreateSchema,await request.json());const state=service.state();if(state.mealTasks?.some((task)=>task.operationId===body.operationId))return ok(state.mealTasks.find((task)=>task.operationId===body.operationId));const baseRecipe=brandSafeRecipes.find((item)=>item.id===body.recipePackageId||item.recipeId===body.recipePackageId);if(!baseRecipe)throw new Error("RECIPE_NOT_FOUND");const preview=body.adjustmentPreviewId?(state.recipeAdjustmentPreviews??[]).find((item)=>item.previewId===body.adjustmentPreviewId&&item.originalRecipeId===baseRecipe.recipeId&&Date.parse(item.expiresAt)>Date.now()):undefined;if(body.adjustmentPreviewId&&!preview)throw new Error("ADJUSTMENT_PREVIEW_INVALID");const task=createMealTask(body,preview?.adjustedRecipe??baseRecipe,state.inventory,state.onboardingProfile?.restrictions??[]);state.mealTasks=[...(state.mealTasks??[]),task];new BrowserStateRepository().write(state);return ok(task,201)}catch(e){return error(e)}}),
   http.post("/api/v1/meal-servings/:id/eat",async({params,request})=>{try{const body=validated(ContractSchemas.PreparedServingEatSchema,await request.json());return ok(service.eatPreparedServing(String(params.id),body.operationId));}catch(e){return error(e)}}),
   http.get("/api/v1/meal-tasks",()=>ok(service.state().mealTasks??[])),
-  http.patch("/api/v1/meal-tasks/:id/shortages/:shortageId",async({params,request})=>{try{const body=validated(ContractSchemas.ShoppingResolutionCommandSchema,await request.json());const task=service.resolveShortage({...body,shortageId:String(params.shortageId)} as never);if(!task)throw new Error("MEAL_TASK_NOT_FOUND");return ok(task);}catch(e){return error(e)}}),
+  http.patch("/api/v1/meal-tasks/:id/shortages/:shortageId",async({params,request})=>{try{const body=validated(ContractSchemas.ShoppingResolutionCommandSchema,await request.json());const task=service.resolveShortage({...body,shortageId:String(params.shortageId)});if(!task)throw new Error("MEAL_TASK_NOT_FOUND");return ok(task);}catch(e){return error(e)}}),
   http.post("/api/v1/meal-tasks/replan",async({request})=>{try{const body=validated(ContractSchemas.ShoppingResolutionCommandSchema,await request.json());const task=service.resolveShortage(body);if(!task)throw new Error("MEAL_TASK_NOT_FOUND");return ok(task);}catch(e){return error(e)}}),
   http.get("/api/v1/chef-chat/sessions",()=>ok((service.state().chefChatSessions??[]).slice(-10).reverse())),
   http.post("/api/v1/chef-chat/sessions",async({request})=>{try{const body=validated(ContractSchemas.ChefChatSendSchema,await request.json());const state=service.state();const today=new Date().toISOString().slice(0,10);const used=(state.chefChatSessions??[]).flatMap((session)=>session.messages).filter((message)=>message.role==="user"&&message.createdAt.startsWith(today)).length;if(used>=30)throw new Error("AI_DAILY_LIMITED");const now=new Date().toISOString();const session={id:crypto.randomUUID(),title:body.message.slice(0,24),source:"rules" as const,createdAt:now,updatedAt:now,messages:[{id:crypto.randomUUID(),role:"user" as const,content:body.message,createdAt:now},{id:crypto.randomUUID(),role:"assistant" as const,content:"AI 目前未連線，我先用規則型協助：從即期食材選一項，再挑 30 分鐘內、符合廚具與飲食限制的食譜。你也可以到食譜頁用多食材搜尋。",createdAt:now}]};state.chefChatSessions=[...(state.chefChatSessions??[]).slice(-9),session];new BrowserStateRepository().write(state);return ok(session,201)}catch(e){return error(e)}}),
@@ -251,7 +281,7 @@ export const handlers = [
   }),
   http.patch("/api/v1/meal-plans/meals/:id", async ({ params, request }) => {
     try {
-      const body = validated(ContractSchemas.MealPostponeSchema, await request.json()) as MealPostpone;
+      const body = validated(ContractSchemas.MealPostponeSchema, await request.json());
       const saved = await planningRepository.current("preview", body.weekStart);
       if (!saved) throw new Error("PLANNED_MEAL_NOT_FOUND");
       const context = planningContext(body.weekStart);
@@ -310,9 +340,10 @@ export const handlers = [
   http.post("/api/v1/shopping/restock", async ({ request }) => {
     try {
       const raw = await request.text();
-      const body = raw ? (JSON.parse(raw) as { operationId?: string; purchasedItems?: unknown }) : null;
-      if (body?.operationId && Array.isArray(body.purchasedItems)) {
-        return ok(service.restock(validated(ContractSchemas.MealTaskRestockCommandSchema, body)));
+      if (!raw) return ok(service.restock());
+      const parsed: unknown = JSON.parse(raw);
+      if (isRestockCommandPayload(parsed)) {
+        return ok(service.restock(validated(ContractSchemas.MealTaskRestockCommandSchema, parsed)));
       }
       return ok(service.restock());
     } catch (e) {
@@ -367,8 +398,16 @@ export const handlers = [
   http.get("/api/v1/settings/recipes", () => ok(mockRecipeSettings)),
   http.put("/api/v1/settings/recipes", async ({ request }) => {
     try {
-      const b = (await request.json()) as { purchaseBudget: number; expectedVersion: number };
-      mockRecipeSettings = { purchaseBudget: b.purchaseBudget, confirmed: true, version: (mockRecipeSettings.version || 1) + 1 };
+      const incoming: unknown = await request.json();
+      if (
+        typeof incoming !== "object" ||
+        incoming === null ||
+        !("purchaseBudget" in incoming) ||
+        typeof incoming.purchaseBudget !== "number"
+      ) {
+        throw new Error("VALIDATION_ERROR");
+      }
+      mockRecipeSettings = { purchaseBudget: incoming.purchaseBudget, confirmed: true, version: (mockRecipeSettings.version || 1) + 1 };
       return ok(mockRecipeSettings);
     } catch (e) {
       return error(e);
@@ -376,7 +415,7 @@ export const handlers = [
   }),
   http.post("/api/v1/recipes/recommendations", async ({ request }) => {
     try {
-      const body = (await request.json()) as { mode: "inventory_only" | "small_purchase"; purchaseBudget: number; allowRepeat?: boolean; energy?: "low" | "normal" };
+      const body = recommendationRequest(await request.json());
       const date = new Date(Date.now() + 8 * 3_600_000).toISOString().slice(0, 10);
       const context = planningContext(weekOf(date), body.energy || "normal");
       const result = recommend(brandSafeRecipes, context, { mode: body.mode, purchaseBudget: body.purchaseBudget ?? 100, allowRepeat: body.allowRepeat ?? false, energy: body.energy }, mockStarterPrices, []);

@@ -12,6 +12,10 @@ import { usePrepTray } from "@/features/kitchen/prep-tray";
 import { groupInventory, needsInventoryConfirmation, type InventoryGroup } from "./inventory-view";
 import "./FridgePage.css";
 
+function addInventoryModalNode(onClose: () => void) {
+  return <AddInventoryModal onClose={onClose} />;
+}
+
 export function FridgePage() {
   const { data } = useAppState();
   const ui = useContext(UiContext);
@@ -94,7 +98,7 @@ export function FridgePage() {
         </div>
         <button
           type="button"
-          onClick={() => ui.open(<AddInventoryModal onClose={ui.close} />)}
+          onClick={() => ui.open(addInventoryModalNode(ui.close))}
           className="fridge-add-btn"
         >
           <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
