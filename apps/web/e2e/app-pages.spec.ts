@@ -47,3 +47,18 @@ test("/me aria tree", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "我的" })).toBeVisible();
   await expect(page.locator("body")).toMatchAriaSnapshot({ name: "me" });
 });
+
+test("root path stays on / and shows today", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByRole("region", { name: "今日任務" })).toBeVisible();
+  expect(new URL(page.url()).pathname).toBe("/");
+});
+
+test("weekly goal input matches loaded app state", async ({ page }) => {
+  await page.goto("/me");
+  const progress = page.getByText(/\d+ \/ \d+/).first();
+  await expect(progress).toBeVisible();
+  const text = await progress.innerText();
+  const target = text.split("/")[1]?.trim();
+  await expect(page.locator('input[name="weekly-goal-target"]')).toHaveValue(target ?? "");
+});

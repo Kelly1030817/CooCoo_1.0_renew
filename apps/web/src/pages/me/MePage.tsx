@@ -1,4 +1,4 @@
-import { useContext, useState, type CSSProperties } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
   CookingCostRecord,
@@ -18,7 +18,7 @@ import { api, json } from "@/shared/api/client";
 import { readOnboardingDraft, saveOnboardingDraft } from "@/shared/model/onboarding-draft";
 import { Modal, ModalHeader } from "@/shared/ui/Modal";
 import { UiContext } from "@/app/ui-context";
-import { startGoogleAuth, supabase } from "@/shared/auth/supabase";
+import { currentPageRedirectTo, startGoogleAuth, supabase } from "@/shared/auth/supabase";
 import { CookwareModal, ProfileModal } from "@/widgets/app-shell/Header";
 import "./MePage.css";
 
@@ -65,13 +65,19 @@ export function MePage() {
   const [authBusy, setAuthBusy] = useState(false);
   const [authError, setAuthError] = useState("");
 
+  useEffect(() => {
+    if (data?.weeklyGoal.target != null) {
+      setTarget(data.weeklyGoal.target);
+    }
+  }, [data?.weeklyGoal.target]);
+
   if (!data) return null;
 
   const handleGoogleSignIn = async () => {
     setAuthBusy(true);
     setAuthError("");
     try {
-      await startGoogleAuth();
+      await startGoogleAuth(currentPageRedirectTo());
     } catch (e) {
       setAuthBusy(false);
       setAuthError(e instanceof Error ? e.message : "Google 登入啟動失敗");
@@ -198,9 +204,7 @@ export function MePage() {
         </div>
         <div
           className="goal-ring"
-          style={
-            { "--progress": `${percent}%` } satisfies CSSProperties & Record<"--progress", string>
-          }
+          ref={(node) => node?.style.setProperty("--progress", `${percent}%`)}
         >
           {percent}%
         </div>
