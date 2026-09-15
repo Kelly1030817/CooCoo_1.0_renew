@@ -8,6 +8,8 @@ import {
   readOnboardingDraft,
   saveOnboardingDraft,
 } from "@/shared/model/onboarding-draft";
+import { queryClient } from "@/app/query-client";
+import { authSessionQueryKey, useAuthSession } from "@/shared/auth/session";
 import { onboardingRedirectTo, startGoogleAuth, supabase } from "@/shared/auth/supabase";
 import { ChefAvatar, type ChefMood } from "./ChefAvatar";
 import { PassportTicket } from "./PassportTicket";
@@ -98,12 +100,10 @@ export function OnboardingPage({
     ...saved,
     currentStep: startingStep,
   });
+  const { status: authStatus, callbackIssue } = useAuthSession();
   const [customCookware, setCustomCookware] = useState("");
   const [restrictionInput, setRestrictionInput] = useState("");
   const [flavorInput, setFlavorInput] = useState("");
-  const [authStatus, setAuthStatus] = useState<"checking" | "signed-in" | "signed-out">(() =>
-    supabase ? "checking" : "signed-in",
-  );
   const [busy, setBusy] = useState(false);
   const [mood, setMood] = useState<ChefMood>("listen");
   const [nodding, setNodding] = useState(false);
@@ -125,26 +125,8 @@ export function OnboardingPage({
   const valid = useMemo(() => isOnboardingStepValid(step, profile), [profile, step]);
 
   useEffect(() => {
-    if (!supabase) return undefined;
-    let active = true;
-    void supabase.auth
-      .getSession()
-      .then(({ data }) => {
-        if (active) setAuthStatus(data.session ? "signed-in" : "signed-out");
-      })
-      .catch(() => {
-        if (active) setAuthStatus("signed-out");
-      });
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (active) setAuthStatus(session ? "signed-in" : "signed-out");
-    });
-    return () => {
-      active = false;
-      subscription.unsubscribe();
-    };
-  }, []);
+    if (callbackIssue) setError(callbackIssue);
+  }, [callbackIssue]);
 
   useEffect(() => {
     if (!stamped) return undefined;
@@ -238,11 +220,11 @@ export function OnboardingPage({
     try {
       const { data, error: authError } = await supabase.auth.getSession();
       if (authError || !data.session) {
-        setAuthStatus("signed-out");
+        queryClient.setQueryData(authSessionQueryKey, null);
         setError("主廚設定已保存在草稿；請先完成登入，再按一次蓋章。");
         return false;
       }
-      setAuthStatus("signed-in");
+      queryClient.setQueryData(authSessionQueryKey, data.session);
       return true;
     } catch {
       setError("暫時無法確認登入狀態，請檢查網路後再按一次蓋章。");
@@ -574,7 +556,7 @@ export function OnboardingPage({
                   title="登入並同步主廚檔案"
                   description="設定會跟著帳號，不會只留在這台裝置。"
                 >
-                  {supabase && authStatus === "checking" && (
+                  {supabase && authStatus === "loading" && (
                     <p className="safety-note">正在確認登入狀態…</p>
                   )}
                   {supabase && authStatus === "signed-out" && (

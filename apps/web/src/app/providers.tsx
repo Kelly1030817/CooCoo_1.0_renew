@@ -1,10 +1,9 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useCallback, useMemo, useState, type ReactNode } from "react";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { queryClient } from "./query-client";
 import { UiContext } from "./ui-context";
+import { startAuthSessionSync } from "../shared/auth/session";
 
-const queryClient = new QueryClient({
-  defaultOptions: { queries: { staleTime: 0, retry: false } },
-});
 let toastTimer: ReturnType<typeof setTimeout> | undefined;
 
 export function armToastDismiss(dismiss: () => void, ms = 3000) {
@@ -24,6 +23,7 @@ export function Providers({ children }: { children: ReactNode }) {
     },
     [],
   );
+  useEffect(() => startAuthSessionSync(toast), [toast]);
   const value = useMemo(() => ({ toast, open: setModal, close }), [toast, close]);
   return (
     <QueryClientProvider client={queryClient}>

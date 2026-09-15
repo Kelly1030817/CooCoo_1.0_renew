@@ -45,3 +45,11 @@ test("onboarding step query opens step 3 without a draft", async ({ page }) => {
   await expect(page.getByText("最後一步，登入並成立你的主廚檔案。")).toBeVisible();
   await expect(page.getByText("Hi！我是你的專屬主廚 CooCoo。")).toHaveCount(0);
 });
+
+test("oauth callback error is announced", async ({ page }) => {
+  await page.goto(
+    "/onboarding?step=3#error_code=otp_expired&error=access_denied&error_description=expired",
+  );
+  await expect(page.getByRole("alert")).toContainText("這封驗證信已使用或過期");
+  await expect(page.getByRole("status")).toContainText("這封驗證信已使用或過期");
+});

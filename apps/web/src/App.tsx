@@ -1,7 +1,6 @@
 import { lazy, Suspense, useContext, useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { AppState } from "@coocoo/contracts";
-import type { Session } from "@supabase/supabase-js";
 import { stateQueryKey, useAppState } from "@/entities/app-state/model";
 import { useAppRoute } from "@/app/routing/useAppRoute";
 import { Header } from "@/widgets/app-shell/Header";
@@ -10,6 +9,7 @@ import { OnboardingPage } from "@/pages/onboarding/OnboardingPage";
 import { readOnboardingDraft } from "@/shared/model/onboarding-draft";
 import { api } from "@/shared/api/client";
 import { currentPageRedirectTo, startGoogleAuth, supabase } from "@/shared/auth/supabase";
+import { useAuthSession } from "@/shared/auth/session";
 import { AuthRecoveryPanel } from "@/shared/auth/AuthRecoveryPanel";
 import { UiContext } from "@/app/ui-context";
 
@@ -32,42 +32,30 @@ export default function App() {
   const { route, navigate } = useAppRoute();
   const queryClient = useQueryClient();
   const ui = useContext(UiContext);
+  const { status: authStatus, session } = useAuthSession();
   const [onboardingComplete, setOnboardingComplete] = useState(
     () => readOnboardingDraft().status === "complete",
-  );
-  const [authStatus, setAuthStatus] = useState<"loading" | "signed-in" | "signed-out">(() =>
-    supabase ? "loading" : "signed-out",
   );
   const [reauthBusy, setReauthBusy] = useState(false);
   const [reauthError, setReauthError] = useState("");
   useEffect(() => {
-    if (!supabase) return undefined;
+    if (!session) return undefined;
     let active = true;
-    const applySession = async (session: Session | null) => {
-      if (!active) return;
-      setAuthStatus(session ? "signed-in" : "signed-out");
-      if (!session) return;
-      try {
-        const state = await api<AppState>("/state");
+    void api<AppState>("/state")
+      .then((state) => {
+        if (!active) return;
         queryClient.setQueryData(stateQueryKey, state);
-        if (active && state.onboardingProfile?.status === "complete") {
+        if (state.onboardingProfile?.status === "complete") {
           setOnboardingComplete(true);
         }
-      } catch {
+      })
+      .catch(() => {
         if (active) void queryClient.invalidateQueries({ queryKey: stateQueryKey });
-      }
-    };
-    void supabase.auth.getSession().then(({ data }) => applySession(data.session));
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      void applySession(session);
-    });
+      });
     return () => {
       active = false;
-      subscription.unsubscribe();
     };
-  }, [queryClient]);
+  }, [session, queryClient]);
   const stateEnabled = onboardingComplete && (!supabase || authStatus === "signed-in");
   const { data, isLoading, error } = useAppState(stateEnabled);
   const restartGoogleAuth = async () => {
