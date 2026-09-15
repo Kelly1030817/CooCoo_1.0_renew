@@ -5,14 +5,25 @@ import { UiContext } from "./ui-context";
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 0, retry: false } },
 });
+let toastTimer: ReturnType<typeof setTimeout> | undefined;
+
+export function armToastDismiss(dismiss: () => void, ms = 3000) {
+  if (toastTimer !== undefined) clearTimeout(toastTimer);
+  toastTimer = setTimeout(dismiss, ms);
+  return toastTimer;
+}
+
 export function Providers({ children }: { children: ReactNode }) {
   const [modal, setModal] = useState<ReactNode>(null);
   const [notice, setNotice] = useState<{ message: string; type: string } | null>(null);
   const close = useCallback(() => setModal(null), []);
-  const toast = useCallback((message: string, type = "success") => {
-    setNotice({ message, type });
-    window.setTimeout(() => setNotice(null), 3000);
-  }, []);
+  const toast = useCallback(
+    (message: string, type: "success" | "warning" | "error" = "success") => {
+      setNotice({ message, type });
+      armToastDismiss(() => setNotice(null));
+    },
+    [],
+  );
   const value = useMemo(() => ({ toast, open: setModal, close }), [toast, close]);
   return (
     <QueryClientProvider client={queryClient}>
