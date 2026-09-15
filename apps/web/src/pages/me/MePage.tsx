@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
   CookingCostRecord,
@@ -17,7 +17,7 @@ import { useAppState, stateQueryKey } from "@/entities/app-state/model";
 import { api, json } from "@/shared/api/client";
 import { readOnboardingDraft, saveOnboardingDraft } from "@/shared/model/onboarding-draft";
 import { Modal, ModalHeader } from "@/shared/ui/Modal";
-import { UiContext } from "@/app/ui-context";
+import { useUi } from "@/app/ui-context";
 import { currentPageRedirectTo, startGoogleAuth, supabase } from "@/shared/auth/supabase";
 import { CookwareModal, ProfileModal } from "@/widgets/app-shell/Header";
 import "./MePage.css";
@@ -59,7 +59,7 @@ function cookwareModalNode(onClose: () => void) {
 export function MePage() {
   const { data } = useAppState();
   const query = useQueryClient();
-  const ui = useContext(UiContext);
+  const ui = useUi();
   const { navigate } = useAppRoute();
   const [target, setTarget] = useState(data?.weeklyGoal.target ?? 1);
   const [authBusy, setAuthBusy] = useState(false);

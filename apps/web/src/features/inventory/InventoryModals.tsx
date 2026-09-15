@@ -1,13 +1,16 @@
-import { useContext } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { UiContext } from "@/app/ui-context";
+import { useUi } from "@/app/ui-context";
 import { Modal, ModalHeader } from "@/shared/ui/Modal";
 import { api, json } from "@/shared/api/client";
 import { formFieldString } from "@/shared/lib/form-fields";
 import { stateQueryKey } from "@/entities/app-state/model";
 
-export function AddInventoryModal({ onClose }: { onClose: () => void }) {
-  const ui = useContext(UiContext);
+export type AddInventoryModalProps = {
+  onClose: () => void;
+};
+
+export function AddInventoryModal({ onClose }: AddInventoryModalProps) {
+  const ui = useUi();
   const query = useQueryClient();
   return (
     <Modal label="新增食材" onClose={onClose}>

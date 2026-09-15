@@ -1,4 +1,4 @@
-import { useContext, useState } from "react";
+import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
   RecipeMode,
@@ -7,7 +7,7 @@ import type {
   RecipeRecommendation,
 } from "@coocoo/contracts";
 import { api, json } from "@/shared/api/client";
-import { UiContext } from "@/app/ui-context";
+import { useUi } from "@/app/ui-context";
 import { useAppState, stateQueryKey } from "@/entities/app-state/model";
 import { RecipePackageModal } from "@/features/cooking/RecipeModal";
 import { Modal, ModalHeader } from "@/shared/ui/Modal";
@@ -16,7 +16,7 @@ import { syncOfflineOperations } from "@/shared/offline/sync";
 import { purchaseReminderText } from "./copy";
 
 export function RecipeCatalogPanel() {
-  const ui = useContext(UiContext),
+  const ui = useUi(),
     query = useQueryClient();
   const { data: state } = useAppState();
   const settings = useQuery({

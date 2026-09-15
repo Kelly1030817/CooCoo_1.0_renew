@@ -47,4 +47,4 @@ bun run --cwd apps/web test:e2e -- --update-snapshots
 
 ## 樣式與 auth
 
-目前仍有頁面級 CSS；後續改為 Tailwind v4，全域設定留在 `src/index.css`。Auth 仍由 `App.tsx` 與 Onboarding 各訂閱一次，後續會收成單一 session query。
+目前仍有頁面級 CSS；全域設定留在 `src/index.css`。Auth session 由 `Providers` 訂閱一次，畫面用 `useAuthSession()`。Toast / modal 請用 `useUi()`；沒有 `Providers` 時會 throw，不再靜默 no-op。`AppRoute` 是底部導覽與 Header 的路由型別，已刪除未使用的 `TabId` 別名。

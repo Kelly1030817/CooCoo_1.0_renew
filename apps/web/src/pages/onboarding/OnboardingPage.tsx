@@ -79,17 +79,19 @@ function StepCard({ title, description, children, className = "" }: StepCardProp
   );
 }
 
+export type OnboardingPageProps = {
+  onComplete: () => void;
+  onExit?: () => void;
+  canExit?: boolean;
+  initialStep?: number;
+};
+
 export function OnboardingPage({
   onComplete,
   onExit,
   canExit = false,
   initialStep,
-}: {
-  onComplete: () => void;
-  onExit?: () => void;
-  canExit?: boolean;
-  initialStep?: number;
-}) {
+}: OnboardingPageProps) {
   const query = useQueryClient();
   const saved = readOnboardingDraft();
   const urlStep = Number(new URLSearchParams(window.location.search).get("step"));

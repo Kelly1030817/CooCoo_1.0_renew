@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
   RecipePackage,
@@ -8,7 +8,7 @@ import type {
 } from "@coocoo/contracts";
 import { CHEF_RANKS, EXP_POINTS, dateInTimeZone, todayMealNumberLabel } from "@coocoo/core";
 import { useAppState, stateQueryKey } from "@/entities/app-state/model";
-import { UiContext } from "@/app/ui-context";
+import { useUi } from "@/app/ui-context";
 import { RecipePackageModal } from "@/features/cooking/RecipeModal";
 import { ChefRevisitModal } from "./ChefRevisitModal";
 import { PurchaseReminder, OfflineImportAndConflicts } from "@/features/recipes/RecipeCatalogPanel";
@@ -33,7 +33,7 @@ const subtitles: Record<string, string> = {
 export function TodayPage() {
   const { data } = useAppState();
   const queryClient = useQueryClient();
-  const ui = useContext(UiContext);
+  const ui = useUi();
   const [energyLow, setEnergyLow] = useState(false);
   const [ticketMode, setTicketMode] = useState<"fridge" | "purchase">("fridge");
   const [hasAutoSwitched, setHasAutoSwitched] = useState(false);

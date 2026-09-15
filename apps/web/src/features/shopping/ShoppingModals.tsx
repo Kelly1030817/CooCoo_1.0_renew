@@ -1,15 +1,20 @@
-import { useContext, useState } from "react";
+import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ShoppingAnalysis, ShoppingItem } from "@coocoo/contracts";
-import { UiContext } from "@/app/ui-context";
+import { useUi } from "@/app/ui-context";
 import { Modal, ModalHeader } from "@/shared/ui/Modal";
 import { api, json } from "@/shared/api/client";
 import { formFieldString } from "@/shared/lib/form-fields";
 import { parseStorageLocation } from "@/shared/lib/storage-location";
 import { stateQueryKey } from "@/entities/app-state/model";
 
-export function AddShoppingModal({ onClose, item }: { onClose: () => void; item?: ShoppingItem }) {
-  const ui = useContext(UiContext);
+export type AddShoppingModalProps = {
+  onClose: () => void;
+  item?: ShoppingItem;
+};
+
+export function AddShoppingModal({ onClose, item }: AddShoppingModalProps) {
+  const ui = useUi();
   const query = useQueryClient();
   return (
     <Modal label="新增待採買食材" onClose={onClose}>
@@ -81,12 +86,16 @@ export function AddShoppingModal({ onClose, item }: { onClose: () => void; item?
   );
 }
 
-export function VoiceInputModal({ onClose }: { onClose: () => void }) {
+export type VoiceInputModalProps = {
+  onClose: () => void;
+};
+
+export function VoiceInputModal({ onClose }: VoiceInputModalProps) {
   const [text, setText] = useState("");
   const [status, setStatus] = useState("也可以直接打字");
   const [parsed, setParsed] = useState<ShoppingItem[]>([]);
   const query = useQueryClient();
-  const ui = useContext(UiContext);
+  const ui = useUi();
   const listen = () => {
     const SpeechRecognition = (
       window as typeof window & {
@@ -168,15 +177,14 @@ type RecognizedReceipt = {
   purchased_on: string | null;
   receipt_items: RecognizedItem[];
 };
-export function InvoiceModal({
-  onClose,
-  onConfirmed,
-}: {
+export type InvoiceModalProps = {
   onClose: () => void;
   onConfirmed?: () => void;
-}) {
+};
+
+export function InvoiceModal({ onClose, onConfirmed }: InvoiceModalProps) {
   const query = useQueryClient();
-  const ui = useContext(UiContext);
+  const ui = useUi();
   const [file, setFile] = useState<File | null>(null);
   const [receipt, setReceipt] = useState<RecognizedReceipt | null>(null);
   const [items, setItems] = useState<RecognizedItem[]>([]);
@@ -362,7 +370,11 @@ const shoppingActionLabel = {
   skip: "先不要買",
 } as const;
 
-export function ShoppingAssistantModal({ onClose }: { onClose: () => void }) {
+export type ShoppingAssistantModalProps = {
+  onClose: () => void;
+};
+
+export function ShoppingAssistantModal({ onClose }: ShoppingAssistantModalProps) {
   const [result, setResult] = useState<ShoppingAnalysis | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");

@@ -1,4 +1,4 @@
-import { useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type {
   InventoryItem,
@@ -9,7 +9,7 @@ import type {
   ShoppingItem,
 } from "@coocoo/contracts";
 import { useAppState, stateQueryKey } from "@/entities/app-state/model";
-import { UiContext } from "@/app/ui-context";
+import { useUi } from "@/app/ui-context";
 import { api, json, ApiError } from "@/shared/api/client";
 import { parseStorageLocationOrDefault } from "@/shared/lib/storage-location";
 import {
@@ -99,7 +99,7 @@ function voiceInputModalNode(onClose: () => void) {
 export function ShoppingPage() {
   const { data } = useAppState();
   const { navigate } = useAppRoute();
-  const ui = useContext(UiContext);
+  const ui = useUi();
   const query = useQueryClient();
   const [busy, setBusy] = useState(false);
   const operation = useRef<string | null>(null);

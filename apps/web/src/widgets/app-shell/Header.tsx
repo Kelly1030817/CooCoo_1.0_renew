@@ -1,9 +1,9 @@
 import { CatalogAdminModal } from "../../features/recipes/CatalogAdminModal";
-import { useContext, useState } from "react";
+import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAppState, stateQueryKey } from "../../entities/app-state/model";
 import { api } from "../../shared/api/client";
-import { UiContext } from "../../app/ui-context";
+import { useUi } from "../../app/ui-context";
 import { Modal, ModalHeader } from "../../shared/ui/Modal";
 import { BrandLogo } from "../../shared/ui/BrandLogo";
 import { currentPageRedirectTo, supabase, startGoogleAuth } from "../../shared/auth/supabase";
@@ -15,20 +15,19 @@ function catalogAdminModalNode(onClose: () => void) {
   return <CatalogAdminModal onClose={onClose} />;
 }
 
-export function Header({
-  enabled = true,
-  onNavigate,
-}: {
+export type HeaderProps = {
   enabled?: boolean;
   onNavigate?: (route: AppRoute) => void;
-}) {
+};
+
+export function Header({ enabled = true, onNavigate }: HeaderProps) {
   const { data } = useAppState(enabled);
   const access = useQuery({
     queryKey: ["catalog-access", data?.session.user?.id],
     queryFn: () => api<{ owner: boolean }>("/admin/recipes/access"),
     enabled: Boolean(data?.session.user),
   });
-  const ui = useContext(UiContext);
+  const ui = useUi();
   const query = useQueryClient();
   const refresh = () => query.invalidateQueries({ queryKey: stateQueryKey });
   const reset = async () => {
@@ -67,17 +66,15 @@ export function Header({
   );
 }
 
-export function ProfileModal({
-  onClose,
-  onReplayOnboarding,
-  enabled = true,
-}: {
+export type ProfileModalProps = {
   onClose: () => void;
   onReplayOnboarding: () => void;
   enabled?: boolean;
-}) {
+};
+
+export function ProfileModal({ onClose, onReplayOnboarding, enabled = true }: ProfileModalProps) {
   const { data } = useAppState(enabled);
-  const ui = useContext(UiContext);
+  const ui = useUi();
   const query = useQueryClient();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -230,13 +227,12 @@ export function ProfileModal({
   );
 }
 
-export function CookwareModal({
-  onClose,
-  enabled = true,
-}: {
+export type CookwareModalProps = {
   onClose: () => void;
   enabled?: boolean;
-}) {
+};
+
+export function CookwareModal({ onClose, enabled = true }: CookwareModalProps) {
   const { data } = useAppState(enabled);
   return (
     <Modal label="廚房裝備設定" onClose={onClose}>

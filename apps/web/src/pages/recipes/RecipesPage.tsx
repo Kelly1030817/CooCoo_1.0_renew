@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { InventoryItem, RecipeAdjustmentPreview, RecipePackage } from "@coocoo/contracts";
 import { brandSafeRecipes, inventoryItemsNeedingConfirmation, searchRecipes } from "@coocoo/core";
@@ -6,7 +6,7 @@ import { stateQueryKey, useAppState } from "@/entities/app-state/model";
 import { usePrepTray } from "@/features/kitchen/prep-tray";
 import { RecipeModal } from "@/features/cooking/RecipeModal";
 import { IngredientIcon } from "@/shared/ui/IngredientIcon";
-import { UiContext } from "@/app/ui-context";
+import { useUi } from "@/app/ui-context";
 import { Modal, ModalHeader } from "@/shared/ui/Modal";
 import { api, json } from "@/shared/api/client";
 import "./RecipesPage.css";
@@ -22,7 +22,7 @@ const categories = [
 export function RecipesPage() {
   const { data } = useAppState();
   const queryClient = useQueryClient();
-  const ui = useContext(UiContext);
+  const ui = useUi();
   const { prepIds } = usePrepTray();
   const [tab, setTab] = useState<"find" | "compose">(() => {
     const requested = new URLSearchParams(window.location.search).get("tab");
@@ -186,7 +186,7 @@ export function RecipesPage() {
 const composeStyles = ["AI 自由發揮", "台式家常", "日式和風", "低卡健康", "一鍋到底免洗"];
 function FreeformComposePanel() {
   const { data } = useAppState();
-  const ui = useContext(UiContext);
+  const ui = useUi();
   const { prepIds, addToTray, removeFromTray, clearTray } = usePrepTray();
   const [style, setStyle] = useState(composeStyles[0]);
   if (!data) return null;

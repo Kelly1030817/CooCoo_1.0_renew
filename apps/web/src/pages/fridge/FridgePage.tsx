@@ -1,7 +1,7 @@
-import { useContext, useState } from "react";
+import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { InventoryItem } from "@coocoo/contracts";
-import { UiContext } from "@/app/ui-context";
+import { useUi } from "@/app/ui-context";
 import { useAppRoute } from "@/app/routing/useAppRoute";
 import { useAppState, stateQueryKey } from "@/entities/app-state/model";
 import { api, json } from "@/shared/api/client";
@@ -18,7 +18,7 @@ function addInventoryModalNode(onClose: () => void) {
 
 export function FridgePage() {
   const { data } = useAppState();
-  const ui = useContext(UiContext);
+  const ui = useUi();
   const query = useQueryClient();
   const { navigate } = useAppRoute();
   const { isInTray, addMultipleToTray } = usePrepTray();

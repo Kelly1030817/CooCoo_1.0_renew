@@ -1,7 +1,7 @@
 import { QueryClientProvider } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { queryClient } from "./query-client";
-import { UiContext } from "./ui-context";
+import { UiContext, type ToastKind } from "./ui-context";
 import { startAuthSessionSync } from "../shared/auth/session";
 
 let toastTimer: ReturnType<typeof setTimeout> | undefined;
@@ -12,17 +12,18 @@ export function armToastDismiss(dismiss: () => void, ms = 3000) {
   return toastTimer;
 }
 
-export function Providers({ children }: { children: ReactNode }) {
+export type ProvidersProps = {
+  children: ReactNode;
+};
+
+export function Providers({ children }: ProvidersProps) {
   const [modal, setModal] = useState<ReactNode>(null);
-  const [notice, setNotice] = useState<{ message: string; type: string } | null>(null);
+  const [notice, setNotice] = useState<{ message: string; type: ToastKind } | null>(null);
   const close = useCallback(() => setModal(null), []);
-  const toast = useCallback(
-    (message: string, type: "success" | "warning" | "error" = "success") => {
-      setNotice({ message, type });
-      armToastDismiss(() => setNotice(null));
-    },
-    [],
-  );
+  const toast = useCallback((message: string, type: ToastKind = "success") => {
+    setNotice({ message, type });
+    armToastDismiss(() => setNotice(null));
+  }, []);
   useEffect(() => startAuthSessionSync(toast), [toast]);
   const value = useMemo(() => ({ toast, open: setModal, close }), [toast, close]);
   return (

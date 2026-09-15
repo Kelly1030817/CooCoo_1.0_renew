@@ -51,5 +51,8 @@ test("oauth callback error is announced", async ({ page }) => {
     "/onboarding?step=3#error_code=otp_expired&error=access_denied&error_description=expired",
   );
   await expect(page.getByRole("alert")).toContainText("這封驗證信已使用或過期");
-  await expect(page.getByRole("status")).toContainText("這封驗證信已使用或過期");
+  const toast = page.getByRole("status");
+  await expect(toast).toContainText("這封驗證信已使用或過期");
+  const background = await toast.evaluate((node) => getComputedStyle(node).backgroundColor);
+  expect(background).toBe("rgb(186, 26, 26)");
 });

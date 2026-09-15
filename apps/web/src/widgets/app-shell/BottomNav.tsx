@@ -14,17 +14,14 @@ function shouldUseBrowserNavigation(event: MouseEvent<HTMLAnchorElement>) {
   return event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey;
 }
 
-export function BottomNav({
-  active,
-  onNavigate,
-  urgent,
-  shopping,
-}: {
+export type BottomNavProps = {
   active: AppRoute;
   onNavigate: (route: AppRoute) => void;
   urgent: number;
   shopping: number;
-}) {
+};
+
+export function BottomNav({ active, onNavigate, urgent, shopping }: BottomNavProps) {
   return (
     <nav aria-label="主要功能" className="bottom-nav">
       <div>

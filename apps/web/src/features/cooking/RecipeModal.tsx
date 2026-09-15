@@ -1,9 +1,9 @@
-import { useContext, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Recipe, RecipeGeneration, RecipePackage } from "@coocoo/contracts";
 import { api, json, ApiError } from "@/shared/api/client";
 import { Modal, ModalHeader } from "@/shared/ui/Modal";
-import { UiContext } from "@/app/ui-context";
+import { useUi } from "@/app/ui-context";
 import { useAppState, stateQueryKey } from "@/entities/app-state/model";
 import {
   enqueueOperation,
@@ -688,7 +688,7 @@ function CookingCompleteModal({
 }) {
   const { data } = useAppState();
   const query = useQueryClient();
-  const ui = useContext(UiContext);
+  const ui = useUi();
   const [trackCost, setTrackCost] = useState(false);
   const [costInput, setCostInput] = useState("0");
   const [servingsInput, setServingsInput] = useState(String(recipePackage.servings || 1));

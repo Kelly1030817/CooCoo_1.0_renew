@@ -1,4 +1,4 @@
-import { lazy, Suspense, useContext, useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { AppState } from "@coocoo/contracts";
 import { stateQueryKey, useAppState } from "@/entities/app-state/model";
@@ -11,7 +11,7 @@ import { api } from "@/shared/api/client";
 import { currentPageRedirectTo, startGoogleAuth, supabase } from "@/shared/auth/supabase";
 import { useAuthSession } from "@/shared/auth/session";
 import { AuthRecoveryPanel } from "@/shared/auth/AuthRecoveryPanel";
-import { UiContext } from "@/app/ui-context";
+import { useUi } from "@/app/ui-context";
 
 const pages = {
   today: lazy(() =>
@@ -31,7 +31,7 @@ const pages = {
 export default function App() {
   const { route, navigate } = useAppRoute();
   const queryClient = useQueryClient();
-  const ui = useContext(UiContext);
+  const ui = useUi();
   const { status: authStatus, session } = useAuthSession();
   const [onboardingComplete, setOnboardingComplete] = useState(
     () => readOnboardingDraft().status === "complete",
