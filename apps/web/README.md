@@ -9,7 +9,7 @@ bun install
 bun run --cwd apps/web dev -- --host 127.0.0.1
 ```
 
-本機未設 Supabase 時會走 MSW mock API。設 `VITE_USE_REAL_API=true` 才打真實 `/api`。
+本機未設 Supabase 時會走 MSW mock API。設 `VITE_USE_REAL_API=true` 才打真實 `/api`。`GET /state` 會用 `AppStateSchema` 做 `Value.Check`；契約不符時丟 `CONTRACT_MISMATCH`，畫面走錯誤狀態而不是壞資料。
 
 ## Lint（oxlint）
 

@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, test } from "vitest";
 import { setupServer } from "msw/node";
-import type { OnboardingProfile } from "@coocoo/contracts";
+import { AppStateSchema, type OnboardingProfile } from "@coocoo/contracts";
+import { Value } from "@sinclair/typebox/value";
 
 let server: ReturnType<typeof setupServer>;
 const api = (path: string, init?: RequestInit) => fetch(`http://localhost/api/v1${path}`, init);
@@ -48,6 +49,12 @@ beforeEach(async () => {
 afterAll(() => server.close());
 
 describe("MSW contract adapter", () => {
+  test("GET /state matches AppStateSchema", async () => {
+    const response = await api("/state");
+    const body = (await response.json()) as { data: unknown };
+    expect(response.status).toBe(200);
+    expect(Value.Check(AppStateSchema, body.data)).toBe(true);
+  });
   test("uses the shared success envelope and deterministic seed", async () => {
     const response = await api("/inventory");
     const body = (await response.json()) as { data: Array<{ name: string }> };

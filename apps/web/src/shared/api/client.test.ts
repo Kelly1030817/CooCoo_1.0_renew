@@ -1,4 +1,6 @@
 import { describe, expect, mock, test } from "bun:test";
+import { AppStateSchema } from "@coocoo/contracts";
+import { createSeedState } from "@coocoo/core";
 import { createApiClient } from "./client";
 
 describe("API authentication adapter", () => {
@@ -15,6 +17,28 @@ describe("API authentication adapter", () => {
     expect(init).toBeDefined();
     const headers = new Headers(init?.headers);
     expect(headers.get("authorization")).toBe("Bearer session-token");
+  });
+
+  test("rejects a /state payload that fails AppStateSchema", async () => {
+    const api = createApiClient(
+      async () => null,
+      async () => Response.json({ data: { version: 1 } }),
+    );
+
+    await expect(api("/state", undefined, AppStateSchema)).rejects.toMatchObject({
+      body: { error: { code: "CONTRACT_MISMATCH" } },
+      message: "伺服器回傳了與契約不符的資料。",
+    });
+  });
+
+  test("accepts a /state payload that matches AppStateSchema", async () => {
+    const state = createSeedState();
+    const api = createApiClient(
+      async () => null,
+      async () => Response.json({ data: state }),
+    );
+
+    await expect(api("/state", undefined, AppStateSchema)).resolves.toEqual(state);
   });
 
   test("turns a plain-text AUTH_REQUIRED response into an actionable API error", async () => {

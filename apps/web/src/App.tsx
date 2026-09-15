@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import type { AppState } from "@coocoo/contracts";
+import { AppStateSchema } from "@coocoo/contracts";
 import { stateQueryKey, useAppState } from "@/entities/app-state/model";
 import { useAppRoute } from "@/app/routing/useAppRoute";
 import { Header } from "@/widgets/app-shell/Header";
@@ -41,7 +41,7 @@ export default function App() {
   useEffect(() => {
     if (!session) return undefined;
     let active = true;
-    void api<AppState>("/state")
+    void api("/state", undefined, AppStateSchema)
       .then((state) => {
         if (!active) return;
         queryClient.setQueryData(stateQueryKey, state);

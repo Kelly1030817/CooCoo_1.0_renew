@@ -1,4 +1,11 @@
-import { Type, type Static } from "@sinclair/typebox";
+import { FormatRegistry, Type, type Static } from "@sinclair/typebox";
+
+if (!FormatRegistry.Has("date-time")) {
+  FormatRegistry.Set("date-time", (value) => !Number.isNaN(Date.parse(value)));
+}
+if (!FormatRegistry.Has("email")) {
+  FormatRegistry.Set("email", (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value));
+}
 
 export const IdSchema = Type.String({ minLength: 1 });
 export const IsoDateTimeSchema = Type.String({ format: "date-time" });
@@ -332,15 +339,25 @@ export const ExpEventSchema = Type.Object({
 });
 export type ExpEvent = Static<typeof ExpEventSchema>;
 
-export type TodayMissionKey = "cook_today" | "eat_prepared" | "use_expiring";
-export interface TodayMission {
-  key: TodayMissionKey;
-  label: string;
-  reward: number;
-  done: boolean;
-  source: "cooking_completed" | "prepared_serving_eaten" | "expiring_ingredient_used";
-  hint?: number;
-}
+export const TodayMissionKeySchema = Type.Union([
+  Type.Literal("cook_today"),
+  Type.Literal("eat_prepared"),
+  Type.Literal("use_expiring"),
+]);
+export type TodayMissionKey = Static<typeof TodayMissionKeySchema>;
+export const TodayMissionSchema = Type.Object({
+  key: TodayMissionKeySchema,
+  label: Type.String({ minLength: 1 }),
+  reward: Type.Integer({ minimum: 0 }),
+  done: Type.Boolean(),
+  source: Type.Union([
+    Type.Literal("cooking_completed"),
+    Type.Literal("prepared_serving_eaten"),
+    Type.Literal("expiring_ingredient_used"),
+  ]),
+  hint: Type.Optional(Type.Integer({ minimum: 0 })),
+});
+export type TodayMission = Static<typeof TodayMissionSchema>;
 
 export const ChefRankSchema = Type.Object({
   level: Type.Integer({ minimum: 1, maximum: 5 }),
@@ -777,37 +794,6 @@ export const RestockOperationSchema = Type.Object({
 });
 export type RestockOperation = Static<typeof RestockOperationSchema>;
 export const ReceiptRecognizeSchema = Type.Object({ operationId: Type.Optional(IdSchema) });
-export interface AppState {
-  version: 2;
-  session: Session;
-  growth: GrowthProfile;
-  weeklyGoal: WeeklyGoal;
-  expEvents: ExpEvent[];
-  badgeAwards: BadgeAward[];
-  cookingOutcomes: CookingOutcome[];
-  habitProgress: HabitProgress;
-  healthAssets: HealthAssets;
-  inventory: InventoryItem[];
-  shoppingItems: ShoppingItem[];
-  cookware: CookwareProfile[];
-  onboardingProfile?: OnboardingProfile;
-  mealPlan?: MealPlan;
-  receipts?: Receipt[];
-  recipePackages?: RecipePackage[];
-  recipeFavoriteIds?: string[];
-  cookingSessions?: CookingSession[];
-  mealServings?: MealServing[];
-  cookingCosts?: CookingCostRecord[];
-  mealTasks?: MealTask[];
-  recipeAdjustmentPreviews?: RecipeAdjustmentPreview[];
-  reminderPreferences?: ReminderPreferences;
-  chefChatSessions?: ChefChatSession[];
-  offlineOperations?: OfflineOperation[];
-  syncConflicts?: SyncConflict[];
-  /** Read-only daily missions derived by the /state backend response. */
-  missions?: TodayMission[];
-  restockOperations?: RestockOperation[];
-}
 
 export interface ApiErrorBody {
   error: {
@@ -848,17 +834,18 @@ export const IngredientPriceSchema = Type.Object({
   observedAt: IsoDateTimeSchema,
 });
 export type IngredientPrice = Static<typeof IngredientPriceSchema>;
-export interface PurchaseRequirement {
-  ingredientKey: string;
-  name: string;
-  quantity: number;
-  unit: string;
-  packages: number | null;
-  purchaseQuantity: number | null;
-  estimatedCost: number | null;
-  priceId: string | null;
-  priceObservedAt: string | null;
-}
+export const PurchaseRequirementSchema = Type.Object({
+  ingredientKey: Type.String(),
+  name: Type.String(),
+  quantity: Type.Number(),
+  unit: Type.String(),
+  packages: Type.Union([Type.Number(), Type.Null()]),
+  purchaseQuantity: Type.Union([Type.Number(), Type.Null()]),
+  estimatedCost: Type.Union([Type.Number(), Type.Null()]),
+  priceId: Type.Union([Type.String(), Type.Null()]),
+  priceObservedAt: Type.Union([Type.String(), Type.Null()]),
+});
+export type PurchaseRequirement = Static<typeof PurchaseRequirementSchema>;
 export interface RecipeRecommendation {
   recipe: RecipePackage;
   missing: PurchaseRequirement[];
@@ -909,16 +896,24 @@ export const RecipeAdjustmentRequestSchema = Type.Object({
   context: Type.String({ maxLength: 500 }),
 });
 export type RecipeAdjustmentRequest = Static<typeof RecipeAdjustmentRequestSchema>;
-export interface RecipeAdjustmentPreview {
-  previewId: string;
-  originalRecipeId: string;
-  adjustedRecipe: RecipePackage;
-  changes: Array<{ field: string; before: string; after: string; reason: string }>;
-  missing: PurchaseRequirement[];
-  safetyChecks: string[];
-  source: "openrouter" | "rules";
-  expiresAt: string;
-}
+export const RecipeAdjustmentPreviewSchema = Type.Object({
+  previewId: IdSchema,
+  originalRecipeId: IdSchema,
+  adjustedRecipe: RecipePackageSchema,
+  changes: Type.Array(
+    Type.Object({
+      field: Type.String(),
+      before: Type.String(),
+      after: Type.String(),
+      reason: Type.String(),
+    }),
+  ),
+  missing: Type.Array(PurchaseRequirementSchema),
+  safetyChecks: Type.Array(Type.String()),
+  source: Type.Union([Type.Literal("openrouter"), Type.Literal("rules")]),
+  expiresAt: Type.String({ minLength: 1 }),
+});
+export type RecipeAdjustmentPreview = Static<typeof RecipeAdjustmentPreviewSchema>;
 
 export const MealTaskCreateSchema = Type.Object({
   operationId: IdSchema,
@@ -959,14 +954,49 @@ export const ChefChatMessageSchema = Type.Object({
   createdAt: IsoDateTimeSchema,
 });
 export type ChefChatMessage = Static<typeof ChefChatMessageSchema>;
-export interface ChefChatSession {
-  id: string;
-  title: string;
-  messages: ChefChatMessage[];
-  source: "openrouter" | "rules";
-  createdAt: string;
-  updatedAt: string;
-}
+export const ChefChatSessionSchema = Type.Object({
+  id: IdSchema,
+  title: Type.String(),
+  messages: Type.Array(ChefChatMessageSchema),
+  source: Type.Union([Type.Literal("openrouter"), Type.Literal("rules")]),
+  createdAt: IsoDateTimeSchema,
+  updatedAt: IsoDateTimeSchema,
+});
+export type ChefChatSession = Static<typeof ChefChatSessionSchema>;
+export const AppStateSchema = Type.Object(
+  {
+    version: Type.Literal(2),
+    session: SessionSchema,
+    growth: GrowthProfileSchema,
+    weeklyGoal: WeeklyGoalSchema,
+    expEvents: Type.Array(ExpEventSchema),
+    badgeAwards: Type.Array(BadgeAwardSchema),
+    cookingOutcomes: Type.Array(CookingOutcomeSchema),
+    habitProgress: HabitProgressSchema,
+    healthAssets: HealthAssetsSchema,
+    inventory: Type.Array(InventoryItemSchema),
+    shoppingItems: Type.Array(ShoppingItemSchema),
+    cookware: Type.Array(CookwareProfileSchema),
+    onboardingProfile: Type.Optional(OnboardingProfileSchema),
+    mealPlan: Type.Optional(MealPlanSchema),
+    receipts: Type.Optional(Type.Array(ReceiptSchema)),
+    recipePackages: Type.Optional(Type.Array(RecipePackageSchema)),
+    recipeFavoriteIds: Type.Optional(Type.Array(Type.String())),
+    cookingSessions: Type.Optional(Type.Array(CookingSessionSchema)),
+    mealServings: Type.Optional(Type.Array(MealServingSchema)),
+    cookingCosts: Type.Optional(Type.Array(CookingCostRecordSchema)),
+    mealTasks: Type.Optional(Type.Array(MealTaskSchema)),
+    recipeAdjustmentPreviews: Type.Optional(Type.Array(RecipeAdjustmentPreviewSchema)),
+    reminderPreferences: Type.Optional(ReminderPreferencesSchema),
+    chefChatSessions: Type.Optional(Type.Array(ChefChatSessionSchema)),
+    offlineOperations: Type.Optional(Type.Array(OfflineOperationSchema)),
+    syncConflicts: Type.Optional(Type.Array(SyncConflictSchema)),
+    missions: Type.Optional(Type.Array(TodayMissionSchema)),
+    restockOperations: Type.Optional(Type.Array(RestockOperationSchema)),
+  },
+  { additionalProperties: true },
+);
+export type AppState = Static<typeof AppStateSchema>;
 export const ChefChatSendSchema = Type.Object({
   operationId: IdSchema,
   message: Type.String({ minLength: 1, maxLength: 2000 }),
@@ -1030,6 +1060,8 @@ export const ContractSchemas = {
   ReminderPreferencesSchema,
   OfflineOperationSchema,
   BetaInviteSchema,
+  TodayMissionSchema,
+  AppStateSchema,
 };
 export interface CatalogVersion {
   id: string;

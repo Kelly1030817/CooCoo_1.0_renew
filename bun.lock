@@ -71,6 +71,7 @@
       "version": "0.1.0",
       "dependencies": {
         "@coocoo/contracts": "workspace:*",
+        "@sinclair/typebox": "0.34.41",
       },
     },
   },

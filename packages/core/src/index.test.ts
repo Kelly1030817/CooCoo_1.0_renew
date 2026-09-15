@@ -1,4 +1,6 @@
 import { describe, expect, test } from "bun:test";
+import { AppStateSchema } from "@coocoo/contracts";
+import { Value } from "@sinclair/typebox/value";
 import {
   CooCooService,
   applyOnboardingProfile,
@@ -13,6 +15,7 @@ import {
   parseShoppingText,
   postponeMeal,
   rankRecipes,
+  withTodayMissions,
   type StateRepository,
 } from "./index";
 import type { MealPlan, OnboardingProfile, PlannedMeal } from "@coocoo/contracts";
@@ -75,6 +78,10 @@ const plannedMeal = (
 });
 
 describe("CooCoo v2 core", () => {
+  test("seed and mission-augmented state match AppStateSchema", () => {
+    expect(Value.Check(AppStateSchema, createSeedState())).toBe(true);
+    expect(Value.Check(AppStateSchema, withTodayMissions(createSeedState()))).toBe(true);
+  });
   test("onboarding creates a weekly habit goal and persists an explicitly confirmed empty fridge", () => {
     const state = applyOnboardingProfile(createSeedState(), profile, {
       now: new Date("2026-09-11T00:00:00.000Z"),

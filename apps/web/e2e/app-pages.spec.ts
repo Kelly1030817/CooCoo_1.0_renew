@@ -54,6 +54,15 @@ test("root path stays on / and shows today", async ({ page }) => {
   expect(new URL(page.url()).pathname).toBe("/");
 });
 
+test("invalid /state JSON shows a load error instead of today", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.__COOCOO_E2E_INVALID_STATE__ = true;
+  });
+  await page.goto("/today");
+  await expect(page.getByRole("alert")).toContainText("資料載入失敗");
+  await expect(page.getByRole("region", { name: "今日任務" })).toHaveCount(0);
+});
+
 test("weekly goal input matches loaded app state", async ({ page }) => {
   await page.goto("/me");
   const progress = page.getByText(/\d+ \/ \d+/).first();

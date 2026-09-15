@@ -618,6 +618,7 @@ export const handlers = [
   http.patch("/api/v1/meal-tasks/:id/shortages/:shortageId", async ({ params, request }) => {
     try {
       const body = validated(ContractSchemas.ShoppingResolutionCommandSchema, await request.json());
+      if (body.action === "replan_meal") throw new Error("SHORTAGE_ID_REQUIRED");
       const task = service.resolveShortage({ ...body, shortageId: String(params.shortageId) });
       if (!task) throw new Error("MEAL_TASK_NOT_FOUND");
       return ok(task);

@@ -1,4 +1,6 @@
 import type { ApiErrorBody, ApiSuccess } from "@coocoo/contracts";
+import type { Static, TSchema } from "@sinclair/typebox";
+import { Value } from "@sinclair/typebox/value";
 import { supabase } from "../auth/supabase";
 import { isApiErrorBody, isApiSuccess, parseJsonText } from "../lib/api-body";
 
@@ -15,6 +17,7 @@ export class ApiError extends Error {
 const fallbackMessages: Record<string, string> = {
   AUTH_REQUIRED: "請先登入再使用這項功能。",
   AUTH_INVALID: "登入狀態已失效，請重新登入。",
+  CONTRACT_MISMATCH: "伺服器回傳了與契約不符的資料。",
 };
 
 async function readResponse<T>(response: Response): Promise<ApiSuccess<T> | ApiErrorBody> {
@@ -27,14 +30,6 @@ async function readResponse<T>(response: Response): Promise<ApiSuccess<T> | ApiE
   } catch (error) {
     if (error instanceof Error && error.message === "UNRECOGNIZED_RESPONSE") {
       if (response.ok) throw new Error("伺服器回傳了無法辨識的資料格式。", { cause: error });
-      const code = text.trim() || `HTTP_${response.status}`;
-      return {
-        error: {
-          code,
-          message: fallbackMessages[code] || "操作未完成，請稍後再試。",
-          requestId: response.headers.get("x-request-id") || "client-response",
-        },
-      };
     }
     if (response.ok) throw new Error("伺服器回傳了無法辨識的資料格式。", { cause: error });
     const code = text.trim() || `HTTP_${response.status}`;
@@ -66,8 +61,31 @@ function buildRequestHeaders(
   return headers;
 }
 
-export function createApiClient(readAccessToken: AccessTokenReader, fetcher: Fetcher = fetch) {
-  return async function request<T>(path: string, init?: RequestInit): Promise<T> {
+function contractMismatch(response: Response): ApiError {
+  return new ApiError(response.status || 500, {
+    error: {
+      code: "CONTRACT_MISMATCH",
+      message: fallbackMessages.CONTRACT_MISMATCH,
+      requestId: response.headers.get("x-request-id") || "client-response",
+    },
+  });
+}
+
+export type ApiRequest = {
+  <S extends TSchema>(path: string, init: RequestInit | undefined, schema: S): Promise<Static<S>>;
+  <T>(path: string, init?: RequestInit): Promise<T>;
+};
+
+export function createApiClient(
+  readAccessToken: AccessTokenReader,
+  fetcher: Fetcher = fetch,
+  defaultSchema?: TSchema,
+): ApiRequest {
+  return async function request<T>(
+    path: string,
+    init?: RequestInit,
+    schema: TSchema | undefined = defaultSchema,
+  ): Promise<T> {
     const accessToken = await readAccessToken();
     const isFormData = init?.body instanceof FormData;
     const response = await fetcher(`/api/v1${path}`, {
@@ -88,6 +106,9 @@ export function createApiClient(readAccessToken: AccessTokenReader, fetcher: Fet
               },
             },
       );
+    }
+    if (schema && !Value.Check(schema, body.data)) {
+      throw contractMismatch(response);
     }
     return body.data;
   };

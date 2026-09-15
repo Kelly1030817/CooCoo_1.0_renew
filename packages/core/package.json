@@ -5,6 +5,7 @@
   "type": "module",
   "exports": "./src/index.ts",
   "dependencies": {
-    "@coocoo/contracts": "workspace:*"
+    "@coocoo/contracts": "workspace:*",
+    "@sinclair/typebox": "0.34.41"
   }
 }
