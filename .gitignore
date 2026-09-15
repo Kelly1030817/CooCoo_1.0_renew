@@ -55,3 +55,4 @@ package-lock.json
 **/playwright/.cache/
 apps/web/test-results/
 apps/web/playwright-report/
+.idea/
