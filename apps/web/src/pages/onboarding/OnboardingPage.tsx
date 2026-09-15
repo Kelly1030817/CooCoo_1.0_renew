@@ -8,7 +8,7 @@ import {
   readOnboardingDraft,
   saveOnboardingDraft,
 } from "@/shared/model/onboarding-draft";
-import { startGoogleAuth, supabase } from "@/shared/auth/supabase";
+import { onboardingRedirectTo, startGoogleAuth, supabase } from "@/shared/auth/supabase";
 import { ChefAvatar, type ChefMood } from "./ChefAvatar";
 import { PassportTicket } from "./PassportTicket";
 import { completeOnboardingProfile, isOnboardingStepValid } from "./validation";
@@ -24,7 +24,6 @@ interface ChoiceProps {
   selected: boolean;
   onClick: () => void;
   children: ReactNode;
-  danger?: boolean;
 }
 
 interface StepCardProps {
@@ -52,17 +51,14 @@ function Tick() {
   );
 }
 
-function Choice({ selected, onClick, children, danger = false }: ChoiceProps) {
+function Choice({ selected, onClick, children }: ChoiceProps) {
   let className = "onboarding-choice";
 
   if (selected) {
     className += " selected";
   }
-  if (danger) {
-    className += " danger";
-  }
   return (
-    <button type="button" {...{ className, onClick }}>
+    <button type="button" className={className} onClick={onClick} aria-pressed={selected}>
       <span>{children}</span>
       <Tick />
     </button>
@@ -94,7 +90,9 @@ export function OnboardingPage({
 }) {
   const query = useQueryClient();
   const saved = readOnboardingDraft();
-  const startingStep = Math.min(3, Math.max(1, initialStep ?? saved.currentStep));
+  const urlStep = Number(new URLSearchParams(window.location.search).get("step"));
+  const fromQuery = Number.isInteger(urlStep) && urlStep >= 1 && urlStep <= 3 ? urlStep : undefined;
+  const startingStep = Math.min(3, Math.max(1, fromQuery ?? initialStep ?? saved.currentStep));
   const [profile, setProfile] = useState<OnboardingProfile>({
     ...emptyOnboardingDraft,
     ...saved,
@@ -156,6 +154,16 @@ export function OnboardingPage({
 
   useEffect(() => {
     window.scrollTo(0, 0);
+  }, [step]);
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    url.pathname = "/onboarding";
+    url.searchParams.set("step", String(step));
+    const next = `${url.pathname}${url.search}${url.hash}`;
+    if (`${window.location.pathname}${window.location.search}${window.location.hash}` !== next) {
+      window.history.replaceState(window.history.state, "", next);
+    }
   }, [step]);
 
   const finish = async () => {
@@ -573,7 +581,7 @@ export function OnboardingPage({
                     <button
                       type="button"
                       className="wide-action"
-                      onClick={() => void startGoogleAuth()}
+                      onClick={() => void startGoogleAuth(onboardingRedirectTo(step))}
                     >
                       <span>使用 Google 登入</span>
                       <span>›</span>

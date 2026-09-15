@@ -75,3 +75,11 @@ export async function startGoogleAuth(redirectTo: string = window.location.origi
   });
   if (error) throw error;
 }
+
+export function currentPageRedirectTo() {
+  return `${window.location.origin}${window.location.pathname}${window.location.search}`;
+}
+
+export function onboardingRedirectTo(step: number) {
+  return `${window.location.origin}/onboarding?step=${step}`;
+}

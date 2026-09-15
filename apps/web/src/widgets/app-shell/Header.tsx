@@ -6,7 +6,7 @@ import { api } from "../../shared/api/client";
 import { UiContext } from "../../app/ui-context";
 import { Modal, ModalHeader } from "../../shared/ui/Modal";
 import { BrandLogo } from "../../shared/ui/BrandLogo";
-import { supabase, startGoogleAuth } from "../../shared/auth/supabase";
+import { currentPageRedirectTo, supabase, startGoogleAuth } from "../../shared/auth/supabase";
 import { readOnboardingDraft } from "../../shared/model/onboarding-draft";
 
 import type { AppRoute } from "../../app/routing/routes";
@@ -88,7 +88,7 @@ export function ProfileModal({
     setBusy(true);
     setError("");
     try {
-      await startGoogleAuth();
+      await startGoogleAuth(currentPageRedirectTo());
     } catch (e) {
       setBusy(false);
       setError(e instanceof Error ? e.message : "Google 登入啟動失敗");

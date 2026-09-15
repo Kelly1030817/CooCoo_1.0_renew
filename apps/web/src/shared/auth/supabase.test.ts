@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { buildEmailOtpOptions, readAuthCallbackIssue } from "./supabase";
+import { buildEmailOtpOptions, onboardingRedirectTo, readAuthCallbackIssue } from "./supabase";
 
 describe("Supabase email authentication", () => {
   test("returns the browser origin as the magic-link redirect", () => {
@@ -37,5 +37,17 @@ describe("Supabase email authentication", () => {
 
   test("ignores normal auth callbacks", () => {
     expect(readAuthCallbackIssue("#access_token=token&token_type=bearer")).toBeNull();
+  });
+
+  test("builds an onboarding oauth return URL that includes the step", () => {
+    const prev = globalThis.window;
+    globalThis.window = {
+      location: { origin: "http://localhost:5173" },
+    } as Window & typeof globalThis;
+    try {
+      expect(onboardingRedirectTo(3)).toMatch(/\/onboarding\?step=3$/);
+    } finally {
+      globalThis.window = prev;
+    }
   });
 });
