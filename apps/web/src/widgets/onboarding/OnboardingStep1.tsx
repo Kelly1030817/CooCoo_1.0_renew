@@ -1,4 +1,5 @@
 import type { OnboardingProfile } from "@coocoo/contracts";
+import { UtensilsCrossed } from "lucide-react";
 import { Choice } from "./Choice";
 import { StepCard } from "./StepCard";
 import { hasRestriction, restrictionQuickOptions } from "./restrictions";
@@ -29,8 +30,8 @@ export function OnboardingStep1({
   return (
     <>
       <div className="chef-open">
-        <span className="chef-open-icon material-symbols-outlined" aria-hidden="true">
-          restaurant
+        <span className="chef-open-icon" aria-hidden="true">
+          <UtensilsCrossed />
         </span>
         <div>
           <strong>Hi！我是你的專屬主廚 CooCoo。</strong>

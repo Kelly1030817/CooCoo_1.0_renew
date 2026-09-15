@@ -1,4 +1,5 @@
 import type { HabitBarrier, OnboardingProfile } from "@coocoo/contracts";
+import { CookingPot } from "lucide-react";
 import { Choice } from "./Choice";
 import { StepCard } from "./StepCard";
 
@@ -34,8 +35,8 @@ export function OnboardingStep2({
   return (
     <>
       <div className="chef-open">
-        <span className="chef-open-icon material-symbols-outlined" aria-hidden="true">
-          skillet
+        <span className="chef-open-icon" aria-hidden="true">
+          <CookingPot />
         </span>
         <div>
           <strong>我先確認你真的能用什麼來煮。</strong>

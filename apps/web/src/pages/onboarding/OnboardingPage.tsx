@@ -15,7 +15,6 @@ import { OnboardingStep3 } from "@/widgets/onboarding/OnboardingStep3";
 import { useOnboardingDraft } from "@/widgets/onboarding/useOnboardingDraft";
 import { useOnboardingStep } from "@/widgets/onboarding/useOnboardingStep";
 import { completeOnboardingProfile, isOnboardingStepValid } from "./validation";
-import "./OnboardingPage.css";
 
 const stepTitles = ["口味與飲食安全", "餐桌與廚具", "登入與通行證"];
 
@@ -119,7 +118,7 @@ export function OnboardingPage({
   return (
     <FormProvider {...form}>
       <main className="onboarding-shell">
-        <section className="onboarding-device">
+        <section className="onboarding-device flex min-h-screen flex-col">
           <header className="onboarding-topbar">
             <ChefAvatar mood={mood} isNodding={nodding} onClick={() => cheer(mood)} />
             <div className="onboarding-top-actions">

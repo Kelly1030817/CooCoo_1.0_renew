@@ -1,4 +1,5 @@
 import type { OnboardingProfile } from "@coocoo/contracts";
+import { Award } from "lucide-react";
 import { StepCard } from "./StepCard";
 import { PassportTicket } from "./PassportTicket";
 
@@ -26,8 +27,8 @@ export function OnboardingStep3({
   return (
     <>
       <div className="chef-open">
-        <span className="chef-open-icon material-symbols-outlined" aria-hidden="true">
-          military_tech
+        <span className="chef-open-icon" aria-hidden="true">
+          <Award />
         </span>
         <div>
           <strong>最後一步，登入並成立你的主廚檔案。</strong>
