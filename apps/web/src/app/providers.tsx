@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react
 import { queryClient } from "./query-client";
 import { UiContext, type ToastKind } from "./ui-context";
 import { startAuthSessionSync } from "../shared/auth/session";
+import { cn } from "../shared/lib/cn";
 
 let toastTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -34,7 +35,14 @@ export function Providers({ children }: ProvidersProps) {
         {notice && (
           <div
             role="status"
-            className={`toast-in fixed top-20 left-1/2 z-[120] -translate-x-1/2 rounded-full px-6 py-3 text-sm font-bold text-white shadow-lg ${notice.type === "warning" ? "bg-rust-orange" : notice.type === "error" ? "bg-error" : "bg-secondary"}`}
+            className={cn(
+              "toast-in fixed top-20 left-1/2 z-[120] -translate-x-1/2 rounded-full px-6 py-3 text-sm font-bold text-white shadow-lg",
+              notice.type === "warning"
+                ? "bg-rust-orange"
+                : notice.type === "error"
+                  ? "bg-error"
+                  : "bg-secondary",
+            )}
           >
             <span className="material-symbols-outlined mr-2 align-middle text-xl">
               {notice.type === "success" ? "check_circle" : "report"}
