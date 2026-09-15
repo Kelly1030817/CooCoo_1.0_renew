@@ -63,6 +63,16 @@ test("invalid /state JSON shows a load error instead of today", async ({ page })
   await expect(page.getByRole("region", { name: "今日任務" })).toHaveCount(0);
 });
 
+test("switching pages does not flash the full app-state loader", async ({ page }) => {
+  await page.goto("/today");
+  await expect(page.getByRole("region", { name: "今日任務" })).toBeVisible();
+  await page.getByRole("link", { name: "採買" }).click();
+  await expect(page.getByRole("heading", { name: "採買清單" })).toBeVisible();
+  await page.getByRole("link", { name: "今日" }).click();
+  await expect(page.getByText("載入 CooCoo 中…")).toHaveCount(0);
+  await expect(page.getByRole("region", { name: "今日任務" })).toBeVisible();
+});
+
 test("weekly goal input matches loaded app state", async ({ page }) => {
   await page.goto("/me");
   const progress = page.getByText(/\d+ \/ \d+/).first();
