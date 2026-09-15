@@ -61,6 +61,9 @@ test("/me aria tree", async ({ page }) => {
   await page.goto("/me");
   await expect(page.getByRole("heading", { name: "我的" })).toBeVisible();
   await expect(page.locator("body")).toMatchAriaSnapshot({ name: "me" });
+  await assertNoHorizontalOverflow(page);
+  await page.setViewportSize({ width: 320, height: 844 });
+  await assertNoHorizontalOverflow(page);
 });
 
 test("root path stays on / and shows today", async ({ page }) => {

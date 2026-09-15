@@ -80,18 +80,6 @@ textarea {
 button {
   cursor: pointer;
 }
-.material-symbols-outlined {
-  font-size: 24px;
-  line-height: 1;
-  font-variation-settings:
-    "FILL" 0,
-    "wght" 400,
-    "GRAD" 0,
-    "opsz" 24;
-}
-.material-symbols-outlined.fill {
-  font-variation-settings: "FILL" 1;
-}
 .custom-scrollbar::-webkit-scrollbar {
   height: 4px;
   width: 4px;
@@ -5142,5 +5130,561 @@ button {
 
   .compose-panel > header {
     grid-column: 1 / -1;
+  }
+}
+
+/* Me page */
+.me-page {
+  display: grid;
+  width: min(100%, 760px);
+  gap: 12px;
+  margin: 0 auto;
+  padding-bottom: 7rem;
+  color: #1c1c11;
+}
+
+@media (min-width: 820px) {
+  .me-page {
+    width: min(100%, 1080px);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .me-page > header,
+  .me-page > .account-card,
+  .me-page > .weekly-card,
+  .me-page > .weekly-meals-card,
+  .me-page > .me-settings {
+    grid-column: 1 / -1;
+  }
+
+  .me-page section {
+    min-width: 0;
+  }
+
+  .me-page > .me-settings {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 24px;
+  }
+
+  .me-page > .me-settings h3 {
+    grid-column: 1 / -1;
+  }
+}
+
+.me-page > header {
+  margin: 4px 0 16px;
+}
+
+.me-page > header .eyebrow {
+  margin: 0 0 4px;
+  color: #9a442d;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.me-page > header h2 {
+  margin: 0;
+  color: #293c4e;
+  font-family: "Plus Jakarta Sans", "Noto Sans TC", sans-serif;
+  font-size: clamp(22px, 5vw, 28px);
+  font-weight: 900;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+}
+
+.me-page > header > p:last-child {
+  margin: 4px 0 8px;
+  color: #716b60;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.me-page section {
+  border: 1px solid #ded3c2;
+  border-radius: 22px;
+  background: #fff;
+  padding: 18px;
+  box-shadow: 0 8px 26px rgb(84 63 39 / 0.06);
+}
+
+.weekly-card {
+  display: grid !important;
+  grid-template-columns: 1fr auto;
+  gap: 14px;
+}
+
+.weekly-card span,
+.rank-card span,
+.badge-card > span,
+.weekly-meals-card > span {
+  color: #9a442d;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.weekly-card h3,
+.rank-card h3,
+.badge-card h3,
+.weekly-meals-card h3 {
+  margin: 5px 0;
+  color: #293c4e;
+  font-family: "Plus Jakarta Sans", "Noto Sans TC", sans-serif;
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.weekly-card strong,
+.rank-card strong {
+  color: #9a442d;
+  font-size: 13px;
+}
+
+.goal-ring {
+  display: grid;
+  width: 76px;
+  height: 76px;
+  place-items: center;
+  border-radius: 50%;
+  background:
+    radial-gradient(closest-side, #fff 76%, transparent 78% 100%),
+    conic-gradient(#9a442d var(--progress), #eee5d6 0);
+  color: #293c4e;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.weekly-card label {
+  display: flex;
+  grid-column: 1 / -1;
+  align-items: center;
+  gap: 8px;
+  color: #6f685e;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.weekly-card input {
+  width: 68px;
+  min-height: 40px;
+  border: 1px solid #d9cbb2;
+  border-radius: 10px;
+  padding: 7px;
+  color: #293c4e;
+}
+
+.weekly-card button {
+  min-height: 40px;
+  border: 0;
+  border-radius: 10px;
+  background: #55755b;
+  padding: 8px 12px;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.rank-track {
+  display: flex;
+  gap: 6px;
+  margin: 16px 0;
+}
+
+.rank-track i {
+  height: 7px;
+  flex: 1;
+  border-radius: 9px;
+  background: #e8e3da;
+}
+
+.rank-track i.reached {
+  background: #d88b43;
+}
+
+.rank-card p,
+.badge-card p {
+  color: #817a6e;
+  font-size: 11px;
+}
+
+.badge-card summary {
+  margin-top: 12px;
+  color: #9a442d;
+  font-size: 11px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.badge-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+  margin-top: 12px;
+}
+
+.badge-grid div {
+  min-width: 0;
+  border-radius: 12px;
+  background: #f3eddf;
+  padding: 10px;
+  color: #8d877c;
+}
+
+.badge-grid div.earned {
+  background: #fff0d8;
+  color: #914b28;
+}
+
+.badge-grid b {
+  display: block;
+  overflow-wrap: anywhere;
+  font-size: 10px;
+}
+
+.badge-grid small {
+  display: block;
+  margin-top: 3px;
+  font-size: 9px;
+}
+
+.me-settings {
+  display: grid;
+  gap: 1px;
+  padding-bottom: 8px !important;
+}
+
+.me-settings h3 {
+  margin: 0 0 5px;
+  color: #293c4e;
+  font-family: "Plus Jakarta Sans", "Noto Sans TC", sans-serif;
+  font-size: 17px;
+  font-weight: 900;
+}
+
+.me-settings button {
+  min-height: 46px;
+  border: 0;
+  border-bottom: 1px solid #eee5d6;
+  background: transparent;
+  padding: 11px 2px;
+  color: #34465b;
+  font-size: 12px;
+  font-weight: 800;
+  text-align: left;
+}
+
+.me-settings button:last-child {
+  border-bottom: 0;
+}
+
+.me-settings small {
+  float: right;
+  color: #817a6e;
+  font-size: 9px;
+}
+
+.meal-tally {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 7px;
+  margin-top: 12px;
+}
+.meal-tally div {
+  border: 1px solid #ede3cf;
+  border-radius: 12px;
+  background: #fbf7ee;
+  padding: 8px 5px;
+  text-align: center;
+}
+.meal-tally b {
+  display: block;
+  color: #293c4e;
+  font-family: ui-monospace, monospace;
+  font-size: 15px;
+}
+.meal-tally small {
+  display: block;
+  margin-top: 2px;
+  color: #817a6e;
+  font-size: 9px;
+  font-weight: 800;
+}
+.weekly-meal-list {
+  margin-top: 13px;
+}
+.weekly-meal-list article {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  border-top: 1px dashed #e7dac2;
+  padding: 9px 0;
+}
+.weekly-meal-list article:first-child {
+  border-top: 0;
+}
+.weekly-meal-list article.today {
+  margin: 0 -6px;
+  border-radius: 10px;
+  background: linear-gradient(90deg, rgb(154 68 45 / 7%), transparent);
+  padding-right: 6px;
+  padding-left: 6px;
+}
+.weekly-meal-list article > span {
+  color: #817a6e;
+  font-family: ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 900;
+}
+.weekly-meal-list article div {
+  min-width: 0;
+}
+.weekly-meal-list article div strong {
+  display: block;
+  overflow: hidden;
+  color: #293c4e;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.weekly-meal-list article div small {
+  display: block;
+  margin-top: 2px;
+  color: #817a6e;
+  font-size: 9px;
+}
+.weekly-meal-list article > b {
+  border: 1px solid;
+  border-radius: 999px;
+  padding: 3px 7px;
+  font-size: 9px;
+  white-space: nowrap;
+}
+.weekly-meal-list article > b.cooked {
+  border-color: #b8d5c5;
+  background: #edf6f0;
+  color: #386753;
+}
+.weekly-meal-list article > b.planned {
+  border-color: #e2bcae;
+  background: #fff1e8;
+  color: #9a442d;
+}
+.weekly-meal-list article > b.postponed {
+  border-color: #e7c88e;
+  background: #fff6df;
+  color: #94601d;
+}
+.weekly-meal-list article > b.cancelled {
+  border-color: #ded7ca;
+  background: #f2eee6;
+  color: #817a6e;
+}
+.empty-meals {
+  margin: 12px 0 0;
+  color: #817a6e;
+  font-size: 11px;
+}
+
+.me-page button:focus-visible,
+.me-page input:focus-visible,
+.badge-card summary:focus-visible {
+  outline: 3px solid rgb(154 68 45 / 0.24);
+  outline-offset: 2px;
+}
+
+@media (max-width: 420px) {
+  .weekly-card label {
+    flex-wrap: wrap;
+  }
+
+  .badge-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Account Profile Card */
+.account-card {
+  display: flex !important;
+  flex-direction: column;
+  gap: 14px;
+  background: linear-gradient(135deg, #fffefb 0%, #fff9f0 100%) !important;
+  border: 1px solid #ebd9c6 !important;
+}
+
+.account-main {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.account-avatar {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #fff3e4;
+  border: 1px solid #ebd9c6;
+  color: #9a442d;
+}
+
+.account-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.account-status-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+
+.account-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 9.5px;
+  font-weight: 800;
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+.account-status-pill.cloud {
+  background: #e7f3ec;
+  color: #386753;
+  border: 1px solid #b8d5c5;
+}
+
+.account-status-pill.local {
+  background: #fff3e4;
+  color: #9a442d;
+  border: 1px solid #e2bcae;
+}
+
+.account-status-pill .dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.account-name {
+  margin: 2px 0 0;
+  font-family: "Plus Jakarta Sans", "Noto Sans TC", sans-serif;
+  font-size: 17px;
+  font-weight: 900;
+  color: #293c4e;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-desc {
+  margin: 2px 0 0;
+  font-size: 11px;
+  color: #817a6e;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-action {
+  flex-shrink: 0;
+}
+
+.btn-signin {
+  border: 1px solid #d9cbb2;
+  border-radius: 12px;
+  background: #fff2df;
+  color: #9a442d;
+  font-size: 11px;
+  font-weight: 900;
+  padding: 8px 14px;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(84, 63, 39, 0.04);
+  transition: all 0.15s ease;
+}
+
+.btn-signin:hover:not(:disabled) {
+  background: #fdecd2;
+}
+
+.btn-signout {
+  border: 1px solid #d9cbb2;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #6f685e;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-signout:hover {
+  color: #9a442d;
+  border-color: #e2bcae;
+  background: #fff8f5;
+}
+
+.account-error {
+  margin: 0;
+  font-size: 11px;
+  color: #b91c1c;
+}
+
+.account-footer {
+  border-top: 1px dashed #ebd9c6;
+  padding-top: 10px;
+}
+
+.account-replay-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: #9a442d;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  padding: 4px 0;
+  transition: opacity 0.15s ease;
+}
+
+.account-replay-btn:hover {
+  opacity: 0.8;
+}
+
+.account-replay-btn svg {
+  width: 16px;
+  height: 16px;
+  margin-right: 6px;
+}
+
+.account-replay-btn .arrow {
+  font-weight: 900;
+  margin-left: auto;
+}
+
+@media (max-width: 480px) {
+  .account-main {
+    flex-wrap: wrap;
+  }
+  .account-action {
+    width: 100%;
+    margin-top: 6px;
+  }
+  .btn-signin,
+  .btn-signout {
+    width: 100%;
+    text-align: center;
   }
 }

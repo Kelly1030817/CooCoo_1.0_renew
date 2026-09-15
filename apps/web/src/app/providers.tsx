@@ -1,5 +1,6 @@
 import { QueryClientProvider } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import { queryClient } from "./query-client";
 import { UiContext, type ToastKind } from "./ui-context";
 import { startAuthSessionSync } from "../shared/auth/session";
@@ -44,9 +45,11 @@ export function Providers({ children }: ProvidersProps) {
                   : "bg-secondary",
             )}
           >
-            <span className="material-symbols-outlined mr-2 align-middle text-xl">
-              {notice.type === "success" ? "check_circle" : "report"}
-            </span>
+            {notice.type === "success" ? (
+              <CheckCircle2 aria-hidden="true" className="mr-2 inline size-5 align-middle" />
+            ) : (
+              <AlertTriangle aria-hidden="true" className="mr-2 inline size-5 align-middle" />
+            )}
             {notice.message}
           </div>
         )}

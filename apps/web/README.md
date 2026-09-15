@@ -49,4 +49,4 @@ Onboarding 三步 UI 在 `src/widgets/onboarding/`；`pages/onboarding/Onboardin
 
 ## 樣式與 auth
 
-目前仍有頁面級 CSS；全域設定留在 `src/index.css`。合併 Tailwind class 請用 `src/shared/lib/cn.ts` 的 `cn()`（clsx + tailwind-merge），避免衝突類名共存。Auth session 由 `Providers` 訂閱一次，畫面用 `useAuthSession()`。Toast / modal 請用 `useUi()`；沒有 `Providers` 時會 throw，不再靜默 no-op。`AppRoute` 是底部導覽與 Header 的路由型別，已刪除未使用的 `TabId` 別名。Onboarding 送出走 react-hook-form + `typeboxResolver(OnboardingProfileSchema)` + `useMutation`；草稿仍自動寫入 `coocoo:onboarding-draft:v2`。底部導覽與 Header 已改 lucide，不再使用 BottomNav 頁面 CSS。
+頁面級 CSS 已全部併入 `src/index.css`；剩餘樣式都在這個檔。圖示使用 lucide。合併 Tailwind class 請用 `src/shared/lib/cn.ts` 的 `cn()`（clsx + tailwind-merge），避免衝突類名共存。Auth session 由 `Providers` 訂閱一次，畫面用 `useAuthSession()`。Toast / modal 請用 `useUi()`；沒有 `Providers` 時會 throw，不再靜默 no-op。`AppRoute` 是底部導覽與 Header 的路由型別，已刪除未使用的 `TabId` 別名。Onboarding 送出走 react-hook-form + `typeboxResolver(OnboardingProfileSchema)` + `useMutation`；草稿仍自動寫入 `coocoo:onboarding-draft:v2`。

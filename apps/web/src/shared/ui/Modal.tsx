@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { X } from "lucide-react";
 
 export function Modal({
   children,
@@ -49,7 +50,7 @@ export function ModalHeader({
         aria-label="關閉"
         className="rounded-full p-2 text-on-surface-variant hover:bg-surface-container"
       >
-        <span className="material-symbols-outlined">close</span>
+        <X aria-hidden="true" className="size-5" />
       </button>
     </div>
   );

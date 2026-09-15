@@ -20,7 +20,7 @@ import { Modal, ModalHeader } from "@/shared/ui/Modal";
 import { useUi } from "@/app/ui-context";
 import { currentPageRedirectTo, startGoogleAuth, supabase } from "@/shared/auth/supabase";
 import { CookwareModal, ProfileModal } from "@/widgets/app-shell/Header";
-import "./MePage.css";
+import { RotateCcw } from "lucide-react";
 
 const defaultReminders: ReminderPreferences = {
   expiringIngredients: true,
@@ -187,7 +187,7 @@ export function MePage() {
 
         <div className="account-footer">
           <button type="button" onClick={replayOnboarding} className="account-replay-btn">
-            <span className="material-symbols-outlined">restart_alt</span>
+            <RotateCcw aria-hidden="true" className="size-4 shrink-0" />
             <span>重新檢視五步主廚檔案設定</span>
             <span className="arrow">➔</span>
           </button>
