@@ -9,7 +9,6 @@ import { IngredientIcon } from "@/shared/ui/IngredientIcon";
 import { useUi } from "@/app/ui-context";
 import { Modal, ModalHeader } from "@/shared/ui/Modal";
 import { api, json } from "@/shared/api/client";
-import "./RecipesPage.css";
 
 const categories = [
   ["all", "全部"],

@@ -52,6 +52,9 @@ test("/recipes aria tree", async ({ page }) => {
   await page.goto("/recipes");
   await expect(page.getByRole("heading", { name: "今天想煮什麼？" })).toBeVisible();
   await expect(page.locator("body")).toMatchAriaSnapshot({ name: "recipes" });
+  await assertNoHorizontalOverflow(page);
+  await page.setViewportSize({ width: 320, height: 844 });
+  await assertNoHorizontalOverflow(page);
 });
 
 test("/me aria tree", async ({ page }) => {
