@@ -10,3 +10,5 @@ apps/web/e2e/**/*.spec.ts-snapshots
 **/*.tsbuildinfo
 bun.lock
 apps/api/bun.lock
+apps/web/public/mockServiceWorker.js
+apps/web/public/sw.js
