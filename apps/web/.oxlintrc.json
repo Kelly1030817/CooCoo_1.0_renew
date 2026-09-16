@@ -12,11 +12,12 @@
     "react/rules-of-hooks": "error",
     "react/exhaustive-deps": "error",
     "react/only-export-components": ["warn", { "allowConstantExport": true }],
-    "react/react-in-jsx-scope": "off"
+    "react/react-in-jsx-scope": "off",
+    "eslint/no-underscore-dangle": "off"
   },
   "overrides": [
     {
-      "files": ["src/shared/api/mock/handlers.test.ts"],
+      "files": ["src/shared/api/mock/handlers.test.ts", "src/**/*.test.ts", "src/**/*.test.tsx"],
       "rules": {
         "typescript/no-unsafe-type-assertion": "off"
       }

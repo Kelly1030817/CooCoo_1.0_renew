@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { preparePage, seedCompletedOnboarding, assertNoHorizontalOverflow } from "./helpers/draft";
-import "./global";
+/// <reference path="./global.d.ts" />
 
 test.beforeEach(async ({ page }) => {
   await preparePage(page);
