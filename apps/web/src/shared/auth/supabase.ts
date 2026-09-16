@@ -3,9 +3,11 @@ import { createClient } from "@supabase/supabase-js";
 const url = import.meta.env.VITE_SUPABASE_URL;
 const publishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 export const isSupabaseConfigured = Boolean(url && publishableKey);
-export const supabase = isSupabaseConfigured ? createClient(url, publishableKey, {
-  auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
-}) : null;
+export const supabase = isSupabaseConfigured
+  ? createClient(url, publishableKey, {
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+    })
+  : null;
 
 export function buildEmailOtpOptions(origin: string) {
   return { shouldCreateUser: true, emailRedirectTo: origin } as const;
@@ -35,7 +37,9 @@ export function readAuthCallbackIssue(hash: string) {
       message: "這封驗證信已使用或過期，請重新寄送一封新的驗證信。",
     };
   }
-  const description = decodeCallbackMessage(parameters.get("error_description") || "登入沒有完成，請重新嘗試。");
+  const description = decodeCallbackMessage(
+    parameters.get("error_description") || "登入沒有完成，請重新嘗試。",
+  );
   if (description.startsWith("Unable to exchange external code")) {
     return {
       code,
@@ -65,6 +69,17 @@ export async function verifyEmailOtp(email: string, token: string) {
 
 export async function startGoogleAuth(redirectTo: string = window.location.origin) {
   if (!supabase) throw new Error("尚未設定 Supabase Auth");
-  const { error } = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo } });
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: { redirectTo },
+  });
   if (error) throw error;
+}
+
+export function currentPageRedirectTo() {
+  return `${window.location.origin}${window.location.pathname}${window.location.search}`;
+}
+
+export function onboardingRedirectTo(step: number) {
+  return `${window.location.origin}/onboarding?step=${step}`;
 }

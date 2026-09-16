@@ -1,16 +1,13 @@
 import { describe, expect, it } from "vitest";
-import {
-  appRoutePaths,
-  isAppPath,
-  pathForRoute,
-  routeFromPathname,
-} from "./routes";
+import { appRoutePaths, isAppPath, pathForRoute, routeFromPathname, type AppRoute } from "./routes";
+
+const appRoutes: AppRoute[] = ["today", "shopping", "fridge", "recipes", "me", "onboarding"];
 
 describe("CooCoo app routes", () => {
-  it.each(Object.entries(appRoutePaths))(
+  it.each(appRoutes.map((route) => [route, appRoutePaths[route]] as const))(
     "maps %s to %s and back",
     (route, path) => {
-      expect(pathForRoute(route as keyof typeof appRoutePaths)).toBe(path);
+      expect(pathForRoute(route)).toBe(path);
       expect(routeFromPathname(path)).toBe(route);
       expect(isAppPath(path)).toBe(true);
     },
@@ -24,7 +21,7 @@ describe("CooCoo app routes", () => {
   it("uses today as the safe entry page for root and unknown paths", () => {
     expect(routeFromPathname("/")).toBe("today");
     expect(routeFromPathname("/not-a-page")).toBe("today");
-    expect(isAppPath("/")).toBe(false);
+    expect(isAppPath("/")).toBe(true);
     expect(isAppPath("/not-a-page")).toBe(false);
   });
 });

@@ -1,0 +1,31 @@
+- main:
+  - button "口袋主廚 CooCoo"
+  - text: /主廚 CooCoo CooCoo 給讚！ 口袋自煮夥伴 \d+ \/ \d+/
+  - paragraph: /首次設定 · \d+ 餐桌與廚具/
+  - progressbar "第 2 步，共 3 步"
+  - strong: 我先確認你真的能用什麼來煮。
+  - paragraph: 份量、廚具與日常卡點會直接影響我能推薦哪些料理。
+  - heading "通常幾人吃？" [level=2]
+  - text: 人份
+  - button "−"
+  - strong: "1"
+  - button "+"
+  - heading "可用廚具" [level=2]
+  - paragraph: 至少選一項；其他廚具也能自行新增。
+  - button "電磁爐"
+  - button "瓦斯爐"
+  - button "電鍋"
+  - button "快煮鍋"
+  - button "氣炸鍋"
+  - button "微波爐"
+  - textbox "例如：卡式爐、蒸烤箱"
+  - button "＋" [disabled]
+  - heading "最常卡在哪裡？" [level=2]
+  - paragraph: 可多選。這會決定我第一則提醒的方式。
+  - button "常常沒想法"
+  - button "下班沒力氣"
+  - button "時間不固定"
+  - button "食材容易放壞"
+  - button "不想收拾"
+  - button "‹ 上一步"
+  - button "繼續 ›" [disabled]

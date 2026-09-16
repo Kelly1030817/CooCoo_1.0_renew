@@ -1,1 +1,1 @@
-export { CooCooService as IdentityApplicationService } from '@coocoo/core'
+export { CooCooService as IdentityApplicationService } from "@coocoo/core";

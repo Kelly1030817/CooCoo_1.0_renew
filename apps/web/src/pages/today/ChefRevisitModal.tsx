@@ -50,9 +50,7 @@ export function ChefRevisitModal({
 }: ChefRevisitModalProps) {
   const [messages, setMessages] = useState<MessageItem[]>(() => {
     const fridgeItems =
-      inventoryNames.length > 0
-        ? inventoryNames.slice(0, 2).join("與")
-        : "雞蛋與鮮蔬";
+      inventoryNames.length > 0 ? inventoryNames.slice(0, 2).join("與") : "雞蛋與鮮蔬";
     return [
       {
         id: "intro",
@@ -156,9 +154,8 @@ export function ChefRevisitModal({
         }
 
         const missingNames = missing.map((item) => item.name).join("、");
-        const fridgeStatus = inventoryNames.length === 0
-          ? "目前冰箱尚無食材"
-          : `目前冰箱缺少「${missingNames}」`;
+        const fridgeStatus =
+          inventoryNames.length === 0 ? "目前冰箱尚無食材" : `目前冰箱缺少「${missingNames}」`;
         finish({
           id: `chef-${Date.now()}`,
           sender: "chef",
@@ -199,20 +196,24 @@ export function ChefRevisitModal({
           return;
         }
         void onAdjustTarget(nextTarget)
-          .then(() => finish({
-            id: `chef-${Date.now()}`,
-            sender: "chef",
-            actionType: "adjust",
-            text: `主廚 CooCoo：完全沒問題！已將本週自煮目標儲存為 ${nextTarget} 餐。生活有變化時再調整就好，不會扣除 EXP。`,
-            timestamp: "剛剛",
-          }))
-          .catch(() => finish({
-            id: `chef-${Date.now()}`,
-            sender: "chef",
-            actionType: "adjust",
-            text: "主廚 CooCoo：本週目標尚未儲存成功，原設定沒有改變。請稍後再試。",
-            timestamp: "剛剛",
-          }));
+          .then(() =>
+            finish({
+              id: `chef-${Date.now()}`,
+              sender: "chef",
+              actionType: "adjust",
+              text: `主廚 CooCoo：完全沒問題！已將本週自煮目標儲存為 ${nextTarget} 餐。生活有變化時再調整就好，不會扣除 EXP。`,
+              timestamp: "剛剛",
+            }),
+          )
+          .catch(() =>
+            finish({
+              id: `chef-${Date.now()}`,
+              sender: "chef",
+              actionType: "adjust",
+              text: "主廚 CooCoo：本週目標尚未儲存成功，原設定沒有改變。請稍後再試。",
+              timestamp: "剛剛",
+            }),
+          );
         return;
       }
 
@@ -227,20 +228,24 @@ export function ChefRevisitModal({
         return;
       }
       void onRecordTakeout()
-        .then((detail) => finish({
-          id: `chef-${Date.now()}`,
-          sender: "chef",
-          actionType: "takeout",
-          text: `主廚 CooCoo：今晚放心享受外食。${detail}`,
-          timestamp: "剛剛",
-        }))
-        .catch(() => finish({
-          id: `chef-${Date.now()}`,
-          sender: "chef",
-          actionType: "takeout",
-          text: "主廚 CooCoo：餐單調整尚未儲存成功，原本安排沒有改變。請稍後再試。",
-          timestamp: "剛剛",
-        }));
+        .then((detail) =>
+          finish({
+            id: `chef-${Date.now()}`,
+            sender: "chef",
+            actionType: "takeout",
+            text: `主廚 CooCoo：今晚放心享受外食。${detail}`,
+            timestamp: "剛剛",
+          }),
+        )
+        .catch(() =>
+          finish({
+            id: `chef-${Date.now()}`,
+            sender: "chef",
+            actionType: "takeout",
+            text: "主廚 CooCoo：餐單調整尚未儲存成功，原本安排沒有改變。請稍後再試。",
+            timestamp: "剛剛",
+          }),
+        );
     }, 350);
   };
 
@@ -301,10 +306,7 @@ export function ChefRevisitModal({
       </div>
 
       {/* Chat Stream Body */}
-      <div
-        ref={chatContainerRef}
-        className="max-h-[380px] overflow-y-auto space-y-3 pr-1 text-xs"
-      >
+      <div ref={chatContainerRef} className="max-h-[380px] overflow-y-auto space-y-3 pr-1 text-xs">
         {messages.map((msg) => {
           if (msg.sender === "user") {
             return (
@@ -578,7 +580,9 @@ export function ChefRevisitModal({
                   <div className="font-bold text-stone-800 text-[11px] group-hover:text-amber-950">
                     今晚改外食，調整今天的餐單
                   </div>
-                  <div className="text-[9px] text-stone-400">有今日排定餐點時才會儲存取消，不會自動扣款</div>
+                  <div className="text-[9px] text-stone-400">
+                    有今日排定餐點時才會儲存取消，不會自動扣款
+                  </div>
                 </div>
               </div>
               <svg

@@ -14,15 +14,20 @@ describe("Chef Consultation Components", () => {
     expect(isOnboardingStepValid(1, { ...emptyOnboardingDraft, plannedMealSlots: [] })).toBe(false);
     expect(isOnboardingStepValid(2, { ...emptyOnboardingDraft, habitBarriers: [] })).toBe(false);
     expect(isOnboardingStepValid(3, { ...emptyOnboardingDraft, currentStep: 3 })).toBe(true);
-    expect(completeOnboardingProfile({
-      ...emptyOnboardingDraft,
-      currentStep: 3,
-      cookingExperience: "advanced",
-      guidanceMode: "compact",
-      primaryGoalMetric: "self_cooked_servings",
-      inventoryReviewed: true,
-      hasNoInventory: true,
-    }, "2026-09-14T00:00:00.000Z")).toMatchObject({
+    expect(
+      completeOnboardingProfile(
+        {
+          ...emptyOnboardingDraft,
+          currentStep: 3,
+          cookingExperience: "advanced",
+          guidanceMode: "compact",
+          primaryGoalMetric: "self_cooked_servings",
+          inventoryReviewed: true,
+          hasNoInventory: true,
+        },
+        "2026-09-14T00:00:00.000Z",
+      ),
+    ).toMatchObject({
       status: "complete",
       currentStep: 3,
       cookingExperience: "beginner",
@@ -35,7 +40,7 @@ describe("Chef Consultation Components", () => {
       completedAt: "2026-09-14T00:00:00.000Z",
     });
   });
-  test("weekly goal suggestion is current frequency plus one within the supported range",()=>{
+  test("weekly goal suggestion is current frequency plus one within the supported range", () => {
     expect(suggestWeeklyGoalTarget(0)).toBe(1);
     expect(suggestWeeklyGoalTarget(1)).toBe(2);
     expect(suggestWeeklyGoalTarget(21)).toBe(21);
@@ -62,10 +67,20 @@ describe("Chef Consultation Components", () => {
       weeklyGoalTarget: 3,
       householdServings: 1,
       cookware: [{ type: "電鍋", limitations: [] }],
-      restrictions: [{ id: "r1", label: "甲殼類", kind: "allergy" as const, ingredientKeys: ["甲殼類"], isHardLimit: true }],
+      restrictions: [
+        {
+          id: "r1",
+          label: "甲殼類",
+          kind: "allergy" as const,
+          ingredientKeys: ["甲殼類"],
+          isHardLimit: true,
+        },
+      ],
     };
 
-    const unstampedHtml = renderToStaticMarkup(<PassportTicket profile={profile} isStamped={false} />);
+    const unstampedHtml = renderToStaticMarkup(
+      <PassportTicket profile={profile} isStamped={false} />,
+    );
     expect(unstampedHtml).toContain("COOCOO CHEF PROFILE");
     expect(unstampedHtml).toContain("初火學徒");
     expect(unstampedHtml).toContain("從 0 EXP 開始");
@@ -106,15 +121,23 @@ describe("Chef Consultation Components", () => {
     const store = new Map<string, string>();
     const mockStorage = {
       getItem: (k: string) => store.get(k) ?? null,
-      setItem: (k: string, v: string) => { store.set(k, String(v)); },
-      removeItem: (k: string) => { store.delete(k); },
-      clear: () => { store.clear(); },
+      setItem: (k: string, v: string) => {
+        store.set(k, v);
+      },
+      removeItem: (k: string) => {
+        store.delete(k);
+      },
+      clear: () => {
+        store.clear();
+      },
     };
-    (globalThis as any).localStorage = mockStorage;
+    Object.defineProperty(globalThis, "localStorage", {
+      configurable: true,
+      value: mockStorage,
+    });
 
-    const { hasSavedOnboardingDraft, saveOnboardingDraft, ONBOARDING_DRAFT_STORAGE_KEY } = await import(
-      "../../shared/model/onboarding-draft"
-    );
+    const { hasSavedOnboardingDraft, saveOnboardingDraft, ONBOARDING_DRAFT_STORAGE_KEY } =
+      await import("../../shared/model/onboarding-draft");
     mockStorage.removeItem(ONBOARDING_DRAFT_STORAGE_KEY);
     expect(hasSavedOnboardingDraft()).toBe(false);
 

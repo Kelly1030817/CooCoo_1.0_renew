@@ -17,7 +17,7 @@ describe("ChefRevisitModal (日常回訪對話流)", () => {
         onSelectLowEnergy={() => undefined}
         inventoryNames={["半盒雞蛋", "青江菜"]}
         weeklyTarget={3}
-      />
+      />,
     );
 
     expect(html).toContain("主廚 CooCoo 相談室");
@@ -55,18 +55,26 @@ describe("ChefRevisitModal (日常回訪對話流)", () => {
   });
 
   test("blocks the fixed emergency recipe when a hard restriction matches egg, gluten, or vegan food", () => {
-    expect(findEmergencyRecipeRestriction([
-      { id: "egg", label: "蛋過敏", kind: "allergy", ingredientKeys: ["蛋"], isHardLimit: true },
-    ])?.id).toBe("egg");
-    expect(findEmergencyRecipeRestriction([
-      { id: "vegan", label: "全素", kind: "avoid", ingredientKeys: ["全素"], isHardLimit: true },
-    ])?.id).toBe("vegan");
-    expect(findEmergencyRecipeRestriction([
-      { id: "milk", label: "牛奶", kind: "allergy", ingredientKeys: ["牛奶"], isHardLimit: true },
-    ])).toBeUndefined();
-    expect(findEmergencyRecipeRestriction([
-      { id: "soft", label: "蛋", kind: "preference", ingredientKeys: ["蛋"], isHardLimit: false },
-    ])).toBeUndefined();
+    expect(
+      findEmergencyRecipeRestriction([
+        { id: "egg", label: "蛋過敏", kind: "allergy", ingredientKeys: ["蛋"], isHardLimit: true },
+      ])?.id,
+    ).toBe("egg");
+    expect(
+      findEmergencyRecipeRestriction([
+        { id: "vegan", label: "全素", kind: "avoid", ingredientKeys: ["全素"], isHardLimit: true },
+      ])?.id,
+    ).toBe("vegan");
+    expect(
+      findEmergencyRecipeRestriction([
+        { id: "milk", label: "牛奶", kind: "allergy", ingredientKeys: ["牛奶"], isHardLimit: true },
+      ]),
+    ).toBeUndefined();
+    expect(
+      findEmergencyRecipeRestriction([
+        { id: "soft", label: "蛋", kind: "preference", ingredientKeys: ["蛋"], isHardLimit: false },
+      ]),
+    ).toBeUndefined();
   });
 
   test("requires compatible direct-heating cookware for the fixed emergency recipe", () => {

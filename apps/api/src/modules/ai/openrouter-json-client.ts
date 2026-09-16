@@ -48,7 +48,12 @@ export class OpenRouterJsonClient {
     if (!this.apiKey) throw new Error("OPENROUTER_API_KEY_REQUIRED");
     const userContent = request.image
       ? [
-          { type: "image_url", image_url: { url: `data:${request.image.mimeType};base64,${Buffer.from(request.image.bytes).toString("base64")}` } },
+          {
+            type: "image_url",
+            image_url: {
+              url: `data:${request.image.mimeType};base64,${Buffer.from(request.image.bytes).toString("base64")}`,
+            },
+          },
           { type: "text", text: request.prompt },
         ]
       : request.prompt;
@@ -57,7 +62,9 @@ export class OpenRouterJsonClient {
       headers: {
         authorization: `Bearer ${this.apiKey}`,
         "content-type": "application/json",
-        ...(process.env.OPENROUTER_SITE_URL ? { "http-referer": process.env.OPENROUTER_SITE_URL } : {}),
+        ...(process.env.OPENROUTER_SITE_URL
+          ? { "http-referer": process.env.OPENROUTER_SITE_URL }
+          : {}),
         "x-title": process.env.OPENROUTER_APP_NAME || "CooCoo",
       },
       body: JSON.stringify({
@@ -90,8 +97,12 @@ export class OpenRouterJsonClient {
       value: JSON.parse(content) as T,
       model: body.model || this.model,
       ...(typeof body.usage?.cost === "number" ? { costUsd: body.usage.cost } : {}),
-      ...(typeof body.usage?.prompt_tokens === "number" ? { inputTokens: body.usage.prompt_tokens } : {}),
-      ...(typeof body.usage?.completion_tokens === "number" ? { outputTokens: body.usage.completion_tokens } : {}),
+      ...(typeof body.usage?.prompt_tokens === "number"
+        ? { inputTokens: body.usage.prompt_tokens }
+        : {}),
+      ...(typeof body.usage?.completion_tokens === "number"
+        ? { outputTokens: body.usage.completion_tokens }
+        : {}),
     };
   }
 }

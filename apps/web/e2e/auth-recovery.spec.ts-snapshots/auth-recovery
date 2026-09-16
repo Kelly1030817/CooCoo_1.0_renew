@@ -1,0 +1,6 @@
+- main:
+  - paragraph: CooCoo
+  - heading "登入狀態已失效" [level=1]
+  - paragraph: 你的主廚相談室設定仍保留著。重新使用 Google 登入後，就能繼續使用 CooCoo。
+  - button "使用 Google 重新登入"
+  - text: 不需要重新填寫廚具、飲食限制、冰箱或週目標。

@@ -1,0 +1,50 @@
+- banner:
+  - button "CooCoo 煮煮 首頁":
+    - heading "CooCoo 煮煮" [level=1]
+  - button "重設範例資料"
+- main:
+  - paragraph: MY KITCHEN RHYTHM
+  - heading "我的" [level=2]
+  - paragraph: 每一次回來，都算數；沒達標不扣分，也不把你歸零。
+  - region "帳號與個人檔案":
+    - text: 本機訪客模式
+    - heading "本機訪客" [level=3]
+    - paragraph: 自煮紀錄暫存於此瀏覽器，登入可跨裝置同步備份
+    - button "Google 登入"
+    - button "重新檢視五步主廚檔案設定 ➔"
+  - text: 本週主目標
+  - heading "料理次數" [level=3]
+  - strong: 0 / 1
+  - text: 0% 隨生活調整目標
+  - spinbutton "本週目標": "1"
+  - button "儲存"
+  - text: 本週餐次
+  - heading "逐餐明細" [level=3]
+  - text: 0 已煮 0 待煮 0 延後 0 已取消
+  - paragraph: 尚未安排本週餐點。
+  - text: 目前職階
+  - heading "初火學徒" [level=3]
+  - strong: 0 EXP
+  - paragraph: /距下一職階還有 \d+ EXP/
+  - text: 下一枚徽章
+  - heading "第一道火光" [level=3]
+  - paragraph: 0 / 1
+  - group: /查看所有 \d+ 枚徽章/
+  - heading "更多" [level=3]
+  - button "料理歷程"
+  - button "成本統計（選用）"
+  - button "提醒設定"
+  - button "廚具設定"
+  - button "帳號與主廚檔案"
+  - button /主廚相談室 每日 \d+ 則 · 最近 \d+ 次/
+- navigation "主要功能":
+  - link "今日":
+    - /url: /today
+  - link "採買 4":
+    - /url: /shopping
+  - link "冰箱 1":
+    - /url: /fridge
+  - link "食譜":
+    - /url: /recipes
+  - link "我的":
+    - /url: /me

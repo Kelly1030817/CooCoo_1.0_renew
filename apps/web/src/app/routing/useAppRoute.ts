@@ -1,10 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import {
-  isAppPath,
-  pathForRoute,
-  routeFromPathname,
-  type AppRoute,
-} from "./routes";
+import { isAppPath, pathForRoute, routeFromPathname, type AppRoute } from "./routes";
 
 function readRoute() {
   return routeFromPathname(window.location.pathname);

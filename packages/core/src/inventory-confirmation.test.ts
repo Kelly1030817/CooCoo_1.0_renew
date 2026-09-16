@@ -1,1 +1,11 @@
-import{expect,test}from"bun:test";import{createSeedState,inventoryItemsNeedingConfirmation}from"./index";test("only asks to reconfirm stale ingredients used by this recipe",()=>{const items=createSeedState().inventory;const result=inventoryItemsNeedingConfirmation(items,[items[0].ingredientKey],new Date("2026-09-11T00:00:00Z"));expect(result.map((item)=>item.id)).toEqual([items[0].id])});
+import { expect, test } from "bun:test";
+import { createSeedState, inventoryItemsNeedingConfirmation } from "./index";
+test("only asks to reconfirm stale ingredients used by this recipe", () => {
+  const items = createSeedState().inventory;
+  const result = inventoryItemsNeedingConfirmation(
+    items,
+    [items[0].ingredientKey],
+    new Date("2026-09-11T00:00:00Z"),
+  );
+  expect(result.map((item) => item.id)).toEqual([items[0].id]);
+});

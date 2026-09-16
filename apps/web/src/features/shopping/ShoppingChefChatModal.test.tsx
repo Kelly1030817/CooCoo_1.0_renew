@@ -19,18 +19,35 @@ const mockActiveTask: MealTask = {
     totalMinutes: 20,
     cookwareTypes: ["pan"],
     ingredients: [
-      { ingredientKey: "chicken_thigh", name: "去骨雞腿肉", quantity: 2, unit: "隻", isPantryStaple: false },
+      {
+        ingredientKey: "chicken_thigh",
+        name: "去骨雞腿肉",
+        quantity: 2,
+        unit: "隻",
+        isPantryStaple: false,
+      },
       { ingredientKey: "scallion", name: "青蔥", quantity: 2, unit: "支", isPantryStaple: false },
     ],
     steps: [
-      { id: "step-1", instruction: "雞腿肉皮朝下煎至金黃", detailedInstruction: "大火熱鍋後轉中火" },
+      {
+        id: "step-1",
+        instruction: "雞腿肉皮朝下煎至金黃",
+        detailedInstruction: "大火熱鍋後轉中火",
+      },
     ],
     safetyReviewed: true,
   },
   plannedTotalServings: 2,
   status: "needs_shopping",
   shortages: [
-    { id: "shortage-scallion", ingredientKey: "scallion", name: "青蔥", quantity: 2, unit: "支", resolution: "needed" },
+    {
+      id: "shortage-scallion",
+      ingredientKey: "scallion",
+      name: "青蔥",
+      quantity: 2,
+      unit: "支",
+      resolution: "needed",
+    },
   ],
   currentMeal: { date: "2026-09-14", slot: "dinner", servings: 2 },
   nextMeal: { date: "2026-09-15", slot: "lunch", servings: 0, strategy: "cook_extra" },
@@ -45,10 +62,18 @@ describe("ShoppingChefChatModal (AI 陪我逛對話框)", () => {
           onClose={() => undefined}
           activeTask={mockActiveTask}
           rescuedItems={[
-            { id: "inv-1", name: "傳統板豆腐", qty: 1, unit: "盒", storageLocation: "cold", expiresOn: "2026-09-15", daysLeft: 1 },
+            {
+              id: "inv-1",
+              name: "傳統板豆腐",
+              qty: 1,
+              unit: "盒",
+              storageLocation: "cold",
+              expiresOn: "2026-09-15",
+              daysLeft: 1,
+            },
           ]}
         />
-      </QueryClientProvider>
+      </QueryClientProvider>,
     );
 
     // Header & identity

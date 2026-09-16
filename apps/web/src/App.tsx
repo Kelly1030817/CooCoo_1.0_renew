@@ -1,16 +1,17 @@
-import { lazy, Suspense, useContext, useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import type { ApiSuccess, AppState } from "@coocoo/contracts";
-import type { Session } from "@supabase/supabase-js";
+import { AppStateSchema } from "@coocoo/contracts";
 import { stateQueryKey, useAppState } from "@/entities/app-state/model";
 import { useAppRoute } from "@/app/routing/useAppRoute";
 import { Header } from "@/widgets/app-shell/Header";
 import { BottomNav } from "@/widgets/app-shell/BottomNav";
 import { OnboardingPage } from "@/pages/onboarding/OnboardingPage";
 import { readOnboardingDraft } from "@/shared/model/onboarding-draft";
-import { startGoogleAuth, supabase } from "@/shared/auth/supabase";
+import { api } from "@/shared/api/client";
+import { currentPageRedirectTo, startGoogleAuth, supabase } from "@/shared/auth/supabase";
+import { useAuthSession } from "@/shared/auth/session";
 import { AuthRecoveryPanel } from "@/shared/auth/AuthRecoveryPanel";
-import { UiContext } from "@/app/ui-context";
+import { useUi } from "@/app/ui-context";
 
 const pages = {
   today: lazy(() =>
@@ -25,69 +26,82 @@ const pages = {
   recipes: lazy(() =>
     import("@/pages/recipes/RecipesPage").then(({ RecipesPage }) => ({ default: RecipesPage })),
   ),
-  me: lazy(() =>
-    import("@/pages/me/MePage").then(({ MePage }) => ({ default: MePage })),
-  ),
+  me: lazy(() => import("@/pages/me/MePage").then(({ MePage }) => ({ default: MePage }))),
 };
 export default function App() {
   const { route, navigate } = useAppRoute();
   const queryClient = useQueryClient();
-  const ui = useContext(UiContext);
-  const [onboardingComplete, setOnboardingComplete] = useState(() => readOnboardingDraft().status === "complete");
-  const [authStatus, setAuthStatus] = useState<"loading" | "signed-in" | "signed-out">(() => supabase ? "loading" : "signed-out");
+  const ui = useUi();
+  const { status: authStatus, session } = useAuthSession();
+  const [onboardingComplete, setOnboardingComplete] = useState(
+    () => readOnboardingDraft().status === "complete",
+  );
   const [reauthBusy, setReauthBusy] = useState(false);
   const [reauthError, setReauthError] = useState("");
   useEffect(() => {
-    if (!supabase) return;
+    if (!session) return undefined;
     let active = true;
-    const applySession = async (session: Session | null) => {
-      if (!active) return;
-      setAuthStatus(session ? "signed-in" : "signed-out");
-      if (!session) return;
-      try {
-        const response = await fetch("/api/v1/state", {
-          headers: { authorization: `Bearer ${session.access_token}` },
-        });
-        if (!response.ok) throw new Error("STATE_RESTORE_FAILED");
-        const { data: state } = await response.json() as ApiSuccess<AppState>;
+    void api("/state", undefined, AppStateSchema)
+      .then((state) => {
+        if (!active) return;
         queryClient.setQueryData(stateQueryKey, state);
-        if (active && state.onboardingProfile?.status === "complete") {
+        if (state.onboardingProfile?.status === "complete") {
           setOnboardingComplete(true);
         }
-      } catch {
+      })
+      .catch(() => {
         if (active) void queryClient.invalidateQueries({ queryKey: stateQueryKey });
-      }
-    };
-    void supabase.auth.getSession().then(({ data }) => applySession(data.session));
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => { void applySession(session); });
+      });
     return () => {
       active = false;
-      subscription.unsubscribe();
     };
-  }, [queryClient]);
+  }, [session, queryClient]);
   const stateEnabled = onboardingComplete && (!supabase || authStatus === "signed-in");
   const { data, isLoading, error } = useAppState(stateEnabled);
   const restartGoogleAuth = async () => {
     setReauthBusy(true);
     setReauthError("");
     try {
-      await startGoogleAuth();
+      await startGoogleAuth(currentPageRedirectTo());
     } catch (reason) {
       setReauthBusy(false);
-      setReauthError(reason instanceof Error ? reason.message : "Google 登入暫時無法開始，請稍後再試。");
+      setReauthError(
+        reason instanceof Error ? reason.message : "Google 登入暫時無法開始，請稍後再試。",
+      );
     }
   };
   const Page = route !== "onboarding" ? pages[route] : null;
-  if(onboardingComplete && authStatus === "loading")return <main className="onboarding-shell"><p className="eyebrow">CooCoo</p><h1 className="text-2xl font-extrabold text-slate-blue">正在找回你的主廚檔案…</h1></main>;
-  if(onboardingComplete && supabase && authStatus === "signed-out")return <AuthRecoveryPanel busy={reauthBusy} error={reauthError} onGoogleSignIn={() => { void restartGoogleAuth(); }} />;
+  if (onboardingComplete && authStatus === "loading")
+    return (
+      <main className="onboarding-shell">
+        <p className="eyebrow">CooCoo</p>
+        <h1 className="text-2xl font-extrabold text-slate-blue">正在找回你的主廚檔案…</h1>
+      </main>
+    );
+  if (onboardingComplete && supabase && authStatus === "signed-out")
+    return (
+      <AuthRecoveryPanel
+        busy={reauthBusy}
+        error={reauthError}
+        onGoogleSignIn={() => {
+          void restartGoogleAuth();
+        }}
+      />
+    );
 
   const localDraft = readOnboardingDraft();
-  const isReplaying = route === "onboarding" && (onboardingComplete || localDraft.status === "complete" || localDraft.currentStep === 1);
+  const isReplaying =
+    route === "onboarding" &&
+    (onboardingComplete || localDraft.status === "complete" || localDraft.currentStep === 1);
 
   if (!onboardingComplete || route === "onboarding")
     return (
       <OnboardingPage
-        key={route === "onboarding" ? `onboarding-${isReplaying ? "replay-1" : localDraft.currentStep}` : "onboarding-initial"}
+        key={
+          route === "onboarding"
+            ? `onboarding-${isReplaying ? "replay-1" : localDraft.currentStep}`
+            : "onboarding-initial"
+        }
         initialStep={isReplaying ? 1 : undefined}
         canExit={onboardingComplete}
         onExit={() => {
@@ -104,9 +118,13 @@ export default function App() {
     <>
       <Header enabled={stateEnabled} onNavigate={navigate} />
       <div className="h-[60px] shrink-0" aria-hidden="true" />
-      <main className={route === "today"
-        ? "mx-auto w-full max-w-[1136px] min-w-0 flex-1 px-[15px] py-md sm:px-5 lg:px-7"
-        : "mx-auto w-full max-w-[1200px] min-w-0 flex-1 px-md py-md transition-all duration-300 md:px-lg md:py-lg"}>
+      <main
+        className={
+          route === "today"
+            ? "mx-auto w-full max-w-[1136px] min-w-0 flex-1 px-[15px] py-md sm:px-5 lg:px-7"
+            : "mx-auto w-full max-w-[1200px] min-w-0 flex-1 px-md py-md transition-all duration-300 md:px-lg md:py-lg"
+        }
+      >
         {isLoading ? (
           <div className="py-xl text-center text-sm font-bold text-on-surface-variant">
             載入 CooCoo 中…

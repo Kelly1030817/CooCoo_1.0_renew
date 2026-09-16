@@ -1,1 +1,1 @@
-export { CooCooService as InventoryApplicationService, getRescuePlan } from '@coocoo/core'
+export { CooCooService as InventoryApplicationService, getRescuePlan } from "@coocoo/core";

@@ -154,38 +154,38 @@ AI 只能提出替代建議，不能直接變更任務或庫存。
 
 ```ts
 interface MealTaskShoppingContext {
-  mealTaskId: string
-  status: 'needs_shopping' | 'ready' | 'cooking' | 'needs_replan' | 'complete'
-  recipeId: string
-  recipeTitle: string
+  mealTaskId: string;
+  status: "needs_shopping" | "ready" | "cooking" | "needs_replan" | "complete";
+  recipeId: string;
+  recipeTitle: string;
   currentMeal: {
-    date: string
-    slot: 'breakfast' | 'lunch' | 'dinner'
-    servings: number
-  }
+    date: string;
+    slot: "breakfast" | "lunch" | "dinner";
+    servings: number;
+  };
   nextMeal:
     | {
-        strategy: 'cook_extra' | 'plan_separately'
-        date: string
-        slot: 'breakfast' | 'lunch' | 'dinner'
-        servings: number
+        strategy: "cook_extra" | "plan_separately";
+        date: string;
+        slot: "breakfast" | "lunch" | "dinner";
+        servings: number;
       }
-    | { strategy: 'skip' }
-  plannedTotalServings: number
-  shortageRevision: string
-  shortages: MealTaskShoppingItem[]
+    | { strategy: "skip" };
+  plannedTotalServings: number;
+  shortageRevision: string;
+  shortages: MealTaskShoppingItem[];
 }
 
 interface MealTaskShoppingItem {
-  shortageId: string
-  ingredientKey: string
-  name: string
-  requiredQuantity: number
-  requiredUnit: string
-  suggestedPurchaseQuantity: number | null
-  suggestedPurchaseUnit: string | null
-  estimatedCost: number | null
-  resolution: 'needed' | 'bought' | 'restocked' | 'unavailable' | 'replaced'
+  shortageId: string;
+  ingredientKey: string;
+  name: string;
+  requiredQuantity: number;
+  requiredUnit: string;
+  suggestedPurchaseQuantity: number | null;
+  suggestedPurchaseUnit: string | null;
+  estimatedCost: number | null;
+  resolution: "needed" | "bought" | "restocked" | "unavailable" | "replaced";
 }
 ```
 
@@ -193,25 +193,25 @@ interface MealTaskShoppingItem {
 
 ```ts
 interface MealTaskRestockCommand {
-  operationId: string
-  mealTaskId: string
-  shortageRevision: string
+  operationId: string;
+  mealTaskId: string;
+  shortageRevision: string;
   purchasedItems: Array<{
-    shortageId: string | null
-    shoppingItemId: string
-    actualQuantity: number
-    actualUnit: string
-    actualPrice: number | null
-    storageLocation: 'pantry' | 'fridge' | 'freezer' | 'other'
-  }>
+    shortageId: string | null;
+    shoppingItemId: string;
+    actualQuantity: number;
+    actualUnit: string;
+    actualPrice: number | null;
+    storageLocation: "pantry" | "fridge" | "freezer" | "other";
+  }>;
 }
 
 interface MealTaskRestockResult {
-  operationId: string
-  replayed: boolean
-  mealTaskStatus: 'needs_shopping' | 'ready'
-  remainingShortages: MealTaskShoppingItem[]
-  nextActions: Array<'return_to_task' | 'continue_shopping' | 'start_cooking'>
+  operationId: string;
+  replayed: boolean;
+  mealTaskStatus: "needs_shopping" | "ready";
+  remainingShortages: MealTaskShoppingItem[];
+  nextActions: Array<"return_to_task" | "continue_shopping" | "start_cooking">;
 }
 ```
 
@@ -220,37 +220,37 @@ interface MealTaskRestockResult {
 ```ts
 type ShoppingResolutionCommand =
   | {
-      operationId: string
-      mealTaskId: string
-      shortageId: string
-      action: 'replace'
-      replacementIngredientKey: string
-      replacementQuantity: number
-      replacementUnit: string
+      operationId: string;
+      mealTaskId: string;
+      shortageId: string;
+      action: "replace";
+      replacementIngredientKey: string;
+      replacementQuantity: number;
+      replacementUnit: string;
     }
   | {
-      operationId: string
-      mealTaskId: string
-      shortageId: string
-      action: 'keep_for_later'
+      operationId: string;
+      mealTaskId: string;
+      shortageId: string;
+      action: "keep_for_later";
     }
   | {
-      operationId: string
-      mealTaskId: string
-      action: 'replan_meal'
-    }
+      operationId: string;
+      mealTaskId: string;
+      action: "replan_meal";
+    };
 ```
 
 ### 5.4 狀態轉移
 
-| 採買事件 | MealTask 結果 |
-|---|---|
-| 從 Today 建立且有缺口 | `needs_shopping` |
+| 採買事件               | MealTask 結果    |
+| ---------------------- | ---------------- |
+| 從 Today 建立且有缺口  | `needs_shopping` |
 | 部分品項入庫，仍有缺口 | `needs_shopping` |
 | 替代品已確認但尚未買到 | `needs_shopping` |
-| 任務必需品全部入庫 | `ready` |
-| 放棄目前菜色並保留餐期 | `needs_replan` |
-| 一般採買未完成 | 不影響 MealTask |
+| 任務必需品全部入庫     | `ready`          |
+| 放棄目前菜色並保留餐期 | `needs_replan`   |
+| 一般採買未完成         | 不影響 MealTask  |
 
 ## 6. 可移植或整併的現有元件
 

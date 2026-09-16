@@ -1,0 +1,27 @@
+- main:
+  - button "口袋主廚 CooCoo"
+  - text: /主廚 CooCoo 最高防線確認 口袋自煮夥伴 \d+ \/ \d+/
+  - paragraph: /首次設定 · \d+ 登入與通行證/
+  - progressbar "第 3 步，共 3 步"
+  - strong: 最後一步，登入並成立你的主廚檔案。
+  - paragraph: 同步設定後蓋章啟程；這一步不會建立、清空或修改冰箱庫存。
+  - heading "登入並同步主廚檔案" [level=2]
+  - paragraph: 設定會跟著帳號，不會只留在這台裝置。
+  - paragraph: 本機 Preview 使用測試資料；正式環境會先要求登入。
+  - paragraph: 食材與保存期限請在完成設定後，前往「冰箱」頁新增或管理。
+  - text: /COOCOO CHEF PROFILE NO\. \d+ 主廚檔案/
+  - heading "初火學徒" [level=3]
+  - text: 從 0 EXP 開始
+  - term: 每週自煮
+  - definition: 1 次 / 週
+  - term: 常用份量
+  - definition: 1 人份
+  - term: 不能吃
+  - definition: 無特殊禁忌
+  - term: 烹飪裝備
+  - definition: 電磁爐
+  - text: 主廚 CooCoo 親筆見證
+  - img "CooCoo 親筆簽名"
+  - text: VERIFIED
+  - button "‹ 上一步"
+  - button "蓋章，成立主廚檔案"

@@ -16,7 +16,10 @@ function serverSecret() {
 }
 
 export function getSupabaseAdmin() {
-  if (!adminClient) adminClient = createClient(required("SUPABASE_URL"), serverSecret(), { auth: { persistSession: false, autoRefreshToken: false } });
+  if (!adminClient)
+    adminClient = createClient(required("SUPABASE_URL"), serverSecret(), {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
   return adminClient;
 }
 
@@ -30,7 +33,10 @@ export async function authenticateRequest(authorization?: string) {
   if (process.env.NODE_ENV !== "production" && token.startsWith("mock-")) {
     return { id: "00000000-0000-4000-8000-000000000001", email: "preview@coocoo.local" };
   }
-  if (!authClient) authClient = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
+  if (!authClient)
+    authClient = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_PUBLISHABLE_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
   const { data, error } = await authClient.auth.getUser(token);
   if (error || !data.user) throw new Error("AUTH_INVALID");
   return { id: data.user.id, email: data.user.email ?? "" };

@@ -13,16 +13,16 @@
 
 ### 2.1 後端已經有的東西
 
-| 實體 | 位置 | 重點欄位 |
-| :--- | :--- | :--- |
+| 實體     | 位置                              | 重點欄位                                                                                                                                     |
+| :------- | :-------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------- |
 | MealTask | `meal_tasks` 表／`MealTaskSchema` | `status`（`needs_shopping`／`ready`／`cooking`／`needs_replan`／`complete`）、`shortages`、`plannedTotalServings`、`currentMeal`、`nextMeal` |
-| EXP 事件 | `exp_events` 表／`EXP_POINTS` | `event_type` 五種，點數固定 30／10／10／20／40；`unique(user_id, operation_id, event_type)` |
-| 週目標 | `weekly_goals_v2` 表 | `metric`、`target`、`progress`、`reward_granted_at` |
-| 徽章 | `badge_awards` 表 | `badge_key`、`category`（cooking／rhythm／waste_less／exploration）、`tier` |
-| 成長檔 | `deriveGrowthProfile()` | `totalExp`、`rank.{level,name,threshold,nextThreshold}`、`nextBadge.{badgeKey,title,current,target}` |
-| 餐份 | `meal_servings` 表 | `status`（`eaten`／`prepared_inventory`）、`eaten_at` |
-| 今日決策 | `TodayDecisionSchema` | `primary`（可為 null）、`alternatives`（最多 2）、`slot`、`notice` |
-| 推薦 | `RecipeRecommendation` | `recipe`、`missing[]`、`estimatedPurchaseCost`、`budgetStatus`、`issues[]` |
+| EXP 事件 | `exp_events` 表／`EXP_POINTS`     | `event_type` 五種，點數固定 30／10／10／20／40；`unique(user_id, operation_id, event_type)`                                                  |
+| 週目標   | `weekly_goals_v2` 表              | `metric`、`target`、`progress`、`reward_granted_at`                                                                                          |
+| 徽章     | `badge_awards` 表                 | `badge_key`、`category`（cooking／rhythm／waste_less／exploration）、`tier`                                                                  |
+| 成長檔   | `deriveGrowthProfile()`           | `totalExp`、`rank.{level,name,threshold,nextThreshold}`、`nextBadge.{badgeKey,title,current,target}`                                         |
+| 餐份     | `meal_servings` 表                | `status`（`eaten`／`prepared_inventory`）、`eaten_at`                                                                                        |
+| 今日決策 | `TodayDecisionSchema`             | `primary`（可為 null）、`alternatives`（最多 2）、`slot`、`notice`                                                                           |
+| 推薦     | `RecipeRecommendation`            | `recipe`、`missing[]`、`estimatedPurchaseCost`、`budgetStatus`、`issues[]`                                                                   |
 
 ### 2.2 後端**沒有**的東西
 
@@ -54,12 +54,12 @@ exploration = 不同食譜名稱數
 
 建議的推導規則：
 
-| 任務 key | 顯示 | 完成判定 | 獎勵來源 |
-| :--- | :--- | :--- | :--- |
-| `cook_today` | 完成今天的料理 | 今日有 `cooking_completed` 事件 | `EXP_POINTS.cooking_completed` = 30 |
-| `eat_prepared` | 吃掉 1 份熟食 | 今日有 `prepared_serving_eaten` 事件，或 `meal_servings` 尚有 `prepared_inventory` | 10 |
-| `use_expiring` | 用掉即期食材 | 今日有 `expiring_ingredient_used` 事件，或庫存有 `daysLeft <= 3` 批次 | 10 |
-| `weekly_rhythm` | 本週節奏 | `weekly_goals_v2.progress >= target` | 40 |
+| 任務 key        | 顯示           | 完成判定                                                                           | 獎勵來源                            |
+| :-------------- | :------------- | :--------------------------------------------------------------------------------- | :---------------------------------- |
+| `cook_today`    | 完成今天的料理 | 今日有 `cooking_completed` 事件                                                    | `EXP_POINTS.cooking_completed` = 30 |
+| `eat_prepared`  | 吃掉 1 份熟食  | 今日有 `prepared_serving_eaten` 事件，或 `meal_servings` 尚有 `prepared_inventory` | 10                                  |
+| `use_expiring`  | 用掉即期食材   | 今日有 `expiring_ingredient_used` 事件，或庫存有 `daysLeft <= 3` 批次              | 10                                  |
+| `weekly_rhythm` | 本週節奏       | `weekly_goals_v2.progress >= target`                                               | 40                                  |
 
 優點：零 migration、不違反「EXP 不得重複」與「採買不發 EXP」規則、可立即實作。
 缺點：任務無法個人化排序，也不能由後端下指令（例如活動限時任務）。
