@@ -110,23 +110,23 @@ MVP 不提供全聯、家樂福或傳統市場的即時商品、價格、庫存�
 
 以下比較描述的是指定 commit 的程式現況，不代表所有畫面中的按鈕都已完成正式資料串接。
 
-| 面向 | `main@a10c6b7` | `legacy-720-development@7862ce1` |
-| --- | --- | --- |
-| 專案定位 | 第一階段遷移後的技術骨架，集中保留可驗證的核心流程。 | 功能與內容較豐富的整合展示版，同時包含產品站、Web App、API、資料庫草稿與封存原型。 |
-| 專案結構 | Bun workspace：`apps/web`、`apps/api`、`packages/contracts`、`packages/core`。 | pnpm／npm 混合結構：`coocoo-webapp`、`marketing-site`、`server`、`database`、`archive`。 |
-| 前端技術 | React + Vite + TypeScript；採 pages、features、entities、shared、widgets 分層。 | 核心 Web App 為 React + Vite + JavaScript；行銷站為 Next.js + TypeScript。 |
-| 主要導覽 | 固定手機底部導覽，四個入口為圓夢看板、冰箱沙漏、小廚房、補貨區；較符合逛市場與下廚時單手操作。 | 固定桌面側欄，除四個主要入口外，還有主廚相談室、個人等級與成就入口；視覺更豐富，但目前版型偏桌面。 |
-| 視覺與品牌 | 保留暖沙、紅土、鼠尾草綠等基準色，以及四大核心頁面的遷移基準；呈現較克制。 | 品牌敘事與遊戲化更完整，包含 3D 撲滿、夢想樹、任務、EXP、英雄榜、結算獎勵和較多情境卡片。 |
-| 核心狀態管理 | React Query 經共用 API client 連到 MSW；mock repository 有版本化持久化與固定 seed。 | 多數狀態由 React component 管理，庫存直接寫入 `localStorage`，其他狀態與舊版全域物件並存，資料來源較分散。 |
-| 業務規則 | `packages/core` 集中料理、庫存、採買、目標與食品安全規則；完成料理與補貨等操作有冪等或原子處理設計。 | 有 `domain/savings.js`、`domain/savingsApp.js` 與多個大型 UI component，但應用狀態、舊版全域物件和畫面事件之間耦合較高。 |
-| 公開契約 | `packages/contracts` 定義共用 runtime schema、回應格式與錯誤碼；MSW 與 Elysia 可共用同一契約。 | Express API 使用 controllers、validators、services、repositories 分層與 Zod 驗證，但前端部分 service 檔仍是 TODO 空函式，尚未證明所有畫面已接到 API。 |
-| 後端與資料 | Elysia API、記憶體 repository 與 SQLite 測試底座；Supabase 業務表與正式 Auth 尚待下一階段接入。 | 已有 Express API、Gemini client、Supabase client 依賴與 `database/schema.sql`，但仍混用 mock fallback，前端真實登入與跨裝置資料閉環尚未完成。 |
-| 採買、發票與 AI | 有採買流程、解析與 MSW 模擬；發票在第一階段仍是固定模擬結果。 | 已呈現 AI 採買助手、發票掃描、語音輸入等 modal，展示範圍較完整；真實 OCR、語音及部分前後端服務仍待串接。 |
-| 料理體驗 | 已有食材選擇、食譜、步驟、計時與完成結算的核心流程，並限制未擁有的廚具不能成為必要步驟。 | 有風格選擇、任務帶入食材、食譜 modal、完成後扣庫存與獎勵結算，陪伴感與遊戲化較強。 |
-| 離線能力 | 有持久化 mock 資料，但尚未形成正式 PWA／料理離線套件。 | 有 `useOfflineQueue`，但尚未證明整個已開始的料理流程、資產與完成同步都能完全離線。 |
-| 開發者功能 | 重設功能在規格上限定開發／測試環境，production 不暴露。 | `DevToolsFab` 目前直接由 App render，正式版需加上環境閘門或從 production bundle／介面移除。 |
-| 行銷與內容 | 沒有獨立行銷內容站，重心是應用與核心領域遷移。 | 有 Next.js 行銷站、食譜內容、文章、FAQ、結構化資料、sitemap 與 robots，公開品牌入口較完整。 |
-| 驗證方式 | 根目錄提供統一的 lint、test、build、verify；涵蓋 Web、API、contracts 與 core。 | 根目錄主要執行 JavaScript 測試與 Tailwind CSS build；Web App、Server、Marketing Site 各自有腳本，尚未收斂成單一全專案驗證入口。 |
+| 面向            | `main@a10c6b7`                                                                                       | `legacy-720-development@7862ce1`                                                                                                                      |
+| --------------- | ---------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 專案定位        | 第一階段遷移後的技術骨架，集中保留可驗證的核心流程。                                                 | 功能與內容較豐富的整合展示版，同時包含產品站、Web App、API、資料庫草稿與封存原型。                                                                    |
+| 專案結構        | Bun workspace：`apps/web`、`apps/api`、`packages/contracts`、`packages/core`。                       | pnpm／npm 混合結構：`coocoo-webapp`、`marketing-site`、`server`、`database`、`archive`。                                                              |
+| 前端技術        | React + Vite + TypeScript；採 pages、features、entities、shared、widgets 分層。                      | 核心 Web App 為 React + Vite + JavaScript；行銷站為 Next.js + TypeScript。                                                                            |
+| 主要導覽        | 固定手機底部導覽，四個入口為圓夢看板、冰箱沙漏、小廚房、補貨區；較符合逛市場與下廚時單手操作。       | 固定桌面側欄，除四個主要入口外，還有主廚相談室、個人等級與成就入口；視覺更豐富，但目前版型偏桌面。                                                    |
+| 視覺與品牌      | 保留暖沙、紅土、鼠尾草綠等基準色，以及四大核心頁面的遷移基準；呈現較克制。                           | 品牌敘事與遊戲化更完整，包含 3D 撲滿、夢想樹、任務、EXP、英雄榜、結算獎勵和較多情境卡片。                                                             |
+| 核心狀態管理    | React Query 經共用 API client 連到 MSW；mock repository 有版本化持久化與固定 seed。                  | 多數狀態由 React component 管理，庫存直接寫入 `localStorage`，其他狀態與舊版全域物件並存，資料來源較分散。                                            |
+| 業務規則        | `packages/core` 集中料理、庫存、採買、目標與食品安全規則；完成料理與補貨等操作有冪等或原子處理設計。 | 有 `domain/savings.js`、`domain/savingsApp.js` 與多個大型 UI component，但應用狀態、舊版全域物件和畫面事件之間耦合較高。                              |
+| 公開契約        | `packages/contracts` 定義共用 runtime schema、回應格式與錯誤碼；MSW 與 Elysia 可共用同一契約。       | Express API 使用 controllers、validators、services、repositories 分層與 Zod 驗證，但前端部分 service 檔仍是 TODO 空函式，尚未證明所有畫面已接到 API。 |
+| 後端與資料      | Elysia API、記憶體 repository 與 SQLite 測試底座；Supabase 業務表與正式 Auth 尚待下一階段接入。      | 已有 Express API、Gemini client、Supabase client 依賴與 `database/schema.sql`，但仍混用 mock fallback，前端真實登入與跨裝置資料閉環尚未完成。         |
+| 採買、發票與 AI | 有採買流程、解析與 MSW 模擬；發票在第一階段仍是固定模擬結果。                                        | 已呈現 AI 採買助手、發票掃描、語音輸入等 modal，展示範圍較完整；真實 OCR、語音及部分前後端服務仍待串接。                                              |
+| 料理體驗        | 已有食材選擇、食譜、步驟、計時與完成結算的核心流程，並限制未擁有的廚具不能成為必要步驟。             | 有風格選擇、任務帶入食材、食譜 modal、完成後扣庫存與獎勵結算，陪伴感與遊戲化較強。                                                                    |
+| 離線能力        | 有持久化 mock 資料，但尚未形成正式 PWA／料理離線套件。                                               | 有 `useOfflineQueue`，但尚未證明整個已開始的料理流程、資產與完成同步都能完全離線。                                                                    |
+| 開發者功能      | 重設功能在規格上限定開發／測試環境，production 不暴露。                                              | `DevToolsFab` 目前直接由 App render，正式版需加上環境閘門或從 production bundle／介面移除。                                                           |
+| 行銷與內容      | 沒有獨立行銷內容站，重心是應用與核心領域遷移。                                                       | 有 Next.js 行銷站、食譜內容、文章、FAQ、結構化資料、sitemap 與 robots，公開品牌入口較完整。                                                           |
+| 驗證方式        | 根目錄提供統一的 lint、test、build、verify；涵蓋 Web、API、contracts 與 core。                       | 根目錄主要執行 JavaScript 測試與 Tailwind CSS build；Web App、Server、Marketing Site 各自有腳本，尚未收斂成單一全專案驗證入口。                       |
 
 ### 共同缺口
 

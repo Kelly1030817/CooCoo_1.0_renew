@@ -1,0 +1,76 @@
+- banner:
+  - button "CooCoo 煮煮 首頁":
+    - heading "CooCoo 煮煮" [level=1]
+  - button "重設範例資料"
+- main:
+  - paragraph: FRIDGE INVENTORY
+  - heading "食材庫存" [level=2]
+  - paragraph: 管理數量、存放位置與使用期限
+  - button "新增食材"
+  - heading "保鮮沙漏警報：2 件即將到期" [level=3]
+  - text: 優先使用可減少浪費
+  - paragraph: 酪梨(剩0天)、胡蘿蔔(剩3天) 即將過期，建議優先帶入自由搭配備料盤！
+  - button "一鍵將即期品帶入自由搭配備料盤"
+  - button "冷藏室（點擊收合）" [expanded]:
+    - heading "冷藏室" [level=3]
+    - paragraph: 4°C
+    - text: 4 種 · 4 批
+  - group:
+    - img "酪梨"
+    - heading "酪梨 1 顆" [level=4]
+    - paragraph: 今天到期 · 1 批次
+    - text: /1 批待確認 已記錄 NT\$\d+ 批次＋/
+  - group:
+    - img "胡蘿蔔"
+    - heading "胡蘿蔔 3 條" [level=4]
+    - paragraph: 最近期限剩 3 天 · 1 批次
+    - text: /1 批待確認 已記錄 NT\$\d+ 批次＋/
+  - group:
+    - img "起司"
+    - heading /起司 \d+ g/ [level=4]
+    - paragraph: 最近期限剩 4 天 · 1 批次
+    - text: /1 批待確認 已記錄 NT\$\d+ 批次＋/
+  - group:
+    - img "雞蛋"
+    - heading "雞蛋 6 顆" [level=4]
+    - paragraph: /最近期限剩 \d+ 天 · 1 批次/
+    - text: /1 批待確認 已記錄 NT\$\d+ 批次＋/
+  - button "冷凍庫（點擊收合）" [expanded]:
+    - heading "冷凍庫" [level=3]
+    - paragraph: /-\d+°C/
+    - text: 2 種 · 2 批
+  - group:
+    - img "鮭魚"
+    - heading "鮭魚 2 片" [level=4]
+    - paragraph: /最近期限剩 \d+ 天 · 1 批次/
+    - text: /1 批待確認 已記錄 NT\$\d+ 批次＋/
+  - group:
+    - img "綜合莓果"
+    - heading "綜合莓果 1 包" [level=4]
+    - paragraph: /最近期限剩 \d+ 天 · 1 批次/
+    - text: /1 批待確認 已記錄 NT\$\d+ 批次＋/
+  - button "常溫櫃（點擊收合）" [expanded]:
+    - heading "常溫櫃" [level=3]
+    - paragraph: 乾燥避光
+    - text: 0 種 · 0 批
+  - text: 常溫櫃目前無庫存食材
+  - heading "食安與延展保存中心" [level=3]
+  - text: POST /inventory/:id/rescue
+  - paragraph: /今天吃不完？點選即期食材執行「分裝冷凍」延長 \d+ 天保存期，或檢核氣味進行過期處置。/
+  - text: 酪梨
+  - button /分裝冷凍 \(\+\d+天\)/
+  - button "丟棄"
+  - text: 胡蘿蔔
+  - button /分裝冷凍 \(\+\d+天\)/
+  - button "丟棄"
+- navigation "主要功能":
+  - link "今日":
+    - /url: /today
+  - link "採買 4":
+    - /url: /shopping
+  - link "冰箱 1":
+    - /url: /fridge
+  - link "食譜":
+    - /url: /recipes
+  - link "我的":
+    - /url: /me

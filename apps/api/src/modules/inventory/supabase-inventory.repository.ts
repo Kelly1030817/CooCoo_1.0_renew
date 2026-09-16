@@ -2,12 +2,108 @@ import type { InventoryItem } from "@coocoo/contracts";
 import { getSupabaseAdmin } from "../../shared/infrastructure/supabase";
 import { getRescuePlan } from "@coocoo/core";
 
-const dateOnly=(date=new Date())=>date.toISOString().slice(0,10);
-const daysLeft=(expiresOn:string|null)=>expiresOn?Math.max(0,Math.ceil((new Date(`${expiresOn}T12:00:00Z`).getTime()-Date.now())/86400000)):30;
+const dateOnly = (date = new Date()) => date.toISOString().slice(0, 10);
+const daysLeft = (expiresOn: string | null) =>
+  expiresOn
+    ? Math.max(0, Math.ceil((new Date(`${expiresOn}T12:00:00Z`).getTime() - Date.now()) / 86400000))
+    : 30;
 export class SupabaseInventoryRepository {
-  async list(userId:string):Promise<InventoryItem[]>{const {data,error}=await getSupabaseAdmin().from("inventory_batches").select("*").eq("user_id",userId).gt("quantity",0).order("expires_on");if(error)throw error;return data.map(row=>({id:row.id,ingredientKey:row.ingredient_key||row.name.toLocaleLowerCase("zh-TW"),name:row.name,chamber:row.location==="frozen"?"frozen":row.location==="pantry"?"pantry":"cold",qty:Number(row.quantity),unit:row.unit,daysLeft:daysLeft(row.expires_on),expiresOn:row.expires_on,lastConfirmedAt:row.last_confirmed_at||row.updated_at||row.created_at,image:"/favicon.svg",addedDate:row.purchased_on||dateOnly(new Date(row.created_at)),estimatedValue:Math.round(Number(row.unit_cost)*Number(row.quantity)),storageProtocol:row.location==="frozen"?"密封冷凍並標示日期":"先進先出，依期限優先使用",boxSize:"M"}))}
-  async create(userId:string,item:Omit<InventoryItem,"id">){const {data,error}=await getSupabaseAdmin().from("inventory_batches").insert({user_id:userId,name:item.name,ingredient_key:item.ingredientKey,quantity:item.qty,unit:item.unit,location:item.chamber,unit_cost:item.qty>0?item.estimatedValue/item.qty:0,purchased_on:item.addedDate,expires_on:item.expiresOn,last_confirmed_at:item.lastConfirmedAt}).select().single();if(error)throw error;return {...item,id:data.id}}
-  async confirm(userId:string,id:string){const now=new Date().toISOString();const {data,error}=await getSupabaseAdmin().from("inventory_batches").update({last_confirmed_at:now,updated_at:now}).eq("id",id).eq("user_id",userId).select("id").maybeSingle();if(error)throw error;if(!data)throw new Error("ITEM_NOT_FOUND");return{id,lastConfirmedAt:now}}
-  async delete(userId:string,id:string){const {error}=await getSupabaseAdmin().from("inventory_batches").delete().eq("id",id).eq("user_id",userId);if(error)throw error;return {id}}
-  async rescue(userId:string,id:string,action:"eat"|"preserve"|"discard",foodSafe:boolean){const item=(await this.list(userId)).find(value=>value.id===id);if(!item)throw new Error("ITEM_NOT_FOUND");if(!foodSafe&&action!=="discard")throw new Error("UNSAFE_ACTION");const plan=getRescuePlan(item);if(action==="eat"||action==="discard")await this.delete(userId,id);else{const expires=new Date();expires.setDate(expires.getDate()+plan.preserve.days);const {error}=await getSupabaseAdmin().from("inventory_batches").update({name:plan.preserve.title,location:"frozen",quantity:plan.preserve.packages,unit:"包",expires_on:dateOnly(expires),updated_at:new Date().toISOString()}).eq("id",id).eq("user_id",userId);if(error)throw error}return{action,plan,item}}
+  async list(userId: string): Promise<InventoryItem[]> {
+    const { data, error } = await getSupabaseAdmin()
+      .from("inventory_batches")
+      .select("*")
+      .eq("user_id", userId)
+      .gt("quantity", 0)
+      .order("expires_on");
+    if (error) throw error;
+    return data.map((row) => ({
+      id: row.id,
+      ingredientKey: row.ingredient_key || row.name.toLocaleLowerCase("zh-TW"),
+      name: row.name,
+      chamber: row.location === "frozen" ? "frozen" : row.location === "pantry" ? "pantry" : "cold",
+      qty: Number(row.quantity),
+      unit: row.unit,
+      daysLeft: daysLeft(row.expires_on),
+      expiresOn: row.expires_on,
+      lastConfirmedAt: row.last_confirmed_at || row.updated_at || row.created_at,
+      image: "/favicon.svg",
+      addedDate: row.purchased_on || dateOnly(new Date(row.created_at)),
+      estimatedValue: Math.round(Number(row.unit_cost) * Number(row.quantity)),
+      storageProtocol:
+        row.location === "frozen" ? "密封冷凍並標示日期" : "先進先出，依期限優先使用",
+      boxSize: "M",
+    }));
+  }
+  async create(userId: string, item: Omit<InventoryItem, "id">) {
+    const { data, error } = await getSupabaseAdmin()
+      .from("inventory_batches")
+      .insert({
+        user_id: userId,
+        name: item.name,
+        ingredient_key: item.ingredientKey,
+        quantity: item.qty,
+        unit: item.unit,
+        location: item.chamber,
+        unit_cost: item.qty > 0 ? item.estimatedValue / item.qty : 0,
+        purchased_on: item.addedDate,
+        expires_on: item.expiresOn,
+        last_confirmed_at: item.lastConfirmedAt,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    return { ...item, id: data.id };
+  }
+  async confirm(userId: string, id: string) {
+    const now = new Date().toISOString();
+    const { data, error } = await getSupabaseAdmin()
+      .from("inventory_batches")
+      .update({ last_confirmed_at: now, updated_at: now })
+      .eq("id", id)
+      .eq("user_id", userId)
+      .select("id")
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) throw new Error("ITEM_NOT_FOUND");
+    return { id, lastConfirmedAt: now };
+  }
+  async delete(userId: string, id: string) {
+    const { error } = await getSupabaseAdmin()
+      .from("inventory_batches")
+      .delete()
+      .eq("id", id)
+      .eq("user_id", userId);
+    if (error) throw error;
+    return { id };
+  }
+  async rescue(
+    userId: string,
+    id: string,
+    action: "eat" | "preserve" | "discard",
+    foodSafe: boolean,
+  ) {
+    const item = (await this.list(userId)).find((value) => value.id === id);
+    if (!item) throw new Error("ITEM_NOT_FOUND");
+    if (!foodSafe && action !== "discard") throw new Error("UNSAFE_ACTION");
+    const plan = getRescuePlan(item);
+    if (action === "eat" || action === "discard") await this.delete(userId, id);
+    else {
+      const expires = new Date();
+      expires.setDate(expires.getDate() + plan.preserve.days);
+      const { error } = await getSupabaseAdmin()
+        .from("inventory_batches")
+        .update({
+          name: plan.preserve.title,
+          location: "frozen",
+          quantity: plan.preserve.packages,
+          unit: "包",
+          expires_on: dateOnly(expires),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", id)
+        .eq("user_id", userId);
+      if (error) throw error;
+    }
+    return { action, plan, item };
+  }
 }

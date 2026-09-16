@@ -1,0 +1,53 @@
+- banner:
+  - button "CooCoo 煮煮 首頁":
+    - heading "CooCoo 煮煮" [level=1]
+  - button "重設範例資料"
+- main:
+  - region "主廚職階進度":
+    - strong: 初火學徒
+    - text: 下一枚 · 第一道火光 0/1
+    - button "EXP 0"
+    - text: /職階進度 0 \/ \d+/
+  - paragraph: GROCERY & MEALTASKS
+  - heading "採買清單" [level=2]
+  - button "新增品項"
+  - button /AI 陪我逛 每日 \d+ 則 · 雙向對話/:
+    - strong: AI 陪我逛
+  - button "掃描發票 逐項確認後直接入庫":
+    - strong: 掃描發票
+  - button "用說的新增 也可以直接打字":
+    - strong: 用說的新增
+  - strong: 0 % 任務補齊度
+  - heading "先選一道料理開始" [level=2]
+  - paragraph: 確認料理後，必要食材會自動成為任務票上的章格。
+  - paragraph: 惜食救援軌
+  - heading "順路補貨，讓即期食材接上下一餐" [level=3]
+  - text: 只顯示冰箱中三天內需要優先照顧的食材
+  - button "去看看"
+  - article:
+    - img "酪梨"
+    - strong: 酪梨
+    - text: 冰箱剩 1顆 · 今天確認狀態
+    - button "查看冰箱"
+  - article:
+    - img "胡蘿蔔"
+    - strong: 胡蘿蔔
+    - text: 冰箱剩 3條 · 還有 3 天
+    - button "查看冰箱"
+  - strong: 這次採買算到哪裡？
+  - text: 等待確認料理任務
+  - button "查看依據"
+  - text: 這一餐 · 待確認 尚未選擇 到今日選擇料理 下一餐 · 待確認 待確認 不納入計算 不自動加購 尚未選定的料理不會進入 MealTask；確認菜色與份數後才重新計算缺口。 已勾選 1 項 · 任務 0/0 · 預估
+  - strong: /NT\$ \d+/
+  - button "完成這次採買"
+- navigation "主要功能":
+  - link "今日":
+    - /url: /today
+  - link "採買 4":
+    - /url: /shopping
+  - link "冰箱 1":
+    - /url: /fridge
+  - link "食譜":
+    - /url: /recipes
+  - link "我的":
+    - /url: /me

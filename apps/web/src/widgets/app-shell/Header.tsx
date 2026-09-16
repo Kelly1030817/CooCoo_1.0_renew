@@ -1,30 +1,34 @@
 import { CatalogAdminModal } from "../../features/recipes/CatalogAdminModal";
-import { useContext, useState } from "react";
+import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAppState, stateQueryKey } from "../../entities/app-state/model";
 import { api } from "../../shared/api/client";
-import { UiContext } from "../../app/ui-context";
+import { useUi } from "../../app/ui-context";
 import { Modal, ModalHeader } from "../../shared/ui/Modal";
 import { BrandLogo } from "../../shared/ui/BrandLogo";
-import { supabase, startGoogleAuth } from "../../shared/auth/supabase";
+import { currentPageRedirectTo, supabase, startGoogleAuth } from "../../shared/auth/supabase";
 import { readOnboardingDraft } from "../../shared/model/onboarding-draft";
 
+import { RotateCcw, CookingPot } from "lucide-react";
 import type { AppRoute } from "../../app/routing/routes";
 
-export function Header({
-  enabled = true,
-  onNavigate,
-}: {
+function catalogAdminModalNode(onClose: () => void) {
+  return <CatalogAdminModal onClose={onClose} />;
+}
+
+export type HeaderProps = {
   enabled?: boolean;
   onNavigate?: (route: AppRoute) => void;
-}) {
+};
+
+export function Header({ enabled = true, onNavigate }: HeaderProps) {
   const { data } = useAppState(enabled);
   const access = useQuery({
     queryKey: ["catalog-access", data?.session.user?.id],
     queryFn: () => api<{ owner: boolean }>("/admin/recipes/access"),
     enabled: Boolean(data?.session.user),
   });
-  const ui = useContext(UiContext);
+  const ui = useUi();
   const query = useQueryClient();
   const refresh = () => query.invalidateQueries({ queryKey: stateQueryKey });
   const reset = async () => {
@@ -45,13 +49,15 @@ export function Header({
               aria-label="重設範例資料"
               className="flex items-center justify-center rounded-full p-2 text-on-surface-variant hover:bg-surface-container-high/40"
             >
-              <span className="material-symbols-outlined text-xl">
-                restart_alt
-              </span>
+              <RotateCcw aria-hidden="true" className="size-5" />
             </button>
           )}
           {import.meta.env.DEV && access.data?.owner && (
-            <button className="text-xs text-on-surface-variant hover:text-primary px-2 py-1 rounded-lg border border-outline-variant/50" onClick={() => ui.open(<CatalogAdminModal onClose={ui.close} />)}>
+            <button
+              type="button"
+              className="text-xs text-on-surface-variant hover:text-primary px-2 py-1 rounded-lg border border-outline-variant/50"
+              onClick={() => ui.open(catalogAdminModalNode(ui.close))}
+            >
               食譜管理
             </button>
           )}
@@ -61,17 +67,15 @@ export function Header({
   );
 }
 
-export function ProfileModal({
-  onClose,
-  onReplayOnboarding,
-  enabled = true,
-}: {
+export type ProfileModalProps = {
   onClose: () => void;
   onReplayOnboarding: () => void;
   enabled?: boolean;
-}) {
+};
+
+export function ProfileModal({ onClose, onReplayOnboarding, enabled = true }: ProfileModalProps) {
   const { data } = useAppState(enabled);
-  const ui = useContext(UiContext);
+  const ui = useUi();
   const query = useQueryClient();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -82,7 +86,7 @@ export function ProfileModal({
     setBusy(true);
     setError("");
     try {
-      await startGoogleAuth();
+      await startGoogleAuth(currentPageRedirectTo());
     } catch (e) {
       setBusy(false);
       setError(e instanceof Error ? e.message : "Google 登入啟動失敗");
@@ -98,11 +102,7 @@ export function ProfileModal({
 
   return (
     <Modal label="我的自煮檔案" onClose={onClose}>
-      <ModalHeader
-        title="我的自煮檔案"
-        kicker="CooCoo 主廚個人中心"
-        onClose={onClose}
-      />
+      <ModalHeader title="我的自煮檔案" kicker="CooCoo 主廚個人中心" onClose={onClose} />
       <div className="space-y-3.5 text-left text-xs">
         {/* User Account Status */}
         <div className="bg-stone-50 border border-stone-200 rounded-2xl p-3 flex items-center justify-between">
@@ -151,14 +151,21 @@ export function ProfileModal({
           )}
         </div>
 
-        {error && <p role="alert" className="offline-error text-xs text-error">{error}</p>}
+        {error && (
+          <p role="alert" className="offline-error text-xs text-error">
+            {error}
+          </p>
+        )}
 
         {/* Current Chef Profile Overview */}
         <div className="bg-amber-50/80 border border-amber-200 rounded-2xl p-3 space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-amber-800 uppercase tracking-wider">本週主目標</span>
+            <span className="text-[10px] font-bold text-amber-800 uppercase tracking-wider">
+              本週主目標
+            </span>
             <span className="text-[10px] font-mono font-bold text-amber-900 bg-amber-100/90 px-1.5 py-0.5 rounded">
-              每週 {draft.weeklyGoalTarget || 1} {draft.primaryGoalMetric === "self_cooked_servings" ? "份" : "次"}
+              每週 {draft.weeklyGoalTarget || 1}{" "}
+              {draft.primaryGoalMetric === "self_cooked_servings" ? "份" : "次"}
             </span>
           </div>
           <div className="flex items-baseline justify-between">
@@ -221,23 +228,21 @@ export function ProfileModal({
   );
 }
 
-export function CookwareModal({ onClose, enabled = true }: { onClose: () => void; enabled?: boolean }) {
+export type CookwareModalProps = {
+  onClose: () => void;
+  enabled?: boolean;
+};
+
+export function CookwareModal({ onClose, enabled = true }: CookwareModalProps) {
   const { data } = useAppState(enabled);
   return (
     <Modal label="廚房裝備設定" onClose={onClose}>
       <ModalHeader title="我的廚房裝備" onClose={onClose} />
       <div className="space-y-sm">
         {data?.cookware.map((item) => (
-          <div
-            key={item.id}
-            className="rounded-2xl bg-surface-container-low p-md"
-          >
-            <span className="material-symbols-outlined text-secondary">
-              skillet
-            </span>
-            <strong className="ml-2 text-sm text-slate-blue">
-              {item.name}
-            </strong>
+          <div key={item.id} className="rounded-2xl bg-surface-container-low p-md">
+            <CookingPot aria-hidden="true" className="inline size-5 text-secondary" />
+            <strong className="ml-2 text-sm text-slate-blue">{item.name}</strong>
             <p className="mt-1 text-[10px] text-on-surface-variant">
               {item.brand} {item.model} · {item.capacity || `${item.wattage}W`}
             </p>

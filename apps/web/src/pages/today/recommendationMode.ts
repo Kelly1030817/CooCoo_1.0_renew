@@ -5,9 +5,11 @@ export function shouldAutoSwitchToPurchase(input: {
   hasAutoSwitched: boolean;
   ticketMode: "fridge" | "purchase";
 }) {
-  return input.hasDecision &&
+  return (
+    input.hasDecision &&
     input.inventoryRecipeCount === 0 &&
     input.purchaseRecipeCount > 0 &&
     !input.hasAutoSwitched &&
-    input.ticketMode === "fridge";
+    input.ticketMode === "fridge"
+  );
 }

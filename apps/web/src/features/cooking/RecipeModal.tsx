@@ -1,25 +1,71 @@
-import { useContext, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Recipe, RecipeGeneration, RecipePackage } from "@coocoo/contracts";
+import { Sparkles } from "lucide-react";
 import { api, json, ApiError } from "@/shared/api/client";
 import { Modal, ModalHeader } from "@/shared/ui/Modal";
-import { UiContext } from "@/app/ui-context";
+import { useUi } from "@/app/ui-context";
 import { useAppState, stateQueryKey } from "@/entities/app-state/model";
-import { enqueueOperation, markRecipePackageCompleted, saveRecipePackage } from "@/shared/offline/recipe-packages";
+import {
+  enqueueOperation,
+  markRecipePackageCompleted,
+  saveRecipePackage,
+} from "@/shared/offline/recipe-packages";
 import { requestFirstCookingPushPermission } from "./push-permission";
 import { instructionForMode, toggledGuidanceMode } from "./recipe-guidance";
 import "./RecipeModal.css";
 
-export function RecipeModal({ ingredientIds, style, onClose, onComplete }: { ingredientIds: string[]; style: string; onClose: () => void; onComplete?: () => void }) {
+export function RecipeModal({
+  ingredientIds,
+  style,
+  onClose,
+  onComplete,
+}: {
+  ingredientIds: string[];
+  style: string;
+  onClose: () => void;
+  onComplete?: () => void;
+}) {
   const [generation, setGeneration] = useState<RecipeGeneration | null>(null);
   const [cookingPackage, setCookingPackage] = useState<RecipePackage | null>(null);
   const [offlineError, setOfflineError] = useState("");
   const [error, setError] = useState("");
-  useEffect(() => { api<RecipeGeneration>("/recipes/generate", json("POST", { operationId:crypto.randomUUID(),ingredientIds, style })).then(setGeneration).catch((reason: Error) => setError(reason.message)); }, [ingredientIds, style]);
-  if (cookingPackage) return <CookingMode recipePackage={cookingPackage} ingredientIds={ingredientIds} onClose={onClose} onComplete={onComplete} />;
-  if (error) return <Modal label="食譜產生失敗" onClose={onClose}><ModalHeader title="食譜產生失敗" onClose={onClose} /><p className="rounded-xl bg-error-container p-md text-xs text-on-error-container">{error}</p></Modal>;
-  if (!generation) return <Modal label="食譜準備中" onClose={onClose}><div className="py-xl text-center"><span className="material-symbols-outlined animate-pulse text-5xl text-secondary">auto_awesome</span><h3 className="mt-md font-extrabold text-slate-blue">正在依設定整理料理</h3></div></Modal>;
-  const recipe=generation.recipe;
+  useEffect(() => {
+    api<RecipeGeneration>(
+      "/recipes/generate",
+      json("POST", { operationId: crypto.randomUUID(), ingredientIds, style }),
+    )
+      .then(setGeneration)
+      .catch((reason: Error) => setError(reason.message));
+  }, [ingredientIds, style]);
+  if (cookingPackage)
+    return (
+      <CookingMode
+        recipePackage={cookingPackage}
+        ingredientIds={ingredientIds}
+        onClose={onClose}
+        onComplete={onComplete}
+      />
+    );
+  if (error)
+    return (
+      <Modal label="食譜產生失敗" onClose={onClose}>
+        <ModalHeader title="食譜產生失敗" onClose={onClose} />
+        <p className="rounded-xl bg-error-container p-md text-xs text-on-error-container">
+          {error}
+        </p>
+      </Modal>
+    );
+  if (!generation)
+    return (
+      <Modal label="食譜準備中" onClose={onClose}>
+        <div className="py-xl text-center">
+          <Sparkles aria-hidden="true" className="mx-auto size-12 animate-pulse text-secondary" />
+          <h3 className="mt-md font-extrabold text-slate-blue">正在依設定整理料理</h3>
+        </div>
+      </Modal>
+    );
+  const recipe = generation.recipe;
   const start = async () => {
     setOfflineError("");
     try {
@@ -29,14 +75,141 @@ export function RecipeModal({ ingredientIds, style, onClose, onComplete }: { ing
       setOfflineError("核心食譜未能存到這台裝置，尚未進入離線料理。請確認瀏覽器儲存空間後重試。");
     }
   };
-  return <Modal label={recipe.title} onClose={onClose} wide><ModalHeader title={recipe.title} kicker={`${recipe.totalMinutes} 分鐘 · ${recipe.servings} 人份 · NT$ ${recipe.estimatedCost}`} onClose={onClose} />{generation.notice&&<p className="rounded-xl bg-secondary/10 p-md text-xs text-on-surface-variant">{generation.notice}</p>}<div className="meal-tags">{recipe.cookwareTypes.map(item=><span key={item}>{item}</span>)}</div><ol className="mt-md space-y-sm">{recipe.steps.map(step => <li key={step.id} className="flex gap-sm rounded-2xl bg-surface-container-low p-md"><span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-extrabold text-white">{step.order}</span><p className="text-sm leading-6 text-slate-blue">{step.instruction}{step.safetyNote&&<small className="mt-1 block text-error">注意：{step.safetyNote}</small>}</p></li>)}</ol>{offlineError && <p role="alert" className="offline-error">{offlineError}</p>}<div className="mt-lg flex flex-col gap-sm sm:flex-row"><button onClick={async () => setGeneration(await api<RecipeGeneration>("/recipes/generate", json("POST", { operationId:crypto.randomUUID(),ingredientIds, style, excludeTitle: recipe.title })))} className="secondary-btn flex-1">換一道</button><button onClick={start} className="primary-btn flex-1">下載並開始料理</button></div></Modal>;
+  return (
+    <Modal label={recipe.title} onClose={onClose} wide>
+      <ModalHeader
+        title={recipe.title}
+        kicker={`${recipe.totalMinutes} 分鐘 · ${recipe.servings} 人份 · NT$ ${recipe.estimatedCost}`}
+        onClose={onClose}
+      />
+      {generation.notice && (
+        <p className="rounded-xl bg-secondary/10 p-md text-xs text-on-surface-variant">
+          {generation.notice}
+        </p>
+      )}
+      <div className="meal-tags">
+        {recipe.cookwareTypes.map((item) => (
+          <span key={item}>{item}</span>
+        ))}
+      </div>
+      <ol className="mt-md space-y-sm">
+        {recipe.steps.map((step) => (
+          <li key={step.id} className="flex gap-sm rounded-2xl bg-surface-container-low p-md">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-extrabold text-white">
+              {step.order}
+            </span>
+            <p className="text-sm leading-6 text-slate-blue">
+              {step.instruction}
+              {step.safetyNote && (
+                <small className="mt-1 block text-error">注意：{step.safetyNote}</small>
+              )}
+            </p>
+          </li>
+        ))}
+      </ol>
+      {offlineError && (
+        <p role="alert" className="offline-error">
+          {offlineError}
+        </p>
+      )}
+      <div className="mt-lg flex flex-col gap-sm sm:flex-row">
+        <button
+          onClick={async () =>
+            setGeneration(
+              await api<RecipeGeneration>(
+                "/recipes/generate",
+                json("POST", {
+                  operationId: crypto.randomUUID(),
+                  ingredientIds,
+                  style,
+                  excludeTitle: recipe.title,
+                }),
+              ),
+            )
+          }
+          className="secondary-btn flex-1"
+        >
+          換一道
+        </button>
+        <button onClick={start} className="primary-btn flex-1">
+          下載並開始料理
+        </button>
+      </div>
+    </Modal>
+  );
 }
 
-export function RecipePackageModal({ recipePackage, ingredientIds, mealTaskId, onClose, onComplete }: { recipePackage: RecipePackage; ingredientIds: string[]; mealTaskId?: string; onClose: () => void; onComplete?: () => void }) {
-  const [savedPackage,setSavedPackage]=useState<RecipePackage|null>(null);const [error,setError]=useState("");
-  if(savedPackage)return <CookingMode recipePackage={savedPackage} ingredientIds={ingredientIds} mealTaskId={mealTaskId} onClose={onClose} onComplete={onComplete}/>;
-  const start=async()=>{setError("");try{setSavedPackage(await saveRecipePackage(recipePackage.catalogVersionId?await api<RecipePackage>(`/recipes/${recipePackage.catalogVersionId}/start`,json("POST",{})):recipePackage))}catch{setError("核心食譜未能存到這台裝置，尚未進入離線料理。");}};
-  return <Modal label={recipePackage.title} onClose={onClose} wide><ModalHeader title={recipePackage.title} kicker={`${recipePackage.totalMinutes} 分鐘 · ${recipePackage.servings} 人份 · NT$ ${recipePackage.estimatedCost}`} onClose={onClose}/><div className="meal-tags"><span>{recipePackage.totalMinutes<=15?"快手餐":"低體力可選"}</span>{recipePackage.cookwareTypes.map(item=><span key={item}>{item}</span>)}</div><ol className="mt-md space-y-sm">{recipePackage.steps.map(step=><li key={step.id} className="rounded-2xl bg-surface-container-low p-md text-sm text-slate-blue">{step.order}. {step.instruction}</li>)}</ol>{error&&<p className="offline-error">{error}</p>}<button onClick={start} className="primary-btn mt-lg w-full">下載並開始料理</button></Modal>;
+export function RecipePackageModal({
+  recipePackage,
+  ingredientIds,
+  mealTaskId,
+  onClose,
+  onComplete,
+}: {
+  recipePackage: RecipePackage;
+  ingredientIds: string[];
+  mealTaskId?: string;
+  onClose: () => void;
+  onComplete?: () => void;
+}) {
+  const [savedPackage, setSavedPackage] = useState<RecipePackage | null>(null);
+  const [error, setError] = useState("");
+  if (savedPackage)
+    return (
+      <CookingMode
+        recipePackage={savedPackage}
+        ingredientIds={ingredientIds}
+        mealTaskId={mealTaskId}
+        onClose={onClose}
+        onComplete={onComplete}
+      />
+    );
+  const start = async () => {
+    setError("");
+    try {
+      setSavedPackage(
+        await saveRecipePackage(
+          recipePackage.catalogVersionId
+            ? await api<RecipePackage>(
+                `/recipes/${recipePackage.catalogVersionId}/start`,
+                json("POST", {}),
+              )
+            : recipePackage,
+        ),
+      );
+    } catch {
+      setError("核心食譜未能存到這台裝置，尚未進入離線料理。");
+    }
+  };
+  return (
+    <Modal label={recipePackage.title} onClose={onClose} wide>
+      <ModalHeader
+        title={recipePackage.title}
+        kicker={`${recipePackage.totalMinutes} 分鐘 · ${recipePackage.servings} 人份 · NT$ ${recipePackage.estimatedCost}`}
+        onClose={onClose}
+      />
+      <div className="meal-tags">
+        <span>{recipePackage.totalMinutes <= 15 ? "快手餐" : "低體力可選"}</span>
+        {recipePackage.cookwareTypes.map((item) => (
+          <span key={item}>{item}</span>
+        ))}
+      </div>
+      <ol className="mt-md space-y-sm">
+        {recipePackage.steps.map((step) => (
+          <li
+            key={step.id}
+            className="rounded-2xl bg-surface-container-low p-md text-sm text-slate-blue"
+          >
+            {step.order}. {step.instruction}
+          </li>
+        ))}
+      </ol>
+      {error && <p className="offline-error">{error}</p>}
+      <button onClick={start} className="primary-btn mt-lg w-full">
+        下載並開始料理
+      </button>
+    </Modal>
+  );
 }
 
 function getHeatInfo(instruction: string) {
@@ -46,7 +219,13 @@ function getHeatInfo(instruction: string) {
   if (instruction.includes("中火") || instruction.includes("炒") || instruction.includes("煎")) {
     return { label: "中小火烹調", style: "heat-med" };
   }
-  if (instruction.includes("小火") || instruction.includes("慢煮") || instruction.includes("微火") || instruction.includes("悶") || instruction.includes("燜")) {
+  if (
+    instruction.includes("小火") ||
+    instruction.includes("慢煮") ||
+    instruction.includes("微火") ||
+    instruction.includes("悶") ||
+    instruction.includes("燜")
+  ) {
     return { label: "微火慢煮", style: "heat-low" };
   }
   if (instruction.includes("關火")) {
@@ -79,7 +258,8 @@ function getChefTip(instruction: string, safetyNote: string | null) {
 
 function playTimerChime() {
   try {
-    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    const extendedWindow = window as Window & { webkitAudioContext?: typeof AudioContext };
+    const AudioCtx = window.AudioContext ?? extendedWindow.webkitAudioContext;
     if (!AudioCtx) return;
     const ctx = new AudioCtx();
     const osc = ctx.createOscillator();
@@ -98,7 +278,19 @@ function playTimerChime() {
   }
 }
 
-function CookingMode({ recipePackage, ingredientIds, mealTaskId, onClose, onComplete }: { recipePackage: RecipePackage; ingredientIds: string[]; mealTaskId?: string; onClose: () => void; onComplete?: () => void }) {
+function CookingMode({
+  recipePackage,
+  ingredientIds,
+  mealTaskId,
+  onClose,
+  onComplete,
+}: {
+  recipePackage: RecipePackage;
+  ingredientIds: string[];
+  mealTaskId?: string;
+  onClose: () => void;
+  onComplete?: () => void;
+}) {
   const { data: appState } = useAppState();
   const [guidanceOverride, setGuidanceOverride] = useState<"detailed" | "compact" | null>(null);
   const [stepIndex, setStepIndex] = useState(0);
@@ -122,14 +314,20 @@ function CookingMode({ recipePackage, ingredientIds, mealTaskId, onClose, onComp
     const acquire = async () => {
       try {
         if ("wakeLock" in navigator) {
-          wakeLock.current = await (navigator as Navigator & { wakeLock: { request: (type: "screen") => Promise<{ release: () => Promise<void> }> } }).wakeLock.request("screen");
+          wakeLock.current = await (
+            navigator as Navigator & {
+              wakeLock: { request: (type: "screen") => Promise<{ release: () => Promise<void> }> };
+            }
+          ).wakeLock.request("screen");
         }
       } catch {
         // wakeLock may not be allowed
       }
     };
     void acquire();
-    const resume = () => { if (document.visibilityState === "visible") void acquire(); };
+    const resume = () => {
+      if (document.visibilityState === "visible") void acquire();
+    };
     document.addEventListener("visibilitychange", resume);
     return () => {
       document.removeEventListener("visibilitychange", resume);
@@ -138,7 +336,7 @@ function CookingMode({ recipePackage, ingredientIds, mealTaskId, onClose, onComp
   }, []);
 
   useEffect(() => {
-    if (!timerRunning || secondsLeft === null || secondsLeft <= 0) return;
+    if (!timerRunning || secondsLeft === null || secondsLeft <= 0) return undefined;
     const timer = window.setInterval(() => {
       setSecondsLeft((prev) => {
         if (prev === null) return null;
@@ -185,20 +383,51 @@ function CookingMode({ recipePackage, ingredientIds, mealTaskId, onClose, onComp
     return cleanName.length >= 2 && normInstr.includes(cleanName);
   });
 
-  if (finishing) return <CookingCompleteModal recipePackage={recipePackage} ingredientIds={ingredientIds} mealTaskId={mealTaskId} onClose={onClose} onComplete={onComplete} />;
+  if (finishing)
+    return (
+      <CookingCompleteModal
+        recipePackage={recipePackage}
+        ingredientIds={ingredientIds}
+        mealTaskId={mealTaskId}
+        onClose={onClose}
+        onComplete={onComplete}
+      />
+    );
 
   return (
-    <div className="cooking-mode" role="dialog" aria-modal="true" aria-label={`${recipePackage.title}料理模式`}>
+    <div
+      className="cooking-mode"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`${recipePackage.title}料理模式`}
+    >
       <header>
-        <button onClick={onClose} className="header-icon-btn" aria-label="離開料理模式" title="離開料理模式">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <line x1="18" y1="6" x2="6" y2="18"/>
-            <line x1="6" y1="6" x2="18" y2="18"/>
+        <button
+          onClick={onClose}
+          className="header-icon-btn"
+          aria-label="離開料理模式"
+          title="離開料理模式"
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
           </svg>
         </button>
         <div className="header-title-wrap">
           <small className="header-recipe-title">{recipePackage.title}</small>
-          <span className="header-step-counter">步驟 {stepIndex + 1} / {recipePackage.steps.length}</span>
+          <span className="header-step-counter">
+            步驟 {stepIndex + 1} / {recipePackage.steps.length}
+          </span>
         </div>
         <button
           type="button"
@@ -220,8 +449,18 @@ function CookingMode({ recipePackage, ingredientIds, mealTaskId, onClose, onComp
         <div className="step-header-row">
           <span className="step-order-tag">STEP {String(step.order).padStart(2, "0")}</span>
           <span className={`heat-badge ${heatInfo.style}`}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
             </svg>
             <span>{heatInfo.label}</span>
           </span>
@@ -247,13 +486,25 @@ function CookingMode({ recipePackage, ingredientIds, mealTaskId, onClose, onComp
           <div className="step-timer-card">
             <div className="timer-info-group">
               <div className="timer-icon-circle">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <circle cx="12" cy="12" r="10"/>
-                  <polyline points="12 6 12 12 16 14"/>
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
                 </svg>
               </div>
               <div className="timer-text-group">
-                <small>{timerFinished ? "計時完畢！" : (timerRunning ? "倒數計時中" : "烹煮計時器")}</small>
+                <small>
+                  {timerFinished ? "計時完畢！" : timerRunning ? "倒數計時中" : "烹煮計時器"}
+                </small>
                 <div className="timer-digits">
                   {Math.floor(secondsLeft / 60)}:{String(secondsLeft % 60).padStart(2, "0")}
                 </div>
@@ -261,12 +512,27 @@ function CookingMode({ recipePackage, ingredientIds, mealTaskId, onClose, onComp
             </div>
             <div className="timer-actions">
               <button onClick={toggleTimer} className="timer-toggle-btn">
-                {secondsLeft === 0 ? "重計" : (timerRunning ? "暫停" : "開始計時")}
+                {secondsLeft === 0 ? "重計" : timerRunning ? "暫停" : "開始計時"}
               </button>
-              <button onClick={resetTimer} className="timer-reset-btn" title="重設計時" aria-label="重設計時">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
-                  <path d="M3 3v5h5"/>
+              <button
+                onClick={resetTimer}
+                className="timer-reset-btn"
+                title="重設計時"
+                aria-label="重設計時"
+              >
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                  <path d="M3 3v5h5" />
                 </svg>
               </button>
             </div>
@@ -277,30 +543,62 @@ function CookingMode({ recipePackage, ingredientIds, mealTaskId, onClose, onComp
           <div className="step-guidance-card">
             <strong>完成判斷</strong>
             <p>{step.guidance.successCue}</p>
-            {step.guidance.why && <><strong>為什麼這樣做</strong><p>{step.guidance.why}</p></>}
-            {step.guidance.rescueTip && <><strong>不如預期時</strong><p>{step.guidance.rescueTip}</p></>}
+            {step.guidance.why && (
+              <>
+                <strong>為什麼這樣做</strong>
+                <p>{step.guidance.why}</p>
+              </>
+            )}
+            {step.guidance.rescueTip && (
+              <>
+                <strong>不如預期時</strong>
+                <p>{step.guidance.rescueTip}</p>
+              </>
+            )}
           </div>
         )}
 
-        {guidanceMode === "detailed" && <div className="step-tip-card">
-          <div className="step-tip-icon">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M9 18h6"/>
-              <path d="M10 22h4"/>
-              <path d="M12 2v1"/>
-              <path d="M12 7a5 5 0 0 0-5 5c0 1.9 1 3.2 2 4h6c1-.8 2-2.1 2-4a5 5 0 0 0-5-5z"/>
-            </svg>
+        {guidanceMode === "detailed" && (
+          <div className="step-tip-card">
+            <div className="step-tip-icon">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M9 18h6" />
+                <path d="M10 22h4" />
+                <path d="M12 2v1" />
+                <path d="M12 7a5 5 0 0 0-5 5c0 1.9 1 3.2 2 4h6c1-.8 2-2.1 2-4a5 5 0 0 0-5-5z" />
+              </svg>
+            </div>
+            <div className="step-tip-content">
+              <strong>主廚私房撇步 · 料理科學</strong>
+              <p>{chefTip}</p>
+            </div>
           </div>
-          <div className="step-tip-content">
-            <strong>主廚私房撇步 · 料理科學</strong>
-            <p>{chefTip}</p>
-          </div>
-        </div>}
+        )}
 
         {step.safetyNote && (
           <div className="step-safety-card">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
             </svg>
             <span>注意：{step.safetyNote}</span>
           </div>
@@ -308,44 +606,95 @@ function CookingMode({ recipePackage, ingredientIds, mealTaskId, onClose, onComp
       </main>
 
       <footer>
-        <button onClick={previous} disabled={stepIndex === 0} className="elbow-btn-secondary" aria-label="回上一步">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <polyline points="15 18 9 12 15 6"/>
+        <button
+          onClick={previous}
+          disabled={stepIndex === 0}
+          className="elbow-btn-secondary"
+          aria-label="回上一步"
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <polyline points="15 18 9 12 15 6" />
           </svg>
           <span>上一步</span>
         </button>
         {stepIndex < recipePackage.steps.length - 1 ? (
           <button className="elbow-btn-primary" onClick={next} aria-label="前進下一步">
             <span>下一步</span>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <polyline points="9 18 15 12 9 6"/>
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <polyline points="9 18 15 12 9 6" />
             </svg>
           </button>
         ) : (
-          <button className="elbow-btn-primary is-finish" onClick={() => setFinishing(true)} aria-label="完成料理並結算">
+          <button
+            className="elbow-btn-primary is-finish"
+            onClick={() => setFinishing(true)}
+            aria-label="完成料理並結算"
+          >
             <span>完成料理</span>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <polyline points="20 6 9 17 4 12"/>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <polyline points="20 6 9 17 4 12" />
             </svg>
           </button>
         )}
       </footer>
-      <p className="elbow-hint">
-        手沾滿水或油？可用手腕、手背或手肘輕壓大按鈕前進
-      </p>
+      <p className="elbow-hint">手沾滿水或油？可用手腕、手背或手肘輕壓大按鈕前進</p>
     </div>
   );
 }
 
-function CookingCompleteModal({ recipePackage, ingredientIds, mealTaskId, onClose, onComplete }: { recipePackage: RecipePackage; ingredientIds: string[]; mealTaskId?: string; onClose: () => void; onComplete?: () => void }) {
+function CookingCompleteModal({
+  recipePackage,
+  ingredientIds,
+  mealTaskId,
+  onClose,
+  onComplete,
+}: {
+  recipePackage: RecipePackage;
+  ingredientIds: string[];
+  mealTaskId?: string;
+  onClose: () => void;
+  onComplete?: () => void;
+}) {
   const { data } = useAppState();
   const query = useQueryClient();
-  const ui = useContext(UiContext);
+  const ui = useUi();
   const [trackCost, setTrackCost] = useState(false);
   const [costInput, setCostInput] = useState("0");
   const [servingsInput, setServingsInput] = useState(String(recipePackage.servings || 1));
   const [eatenInput, setEatenInput] = useState("1");
-  const [vegetables, setVegetables] = useState(recipePackage.ingredients.some((item) => item.isVegetable));
+  const [vegetables, setVegetables] = useState(
+    recipePackage.ingredients.some((item) => item.isVegetable),
+  );
   const [submitting, setSubmitting] = useState(false);
 
   // Derived numeric values
@@ -385,7 +734,9 @@ function CookingCompleteModal({ recipePackage, ingredientIds, mealTaskId, onClos
       vegetables,
       lowOil: false,
       mindfulSeasoning: false,
-      usedExpiringIngredient: ingredientIds.some((id) => data?.inventory.some((item) => item.id === id && item.daysLeft <= 3)),
+      usedExpiringIngredient: ingredientIds.some((id) =>
+        data?.inventory.some((item) => item.id === id && item.daysLeft <= 3),
+      ),
       completedDoubleMeal: servings >= 2 && eaten < servings,
       servingsCooked: servings,
       servingsEaten: eaten,
@@ -468,7 +819,11 @@ function CookingCompleteModal({ recipePackage, ingredientIds, mealTaskId, onClos
 
   return (
     <Modal label="料理完成結算" onClose={onClose}>
-      <ModalHeader title={recipePackage.title} kicker="確認後才會扣庫存並發放 EXP" onClose={onClose} />
+      <ModalHeader
+        title={recipePackage.title}
+        kicker="確認後才會扣庫存並發放 EXP"
+        onClose={onClose}
+      />
       <div className="serving-grid">
         <label>
           這次煮幾份
@@ -516,37 +871,58 @@ function CookingCompleteModal({ recipePackage, ingredientIds, mealTaskId, onClos
           />
         </label>
       </div>
-      <p className="prepared-note">剩下 {Math.max(0, servings - eaten)} 份會成為熟食庫存；料理次數仍只記 1 次。</p>
+      <p className="prepared-note">
+        剩下 {Math.max(0, servings - eaten)} 份會成為熟食庫存；料理次數仍只記 1 次。
+      </p>
       <label className="vegetable-check">
-        <input type="checkbox" checked={trackCost} onChange={(event) => setTrackCost(event.target.checked)} />
+        <input
+          type="checkbox"
+          checked={trackCost}
+          onChange={(event) => setTrackCost(event.target.checked)}
+        />
         <span>記錄本餐成本（選用，不影響 EXP）</span>
       </label>
-      {trackCost && <label className="field-label">
-        本餐實際食材成本
-        <input
-          className="field"
-          type="number"
-          min="0"
-          value={costInput}
-          onFocus={(e) => e.target.select()}
-          onChange={(event) => setCostInput(event.target.value)}
-          onBlur={() => {
-            if (costInput === "" || isNaN(parseInt(costInput, 10))) {
-              setCostInput("0");
-            } else {
-              setCostInput(String(cost));
-            }
-          }}
-        />
-      </label>}
+      {trackCost && (
+        <label className="field-label">
+          本餐實際食材成本
+          <input
+            className="field"
+            type="number"
+            min="0"
+            value={costInput}
+            onFocus={(e) => e.target.select()}
+            onChange={(event) => setCostInput(event.target.value)}
+            onBlur={() => {
+              if (costInput === "" || isNaN(parseInt(costInput, 10))) {
+                setCostInput("0");
+              } else {
+                setCostInput(String(cost));
+              }
+            }}
+          />
+        </label>
+      )}
       <div className="mt-3">
         <label className="vegetable-check">
-          <input type="checkbox" checked={vegetables} onChange={(event) => setVegetables(event.target.checked)} />
+          <input
+            type="checkbox"
+            checked={vegetables}
+            onChange={(event) => setVegetables(event.target.checked)}
+          />
           <span className="flex-1 flex items-center justify-between gap-1">
             <span>這餐實際吃到蔬菜</span>
             <span className="text-[10px] font-extrabold text-[#2d6a4f] bg-[#d5ede1] px-2 py-0.5 rounded-full border border-[#b4dfc8]">
-              <svg className="mr-1 inline h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                <path d="M12 22V10" /><path d="M12 14c-4 0-7-2-8-6 4 0 7 2 8 6Z" /><path d="M12 10c4 0 7-2 8-6-4 0-7 2-8 6Z" />
+              <svg
+                className="mr-1 inline h-3 w-3"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                aria-hidden="true"
+              >
+                <path d="M12 22V10" />
+                <path d="M12 14c-4 0-7-2-8-6 4 0 7 2 8 6Z" />
+                <path d="M12 10c4 0 7-2 8-6-4 0-7 2-8 6Z" />
               </svg>
               料理歷程
             </span>
@@ -566,8 +942,19 @@ function CookingCompleteModal({ recipePackage, ingredientIds, mealTaskId, onClos
           {submitting ? (
             <>
               <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24" fill="none">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
               </svg>
               <span>結算中…</span>
             </>

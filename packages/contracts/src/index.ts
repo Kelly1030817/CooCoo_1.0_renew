@@ -1,4 +1,11 @@
-import { Type, type Static } from "@sinclair/typebox";
+import { FormatRegistry, Type, type Static } from "@sinclair/typebox";
+
+if (!FormatRegistry.Has("date-time")) {
+  FormatRegistry.Set("date-time", (value) => !Number.isNaN(Date.parse(value)));
+}
+if (!FormatRegistry.Has("email")) {
+  FormatRegistry.Set("email", (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value));
+}
 
 export const IdSchema = Type.String({ minLength: 1 });
 export const IsoDateTimeSchema = Type.String({ format: "date-time" });
@@ -30,10 +37,7 @@ export const CookingExperienceSchema = Type.Union([
 ]);
 export type CookingExperience = Static<typeof CookingExperienceSchema>;
 
-export const GuidanceModeSchema = Type.Union([
-  Type.Literal("detailed"),
-  Type.Literal("compact"),
-]);
+export const GuidanceModeSchema = Type.Union([Type.Literal("detailed"), Type.Literal("compact")]);
 export type GuidanceMode = Static<typeof GuidanceModeSchema>;
 
 export const HabitBarrierSchema = Type.Union([
@@ -77,11 +81,13 @@ export const OnboardingProfileSchema = Type.Object({
   habitBarriers: Type.Array(HabitBarrierSchema, { minItems: 1 }),
   guidanceMode: GuidanceModeSchema,
   householdServings: Type.Integer({ minimum: 1, maximum: 12 }),
-  cookware: Type.Array(Type.Object({
-    type: Type.String({ minLength: 1 }),
-    capacity: Type.Optional(Type.String()),
-    limitations: Type.Array(Type.String()),
-  })),
+  cookware: Type.Array(
+    Type.Object({
+      type: Type.String({ minLength: 1 }),
+      capacity: Type.Optional(Type.String()),
+      limitations: Type.Array(Type.String()),
+    }),
+  ),
   restrictions: Type.Array(DietaryRestrictionSchema),
   preferredFlavors: Type.Array(Type.String()),
   availableMinutes: Type.Integer({ minimum: 5, maximum: 180 }),
@@ -112,7 +118,12 @@ export const PlannedMealSchema = Type.Object({
   slot: MealSlotSchema,
   recipeId: IdSchema,
   title: Type.String(),
-  status: Type.Union([Type.Literal("planned"), Type.Literal("postponed"), Type.Literal("cancelled"), Type.Literal("cooked")]),
+  status: Type.Union([
+    Type.Literal("planned"),
+    Type.Literal("postponed"),
+    Type.Literal("cancelled"),
+    Type.Literal("cooked"),
+  ]),
   servings: Type.Integer({ minimum: 1 }),
   ingredients: Type.Array(IngredientRequirementSchema),
   estimatedCost: MoneySchema,
@@ -139,7 +150,11 @@ export const ReceiptItemSchema = Type.Object({
   unit: Type.String(),
   unitPrice: MoneySchema,
   actualPrice: MoneySchema,
-  storageLocation: Type.Union([Type.Literal("cold"), Type.Literal("frozen"), Type.Literal("pantry")]),
+  storageLocation: Type.Union([
+    Type.Literal("cold"),
+    Type.Literal("frozen"),
+    Type.Literal("pantry"),
+  ]),
   expiresOn: Type.Union([DateOnlySchema, Type.Null()]),
   confidence: Type.Object({
     name: Type.Number({ minimum: 0, maximum: 1 }),
@@ -155,21 +170,29 @@ export const ReceiptSchema = Type.Object({
   id: IdSchema,
   purchasedOn: Type.Union([DateOnlySchema, Type.Null()]),
   originalImagePath: Type.String(),
-  status: Type.Union([Type.Literal("uploaded"), Type.Literal("recognizing"), Type.Literal("needs_review"), Type.Literal("confirmed"), Type.Literal("failed")]),
+  status: Type.Union([
+    Type.Literal("uploaded"),
+    Type.Literal("recognizing"),
+    Type.Literal("needs_review"),
+    Type.Literal("confirmed"),
+    Type.Literal("failed"),
+  ]),
   items: Type.Array(ReceiptItemSchema),
   createdAt: IsoDateTimeSchema,
 });
 export type Receipt = Static<typeof ReceiptSchema>;
 export const ReceiptRecognitionSchema = Type.Object({
   purchasedOn: Type.Union([DateOnlySchema, Type.Null()]),
-  items: Type.Array(Type.Object({
-    name: Type.String({ minLength: 1 }),
-    quantity: Type.Number({ exclusiveMinimum: 0 }),
-    unit: Type.String({ minLength: 1 }),
-    unitPrice: MoneySchema,
-    actualPrice: MoneySchema,
-    confidence: ReceiptItemSchema.properties.confidence,
-  })),
+  items: Type.Array(
+    Type.Object({
+      name: Type.String({ minLength: 1 }),
+      quantity: Type.Number({ exclusiveMinimum: 0 }),
+      unit: Type.String({ minLength: 1 }),
+      unitPrice: MoneySchema,
+      actualPrice: MoneySchema,
+      confidence: ReceiptItemSchema.properties.confidence,
+    }),
+  ),
 });
 export type ReceiptRecognition = Static<typeof ReceiptRecognitionSchema>;
 
@@ -178,11 +201,13 @@ export const RecipeStepSchema = Type.Object({
   order: Type.Integer({ minimum: 1 }),
   instruction: Type.String({ minLength: 1 }),
   compactInstruction: Type.Optional(Type.String({ minLength: 1 })),
-  guidance: Type.Optional(Type.Object({
-    successCue: Type.String({ minLength: 1 }),
-    why: Type.Union([Type.String({ minLength: 1 }), Type.Null()]),
-    rescueTip: Type.Union([Type.String({ minLength: 1 }), Type.Null()]),
-  })),
+  guidance: Type.Optional(
+    Type.Object({
+      successCue: Type.String({ minLength: 1 }),
+      why: Type.Union([Type.String({ minLength: 1 }), Type.Null()]),
+      rescueTip: Type.Union([Type.String({ minLength: 1 }), Type.Null()]),
+    }),
+  ),
   voiceText: Type.String({ minLength: 1 }),
   timerSeconds: Type.Union([Type.Integer({ minimum: 1 }), Type.Null()]),
   safetyNote: Type.Union([Type.String(), Type.Null()]),
@@ -191,7 +216,14 @@ export type RecipeStep = Static<typeof RecipeStepSchema>;
 
 export const RecipePackageSchema = Type.Object({
   catalogVersionId: Type.Optional(Type.String()),
-  source: Type.Optional(Type.Union([Type.Literal("gemini"), Type.Literal("openrouter"), Type.Literal("brand_safe"), Type.Literal("catalog")])),
+  source: Type.Optional(
+    Type.Union([
+      Type.Literal("gemini"),
+      Type.Literal("openrouter"),
+      Type.Literal("brand_safe"),
+      Type.Literal("catalog"),
+    ]),
+  ),
   id: IdSchema,
   recipeId: IdSchema,
   title: Type.String(),
@@ -210,7 +242,12 @@ export type RecipePackage = Static<typeof RecipePackageSchema>;
 
 export const RecipeGenerationSchema = Type.Object({
   recipe: RecipePackageSchema,
-  source: Type.Union([Type.Literal("gemini"), Type.Literal("openrouter"), Type.Literal("brand_safe"), Type.Literal("catalog")]),
+  source: Type.Union([
+    Type.Literal("gemini"),
+    Type.Literal("openrouter"),
+    Type.Literal("brand_safe"),
+    Type.Literal("catalog"),
+  ]),
   notice: Type.Union([Type.String(), Type.Null()]),
 });
 export type RecipeGeneration = Static<typeof RecipeGenerationSchema>;
@@ -226,13 +263,20 @@ export type TodayDecision = Static<typeof TodayDecisionSchema>;
 export const MealPlanCreateSchema = Type.Object({ weekStart: DateOnlySchema });
 export const MealPostponeSchema = Type.Object({
   weekStart: DateOnlySchema,
-  kind: Type.Union([Type.Literal("next_slot"), Type.Literal("specific_date"), Type.Literal("cancel")]),
+  kind: Type.Union([
+    Type.Literal("next_slot"),
+    Type.Literal("specific_date"),
+    Type.Literal("cancel"),
+  ]),
   date: Type.Optional(DateOnlySchema),
   slot: Type.Optional(MealSlotSchema),
   expectedUpdatedAt: IsoDateTimeSchema,
 });
 export type MealPostpone = Static<typeof MealPostponeSchema>;
-export interface MealPlanGap { date: string; slot: MealSlot }
+export interface MealPlanGap {
+  date: string;
+  slot: MealSlot;
+}
 export interface MealPlanResult {
   plan: MealPlan;
   packages: RecipePackage[];
@@ -245,7 +289,11 @@ export const CookingSessionSchema = Type.Object({
   id: IdSchema,
   operationId: IdSchema,
   recipePackageId: IdSchema,
-  status: Type.Union([Type.Literal("active"), Type.Literal("completed"), Type.Literal("needs_sync")]),
+  status: Type.Union([
+    Type.Literal("active"),
+    Type.Literal("completed"),
+    Type.Literal("needs_sync"),
+  ]),
   servingsCooked: Type.Integer({ minimum: 1 }),
   currentStep: Type.Integer({ minimum: 0 }),
   startedAt: IsoDateTimeSchema,
@@ -291,15 +339,25 @@ export const ExpEventSchema = Type.Object({
 });
 export type ExpEvent = Static<typeof ExpEventSchema>;
 
-export type TodayMissionKey = "cook_today" | "eat_prepared" | "use_expiring";
-export interface TodayMission {
-  key: TodayMissionKey;
-  label: string;
-  reward: number;
-  done: boolean;
-  source: "cooking_completed" | "prepared_serving_eaten" | "expiring_ingredient_used";
-  hint?: number;
-}
+export const TodayMissionKeySchema = Type.Union([
+  Type.Literal("cook_today"),
+  Type.Literal("eat_prepared"),
+  Type.Literal("use_expiring"),
+]);
+export type TodayMissionKey = Static<typeof TodayMissionKeySchema>;
+export const TodayMissionSchema = Type.Object({
+  key: TodayMissionKeySchema,
+  label: Type.String({ minLength: 1 }),
+  reward: Type.Integer({ minimum: 0 }),
+  done: Type.Boolean(),
+  source: Type.Union([
+    Type.Literal("cooking_completed"),
+    Type.Literal("prepared_serving_eaten"),
+    Type.Literal("expiring_ingredient_used"),
+  ]),
+  hint: Type.Optional(Type.Integer({ minimum: 0 })),
+});
+export type TodayMission = Static<typeof TodayMissionSchema>;
 
 export const ChefRankSchema = Type.Object({
   level: Type.Integer({ minimum: 1, maximum: 5 }),
@@ -345,12 +403,15 @@ export type BadgeAward = Static<typeof BadgeAwardSchema>;
 export const GrowthProfileSchema = Type.Object({
   totalExp: Type.Integer({ minimum: 0 }),
   rank: ChefRankSchema,
-  nextBadge: Type.Union([Type.Object({
-    badgeKey: Type.String(),
-    title: Type.String(),
-    current: Type.Integer({ minimum: 0 }),
-    target: Type.Integer({ minimum: 1 }),
-  }), Type.Null()]),
+  nextBadge: Type.Union([
+    Type.Object({
+      badgeKey: Type.String(),
+      title: Type.String(),
+      current: Type.Integer({ minimum: 0 }),
+      target: Type.Integer({ minimum: 1 }),
+    }),
+    Type.Null(),
+  ]),
 });
 export type GrowthProfile = Static<typeof GrowthProfileSchema>;
 
@@ -366,21 +427,42 @@ export const MealTaskSchema = Type.Object({
   operationId: IdSchema,
   recipe: RecipePackageSchema,
   status: MealTaskStatusSchema,
-  currentMeal: Type.Object({ date: DateOnlySchema, slot: MealSlotSchema, servings: Type.Integer({ minimum: 1 }) }),
+  currentMeal: Type.Object({
+    date: DateOnlySchema,
+    slot: MealSlotSchema,
+    servings: Type.Integer({ minimum: 1 }),
+  }),
   nextMeal: Type.Union([
-    Type.Object({ strategy: Type.Literal("cook_extra"), date: DateOnlySchema, slot: MealSlotSchema, servings: Type.Integer({ minimum: 1 }) }),
-    Type.Object({ strategy: Type.Literal("plan_separately"), date: DateOnlySchema, slot: MealSlotSchema, servings: Type.Integer({ minimum: 1 }) }),
+    Type.Object({
+      strategy: Type.Literal("cook_extra"),
+      date: DateOnlySchema,
+      slot: MealSlotSchema,
+      servings: Type.Integer({ minimum: 1 }),
+    }),
+    Type.Object({
+      strategy: Type.Literal("plan_separately"),
+      date: DateOnlySchema,
+      slot: MealSlotSchema,
+      servings: Type.Integer({ minimum: 1 }),
+    }),
     Type.Object({ strategy: Type.Literal("skip") }),
   ]),
   plannedTotalServings: Type.Integer({ minimum: 1 }),
-  shortages: Type.Array(Type.Object({
-    id: IdSchema,
-    ingredientKey: Type.String(),
-    name: Type.String(),
-    quantity: Type.Number({ exclusiveMinimum: 0 }),
-    unit: Type.String(),
-    resolution: Type.Union([Type.Literal("needed"), Type.Literal("bought"), Type.Literal("unavailable"), Type.Literal("replaced")]),
-  })),
+  shortages: Type.Array(
+    Type.Object({
+      id: IdSchema,
+      ingredientKey: Type.String(),
+      name: Type.String(),
+      quantity: Type.Number({ exclusiveMinimum: 0 }),
+      unit: Type.String(),
+      resolution: Type.Union([
+        Type.Literal("needed"),
+        Type.Literal("bought"),
+        Type.Literal("unavailable"),
+        Type.Literal("replaced"),
+      ]),
+    }),
+  ),
   revision: Type.Integer({ minimum: 1 }),
   createdAt: IsoDateTimeSchema,
   updatedAt: IsoDateTimeSchema,
@@ -488,11 +570,7 @@ export const InventoryItemSchema = Type.Object({
   /** @deprecated Read-only visual fallback until the fridge card migration is complete. */
   roi: Type.Optional(Type.Object({ savings: MoneySchema, sodium: MoneySchema, fat: MoneySchema })),
   storageProtocol: Type.String(),
-  boxSize: Type.Union([
-    Type.Literal("S"),
-    Type.Literal("M"),
-    Type.Literal("L"),
-  ]),
+  boxSize: Type.Union([Type.Literal("S"), Type.Literal("M"), Type.Literal("L")]),
 });
 export type InventoryItem = Static<typeof InventoryItemSchema>;
 
@@ -542,11 +620,7 @@ export type ShoppingItem = Static<typeof ShoppingItemSchema>;
 
 export const ShoppingAnalysisRecommendationSchema = Type.Object({
   item: ShoppingItemSchema,
-  action: Type.Union([
-    Type.Literal("buy_now"),
-    Type.Literal("buy_later"),
-    Type.Literal("skip"),
-  ]),
+  action: Type.Union([Type.Literal("buy_now"), Type.Literal("buy_later"), Type.Literal("skip")]),
   reason: Type.String({ minLength: 1 }),
 });
 export type ShoppingAnalysisRecommendation = Static<typeof ShoppingAnalysisRecommendationSchema>;
@@ -568,7 +642,14 @@ export type ShoppingAnalysis = Static<typeof ShoppingAnalysisSchema>;
 
 export const RecipeSchema = Type.Object({
   catalogVersionId: Type.Optional(Type.String()),
-  source: Type.Optional(Type.Union([Type.Literal("gemini"), Type.Literal("openrouter"), Type.Literal("brand_safe"), Type.Literal("catalog")])),
+  source: Type.Optional(
+    Type.Union([
+      Type.Literal("gemini"),
+      Type.Literal("openrouter"),
+      Type.Literal("brand_safe"),
+      Type.Literal("catalog"),
+    ]),
+  ),
   id: IdSchema,
   title: Type.String(),
   style: Type.String(),
@@ -596,11 +677,7 @@ export const LoginRequestSchema = Type.Object({
 });
 export const InventoryCreateSchema = Type.Omit(InventoryItemSchema, ["id"]);
 export const RescueCommandSchema = Type.Object({
-  action: Type.Union([
-    Type.Literal("eat"),
-    Type.Literal("preserve"),
-    Type.Literal("discard"),
-  ]),
+  action: Type.Union([Type.Literal("eat"), Type.Literal("preserve"), Type.Literal("discard")]),
   foodSafe: Type.Boolean(),
 });
 export const RecipeGenerateSchema = Type.Object({
@@ -647,7 +724,6 @@ export const StorageLocationSchema = Type.Union([
   Type.Literal("cold"),
   Type.Literal("frozen"),
   Type.Literal("pantry"),
-
 ]);
 export type StorageLocation = Static<typeof StorageLocationSchema>;
 export const RestockPurchasedItemSchema = Type.Object({
@@ -673,33 +749,42 @@ export const MealTaskRestockResultSchema = Type.Object({
   count: Type.Integer({ minimum: 0 }),
   mealTaskStatus: Type.Optional(MealTaskStatusSchema),
   remainingShortages: Type.Array(MealTaskSchema.properties.shortages.items),
-  nextActions: Type.Array(Type.Union([
-    Type.Literal("return_to_task"),
-    Type.Literal("continue_shopping"),
-    Type.Literal("start_cooking"),
-  ])),
+  nextActions: Type.Array(
+    Type.Union([
+      Type.Literal("return_to_task"),
+      Type.Literal("continue_shopping"),
+      Type.Literal("start_cooking"),
+    ]),
+  ),
 });
 export type MealTaskRestockResult = Static<typeof MealTaskRestockResultSchema>;
-export const ShoppingResolutionCommandSchema = Type.Intersect([Type.Object({mealTaskId: Type.Optional(IdSchema), shortageRevision: Type.Optional(Type.Integer({minimum:1})), adjustmentPreviewId: Type.Optional(IdSchema)}), Type.Union([
+export const ShoppingResolutionCommandSchema = Type.Intersect([
   Type.Object({
-    operationId: IdSchema,
-    shortageId: IdSchema,
-    action: Type.Literal("replace"),
-    replacementIngredientKey: Type.String({ minLength: 1 }),
-    replacementName: Type.String({ minLength: 1 }),
-    replacementQuantity: Type.Number({ exclusiveMinimum: 0 }),
-    replacementUnit: Type.String({ minLength: 1 }),
+    mealTaskId: Type.Optional(IdSchema),
+    shortageRevision: Type.Optional(Type.Integer({ minimum: 1 })),
+    adjustmentPreviewId: Type.Optional(IdSchema),
   }),
-  Type.Object({
-    operationId: IdSchema,
-    shortageId: IdSchema,
-    action: Type.Union([Type.Literal("keep_for_later"),Type.Literal("resume")]),
-  }),
-  Type.Object({
-    operationId: IdSchema,
-    action: Type.Literal("replan_meal"),
-  }),
-])]);
+  Type.Union([
+    Type.Object({
+      operationId: IdSchema,
+      shortageId: IdSchema,
+      action: Type.Literal("replace"),
+      replacementIngredientKey: Type.String({ minLength: 1 }),
+      replacementName: Type.String({ minLength: 1 }),
+      replacementQuantity: Type.Number({ exclusiveMinimum: 0 }),
+      replacementUnit: Type.String({ minLength: 1 }),
+    }),
+    Type.Object({
+      operationId: IdSchema,
+      shortageId: IdSchema,
+      action: Type.Union([Type.Literal("keep_for_later"), Type.Literal("resume")]),
+    }),
+    Type.Object({
+      operationId: IdSchema,
+      action: Type.Literal("replan_meal"),
+    }),
+  ]),
+]);
 export type ShoppingResolutionCommand = Static<typeof ShoppingResolutionCommandSchema>;
 export const RestockOperationSchema = Type.Object({
   operationId: IdSchema,
@@ -709,38 +794,6 @@ export const RestockOperationSchema = Type.Object({
 });
 export type RestockOperation = Static<typeof RestockOperationSchema>;
 export const ReceiptRecognizeSchema = Type.Object({ operationId: Type.Optional(IdSchema) });
-export interface AppState {
-  version: 2;
-  session: Session;
-  growth: GrowthProfile;
-  weeklyGoal: WeeklyGoal;
-  expEvents: ExpEvent[];
-  badgeAwards: BadgeAward[];
-  cookingOutcomes: CookingOutcome[];
-  habitProgress: HabitProgress;
-  healthAssets: HealthAssets;
-  inventory: InventoryItem[];
-  shoppingItems: ShoppingItem[];
-  cookware: CookwareProfile[];
-  onboardingProfile?: OnboardingProfile;
-  mealPlan?: MealPlan;
-  receipts?: Receipt[];
-  recipePackages?: RecipePackage[];
-  recipeFavoriteIds?: string[];
-  cookingSessions?: CookingSession[];
-  mealServings?: MealServing[];
-  cookingCosts?: CookingCostRecord[];
-  mealTasks?: MealTask[];
-  recipeAdjustmentPreviews?: RecipeAdjustmentPreview[];
-  reminderPreferences?: ReminderPreferences;
-  chefChatSessions?: ChefChatSession[];
-  offlineOperations?: OfflineOperation[];
-  syncConflicts?: SyncConflict[];
-  /** Read-only daily missions derived by the /state backend response. */
-  missions?: TodayMission[];
-  restockOperations?: RestockOperation[];
-
-}
 
 export interface ApiErrorBody {
   error: {
@@ -752,7 +805,10 @@ export interface ApiErrorBody {
 }
 export type ApiSuccess<T> = { data: T };
 
-export const RecipeModeSchema = Type.Union([Type.Literal('inventory_only'), Type.Literal('small_purchase')]);
+export const RecipeModeSchema = Type.Union([
+  Type.Literal("inventory_only"),
+  Type.Literal("small_purchase"),
+]);
 export type RecipeMode = Static<typeof RecipeModeSchema>;
 export const RecipePreferencesSchema = Type.Object({
   purchaseBudget: MoneySchema,
@@ -764,40 +820,57 @@ export const RecipeRecommendationRequestSchema = Type.Object({
   mode: RecipeModeSchema,
   purchaseBudget: MoneySchema,
   allowRepeat: Type.Optional(Type.Boolean()),
-  energy: Type.Optional(Type.Union([Type.Literal('low'), Type.Literal('normal')])),
+  energy: Type.Optional(Type.Union([Type.Literal("low"), Type.Literal("normal")])),
 });
 export type RecipeRecommendationRequest = Static<typeof RecipeRecommendationRequestSchema>;
 export const IngredientPriceSchema = Type.Object({
-  id: Type.String(), ingredientKey: Type.String({ minLength: 1 }), name: Type.String({ minLength: 1 }),
-  packageQuantity: Type.Number({ exclusiveMinimum: 0 }), unit: Type.String({ minLength: 1 }),
-  price: MoneySchema, source: Type.String({ minLength: 1 }), observedAt: IsoDateTimeSchema,
+  id: Type.String(),
+  ingredientKey: Type.String({ minLength: 1 }),
+  name: Type.String({ minLength: 1 }),
+  packageQuantity: Type.Number({ exclusiveMinimum: 0 }),
+  unit: Type.String({ minLength: 1 }),
+  price: MoneySchema,
+  source: Type.String({ minLength: 1 }),
+  observedAt: IsoDateTimeSchema,
 });
 export type IngredientPrice = Static<typeof IngredientPriceSchema>;
-export interface PurchaseRequirement {
-  ingredientKey: string; name: string; quantity: number; unit: string;
-  packages: number | null; purchaseQuantity: number | null; estimatedCost: number | null;
-  priceId: string | null; priceObservedAt: string | null;
-}
+export const PurchaseRequirementSchema = Type.Object({
+  ingredientKey: Type.String(),
+  name: Type.String(),
+  quantity: Type.Number(),
+  unit: Type.String(),
+  packages: Type.Union([Type.Number(), Type.Null()]),
+  purchaseQuantity: Type.Union([Type.Number(), Type.Null()]),
+  estimatedCost: Type.Union([Type.Number(), Type.Null()]),
+  priceId: Type.Union([Type.String(), Type.Null()]),
+  priceObservedAt: Type.Union([Type.String(), Type.Null()]),
+});
+export type PurchaseRequirement = Static<typeof PurchaseRequirementSchema>;
 export interface RecipeRecommendation {
-  recipe: RecipePackage; missing: PurchaseRequirement[];
+  recipe: RecipePackage;
+  missing: PurchaseRequirement[];
   estimatedPurchaseCost: number | null;
-  budgetStatus: 'within_budget' | 'unknown';
+  budgetStatus: "within_budget" | "unknown";
   issues: string[];
 }
 export interface RecipeRecommendations {
-  eligible: RecipeRecommendation[]; needsConfirmation: RecipeRecommendation[];
-  notice: string; mode: RecipeMode;
+  eligible: RecipeRecommendation[];
+  needsConfirmation: RecipeRecommendation[];
+  notice: string;
+  mode: RecipeMode;
 }
 
 export const RecipeSearchRequestSchema = Type.Object({
   query: Type.String({ maxLength: 120 }),
   ingredientKeywords: Type.Array(Type.String({ minLength: 1, maxLength: 40 }), { maxItems: 10 }),
-  category: Type.Optional(Type.Union([
-    Type.Literal("quick"),
-    Type.Literal("fridge_rescue"),
-    Type.Literal("new_flavor"),
-    Type.Literal("favorites"),
-  ])),
+  category: Type.Optional(
+    Type.Union([
+      Type.Literal("quick"),
+      Type.Literal("fridge_rescue"),
+      Type.Literal("new_flavor"),
+      Type.Literal("favorites"),
+    ]),
+  ),
 });
 export type RecipeSearchRequest = Static<typeof RecipeSearchRequestSchema>;
 export interface RecipeSearchItem extends RecipeRecommendation {
@@ -805,37 +878,65 @@ export interface RecipeSearchItem extends RecipeRecommendation {
   match: "all" | "partial" | "none";
   favorite: boolean;
 }
-export interface RecipeSearchResult { items: RecipeSearchItem[]; notice: string }
+export interface RecipeSearchResult {
+  items: RecipeSearchItem[];
+  notice: string;
+}
 
 export const RecipeAdjustmentRequestSchema = Type.Object({
   operationId: IdSchema,
   servings: Type.Integer({ minimum: 1, maximum: 20 }),
-  replacementRequests: Type.Array(Type.Object({
-    ingredientKey: Type.String({ minLength: 1 }),
-    requestedReplacement: Type.String({ minLength: 1 }),
-  }), { maxItems: 8 }),
+  replacementRequests: Type.Array(
+    Type.Object({
+      ingredientKey: Type.String({ minLength: 1 }),
+      requestedReplacement: Type.String({ minLength: 1 }),
+    }),
+    { maxItems: 8 },
+  ),
   context: Type.String({ maxLength: 500 }),
 });
 export type RecipeAdjustmentRequest = Static<typeof RecipeAdjustmentRequestSchema>;
-export interface RecipeAdjustmentPreview {
-  previewId: string;
-  originalRecipeId: string;
-  adjustedRecipe: RecipePackage;
-  changes: Array<{ field: string; before: string; after: string; reason: string }>;
-  missing: PurchaseRequirement[];
-  safetyChecks: string[];
-  source: "openrouter" | "rules";
-  expiresAt: string;
-}
+export const RecipeAdjustmentPreviewSchema = Type.Object({
+  previewId: IdSchema,
+  originalRecipeId: IdSchema,
+  adjustedRecipe: RecipePackageSchema,
+  changes: Type.Array(
+    Type.Object({
+      field: Type.String(),
+      before: Type.String(),
+      after: Type.String(),
+      reason: Type.String(),
+    }),
+  ),
+  missing: Type.Array(PurchaseRequirementSchema),
+  safetyChecks: Type.Array(Type.String()),
+  source: Type.Union([Type.Literal("openrouter"), Type.Literal("rules")]),
+  expiresAt: Type.String({ minLength: 1 }),
+});
+export type RecipeAdjustmentPreview = Static<typeof RecipeAdjustmentPreviewSchema>;
 
 export const MealTaskCreateSchema = Type.Object({
   operationId: IdSchema,
   recipePackageId: IdSchema,
   adjustmentPreviewId: Type.Optional(IdSchema),
-  currentMeal: Type.Object({ date: DateOnlySchema, slot: MealSlotSchema, servings: Type.Integer({ minimum: 1, maximum: 20 }) }),
+  currentMeal: Type.Object({
+    date: DateOnlySchema,
+    slot: MealSlotSchema,
+    servings: Type.Integer({ minimum: 1, maximum: 20 }),
+  }),
   nextMeal: Type.Union([
-    Type.Object({ strategy: Type.Literal("cook_extra"), date: DateOnlySchema, slot: MealSlotSchema, servings: Type.Integer({ minimum: 1, maximum: 20 }) }),
-    Type.Object({ strategy: Type.Literal("plan_separately"), date: DateOnlySchema, slot: MealSlotSchema, servings: Type.Integer({ minimum: 1, maximum: 20 }) }),
+    Type.Object({
+      strategy: Type.Literal("cook_extra"),
+      date: DateOnlySchema,
+      slot: MealSlotSchema,
+      servings: Type.Integer({ minimum: 1, maximum: 20 }),
+    }),
+    Type.Object({
+      strategy: Type.Literal("plan_separately"),
+      date: DateOnlySchema,
+      slot: MealSlotSchema,
+      servings: Type.Integer({ minimum: 1, maximum: 20 }),
+    }),
     Type.Object({ strategy: Type.Literal("skip") }),
   ]),
 });
@@ -853,14 +954,49 @@ export const ChefChatMessageSchema = Type.Object({
   createdAt: IsoDateTimeSchema,
 });
 export type ChefChatMessage = Static<typeof ChefChatMessageSchema>;
-export interface ChefChatSession {
-  id: string;
-  title: string;
-  messages: ChefChatMessage[];
-  source: "openrouter" | "rules";
-  createdAt: string;
-  updatedAt: string;
-}
+export const ChefChatSessionSchema = Type.Object({
+  id: IdSchema,
+  title: Type.String(),
+  messages: Type.Array(ChefChatMessageSchema),
+  source: Type.Union([Type.Literal("openrouter"), Type.Literal("rules")]),
+  createdAt: IsoDateTimeSchema,
+  updatedAt: IsoDateTimeSchema,
+});
+export type ChefChatSession = Static<typeof ChefChatSessionSchema>;
+export const AppStateSchema = Type.Object(
+  {
+    version: Type.Literal(2),
+    session: SessionSchema,
+    growth: GrowthProfileSchema,
+    weeklyGoal: WeeklyGoalSchema,
+    expEvents: Type.Array(ExpEventSchema),
+    badgeAwards: Type.Array(BadgeAwardSchema),
+    cookingOutcomes: Type.Array(CookingOutcomeSchema),
+    habitProgress: HabitProgressSchema,
+    healthAssets: HealthAssetsSchema,
+    inventory: Type.Array(InventoryItemSchema),
+    shoppingItems: Type.Array(ShoppingItemSchema),
+    cookware: Type.Array(CookwareProfileSchema),
+    onboardingProfile: Type.Optional(OnboardingProfileSchema),
+    mealPlan: Type.Optional(MealPlanSchema),
+    receipts: Type.Optional(Type.Array(ReceiptSchema)),
+    recipePackages: Type.Optional(Type.Array(RecipePackageSchema)),
+    recipeFavoriteIds: Type.Optional(Type.Array(Type.String())),
+    cookingSessions: Type.Optional(Type.Array(CookingSessionSchema)),
+    mealServings: Type.Optional(Type.Array(MealServingSchema)),
+    cookingCosts: Type.Optional(Type.Array(CookingCostRecordSchema)),
+    mealTasks: Type.Optional(Type.Array(MealTaskSchema)),
+    recipeAdjustmentPreviews: Type.Optional(Type.Array(RecipeAdjustmentPreviewSchema)),
+    reminderPreferences: Type.Optional(ReminderPreferencesSchema),
+    chefChatSessions: Type.Optional(Type.Array(ChefChatSessionSchema)),
+    offlineOperations: Type.Optional(Type.Array(OfflineOperationSchema)),
+    syncConflicts: Type.Optional(Type.Array(SyncConflictSchema)),
+    missions: Type.Optional(Type.Array(TodayMissionSchema)),
+    restockOperations: Type.Optional(Type.Array(RestockOperationSchema)),
+  },
+  { additionalProperties: true },
+);
+export type AppState = Static<typeof AppStateSchema>;
 export const ChefChatSendSchema = Type.Object({
   operationId: IdSchema,
   message: Type.String({ minLength: 1, maxLength: 2000 }),
@@ -924,24 +1060,75 @@ export const ContractSchemas = {
   ReminderPreferencesSchema,
   OfflineOperationSchema,
   BetaInviteSchema,
+  TodayMissionSchema,
+  AppStateSchema,
 };
 export interface CatalogVersion {
-  id: string; familyId: string; status: 'candidate' | 'published' | 'quarantined' | 'rejected';
-  recipe: RecipePackage; createdAt: string; reasons: string[];
+  id: string;
+  familyId: string;
+  status: "candidate" | "published" | "quarantined" | "rejected";
+  recipe: RecipePackage;
+  createdAt: string;
+  reasons: string[];
 }
-export interface CatalogReview { pass: boolean; reasons: string[]; ruleVersion: string }
+export interface CatalogReview {
+  pass: boolean;
+  reasons: string[];
+  ruleVersion: string;
+}
 export interface CatalogAdminState {
-  versions: CatalogVersion[]; prices: IngredientPrice[];
-  paused: boolean; month: string; spentTwd: number; reservedTwd: number; catalogBudgetTwd: number;
-  interactiveUsage: Array<{ feature:'shopping_analysis'|'recipe_generation'|'receipt_ocr'; spentTwd:number; reservedTwd:number; budgetTwd:number; dailyUserLimit:number }>;
-  globalSpentTwd:number; globalReservedTwd:number; globalBudgetTwd:number;
-  candidateCount: number; candidateLimit: number; failedJobCount: number;
-  stalePriceCount: number; expiringPriceCount: number;
-  lastRunAt: string | null; alerts: string[];
-  jobs: Array<{ id:string; status:string; attempts:number; error:string|null; createdAt:string; versionId:string|null }>;
-  reports: Array<{ id:string; versionId:string; title:string; safety:boolean; message:string; createdAt:string; processedAt:string|null }>;
+  versions: CatalogVersion[];
+  prices: IngredientPrice[];
+  paused: boolean;
+  month: string;
+  spentTwd: number;
+  reservedTwd: number;
+  catalogBudgetTwd: number;
+  interactiveUsage: Array<{
+    feature: "shopping_analysis" | "recipe_generation" | "receipt_ocr";
+    spentTwd: number;
+    reservedTwd: number;
+    budgetTwd: number;
+    dailyUserLimit: number;
+  }>;
+  globalSpentTwd: number;
+  globalReservedTwd: number;
+  globalBudgetTwd: number;
+  candidateCount: number;
+  candidateLimit: number;
+  failedJobCount: number;
+  stalePriceCount: number;
+  expiringPriceCount: number;
+  lastRunAt: string | null;
+  alerts: string[];
+  jobs: Array<{
+    id: string;
+    status: string;
+    attempts: number;
+    error: string | null;
+    createdAt: string;
+    versionId: string | null;
+  }>;
+  reports: Array<{
+    id: string;
+    versionId: string;
+    title: string;
+    safety: boolean;
+    message: string;
+    createdAt: string;
+    processedAt: string | null;
+  }>;
 }
-export const SyncRequestSchema = Type.Object({ operations: Type.Array(Type.Object({
-  id: Type.String({ format: 'uuid' }), kind: Type.Literal('cooking_complete'), payload: CookingOutcomeCommandSchema,
-}), { maxItems: 20 }) });
-export interface SyncResult { results: Array<{id: string; status: 'synced' | 'conflict'; message?: string}> }
+export const SyncRequestSchema = Type.Object({
+  operations: Type.Array(
+    Type.Object({
+      id: Type.String({ format: "uuid" }),
+      kind: Type.Literal("cooking_complete"),
+      payload: CookingOutcomeCommandSchema,
+    }),
+    { maxItems: 20 },
+  ),
+});
+export interface SyncResult {
+  results: Array<{ id: string; status: "synced" | "conflict"; message?: string }>;
+}

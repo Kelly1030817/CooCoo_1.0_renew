@@ -1,1 +1,1 @@
-export { getRescuePlan } from '@coocoo/core'
+export { getRescuePlan } from "@coocoo/core";

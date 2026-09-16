@@ -31,8 +31,7 @@ import { sameIngredient } from "./ingredient";
 const DAY_MS = 86_400_000;
 const int = (value: unknown, fallback = 0) =>
   Number.isFinite(Number(value)) ? Math.round(Number(value)) : fallback;
-const nonNegative = (value: unknown, fallback = 0) =>
-  Math.max(0, int(value, fallback));
+const nonNegative = (value: unknown, fallback = 0) => Math.max(0, int(value, fallback));
 const dateOnly = (date: Date) =>
   Number.isNaN(date.getTime()) ? null : date.toISOString().slice(0, 10);
 export function applyOnboardingProfile(
@@ -42,7 +41,8 @@ export function applyOnboardingProfile(
 ) {
   const next = structuredClone(state);
   next.onboardingProfile = structuredClone(profile);
-  if (profile.status === "complete" && profile.inventoryReviewed && profile.hasNoInventory) next.inventory = [];
+  if (profile.status === "complete" && profile.inventoryReviewed && profile.hasNoInventory)
+    next.inventory = [];
   const now = (options.now ?? new Date()).toISOString();
   next.weeklyGoal = {
     ...next.weeklyGoal,
@@ -59,9 +59,7 @@ export function applyOnboardingProfile(
 export function getWeekStart(input: Date | string = new Date()) {
   const date = input instanceof Date ? new Date(input) : new Date(input);
   if (Number.isNaN(date.getTime())) return null;
-  const utc = new Date(
-    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()),
-  );
+  const utc = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
   utc.setUTCDate(utc.getUTCDate() - (utc.getUTCDay() || 7) + 1);
   return dateOnly(utc);
 }
@@ -116,11 +114,7 @@ export function recordMealProgress(
   },
   now = new Date(),
 ) {
-  if (
-    state.habitProgress.events.some(
-      (event) => event.outcomeId === input.outcomeId,
-    )
-  )
+  if (state.habitProgress.events.some((event) => event.outcomeId === input.outcomeId))
     return { accepted: false as const, reason: "duplicate", ...state };
   const createdAt = now.toISOString();
   const weekKey = getWeekStart(now)!;
@@ -135,9 +129,7 @@ export function recordMealProgress(
     }),
     {},
   );
-  const qualifies =
-    input.foodSafe &&
-    (input.vegetables || input.lowOil || input.mindfulSeasoning);
+  const qualifies = input.foodSafe && (input.vegetables || input.lowOil || input.mindfulSeasoning);
   const healthEvents = qualifies
     ? [
         ...state.healthAssets.events,
@@ -155,8 +147,7 @@ export function recordMealProgress(
     healthyAutonomyMeals: healthEvents.length,
     vegetableMeals: healthEvents.filter((e) => e.vegetables).length,
     lowOilMeals: healthEvents.filter((e) => e.lowOil).length,
-    mindfulSeasoningMeals: healthEvents.filter((e) => e.mindfulSeasoning)
-      .length,
+    mindfulSeasoningMeals: healthEvents.filter((e) => e.mindfulSeasoning).length,
     events: healthEvents,
   };
   return {
@@ -212,14 +203,32 @@ export function getRescuePlan(item: InventoryItem): RescuePlan {
 
 export function shoppingCategoryFor(name: string): ShoppingItem["category"] {
   const n = name.trim().toLowerCase();
-  if (/水餃|餃子|餛飩|烏龍|拉麵|義大利麵|通心麵|冬粉|米粉|麵條|白飯|糙米飯|年糕|吐司|麵包/.test(n) || (/(飯|麵|粉)$/.test(n) && !/胡椒粉|辣椒粉|太白粉|地瓜粉/.test(n))) return "pantry";
-  if (/食用油|橄欖油|香油|沙拉油|麻油|醬油|蠔油|豆瓣醬|番茄醬|沙茶|味醂|胡椒|鹽巴|海鹽|砂糖|黑糖|烏醋|白醋|味噌|辣醬|辣椒醬|美乃滋|泡菜|醃|漬|醬/.test(n)) return "pantry";
-  if (/肉|豬|牛|雞|羊|鴨|鵝|魚|蝦|蛤|蚵|花枝|魷魚|干貝|海鮮|培根|火腿|熱狗|香腸|絞肉/.test(n)) return "protein";
-  if (/蛋|豆腐|豆漿|豆花|豆皮|豆包|乾絲|起司|乳酪|起士|牛奶|優格|毛豆|黃豆|黑豆/.test(n)) return "protein";
+  if (
+    /水餃|餃子|餛飩|烏龍|拉麵|義大利麵|通心麵|冬粉|米粉|麵條|白飯|糙米飯|年糕|吐司|麵包/.test(n) ||
+    (/(飯|麵|粉)$/.test(n) && !/胡椒粉|辣椒粉|太白粉|地瓜粉/.test(n))
+  )
+    return "pantry";
+  if (
+    /食用油|橄欖油|香油|沙拉油|麻油|醬油|蠔油|豆瓣醬|番茄醬|沙茶|味醂|胡椒|鹽巴|海鹽|砂糖|黑糖|烏醋|白醋|味噌|辣醬|辣椒醬|美乃滋|泡菜|醃|漬|醬/.test(
+      n,
+    )
+  )
+    return "pantry";
+  if (/肉|豬|牛|雞|羊|鴨|鵝|魚|蝦|蛤|蚵|花枝|魷魚|干貝|海鮮|培根|火腿|熱狗|香腸|絞肉/.test(n))
+    return "protein";
+  if (/蛋|豆腐|豆漿|豆花|豆皮|豆包|乾絲|起司|乳酪|起士|牛奶|優格|毛豆|黃豆|黑豆/.test(n))
+    return "protein";
   if (/菇|木耳|蕈|蘑菇|菌/.test(n)) return "produce";
-  if (/菜|葉|菠菜|空心菜|小白菜|青江菜|地瓜葉|茼蒿|水蓮|萵苣|娃娃菜|羽衣甘藍|芥藍/.test(n)) return "produce";
-  if (/地瓜|番薯|馬鈴薯|山藥|芋頭|蓮藕|牛蒡|竹筍|筍|蘿蔔|洋蔥|洋葱|蒜|蒜頭|蔥|蔥花|青蔥|薑|老薑|生薑/.test(n)) return "produce";
-  if (/節瓜|櫛瓜|南瓜|絲瓜|苦瓜|冬瓜|胡瓜|小黃瓜|大黃瓜|佛手瓜|扁蒲|瓠瓜|木瓜|西瓜|瓜/.test(n)) return "produce";
+  if (/菜|葉|菠菜|空心菜|小白菜|青江菜|地瓜葉|茼蒿|水蓮|萵苣|娃娃菜|羽衣甘藍|芥藍/.test(n))
+    return "produce";
+  if (
+    /地瓜|番薯|馬鈴薯|山藥|芋頭|蓮藕|牛蒡|竹筍|筍|蘿蔔|洋蔥|洋葱|蒜|蒜頭|蔥|蔥花|青蔥|薑|老薑|生薑/.test(
+      n,
+    )
+  )
+    return "produce";
+  if (/節瓜|櫛瓜|南瓜|絲瓜|苦瓜|冬瓜|胡瓜|小黃瓜|大黃瓜|佛手瓜|扁蒲|瓠瓜|木瓜|西瓜|瓜/.test(n))
+    return "produce";
   if (/番茄|西紅柿|玉米|花椰/.test(n)) return "produce";
   return "other";
 }
@@ -277,38 +286,28 @@ export function createSeedState(): AppState {
     ["i4", "雞蛋", "cold", 6, "顆", 10, "M", 50, "2026-06-26"],
     ["i5", "鮭魚", "frozen", 2, "片", 90, "M", 250, "2026-06-25"],
     ["i6", "綜合莓果", "frozen", 1, "包", 150, "S", 150, "2026-06-26"],
-  ].map(
-    ([
-      id,
-      name,
-      chamber,
-      qty,
-      unit,
-      daysLeft,
-      boxSize,
-      savings,
-      addedDate,
-    ]) => ({
-      id: String(id),
-      ingredientKey: String(name),
-      name: String(name),
-      chamber: chamber as "cold" | "frozen",
-      qty: Number(qty),
-      unit: String(unit),
-      daysLeft: Number(daysLeft),
-      image: legacyInventoryImages[String(id)] || image,
-      addedDate: String(addedDate),
-      expiresOn: new Date(Date.UTC(2026, 5, Number(String(addedDate).slice(-2)) + Number(daysLeft))).toISOString().slice(0, 10),
-      lastConfirmedAt: "2026-06-26T00:00:00.000Z",
-      estimatedValue: Number(savings),
-      roi: { savings: Number(savings), sodium: 100, fat: 5 },
-      storageProtocol:
-        chamber === "frozen"
-          ? "壓扁冷凍最大化表面積，縮短解凍時間。"
-          : "方形收納管理，先進先出並定期檢查。",
-      boxSize: boxSize as "S" | "M" | "L",
-    }),
-  );
+  ].map(([id, name, chamber, qty, unit, daysLeft, boxSize, savings, addedDate]) => ({
+    id: String(id),
+    ingredientKey: String(name),
+    name: String(name),
+    chamber: chamber as "cold" | "frozen",
+    qty: Number(qty),
+    unit: String(unit),
+    daysLeft: Number(daysLeft),
+    image: legacyInventoryImages[String(id)] || image,
+    addedDate: String(addedDate),
+    expiresOn: new Date(Date.UTC(2026, 5, Number(String(addedDate).slice(-2)) + Number(daysLeft)))
+      .toISOString()
+      .slice(0, 10),
+    lastConfirmedAt: "2026-06-26T00:00:00.000Z",
+    estimatedValue: Number(savings),
+    roi: { savings: Number(savings), sodium: 100, fat: 5 },
+    storageProtocol:
+      chamber === "frozen"
+        ? "壓扁冷凍最大化表面積，縮短解凍時間。"
+        : "方形收納管理，先進先出並定期檢查。",
+    boxSize: boxSize as "S" | "M" | "L",
+  }));
   const shoppingItems: ShoppingItem[] = [
     {
       id: "s1",
@@ -435,8 +434,7 @@ export interface Runtime {
 const defaultRuntime: Runtime = {
   now: () => new Date(),
   id: () =>
-    globalThis.crypto?.randomUUID?.() ||
-    `id_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+    globalThis.crypto?.randomUUID?.() || `id_${Date.now()}_${Math.random().toString(36).slice(2)}`,
 };
 
 export class CooCooService {
@@ -498,11 +496,7 @@ export class CooCooService {
     this.repository.write(s);
     return structuredClone(item);
   }
-  rescue(
-    id: string,
-    action: "eat" | "preserve" | "discard",
-    foodSafe: boolean,
-  ) {
+  rescue(id: string, action: "eat" | "preserve" | "discard", foodSafe: boolean) {
     const s = this.state();
     const item = s.inventory.find((i) => i.id === id);
     if (!item) throw new Error("ITEM_NOT_FOUND");
@@ -526,15 +520,9 @@ export class CooCooService {
     this.repository.write(s);
     return { action, plan, item };
   }
-  generateRecipe(
-    ingredientIds: string[],
-    style = "無特定風格",
-    excludeTitle = "",
-  ) {
+  generateRecipe(ingredientIds: string[], style = "無特定風格", excludeTitle = "") {
     const s = this.state();
-    const ingredients = s.inventory
-      .filter((i) => ingredientIds.includes(i.id))
-      .map((i) => i.name);
+    const ingredients = s.inventory.filter((i) => ingredientIds.includes(i.id)).map((i) => i.name);
     if (!ingredients.length) throw new Error("INGREDIENT_REQUIRED");
     const variant = excludeTitle ? "新風味" : "";
     const recipe: Recipe = {
@@ -543,14 +531,11 @@ export class CooCooService {
       style,
       prepTime: "15 分鐘",
       estCost: "NT$ 55",
-      scientificPrinciple:
-        "利用食材的高比熱容，在加蓋鍋體內形成溫和熱流，避免蛋白質過度緊縮。",
+      scientificPrinciple: "利用食材的高比熱容，在加蓋鍋體內形成溫和熱流，避免蛋白質過度緊縮。",
       ingredients,
       steps: [
         `處理 ${ingredients[0]}，若有水分請先用紙巾吸乾。`,
-        ingredients[1]
-          ? `將 ${ingredients[1]} 切細，加入少許鹽靜置 3 分鐘。`
-          : "將食材預備完成。",
+        ingredients[1] ? `將 ${ingredients[1]} 切細，加入少許鹽靜置 3 分鐘。` : "將食材預備完成。",
         "加熱後加入食材，加蓋利用餘溫慢熟，完成後立即享用。",
       ],
     };
@@ -581,7 +566,12 @@ export class CooCooService {
       ...(input.usedExpiringIngredient ? ["expiring_ingredient_used" as const] : []),
       ...(input.completedDoubleMeal ? ["double_meal_completed" as const] : []),
     ];
-    const expAwarded = expTypes.reduce((total, type) => total + ({ cooking_completed: 30, expiring_ingredient_used: 10, double_meal_completed: 20 })[type], 0);
+    const expAwarded = expTypes.reduce(
+      (total, type) =>
+        total +
+        { cooking_completed: 30, expiring_ingredient_used: 10, double_meal_completed: 20 }[type],
+      0,
+    );
     const result = recordCookingOutcome(
       s.cookingOutcomes,
       {
@@ -597,16 +587,29 @@ export class CooCooService {
     );
     if (!result.accepted) return result;
     const servingResult = completeCookingSession(
-      { completedOperationIds: s.cookingOutcomes.map((outcome) => outcome.completionKey), servings: s.mealServings ?? [], cookingCosts: s.cookingCosts ?? [] },
-      { operationId: input.completionKey, sessionId: result.outcome.id, servingsCooked, servingsEaten, ingredientCost: input.ingredientCost, comparisonMealPrice: input.comparisonMealPrice, trackCost: input.trackCost },
+      {
+        completedOperationIds: s.cookingOutcomes.map((outcome) => outcome.completionKey),
+        servings: s.mealServings ?? [],
+        cookingCosts: s.cookingCosts ?? [],
+      },
+      {
+        operationId: input.completionKey,
+        sessionId: result.outcome.id,
+        servingsCooked,
+        servingsEaten,
+        ingredientCost: input.ingredientCost,
+        comparisonMealPrice: input.comparisonMealPrice,
+        trackCost: input.trackCost,
+      },
       this.runtime.now().toISOString(),
     );
-    s.mealServings = servingResult.servings.map((serving) => ({ ...serving, vegetableKeys: input.vegetables && serving.status === "eaten" ? ["reported-vegetable"] : [] }));
+    s.mealServings = servingResult.servings.map((serving) => ({
+      ...serving,
+      vegetableKeys: input.vegetables && serving.status === "eaten" ? ["reported-vegetable"] : [],
+    }));
     s.cookingCosts = servingResult.cookingCosts;
     s.cookingOutcomes.push(result.outcome);
-    s.inventory = s.inventory.filter(
-      (i) => !input.ingredientIds.includes(i.id),
-    );
+    s.inventory = s.inventory.filter((i) => !input.ingredientIds.includes(i.id));
     const progress = recordMealProgress(
       s,
       {
@@ -623,23 +626,41 @@ export class CooCooService {
     for (let index = 1; index < servingsEaten; index += 1) {
       const extra = recordMealProgress(
         s,
-        { outcomeId: `${result.outcome.id}:serving:${index + 1}`, foodSafe: input.foodSafe, vegetables: input.vegetables, lowOil: false, mindfulSeasoning: false },
+        {
+          outcomeId: `${result.outcome.id}:serving:${index + 1}`,
+          foodSafe: input.foodSafe,
+          vegetables: input.vegetables,
+          lowOil: false,
+          mindfulSeasoning: false,
+        },
         this.runtime.now(),
       );
       s.habitProgress = extra.habitProgress;
       s.healthAssets = extra.healthAssets;
     }
     for (const type of expTypes) {
-      s.expEvents = awardExp(s.expEvents, { operationId: input.completionKey, type, sourceId: result.outcome.id }, this.runtime.now().toISOString()).events;
+      s.expEvents = awardExp(
+        s.expEvents,
+        { operationId: input.completionKey, type, sourceId: result.outcome.id },
+        this.runtime.now().toISOString(),
+      ).events;
     }
     s.weeklyGoal.progress += s.weeklyGoal.metric === "cooking_sessions" ? 1 : servingsEaten;
-    const weekly = grantWeeklyGoalReward(s.weeklyGoal, s.expEvents, `${s.weeklyGoal.id}:reward`, this.runtime.now().toISOString());
+    const weekly = grantWeeklyGoalReward(
+      s.weeklyGoal,
+      s.expEvents,
+      `${s.weeklyGoal.id}:reward`,
+      this.runtime.now().toISOString(),
+    );
     s.weeklyGoal = weekly.goal;
     s.expEvents = weekly.events;
     const counters = {
       cooking: s.cookingOutcomes.length,
       rhythm: s.expEvents.filter((event) => event.type === "weekly_goal_completed").length,
-      wasteLess: s.expEvents.filter((event) => event.type === "expiring_ingredient_used" || event.type === "prepared_serving_eaten").length,
+      wasteLess: s.expEvents.filter(
+        (event) =>
+          event.type === "expiring_ingredient_used" || event.type === "prepared_serving_eaten",
+      ).length,
       exploration: new Set(s.cookingOutcomes.map((outcome) => outcome.mealName)).size,
     };
     s.badgeAwards = awardBadges(s.badgeAwards, counters, this.runtime.now().toISOString()).awards;
@@ -647,7 +668,12 @@ export class CooCooService {
     if (input.mealTaskId) {
       s.mealTasks = (s.mealTasks ?? []).map((task) =>
         task.id === input.mealTaskId
-          ? { ...task, status: "complete" as const, revision: task.revision + 1, updatedAt: this.runtime.now().toISOString() }
+          ? {
+              ...task,
+              status: "complete" as const,
+              revision: task.revision + 1,
+              updatedAt: this.runtime.now().toISOString(),
+            }
           : task,
       );
     }
@@ -656,18 +682,41 @@ export class CooCooService {
   }
   eatPreparedServing(servingId: string, operationId: string) {
     const s = this.state();
-    if (s.expEvents.some((event) => event.operationId === operationId && event.type === "prepared_serving_eaten")) return { accepted: false as const, reason: "duplicate" };
+    if (
+      s.expEvents.some(
+        (event) => event.operationId === operationId && event.type === "prepared_serving_eaten",
+      )
+    )
+      return { accepted: false as const, reason: "duplicate" };
     const serving = (s.mealServings ?? []).find((item) => item.id === servingId);
-    if (!serving || serving.status !== "prepared_inventory") throw new Error("PREPARED_SERVING_NOT_FOUND");
+    if (!serving || serving.status !== "prepared_inventory")
+      throw new Error("PREPARED_SERVING_NOT_FOUND");
     const now = this.runtime.now().toISOString();
     serving.status = "eaten";
     serving.eatenAt = now;
-    s.expEvents = awardExp(s.expEvents, { operationId, type: "prepared_serving_eaten", sourceId: serving.id }, now).events;
+    s.expEvents = awardExp(
+      s.expEvents,
+      { operationId, type: "prepared_serving_eaten", sourceId: serving.id },
+      now,
+    ).events;
     if (s.weeklyGoal.metric === "self_cooked_servings") s.weeklyGoal.progress += 1;
-    const weekly = grantWeeklyGoalReward(s.weeklyGoal, s.expEvents, `${s.weeklyGoal.id}:reward`, now);
+    const weekly = grantWeeklyGoalReward(
+      s.weeklyGoal,
+      s.expEvents,
+      `${s.weeklyGoal.id}:reward`,
+      now,
+    );
     s.weeklyGoal = weekly.goal;
     s.expEvents = weekly.events;
-    const counters = { cooking: s.cookingOutcomes.length, rhythm: s.expEvents.filter((event) => event.type === "weekly_goal_completed").length, wasteLess: s.expEvents.filter((event) => event.type === "expiring_ingredient_used" || event.type === "prepared_serving_eaten").length, exploration: new Set(s.cookingOutcomes.map((outcome) => outcome.mealName)).size };
+    const counters = {
+      cooking: s.cookingOutcomes.length,
+      rhythm: s.expEvents.filter((event) => event.type === "weekly_goal_completed").length,
+      wasteLess: s.expEvents.filter(
+        (event) =>
+          event.type === "expiring_ingredient_used" || event.type === "prepared_serving_eaten",
+      ).length,
+      exploration: new Set(s.cookingOutcomes.map((outcome) => outcome.mealName)).size,
+    };
     s.badgeAwards = awardBadges(s.badgeAwards, counters, now).awards;
     s.growth = deriveGrowthProfile(s.expEvents, s.badgeAwards, counters);
     this.repository.write(s);
@@ -703,7 +752,9 @@ export class CooCooService {
     s.shoppingItems = s.shoppingItems.filter((i) => i.id !== id);
     this.repository.write(s);
   }
-  restock(command?: MealTaskRestockCommand): MealTaskRestockResult | { count: number; items: ShoppingItem[] } {
+  restock(
+    command?: MealTaskRestockCommand,
+  ): MealTaskRestockResult | { count: number; items: ShoppingItem[] } {
     const s = this.state();
     if (command) return this.restockWithCommand(s, command);
     const selected = s.shoppingItems.filter((i) => i.checked);
@@ -730,9 +781,13 @@ export class CooCooService {
     const bought = selected.map((item) => ({ ...item, remaining: item.qty }));
     s.mealTasks = (s.mealTasks ?? []).map((task) => {
       const shortages = task.shortages.map((shortage) => {
-        if(["bought","replaced"].includes(shortage.resolution))return shortage;
+        if (["bought", "replaced"].includes(shortage.resolution)) return shortage;
         let needed = shortage.quantity;
-        for (const item of bought.filter((candidate) => candidate.unit === shortage.unit && sameIngredient({ ingredientKey: candidate.name, name: candidate.name }, shortage))) {
+        for (const item of bought.filter(
+          (candidate) =>
+            candidate.unit === shortage.unit &&
+            sameIngredient({ ingredientKey: candidate.name, name: candidate.name }, shortage),
+        )) {
           const used = Math.min(needed, item.remaining);
           needed -= used;
           item.remaining -= used;
@@ -744,42 +799,94 @@ export class CooCooService {
             ? { ...shortage, quantity: needed, resolution: "needed" as const }
             : shortage;
       });
-      return { ...task, shortages, status: shortages.every((item) => item.resolution === "bought" || item.resolution === "replaced") ? "ready" as const : task.status, revision: task.revision + (shortages.some((item,index) => item.resolution !== task.shortages[index].resolution) ? 1 : 0), updatedAt: this.runtime.now().toISOString() };
+      return {
+        ...task,
+        shortages,
+        status: shortages.every(
+          (item) => item.resolution === "bought" || item.resolution === "replaced",
+        )
+          ? ("ready" as const)
+          : task.status,
+        revision:
+          task.revision +
+          (shortages.some((item, index) => item.resolution !== task.shortages[index].resolution)
+            ? 1
+            : 0),
+        updatedAt: this.runtime.now().toISOString(),
+      };
     });
     this.repository.write(s);
     return { count: selected.length, items: selected };
   }
-  private restockWithCommand(s: ReturnType<StateRepository["read"]>, command: MealTaskRestockCommand): MealTaskRestockResult {
+  private restockWithCommand(
+    s: ReturnType<StateRepository["read"]>,
+    command: MealTaskRestockCommand,
+  ): MealTaskRestockResult {
     const prior = (s.restockOperations ?? []).find((op) => op.operationId === command.operationId);
-    if (prior) { if(prior.request && prior.request !== JSON.stringify(command)) throw new Error("OPERATION_CONFLICT"); return { ...prior.result, replayed: true }; }
-    const task = command.mealTaskId ? (s.mealTasks ?? []).find((t) => t.id === command.mealTaskId) : undefined;
+    if (prior) {
+      if (prior.request && prior.request !== JSON.stringify(command))
+        throw new Error("OPERATION_CONFLICT");
+      return { ...prior.result, replayed: true };
+    }
+    const task = command.mealTaskId
+      ? (s.mealTasks ?? []).find((t) => t.id === command.mealTaskId)
+      : undefined;
     if (command.mealTaskId && !task) throw new Error("MEAL_TASK_NOT_FOUND");
-    if(task && !["needs_shopping","ready"].includes(task.status)) throw new Error("MEAL_TASK_NOT_ACTIVE");
-    if (task && command.shortageRevision !== undefined && command.shortageRevision !== task.revision) {
+    if (task && !["needs_shopping", "ready"].includes(task.status))
+      throw new Error("MEAL_TASK_NOT_ACTIVE");
+    if (
+      task &&
+      command.shortageRevision !== undefined &&
+      command.shortageRevision !== task.revision
+    ) {
       throw new Error("MEAL_TASK_REVISION_CONFLICT");
     }
-    if(new Set(command.purchasedItems.map(p=>p.shoppingItemId)).size!==command.purchasedItems.length) throw new Error("DUPLICATE_SHOPPING_ITEM");
+    if (
+      new Set(command.purchasedItems.map((p) => p.shoppingItemId)).size !==
+      command.purchasedItems.length
+    )
+      throw new Error("DUPLICATE_SHOPPING_ITEM");
     for (const entry of command.purchasedItems) {
-      const item=s.shoppingItems.find(i=>i.id===entry.shoppingItemId);
-      if(!item)throw new Error("SHOPPING_ITEM_NOT_FOUND");
-      if(!item.checked)throw new Error("SHOPPING_ITEM_NOT_CHECKED");
-      if(item.shortageId!==entry.shortageId)throw new Error("SHORTAGE_LINK_CONFLICT");
-      if(entry.actualQuantity<=0||!entry.actualUnit.trim())throw new Error("INVALID_PURCHASE");
-      if(item.shortageId){
-        if(!task)throw new Error("MEAL_TASK_REQUIRED");
-        const shortage=task.shortages.find(sh=>sh.id===item.shortageId);
-        if(!shortage||!["needed","unavailable"].includes(shortage.resolution))throw new Error("SHORTAGE_NOT_ACTIVE");
-        if(!entry.expiresOn)throw new Error("EXPIRY_REQUIRED");
-        if(entry.expiresOn<dateOnly(this.runtime.now())!)throw new Error("EXPIRED_PURCHASE");
-        if(entry.actualUnit!==shortage.unit)throw new Error("UNIT_CONFIRMATION_REQUIRED");
+      const item = s.shoppingItems.find((i) => i.id === entry.shoppingItemId);
+      if (!item) throw new Error("SHOPPING_ITEM_NOT_FOUND");
+      if (!item.checked) throw new Error("SHOPPING_ITEM_NOT_CHECKED");
+      if (item.shortageId !== entry.shortageId) throw new Error("SHORTAGE_LINK_CONFLICT");
+      if (entry.actualQuantity <= 0 || !entry.actualUnit.trim())
+        throw new Error("INVALID_PURCHASE");
+      if (item.shortageId) {
+        if (!task) throw new Error("MEAL_TASK_REQUIRED");
+        const shortage = task.shortages.find((sh) => sh.id === item.shortageId);
+        if (!shortage || !["needed", "unavailable"].includes(shortage.resolution))
+          throw new Error("SHORTAGE_NOT_ACTIVE");
+        if (!entry.expiresOn) throw new Error("EXPIRY_REQUIRED");
+        if (entry.expiresOn < dateOnly(this.runtime.now())!) throw new Error("EXPIRED_PURCHASE");
+        if (entry.actualUnit !== shortage.unit) throw new Error("UNIT_CONFIRMATION_REQUIRED");
       }
     }
     const nowIso = this.runtime.now().toISOString();
-    const purchased = command.purchasedItems.map((p) => ({ p, item: s.shoppingItems.find((i) => i.id === p.shoppingItemId) })).filter((x): x is { p: MealTaskRestockCommand["purchasedItems"][number]; item: ShoppingItem } => !!x.item);
+    const purchased = command.purchasedItems
+      .map((p) => ({ p, item: s.shoppingItems.find((i) => i.id === p.shoppingItemId) }))
+      .filter(
+        (x): x is { p: MealTaskRestockCommand["purchasedItems"][number]; item: ShoppingItem } =>
+          !!x.item,
+      );
     for (const { p, item } of purchased) {
-      const chamber = p.storageLocation === "pantry" ? "pantry" : p.storageLocation === "frozen" ? "frozen" : "cold";
+      const chamber =
+        p.storageLocation === "pantry"
+          ? "pantry"
+          : p.storageLocation === "frozen"
+            ? "frozen"
+            : "cold";
       const expiresOn = p.expiresOn ?? null;
-      const days = expiresOn ? Math.max(0, Math.ceil((new Date(`${expiresOn}T12:00:00Z`).getTime() - this.runtime.now().getTime()) / DAY_MS)) : 30;
+      const days = expiresOn
+        ? Math.max(
+            0,
+            Math.ceil(
+              (new Date(`${expiresOn}T12:00:00Z`).getTime() - this.runtime.now().getTime()) /
+                DAY_MS,
+            ),
+          )
+        : 30;
       s.inventory.push({
         id: this.runtime.id(),
         ingredientKey: item.name,
@@ -802,13 +909,61 @@ export class CooCooService {
     s.shoppingItems = s.shoppingItems.filter((i) => !boughtIds.has(i.id));
     let mealTaskStatus: MealTaskStatus | undefined;
     let remainingShortages: MealTask["shortages"] = [];
-    if(task){
-      const recalculated=createMealTask({operationId:task.operationId,recipePackageId:task.recipe.recipeId,currentMeal:task.currentMeal,nextMeal:task.nextMeal},task.recipe,s.inventory,s.onboardingProfile?.restrictions??[],nowIso);
-      const shortages:MealTask["shortages"]=task.shortages.map(sh=>recalculated.shortages.find(n=>n.ingredientKey===sh.ingredientKey&&n.unit===sh.unit)?{...sh,quantity:recalculated.shortages.find(n=>n.ingredientKey===sh.ingredientKey&&n.unit===sh.unit)!.quantity,resolution:sh.resolution==='unavailable'?'unavailable' as const:'needed' as const}:{...sh,resolution:'bought' as const});
-      shortages.push(...recalculated.shortages.filter(sh=>!shortages.some(old=>old.ingredientKey===sh.ingredientKey&&old.unit===sh.unit)));
-      mealTaskStatus=recalculated.status;
-      remainingShortages=shortages.filter(sh=>!['bought','replaced'].includes(sh.resolution));
-      s.mealTasks=(s.mealTasks??[]).map(t=>t.id===task.id?{...t,shortages,status:mealTaskStatus!,revision:t.revision+(JSON.stringify(shortages)!==JSON.stringify(t.shortages)||mealTaskStatus!==t.status?1:0),updatedAt:nowIso}:t);
+    if (task) {
+      const recalculated = createMealTask(
+        {
+          operationId: task.operationId,
+          recipePackageId: task.recipe.recipeId,
+          currentMeal: task.currentMeal,
+          nextMeal: task.nextMeal,
+        },
+        task.recipe,
+        s.inventory,
+        s.onboardingProfile?.restrictions ?? [],
+        nowIso,
+      );
+      const shortages: MealTask["shortages"] = task.shortages.map((sh) =>
+        recalculated.shortages.find(
+          (n) => n.ingredientKey === sh.ingredientKey && n.unit === sh.unit,
+        )
+          ? {
+              ...sh,
+              quantity: recalculated.shortages.find(
+                (n) => n.ingredientKey === sh.ingredientKey && n.unit === sh.unit,
+              )!.quantity,
+              resolution:
+                sh.resolution === "unavailable" ? ("unavailable" as const) : ("needed" as const),
+            }
+          : { ...sh, resolution: "bought" as const },
+      );
+      shortages.push(
+        ...recalculated.shortages.filter(
+          (sh) =>
+            !shortages.some(
+              (old) => old.ingredientKey === sh.ingredientKey && old.unit === sh.unit,
+            ),
+        ),
+      );
+      mealTaskStatus = recalculated.status;
+      remainingShortages = shortages.filter(
+        (sh) => !["bought", "replaced"].includes(sh.resolution),
+      );
+      s.mealTasks = (s.mealTasks ?? []).map((t) =>
+        t.id === task.id
+          ? {
+              ...t,
+              shortages,
+              status: mealTaskStatus!,
+              revision:
+                t.revision +
+                (JSON.stringify(shortages) !== JSON.stringify(t.shortages) ||
+                mealTaskStatus !== t.status
+                  ? 1
+                  : 0),
+              updatedAt: nowIso,
+            }
+          : t,
+      );
     }
     const result: MealTaskRestockResult = {
       operationId: command.operationId,
@@ -816,18 +971,34 @@ export class CooCooService {
       count: purchased.length,
       mealTaskStatus,
       remainingShortages,
-      nextActions: mealTaskStatus === "ready" ? ["return_to_task", "start_cooking"] : ["continue_shopping", "return_to_task"],
+      nextActions:
+        mealTaskStatus === "ready"
+          ? ["return_to_task", "start_cooking"]
+          : ["continue_shopping", "return_to_task"],
     };
-    s.restockOperations = [...(s.restockOperations ?? []), { operationId: command.operationId, request: JSON.stringify(command), result, createdAt: nowIso }];
+    s.restockOperations = [
+      ...(s.restockOperations ?? []),
+      {
+        operationId: command.operationId,
+        request: JSON.stringify(command),
+        result,
+        createdAt: nowIso,
+      },
+    ];
     this.repository.write(s);
     return result;
   }
   resolveShortage(command: ShoppingResolutionCommand): MealTask | null {
-    const s=this.state();
-    const next=resolveShoppingTask(s,command,this.runtime.now().toISOString());
-    const old=s.mealTasks?.find(t=>t.id===next.id);
-    if(command.action==='replace'||command.action==='replan_meal')s.shoppingItems=s.shoppingItems.map(item=>old?.shortages.some(sh=>sh.id===item.shortageId)?{...item,shortageId:undefined,source:'manual',status:'一般採買'}:item);
-    s.mealTasks=(s.mealTasks??[]).map(t=>t.id===next.id?next:t);
+    const s = this.state();
+    const next = resolveShoppingTask(s, command, this.runtime.now().toISOString());
+    const old = s.mealTasks?.find((t) => t.id === next.id);
+    if (command.action === "replace" || command.action === "replan_meal")
+      s.shoppingItems = s.shoppingItems.map((item) =>
+        old?.shortages.some((sh) => sh.id === item.shortageId)
+          ? { ...item, shortageId: undefined, source: "manual", status: "一般採買" }
+          : item,
+      );
+    s.mealTasks = (s.mealTasks ?? []).map((t) => (t.id === next.id ? next : t));
     this.repository.write(s);
     return next;
   }

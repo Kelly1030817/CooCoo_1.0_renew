@@ -32,7 +32,8 @@ export function groupInventory(items: InventoryItem[], now = new Date()): Invent
   return [...groups.entries()]
     .map(([key, batches]) => {
       const ordered = [...batches].sort(
-        (left, right) => left.daysLeft - right.daysLeft || left.addedDate.localeCompare(right.addedDate),
+        (left, right) =>
+          left.daysLeft - right.daysLeft || left.addedDate.localeCompare(right.addedDate),
       );
       return {
         key,
@@ -47,5 +48,8 @@ export function groupInventory(items: InventoryItem[], now = new Date()): Invent
         batches: ordered,
       };
     })
-    .sort((left, right) => left.daysLeft - right.daysLeft || left.name.localeCompare(right.name, "zh-TW"));
+    .sort(
+      (left, right) =>
+        left.daysLeft - right.daysLeft || left.name.localeCompare(right.name, "zh-TW"),
+    );
 }

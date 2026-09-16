@@ -1,470 +1,586 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-TW">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CooCoo 1.0 · 今日介面 Header 復原與「我的」帳號卡片預覽</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800;900&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --bg: #fdfae7;
-      --card: #fffdf8;
-      --ink: #1c1c11;
-      --muted: #716b60;
-      --line: #d9cab2;
-      --primary: #9a442d;
-      --primary-ink: #6f2f20;
-      --stub-a: #34465b;
-      --gold: #f4ce8d;
-    }
-    body {
-      background-color: #f7f3e8;
-      font-family: "Plus Jakarta Sans", "Noto Sans TC", -apple-system, sans-serif;
-      color: #1c1c11;
-      margin: 0;
-      padding: 24px 16px;
-    }
-    .material-symbols-outlined {
-      font-variation-settings: 'FILL' 0, 'wght' 600, 'GRAD' 0, 'opsz' 24;
-      display: inline-block;
-      vertical-align: middle;
-      line-height: 1;
-    }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CooCoo 1.0 · 今日介面 Header 復原與「我的」帳號卡片預覽</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800;900&family=Noto+Sans+TC:wght@400;500;700;900&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #fdfae7;
+        --card: #fffdf8;
+        --ink: #1c1c11;
+        --muted: #716b60;
+        --line: #d9cab2;
+        --primary: #9a442d;
+        --primary-ink: #6f2f20;
+        --stub-a: #34465b;
+        --gold: #f4ce8d;
+      }
+      body {
+        background-color: #f7f3e8;
+        font-family:
+          "Plus Jakarta Sans",
+          "Noto Sans TC",
+          -apple-system,
+          sans-serif;
+        color: #1c1c11;
+        margin: 0;
+        padding: 24px 16px;
+      }
+      .material-symbols-outlined {
+        font-variation-settings:
+          "FILL" 0,
+          "wght" 600,
+          "GRAD" 0,
+          "opsz" 24;
+        display: inline-block;
+        vertical-align: middle;
+        line-height: 1;
+      }
 
-    /* Device Mockup */
-    .device-shell {
-      width: 100%;
-      max-width: 412px;
-      min-height: 844px;
-      background: var(--bg);
-      border-radius: 44px;
-      border: 9px solid #2d261e;
-      box-shadow: 0 25px 60px -15px rgba(45, 38, 30, 0.25), 0 0 0 1px rgba(0,0,0,0.06);
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      position: relative;
-    }
+      /* Device Mockup */
+      .device-shell {
+        width: 100%;
+        max-width: 412px;
+        min-height: 844px;
+        background: var(--bg);
+        border-radius: 44px;
+        border: 9px solid #2d261e;
+        box-shadow:
+          0 25px 60px -15px rgba(45, 38, 30, 0.25),
+          0 0 0 1px rgba(0, 0, 0, 0.06);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+      }
 
-    /* Dynamic Island */
-    .island {
-      width: 110px;
-      height: 26px;
-      background: #000;
-      border-radius: 20px;
-      margin: 0 auto;
-    }
+      /* Dynamic Island */
+      .island {
+        width: 110px;
+        height: 26px;
+        background: #000;
+        border-radius: 20px;
+        margin: 0 auto;
+      }
 
-    /* App Header - matching bg-surface (#fdfae7) and border-surface-container-high (#ece9d6) */
-    .app-header {
-      background: var(--bg);
-      border-bottom: 1px solid #ece9d6;
-      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
-      padding: 10px 16px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      position: sticky;
-      top: 0;
-      z-index: 40;
-    }
+      /* App Header - matching bg-surface (#fdfae7) and border-surface-container-high (#ece9d6) */
+      .app-header {
+        background: var(--bg);
+        border-bottom: 1px solid #ece9d6;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+        padding: 10px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: sticky;
+        top: 0;
+        z-index: 40;
+      }
 
-    /* Ticket styling Scheme A */
-    .meal-ticket {
-      position: relative;
-      display: grid;
-      grid-template-columns: 66px minmax(0, 1fr);
-      overflow: hidden;
-      border: 1px solid var(--line);
-      border-radius: 20px;
-      background: var(--card);
-      box-shadow: 0 16px 44px -12px rgb(154 68 45 / 14%), 0 4px 16px -2px rgb(41 60 78 / 5%);
-    }
-    .ticket-notch-top, .ticket-notch-bottom {
-      position: absolute;
-      left: 57px;
-      z-index: 5;
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      background: var(--bg);
-    }
-    .ticket-notch-top { top: -9px; border-bottom: 1px solid var(--line); }
-    .ticket-notch-bottom { bottom: -9px; border-top: 1px solid var(--line); }
+      /* Ticket styling Scheme A */
+      .meal-ticket {
+        position: relative;
+        display: grid;
+        grid-template-columns: 66px minmax(0, 1fr);
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        background: var(--card);
+        box-shadow:
+          0 16px 44px -12px rgb(154 68 45 / 14%),
+          0 4px 16px -2px rgb(41 60 78 / 5%);
+      }
+      .ticket-notch-top,
+      .ticket-notch-bottom {
+        position: absolute;
+        left: 57px;
+        z-index: 5;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: var(--bg);
+      }
+      .ticket-notch-top {
+        top: -9px;
+        border-bottom: 1px solid var(--line);
+      }
+      .ticket-notch-bottom {
+        bottom: -9px;
+        border-top: 1px solid var(--line);
+      }
 
-    .ticket-stub {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-direction: column;
-      border-right: 2px dashed #bba98d;
-      background: var(--stub-a);
-      padding: 16px 5px;
-      color: var(--gold);
-    }
-    .stub-vertical-text {
-      writing-mode: vertical-rl;
-      color: rgb(244 206 141 / 82%);
-      font-size: 8.5px;
-      font-weight: 900;
-      letter-spacing: .28em;
-    }
-    .stub-center { display: grid; place-items: center; gap: 4px; margin: auto 0; text-align: center; }
-    .stub-center small { color: rgb(244 206 141 / 72%); font-size: 7.5px; font-weight: 900; }
-    .stub-center strong { color: #fef08a; font-size: 23px; font-weight: 900; line-height: 1; }
+      .ticket-stub {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-direction: column;
+        border-right: 2px dashed #bba98d;
+        background: var(--stub-a);
+        padding: 16px 5px;
+        color: var(--gold);
+      }
+      .stub-vertical-text {
+        writing-mode: vertical-rl;
+        color: rgb(244 206 141 / 82%);
+        font-size: 8.5px;
+        font-weight: 900;
+        letter-spacing: 0.28em;
+      }
+      .stub-center {
+        display: grid;
+        place-items: center;
+        gap: 4px;
+        margin: auto 0;
+        text-align: center;
+      }
+      .stub-center small {
+        color: rgb(244 206 141 / 72%);
+        font-size: 7.5px;
+        font-weight: 900;
+      }
+      .stub-center strong {
+        color: #fef08a;
+        font-size: 23px;
+        font-weight: 900;
+        line-height: 1;
+      }
 
-    /* Account card */
-    .account-card {
-      border: 1px solid #ebd9c6;
-      background: linear-gradient(135deg, #fffefb 0%, #fff9f0 100%);
-      border-radius: 22px;
-      padding: 18px;
-      box-shadow: 0 8px 24px rgba(84, 63, 39, 0.05);
-    }
+      /* Account card */
+      .account-card {
+        border: 1px solid #ebd9c6;
+        background: linear-gradient(135deg, #fffefb 0%, #fff9f0 100%);
+        border-radius: 22px;
+        padding: 18px;
+        box-shadow: 0 8px 24px rgba(84, 63, 39, 0.05);
+      }
 
-    /* Bottom tabbar */
-    .tabbar {
-      background: #fffefb;
-      border-top: 1px solid #ebd9c6;
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      padding: 6px 0 10px;
-    }
-    .tab-btn {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 2px;
-      font-size: 10px;
-      font-weight: 800;
-      color: #8c8273;
-      padding: 4px 0;
-      transition: all 0.15s ease;
-    }
-    .tab-btn.active {
-      color: var(--primary);
-    }
-  </style>
-</head>
-<body class="min-h-screen flex flex-col items-center">
-
-  <!-- Workspace Notice & Tab Switcher -->
-  <div class="w-full max-w-4xl mb-6 text-center space-y-3">
-    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100/80 border border-amber-300 text-amber-900 text-xs font-black">
-      <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
-      工作樹預覽 · 尚未部署至線上正式站
-    </div>
-    <h1 class="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight">
-      今日介面 Header 復原與「我的」帳號整合
-    </h1>
-    <p class="text-xs sm:text-sm text-stone-600 max-w-xl mx-auto leading-relaxed">
-      1. <b>頂部 Header 配色對齊</b>：採用與全站一致的溫暖杏色米底（<code>#fdfae7</code>），邊框為 <code>#ece9d6</code>。<br>
-      2. <b>右側純淨呈現</b>：線上正式環境完全無「食譜管理」與右上角帳號按鈕，乾淨簡潔。<br>
-      3. <b>導覽列「我的」介面</b>：雲端登入與主廚檔案入口完整收納在「我的」分頁頂部卡片。
-    </p>
-
-    <!-- Page Switcher Bar -->
-    <div class="inline-flex p-1.5 rounded-2xl bg-stone-200/80 border border-stone-300 text-xs font-black shadow-inner gap-1">
-      <button id="btnShowToday" class="px-5 py-2 rounded-xl bg-white text-stone-900 shadow-sm transition-all" onclick="switchView('today')">
-        📱 今日（Today）介面預覽
-      </button>
-      <button id="btnShowMe" class="px-5 py-2 rounded-xl text-stone-600 hover:text-stone-900 transition-all" onclick="switchView('me')">
-        👤 「我的」（Me）帳號介面預覽
-      </button>
-    </div>
-  </div>
-
-  <!-- Device Mockup Container -->
-  <div class="device-shell">
-    <!-- Phone Top Status Bar -->
-    <div class="pt-3 px-6 pb-2 flex items-center justify-between text-[11px] font-black text-stone-800">
-      <span>19:30</span>
-      <div class="island"></div>
-      <div class="flex items-center gap-1 text-xs">
-        <span class="material-symbols-outlined text-sm">signal_cellular_alt</span>
-        <span class="material-symbols-outlined text-sm">wifi</span>
-        <span class="material-symbols-outlined text-sm">battery_full</span>
+      /* Bottom tabbar */
+      .tabbar {
+        background: #fffefb;
+        border-top: 1px solid #ebd9c6;
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        padding: 6px 0 10px;
+      }
+      .tab-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+        font-size: 10px;
+        font-weight: 800;
+        color: #8c8273;
+        padding: 4px 0;
+        transition: all 0.15s ease;
+      }
+      .tab-btn.active {
+        color: var(--primary);
+      }
+    </style>
+  </head>
+  <body class="min-h-screen flex flex-col items-center">
+    <!-- Workspace Notice & Tab Switcher -->
+    <div class="w-full max-w-4xl mb-6 text-center space-y-3">
+      <div
+        class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100/80 border border-amber-300 text-amber-900 text-xs font-black"
+      >
+        <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
+        工作樹預覽 · 尚未部署至線上正式站
       </div>
-    </div>
+      <h1 class="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight">
+        今日介面 Header 復原與「我的」帳號整合
+      </h1>
+      <p class="text-xs sm:text-sm text-stone-600 max-w-xl mx-auto leading-relaxed">
+        1. <b>頂部 Header 配色對齊</b>：採用與全站一致的溫暖杏色米底（<code>#fdfae7</code>），邊框為
+        <code>#ece9d6</code>。<br />
+        2. <b>右側純淨呈現</b>：線上正式環境完全無「食譜管理」與右上角帳號按鈕，乾淨簡潔。<br />
+        3. <b>導覽列「我的」介面</b>：雲端登入與主廚檔案入口完整收納在「我的」分頁頂部卡片。
+      </p>
 
-    <!-- ============================================== -->
-    <!-- 1. RESTORED GLOBAL HEADER                      -->
-    <!-- ============================================== -->
-    <header class="app-header">
-      <div class="flex items-center gap-2">
-        <span class="material-symbols-outlined text-2xl text-[#9a442d]">kitchen</span>
-        <span class="font-black text-base tracking-wide text-[#9a442d]">CooCoo 煮煮</span>
-      </div>
-      <!-- Right Side: Clean in production (No '食譜管理', No account button, No badges) -->
-      <div></div>
-    </header>
-
-    <!-- ============================================== -->
-    <!-- VIEW A: TODAY PAGE                             -->
-    <!-- ============================================== -->
-    <div id="viewToday" class="flex-1 overflow-y-auto px-4 py-3 space-y-3">
-      <!-- HUD Rank & EXP -->
-      <section class="bg-white/80 border border-[#ebd9c6] rounded-2xl p-2.5 space-y-1.5 shadow-2xs">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <span class="w-7 h-7 rounded-full bg-[#f2eadb] text-[#9a442d] flex items-center justify-center font-bold">
-              👨‍🍳
-            </span>
-            <div>
-              <strong class="block text-xs font-black text-stone-900">初火學徒</strong>
-              <small class="text-[9px] text-stone-500 font-bold">距下一職階還有 100 EXP</small>
-            </div>
-          </div>
-          <span class="text-[10px] font-mono font-black text-amber-900 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-full">
-            0 EXP
-          </span>
-        </div>
-        <div class="h-1.5 rounded-full bg-stone-200 overflow-hidden">
-          <div class="h-full bg-gradient-to-r from-[#9a442d] to-amber-500 w-0"></div>
-        </div>
-      </section>
-
-      <!-- Scheme A Ticket Card -->
-      <article class="meal-ticket">
-        <div class="ticket-notch-top"></div>
-        <div class="ticket-notch-bottom"></div>
-        <div class="ticket-stub">
-          <span class="stub-vertical-text">STATUS</span>
-          <div class="stub-center">
-            <small>檢核</small>
-            <strong>!</strong>
-          </div>
-          <span class="material-symbols-outlined text-xs">tune</span>
-        </div>
-        <div class="p-3 space-y-2">
-          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black bg-amber-100 text-amber-950 border border-amber-300">
-            <span class="material-symbols-outlined text-xs">info</span>
-            冰箱現有庫存檢核
-          </span>
-          <h3 class="text-sm font-black text-[#293c4e] leading-snug">
-            目前冰箱現有食材暫無完全匹配的料理
-          </h3>
-          <p class="text-[10px] text-stone-600 leading-relaxed font-medium">
-            後台檢核您的可用廚具、時間與飲食限制，尚未找到同時符合全部條件的食譜。
-          </p>
-          <div class="space-y-1 pt-1">
-            <button class="w-full bg-[#9a442d] text-white text-xs font-black py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 shadow-sm">
-              <span class="material-symbols-outlined text-xs">shopping_cart</span>
-              查看「少量補買」候選（2 道）
-            </button>
-            <button class="w-full bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-black py-1.5 px-3 rounded-xl flex items-center justify-center gap-1.5 border border-stone-200">
-              <span class="material-symbols-outlined text-xs">kitchen</span>
-              前往「冰箱」新增或盤點食材
-            </button>
-          </div>
-        </div>
-      </article>
-
-      <!-- Alternatives & Missions Summary -->
-      <section class="border border-[#ebd9c6] bg-white rounded-2xl p-3 space-y-2 shadow-2xs">
-        <div class="flex items-center justify-between">
-          <h4 class="text-xs font-black text-stone-800 flex items-center gap-1">
-            <span class="material-symbols-outlined text-sm text-[#9a442d]">alt_route</span>
-            三個可行方向
-          </h4>
-          <span class="text-[9px] font-bold text-stone-400">點選小票根置換</span>
-        </div>
-        <div class="grid grid-cols-2 gap-1.5 text-left">
-          <div class="border border-stone-200 rounded-xl p-2 bg-stone-50/60">
-            <strong class="text-[11px] block font-black text-stone-800">蔥香煎蛋</strong>
-            <small class="text-[9px] text-stone-500">10 分鐘 · 庫存齊全</small>
-          </div>
-          <div class="border border-stone-200 rounded-xl p-2 bg-stone-50/60">
-            <strong class="text-[11px] block font-black text-stone-800">清炒高麗菜</strong>
-            <small class="text-[9px] text-stone-500">8 分鐘 · 庫存齊全</small>
-          </div>
-        </div>
-      </section>
-
-      <!-- Single Strip Weekly Progress -->
-      <section class="border border-[#ebd9c6] bg-amber-50/60 rounded-2xl p-2.5 flex items-center justify-between text-xs font-bold text-stone-700">
-        <div class="flex items-center gap-2">
-          <span class="material-symbols-outlined text-[#9a442d] text-base">calendar_month</span>
-          <span>本週 0 / 1 餐</span>
-        </div>
-        <button onclick="switchView('me')" class="text-[10px] font-black text-[#9a442d] flex items-center">
-          到「我的」看明細 ➔
+      <!-- Page Switcher Bar -->
+      <div
+        class="inline-flex p-1.5 rounded-2xl bg-stone-200/80 border border-stone-300 text-xs font-black shadow-inner gap-1"
+      >
+        <button
+          id="btnShowToday"
+          class="px-5 py-2 rounded-xl bg-white text-stone-900 shadow-sm transition-all"
+          onclick="switchView('today')"
+        >
+          📱 今日（Today）介面預覽
         </button>
-      </section>
+        <button
+          id="btnShowMe"
+          class="px-5 py-2 rounded-xl text-stone-600 hover:text-stone-900 transition-all"
+          onclick="switchView('me')"
+        >
+          👤 「我的」（Me）帳號介面預覽
+        </button>
+      </div>
     </div>
 
-    <!-- ============================================== -->
-    <!-- VIEW B: ME PAGE (WITH ACCOUNT CARD)            -->
-    <!-- ============================================== -->
-    <div id="viewMe" class="flex-1 overflow-y-auto px-4 py-3 space-y-3" style="display: none;">
-      <div>
-        <p class="text-[9px] font-black text-[#9a442d] tracking-widest uppercase">MY KITCHEN RHYTHM</p>
-        <h2 class="text-2xl font-black text-stone-900 tracking-tight">我的</h2>
-        <p class="text-[11px] text-stone-500">每一次回來，都算數；沒達標不扣分，也不把你歸零。</p>
-      </div>
-
-      <!-- Quick Switcher for Simulation (Logged in vs Visitor) -->
-      <div class="flex items-center justify-between bg-stone-200/70 p-1.5 rounded-xl text-[10px] font-black text-stone-700">
-        <span>模擬帳號身分：</span>
-        <div class="flex gap-1">
-          <button id="btnStateAuth" class="px-2 py-0.5 rounded-lg bg-white shadow-2xs text-[#9a442d]" onclick="toggleAuthState(true)">
-            已登入 (kelly1030817)
-          </button>
-          <button id="btnStateGuest" class="px-2 py-0.5 rounded-lg text-stone-500" onclick="toggleAuthState(false)">
-            訪客模式
-          </button>
+    <!-- Device Mockup Container -->
+    <div class="device-shell">
+      <!-- Phone Top Status Bar -->
+      <div
+        class="pt-3 px-6 pb-2 flex items-center justify-between text-[11px] font-black text-stone-800"
+      >
+        <span>19:30</span>
+        <div class="island"></div>
+        <div class="flex items-center gap-1 text-xs">
+          <span class="material-symbols-outlined text-sm">signal_cellular_alt</span>
+          <span class="material-symbols-outlined text-sm">wifi</span>
+          <span class="material-symbols-outlined text-sm">battery_full</span>
         </div>
       </div>
 
-      <!-- THE NEW ACCOUNT CARD (歸類在「我的」) -->
-      <section class="account-card space-y-3">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-full bg-amber-100 text-amber-900 border border-amber-300 flex items-center justify-center shrink-0">
-            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
-            </svg>
-          </div>
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center gap-1.5">
-              <span id="accountBadge" class="inline-flex items-center gap-1 text-[9px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                雲端帳號已連線
+      <!-- ============================================== -->
+      <!-- 1. RESTORED GLOBAL HEADER                      -->
+      <!-- ============================================== -->
+      <header class="app-header">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-2xl text-[#9a442d]">kitchen</span>
+          <span class="font-black text-base tracking-wide text-[#9a442d]">CooCoo 煮煮</span>
+        </div>
+        <!-- Right Side: Clean in production (No '食譜管理', No account button, No badges) -->
+        <div></div>
+      </header>
+
+      <!-- ============================================== -->
+      <!-- VIEW A: TODAY PAGE                             -->
+      <!-- ============================================== -->
+      <div id="viewToday" class="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+        <!-- HUD Rank & EXP -->
+        <section
+          class="bg-white/80 border border-[#ebd9c6] rounded-2xl p-2.5 space-y-1.5 shadow-2xs"
+        >
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span
+                class="w-7 h-7 rounded-full bg-[#f2eadb] text-[#9a442d] flex items-center justify-center font-bold"
+              >
+                👨‍🍳
               </span>
+              <div>
+                <strong class="block text-xs font-black text-stone-900">初火學徒</strong>
+                <small class="text-[9px] text-stone-500 font-bold">距下一職階還有 100 EXP</small>
+              </div>
             </div>
-            <h3 id="accountName" class="text-base font-black text-stone-900 truncate mt-0.5">
-              kelly1030817
-            </h3>
-            <p id="accountDesc" class="text-[10px] text-stone-500 truncate">
-              kelly1030817@gmail.com
-            </p>
+            <span
+              class="text-[10px] font-mono font-black text-amber-900 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-full"
+            >
+              0 EXP
+            </span>
           </div>
-          <div id="accountAction">
-            <button class="text-xs font-bold text-stone-600 bg-white border border-stone-300 hover:text-red-700 px-3 py-1.5 rounded-xl transition-colors">
-              登出
+          <div class="h-1.5 rounded-full bg-stone-200 overflow-hidden">
+            <div class="h-full bg-gradient-to-r from-[#9a442d] to-amber-500 w-0"></div>
+          </div>
+        </section>
+
+        <!-- Scheme A Ticket Card -->
+        <article class="meal-ticket">
+          <div class="ticket-notch-top"></div>
+          <div class="ticket-notch-bottom"></div>
+          <div class="ticket-stub">
+            <span class="stub-vertical-text">STATUS</span>
+            <div class="stub-center">
+              <small>檢核</small>
+              <strong>!</strong>
+            </div>
+            <span class="material-symbols-outlined text-xs">tune</span>
+          </div>
+          <div class="p-3 space-y-2">
+            <span
+              class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black bg-amber-100 text-amber-950 border border-amber-300"
+            >
+              <span class="material-symbols-outlined text-xs">info</span>
+              冰箱現有庫存檢核
+            </span>
+            <h3 class="text-sm font-black text-[#293c4e] leading-snug">
+              目前冰箱現有食材暫無完全匹配的料理
+            </h3>
+            <p class="text-[10px] text-stone-600 leading-relaxed font-medium">
+              後台檢核您的可用廚具、時間與飲食限制，尚未找到同時符合全部條件的食譜。
+            </p>
+            <div class="space-y-1 pt-1">
+              <button
+                class="w-full bg-[#9a442d] text-white text-xs font-black py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 shadow-sm"
+              >
+                <span class="material-symbols-outlined text-xs">shopping_cart</span>
+                查看「少量補買」候選（2 道）
+              </button>
+              <button
+                class="w-full bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-black py-1.5 px-3 rounded-xl flex items-center justify-center gap-1.5 border border-stone-200"
+              >
+                <span class="material-symbols-outlined text-xs">kitchen</span>
+                前往「冰箱」新增或盤點食材
+              </button>
+            </div>
+          </div>
+        </article>
+
+        <!-- Alternatives & Missions Summary -->
+        <section class="border border-[#ebd9c6] bg-white rounded-2xl p-3 space-y-2 shadow-2xs">
+          <div class="flex items-center justify-between">
+            <h4 class="text-xs font-black text-stone-800 flex items-center gap-1">
+              <span class="material-symbols-outlined text-sm text-[#9a442d]">alt_route</span>
+              三個可行方向
+            </h4>
+            <span class="text-[9px] font-bold text-stone-400">點選小票根置換</span>
+          </div>
+          <div class="grid grid-cols-2 gap-1.5 text-left">
+            <div class="border border-stone-200 rounded-xl p-2 bg-stone-50/60">
+              <strong class="text-[11px] block font-black text-stone-800">蔥香煎蛋</strong>
+              <small class="text-[9px] text-stone-500">10 分鐘 · 庫存齊全</small>
+            </div>
+            <div class="border border-stone-200 rounded-xl p-2 bg-stone-50/60">
+              <strong class="text-[11px] block font-black text-stone-800">清炒高麗菜</strong>
+              <small class="text-[9px] text-stone-500">8 分鐘 · 庫存齊全</small>
+            </div>
+          </div>
+        </section>
+
+        <!-- Single Strip Weekly Progress -->
+        <section
+          class="border border-[#ebd9c6] bg-amber-50/60 rounded-2xl p-2.5 flex items-center justify-between text-xs font-bold text-stone-700"
+        >
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-[#9a442d] text-base">calendar_month</span>
+            <span>本週 0 / 1 餐</span>
+          </div>
+          <button
+            onclick="switchView('me')"
+            class="text-[10px] font-black text-[#9a442d] flex items-center"
+          >
+            到「我的」看明細 ➔
+          </button>
+        </section>
+      </div>
+
+      <!-- ============================================== -->
+      <!-- VIEW B: ME PAGE (WITH ACCOUNT CARD)            -->
+      <!-- ============================================== -->
+      <div id="viewMe" class="flex-1 overflow-y-auto px-4 py-3 space-y-3" style="display: none">
+        <div>
+          <p class="text-[9px] font-black text-[#9a442d] tracking-widest uppercase">
+            MY KITCHEN RHYTHM
+          </p>
+          <h2 class="text-2xl font-black text-stone-900 tracking-tight">我的</h2>
+          <p class="text-[11px] text-stone-500">每一次回來，都算數；沒達標不扣分，也不把你歸零。</p>
+        </div>
+
+        <!-- Quick Switcher for Simulation (Logged in vs Visitor) -->
+        <div
+          class="flex items-center justify-between bg-stone-200/70 p-1.5 rounded-xl text-[10px] font-black text-stone-700"
+        >
+          <span>模擬帳號身分：</span>
+          <div class="flex gap-1">
+            <button
+              id="btnStateAuth"
+              class="px-2 py-0.5 rounded-lg bg-white shadow-2xs text-[#9a442d]"
+              onclick="toggleAuthState(true)"
+            >
+              已登入 (kelly1030817)
+            </button>
+            <button
+              id="btnStateGuest"
+              class="px-2 py-0.5 rounded-lg text-stone-500"
+              onclick="toggleAuthState(false)"
+            >
+              訪客模式
             </button>
           </div>
         </div>
 
-        <div class="border-t border-dashed border-amber-200/80 pt-2.5">
-          <button class="w-full flex items-center justify-between text-xs font-black text-[#9a442d] hover:opacity-80 transition-opacity">
-            <span class="flex items-center gap-1.5">
-              <span class="material-symbols-outlined text-sm">restart_alt</span>
-              重新檢視五步主廚檔案設定
-            </span>
-            <span>➔</span>
-          </button>
-        </div>
-      </section>
-
-      <!-- Weekly Goal Card -->
-      <section class="bg-white border border-[#ebd9c6] rounded-2xl p-3.5 space-y-2 shadow-2xs">
-        <span class="text-[9px] font-black text-[#9a442d] uppercase tracking-wider">本週主目標</span>
-        <div class="flex items-center justify-between">
-          <div>
-            <h3 class="text-lg font-black text-stone-900">自煮餐份</h3>
-            <strong class="text-xs font-black text-[#9a442d]">0 / 1 份</strong>
+        <!-- THE NEW ACCOUNT CARD (歸類在「我的」) -->
+        <section class="account-card space-y-3">
+          <div class="flex items-center gap-3">
+            <div
+              class="w-10 h-10 rounded-full bg-amber-100 text-amber-900 border border-amber-300 flex items-center justify-center shrink-0"
+            >
+              <svg
+                class="w-5 h-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-1.5">
+                <span
+                  id="accountBadge"
+                  class="inline-flex items-center gap-1 text-[9px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300"
+                >
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                  雲端帳號已連線
+                </span>
+              </div>
+              <h3 id="accountName" class="text-base font-black text-stone-900 truncate mt-0.5">
+                kelly1030817
+              </h3>
+              <p id="accountDesc" class="text-[10px] text-stone-500 truncate">
+                kelly1030817@gmail.com
+              </p>
+            </div>
+            <div id="accountAction">
+              <button
+                class="text-xs font-bold text-stone-600 bg-white border border-stone-300 hover:text-red-700 px-3 py-1.5 rounded-xl transition-colors"
+              >
+                登出
+              </button>
+            </div>
           </div>
-          <div class="w-12 h-12 rounded-full border-2 border-stone-200 flex items-center justify-center text-xs font-black text-stone-800">
-            0%
-          </div>
-        </div>
-      </section>
 
-      <!-- Chef Ranks and Badges -->
-      <section class="bg-white border border-[#ebd9c6] rounded-2xl p-3.5 space-y-2 shadow-2xs">
-        <span class="text-[9px] font-black text-[#9a442d] uppercase tracking-wider">目前職階</span>
-        <div class="flex items-center justify-between">
-          <h3 class="text-base font-black text-stone-900">初火學徒</h3>
-          <span class="text-xs font-mono font-black text-[#9a442d]">0 EXP</span>
-        </div>
-        <p class="text-[10px] text-stone-500">距下一職階還有 100 EXP</p>
-      </section>
+          <div class="border-t border-dashed border-amber-200/80 pt-2.5">
+            <button
+              class="w-full flex items-center justify-between text-xs font-black text-[#9a442d] hover:opacity-80 transition-opacity"
+            >
+              <span class="flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-sm">restart_alt</span>
+                重新檢視五步主廚檔案設定
+              </span>
+              <span>➔</span>
+            </button>
+          </div>
+        </section>
+
+        <!-- Weekly Goal Card -->
+        <section class="bg-white border border-[#ebd9c6] rounded-2xl p-3.5 space-y-2 shadow-2xs">
+          <span class="text-[9px] font-black text-[#9a442d] uppercase tracking-wider"
+            >本週主目標</span
+          >
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-lg font-black text-stone-900">自煮餐份</h3>
+              <strong class="text-xs font-black text-[#9a442d]">0 / 1 份</strong>
+            </div>
+            <div
+              class="w-12 h-12 rounded-full border-2 border-stone-200 flex items-center justify-center text-xs font-black text-stone-800"
+            >
+              0%
+            </div>
+          </div>
+        </section>
+
+        <!-- Chef Ranks and Badges -->
+        <section class="bg-white border border-[#ebd9c6] rounded-2xl p-3.5 space-y-2 shadow-2xs">
+          <span class="text-[9px] font-black text-[#9a442d] uppercase tracking-wider"
+            >目前職階</span
+          >
+          <div class="flex items-center justify-between">
+            <h3 class="text-base font-black text-stone-900">初火學徒</h3>
+            <span class="text-xs font-mono font-black text-[#9a442d]">0 EXP</span>
+          </div>
+          <p class="text-[10px] text-stone-500">距下一職階還有 100 EXP</p>
+        </section>
+      </div>
+
+      <!-- ============================================== -->
+      <!-- BOTTOM TAB NAVIGATION                          -->
+      <!-- ============================================== -->
+      <nav class="tabbar">
+        <button id="tabToday" class="tab-btn active" onclick="switchView('today')">
+          <span class="material-symbols-outlined text-xl">today</span>
+          <span>今日</span>
+        </button>
+        <button class="tab-btn" onclick="alert('點選「今日」或「我的」即可預覽本次調整重點')">
+          <span class="material-symbols-outlined text-xl">shopping_bag</span>
+          <span>採買</span>
+        </button>
+        <button class="tab-btn" onclick="alert('點選「今日」或「我的」即可預覽本次調整重點')">
+          <span class="material-symbols-outlined text-xl">kitchen</span>
+          <span>冰箱</span>
+        </button>
+        <button class="tab-btn" onclick="alert('點選「今日」或「我的」即可預覽本次調整重點')">
+          <span class="material-symbols-outlined text-xl">menu_book</span>
+          <span>食譜</span>
+        </button>
+        <button id="tabMe" class="tab-btn" onclick="switchView('me')">
+          <span class="material-symbols-outlined text-xl">person</span>
+          <span>我的</span>
+        </button>
+      </nav>
     </div>
 
-    <!-- ============================================== -->
-    <!-- BOTTOM TAB NAVIGATION                          -->
-    <!-- ============================================== -->
-    <nav class="tabbar">
-      <button id="tabToday" class="tab-btn active" onclick="switchView('today')">
-        <span class="material-symbols-outlined text-xl">today</span>
-        <span>今日</span>
-      </button>
-      <button class="tab-btn" onclick="alert('點選「今日」或「我的」即可預覽本次調整重點')">
-        <span class="material-symbols-outlined text-xl">shopping_bag</span>
-        <span>採買</span>
-      </button>
-      <button class="tab-btn" onclick="alert('點選「今日」或「我的」即可預覽本次調整重點')">
-        <span class="material-symbols-outlined text-xl">kitchen</span>
-        <span>冰箱</span>
-      </button>
-      <button class="tab-btn" onclick="alert('點選「今日」或「我的」即可預覽本次調整重點')">
-        <span class="material-symbols-outlined text-xl">menu_book</span>
-        <span>食譜</span>
-      </button>
-      <button id="tabMe" class="tab-btn" onclick="switchView('me')">
-        <span class="material-symbols-outlined text-xl">person</span>
-        <span>我的</span>
-      </button>
-    </nav>
-  </div>
+    <script>
+      function switchView(view) {
+        const viewToday = document.getElementById("viewToday");
+        const viewMe = document.getElementById("viewMe");
+        const tabToday = document.getElementById("tabToday");
+        const tabMe = document.getElementById("tabMe");
+        const btnShowToday = document.getElementById("btnShowToday");
+        const btnShowMe = document.getElementById("btnShowMe");
 
-  <script>
-    function switchView(view) {
-      const viewToday = document.getElementById('viewToday');
-      const viewMe = document.getElementById('viewMe');
-      const tabToday = document.getElementById('tabToday');
-      const tabMe = document.getElementById('tabMe');
-      const btnShowToday = document.getElementById('btnShowToday');
-      const btnShowMe = document.getElementById('btnShowMe');
-
-      if (view === 'today') {
-        viewToday.style.display = 'block';
-        viewMe.style.display = 'none';
-        tabToday.classList.add('active');
-        tabMe.classList.remove('active');
-        btnShowToday.className = 'px-5 py-2 rounded-xl bg-white text-stone-900 shadow-sm transition-all';
-        btnShowMe.className = 'px-5 py-2 rounded-xl text-stone-600 hover:text-stone-900 transition-all';
-      } else {
-        viewToday.style.display = 'none';
-        viewMe.style.display = 'block';
-        tabToday.classList.remove('active');
-        tabMe.classList.add('active');
-        btnShowMe.className = 'px-5 py-2 rounded-xl bg-white text-stone-900 shadow-sm transition-all';
-        btnShowToday.className = 'px-5 py-2 rounded-xl text-stone-600 hover:text-stone-900 transition-all';
+        if (view === "today") {
+          viewToday.style.display = "block";
+          viewMe.style.display = "none";
+          tabToday.classList.add("active");
+          tabMe.classList.remove("active");
+          btnShowToday.className =
+            "px-5 py-2 rounded-xl bg-white text-stone-900 shadow-sm transition-all";
+          btnShowMe.className =
+            "px-5 py-2 rounded-xl text-stone-600 hover:text-stone-900 transition-all";
+        } else {
+          viewToday.style.display = "none";
+          viewMe.style.display = "block";
+          tabToday.classList.remove("active");
+          tabMe.classList.add("active");
+          btnShowMe.className =
+            "px-5 py-2 rounded-xl bg-white text-stone-900 shadow-sm transition-all";
+          btnShowToday.className =
+            "px-5 py-2 rounded-xl text-stone-600 hover:text-stone-900 transition-all";
+        }
       }
-    }
 
-    function toggleAuthState(isAuth) {
-      const btnStateAuth = document.getElementById('btnStateAuth');
-      const btnStateGuest = document.getElementById('btnStateGuest');
-      const badge = document.getElementById('accountBadge');
-      const name = document.getElementById('accountName');
-      const desc = document.getElementById('accountDesc');
-      const action = document.getElementById('accountAction');
+      function toggleAuthState(isAuth) {
+        const btnStateAuth = document.getElementById("btnStateAuth");
+        const btnStateGuest = document.getElementById("btnStateGuest");
+        const badge = document.getElementById("accountBadge");
+        const name = document.getElementById("accountName");
+        const desc = document.getElementById("accountDesc");
+        const action = document.getElementById("accountAction");
 
-      if (isAuth) {
-        btnStateAuth.className = 'px-2 py-0.5 rounded-lg bg-white shadow-2xs text-[#9a442d]';
-        btnStateGuest.className = 'px-2 py-0.5 rounded-lg text-stone-500';
-        badge.className = 'inline-flex items-center gap-1 text-[9px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300';
-        badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>雲端帳號已連線';
-        name.innerText = 'kelly1030817';
-        desc.innerText = 'kelly1030817@gmail.com';
-        action.innerHTML = '<button class="text-xs font-bold text-stone-600 bg-white border border-stone-300 hover:text-red-700 px-3 py-1.5 rounded-xl transition-colors">登出</button>';
-      } else {
-        btnStateGuest.className = 'px-2 py-0.5 rounded-lg bg-white shadow-2xs text-[#9a442d]';
-        btnStateAuth.className = 'px-2 py-0.5 rounded-lg text-stone-500';
-        badge.className = 'inline-flex items-center gap-1 text-[9px] font-black px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300';
-        badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>本機訪客模式';
-        name.innerText = '本機訪客';
-        desc.innerText = '資料暫存於此瀏覽器，登入可跨裝置同步備份';
-        action.innerHTML = '<button class="text-xs font-black text-amber-950 bg-amber-100 hover:bg-amber-200 border border-amber-300 px-3 py-1.5 rounded-xl transition-colors">Google 登入</button>';
+        if (isAuth) {
+          btnStateAuth.className = "px-2 py-0.5 rounded-lg bg-white shadow-2xs text-[#9a442d]";
+          btnStateGuest.className = "px-2 py-0.5 rounded-lg text-stone-500";
+          badge.className =
+            "inline-flex items-center gap-1 text-[9px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300";
+          badge.innerHTML =
+            '<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>雲端帳號已連線';
+          name.innerText = "kelly1030817";
+          desc.innerText = "kelly1030817@gmail.com";
+          action.innerHTML =
+            '<button class="text-xs font-bold text-stone-600 bg-white border border-stone-300 hover:text-red-700 px-3 py-1.5 rounded-xl transition-colors">登出</button>';
+        } else {
+          btnStateGuest.className = "px-2 py-0.5 rounded-lg bg-white shadow-2xs text-[#9a442d]";
+          btnStateAuth.className = "px-2 py-0.5 rounded-lg text-stone-500";
+          badge.className =
+            "inline-flex items-center gap-1 text-[9px] font-black px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300";
+          badge.innerHTML =
+            '<span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>本機訪客模式';
+          name.innerText = "本機訪客";
+          desc.innerText = "資料暫存於此瀏覽器，登入可跨裝置同步備份";
+          action.innerHTML =
+            '<button class="text-xs font-black text-amber-950 bg-amber-100 hover:bg-amber-200 border border-amber-300 px-3 py-1.5 rounded-xl transition-colors">Google 登入</button>';
+        }
       }
-    }
-  </script>
-</body>
+    </script>
+  </body>
 </html>

@@ -1,1 +1,1 @@
-export { CooCooService as ShoppingApplicationService, parseShoppingText } from '@coocoo/core'
+export { CooCooService as ShoppingApplicationService, parseShoppingText } from "@coocoo/core";
