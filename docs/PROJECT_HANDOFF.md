@@ -15,6 +15,7 @@
 
 - 使用者明確要求修正剩餘三個失敗並在全數通過後發布正式站。三個失敗均來自固定的 2026-09 保存期限與真實時鐘不一致；core 測試注入固定 Runtime，PGlite 測試以資料庫台北日期加 7／12 日產生保存期限，MSW 測試使用未來 7 日期限。正式食安判斷未修改，新增過期食材拒絕入庫／庫存不變的斷言。
 - 完整 `bun run verify` exit 0：187 個單元／契約測試、27 個 Playwright 測試全部通過，lint、格式、Web build 與 API typecheck 通過。仍有既有 Fast Refresh warning；E2E 模擬後端的 health proxy 探測紀錄不影響通過結果。
+- GitHub CI 額外發現根目錄 bunx 下載 Chromium 1248，而 Web 鎖定的 Playwright 需要 1243。安裝改用 Web workspace 的 test:e2e:install 腳本，與執行測試解析同一個已安裝版本；不更新依賴或鎖檔。修正後須等待 CI 完整重跑。
 - 發布路徑已查核：GitHub main → Vercel coocoo-marketing → https://coocoo-marketing.vercel.app 。當前 Production commit 為 0d26353，尚未發布本次變更。Vercel CLI token 過期，使用現有 GitHub 自動部署，不建立額外專案。
 - 新舊帳號 Hosted Auth／Render 資料流程已實測；部署後正式網址的實際 Email 登入與頁面重整仍需再查核，手機真機仍待驗證。
 
