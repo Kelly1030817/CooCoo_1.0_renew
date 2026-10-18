@@ -2,6 +2,8 @@ import { createClient } from "@supabase/supabase-js";
 
 const url = import.meta.env.VITE_SUPABASE_URL;
 const publishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+export const isAuthPreviewOnly =
+  import.meta.env.DEV && import.meta.env.VITE_AUTH_PREVIEW_ONLY === "true";
 export const isSupabaseConfigured = Boolean(url && publishableKey);
 export const supabase = isSupabaseConfigured
   ? createClient(url, publishableKey, {
@@ -43,7 +45,7 @@ export function readAuthCallbackIssue(hash: string) {
   if (description.startsWith("Unable to exchange external code")) {
     return {
       code,
-      message: "Google 登入未完成，請稍後重試；若持續發生，請檢查 OAuth 用戶端憑證設定。",
+      message: "登入未完成，請回到 CooCoo 使用 Email 驗證碼重新登入。",
     };
   }
   return {
@@ -53,6 +55,7 @@ export function readAuthCallbackIssue(hash: string) {
 }
 
 export async function requestEmailOtp(email: string, redirectTo: string = window.location.origin) {
+  if (isAuthPreviewOnly) throw new Error("此預覽只供檢視登入畫面，尚未開放寄送驗證碼。");
   if (!supabase) throw new Error("尚未設定 Supabase Auth");
   const { error } = await supabase.auth.signInWithOtp({
     email,
@@ -62,18 +65,12 @@ export async function requestEmailOtp(email: string, redirectTo: string = window
 }
 
 export async function verifyEmailOtp(email: string, token: string) {
+  if (isAuthPreviewOnly) throw new Error("此預覽只供檢視登入畫面，尚未開放寄送驗證碼。");
   if (!supabase) throw new Error("尚未設定 Supabase Auth");
-  const { error } = await supabase.auth.verifyOtp({ email, token, type: "email" });
+  const { data, error } = await supabase.auth.verifyOtp({ email, token, type: "email" });
   if (error) throw error;
-}
-
-export async function startGoogleAuth(redirectTo: string = window.location.origin) {
-  if (!supabase) throw new Error("尚未設定 Supabase Auth");
-  const { error } = await supabase.auth.signInWithOAuth({
-    provider: "google",
-    options: { redirectTo },
-  });
-  if (error) throw error;
+  if (!data.session) throw new Error("驗證未完成，請重新寄送驗證碼。");
+  return data.session;
 }
 
 export function currentPageRedirectTo() {

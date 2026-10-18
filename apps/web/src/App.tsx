@@ -8,7 +8,7 @@ import { BottomNav } from "@/widgets/app-shell/BottomNav";
 import { OnboardingPage } from "@/pages/onboarding/OnboardingPage";
 import { readOnboardingDraft } from "@/shared/model/onboarding-draft";
 import { api } from "@/shared/api/client";
-import { currentPageRedirectTo, startGoogleAuth, supabase } from "@/shared/auth/supabase";
+import { supabase } from "@/shared/auth/supabase";
 import { useAuthSession } from "@/shared/auth/session";
 import { AuthRecoveryPanel } from "@/shared/auth/AuthRecoveryPanel";
 import { useUi } from "@/app/ui-context";
@@ -36,8 +36,6 @@ export default function App() {
   const [onboardingComplete, setOnboardingComplete] = useState(
     () => readOnboardingDraft().status === "complete",
   );
-  const [reauthBusy, setReauthBusy] = useState(false);
-  const [reauthError, setReauthError] = useState("");
   useEffect(() => {
     if (!session) return undefined;
     let active = true;
@@ -58,18 +56,6 @@ export default function App() {
   }, [session, queryClient]);
   const stateEnabled = onboardingComplete && (!supabase || authStatus === "signed-in");
   const { data, isLoading, error } = useAppState(stateEnabled);
-  const restartGoogleAuth = async () => {
-    setReauthBusy(true);
-    setReauthError("");
-    try {
-      await startGoogleAuth(currentPageRedirectTo());
-    } catch (reason) {
-      setReauthBusy(false);
-      setReauthError(
-        reason instanceof Error ? reason.message : "Google 登入暫時無法開始，請稍後再試。",
-      );
-    }
-  };
   const Page = route !== "onboarding" ? pages[route] : null;
   if (onboardingComplete && authStatus === "loading")
     return (
@@ -78,16 +64,7 @@ export default function App() {
         <h1 className="text-2xl font-extrabold text-slate-blue">正在找回你的主廚檔案…</h1>
       </main>
     );
-  if (onboardingComplete && supabase && authStatus === "signed-out")
-    return (
-      <AuthRecoveryPanel
-        busy={reauthBusy}
-        error={reauthError}
-        onGoogleSignIn={() => {
-          void restartGoogleAuth();
-        }}
-      />
-    );
+  if (onboardingComplete && supabase && authStatus === "signed-out") return <AuthRecoveryPanel />;
 
   const localDraft = readOnboardingDraft();
   const isReplaying =
@@ -106,7 +83,7 @@ export default function App() {
         canExit={onboardingComplete}
         onExit={() => {
           navigate("today");
-          ui.toast("設定草稿已安全暫存；完成五步後才會成立主廚檔案。");
+          ui.toast("設定草稿已安全暫存；完成三步後才會成立主廚檔案。");
         }}
         onComplete={() => {
           navigate("today");

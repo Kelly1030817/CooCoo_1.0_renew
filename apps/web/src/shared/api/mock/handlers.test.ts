@@ -338,6 +338,7 @@ describe("MSW contract adapter", () => {
     expect(tasks.data.find((item) => item.id === taskId)?.status).toBe("complete");
   });
   test("shortage bridge is idempotent and command restock replays without double intake", async () => {
+    const expiresOn = new Date(Date.now() + 7 * 86_400_000).toISOString().slice(0, 10);
     const recipeId = "11111111-1111-4111-8111-111111111111";
     const taskResponse = await api("/meal-tasks", {
       method: "POST",
@@ -428,7 +429,7 @@ describe("MSW contract adapter", () => {
         actualUnit: item.unit,
         actualPrice: 40,
         storageLocation: "cold",
-        expiresOn: "2026-09-20",
+        expiresOn,
       });
     }
     const operationId = crypto.randomUUID();
@@ -443,6 +444,7 @@ describe("MSW contract adapter", () => {
       headers: { "content-type": "application/json" },
       body: JSON.stringify(command),
     });
+    expect(restockResponse.status).toBe(200);
     const restockBody = (await restockResponse.json()) as {
       data: { replayed: boolean; count: number; mealTaskStatus: string; nextActions: string[] };
     };

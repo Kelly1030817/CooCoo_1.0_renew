@@ -1,3 +1,4 @@
+import { EmailSignIn } from "@/shared/auth/EmailSignIn";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
@@ -18,7 +19,7 @@ import { api, json } from "@/shared/api/client";
 import { readOnboardingDraft, saveOnboardingDraft } from "@/shared/model/onboarding-draft";
 import { Modal, ModalHeader } from "@/shared/ui/Modal";
 import { useUi } from "@/app/ui-context";
-import { currentPageRedirectTo, startGoogleAuth, supabase } from "@/shared/auth/supabase";
+import { supabase } from "@/shared/auth/supabase";
 import { CookwareModal, ProfileModal } from "@/widgets/app-shell/Header";
 import { RotateCcw } from "lucide-react";
 
@@ -62,8 +63,7 @@ export function MePage() {
   const ui = useUi();
   const { navigate } = useAppRoute();
   const [target, setTarget] = useState(data?.weeklyGoal.target ?? 1);
-  const [authBusy, setAuthBusy] = useState(false);
-  const [authError, setAuthError] = useState("");
+  const [showEmailSignIn, setShowEmailSignIn] = useState(false);
 
   useEffect(() => {
     if (data?.weeklyGoal.target != null) {
@@ -72,17 +72,6 @@ export function MePage() {
   }, [data?.weeklyGoal.target]);
 
   if (!data) return null;
-
-  const handleGoogleSignIn = async () => {
-    setAuthBusy(true);
-    setAuthError("");
-    try {
-      await startGoogleAuth(currentPageRedirectTo());
-    } catch (e) {
-      setAuthBusy(false);
-      setAuthError(e instanceof Error ? e.message : "Google 登入啟動失敗");
-    }
-  };
 
   const handleSignOut = async () => {
     await supabase?.auth.signOut();
@@ -167,28 +156,19 @@ export function MePage() {
                 登出
               </button>
             ) : (
-              <button
-                type="button"
-                disabled={authBusy}
-                onClick={handleGoogleSignIn}
-                className="btn-signin"
-              >
-                {authBusy ? "登入中…" : "Google 登入"}
+              <button type="button" onClick={() => setShowEmailSignIn(true)} className="btn-signin">
+                Email 登入
               </button>
             )}
           </div>
         </div>
 
-        {authError && (
-          <p role="alert" className="account-error">
-            {authError}
-          </p>
-        )}
+        {showEmailSignIn && !data?.session.user && <EmailSignIn />}
 
         <div className="account-footer">
           <button type="button" onClick={replayOnboarding} className="account-replay-btn">
             <RotateCcw aria-hidden="true" className="size-4 shrink-0" />
-            <span>重新檢視五步主廚檔案設定</span>
+            <span>重新檢視三步主廚檔案設定</span>
             <span className="arrow">➔</span>
           </button>
         </div>

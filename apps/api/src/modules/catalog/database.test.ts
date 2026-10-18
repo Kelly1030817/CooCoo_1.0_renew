@@ -303,6 +303,12 @@ test("inventory quantities and EXP are changed once by cooking replay", async ()
   ).toBe("brand_safe");
 });
 test("restock v2: partial keeps task open, replay is idempotent, expiry and location are honored", async () => {
+  // Derive expiry from the same database clock used by the RPC safety check.
+  const dates = (
+    await db.query<{ first: string; second: string }>(
+      "select (timezone('Asia/Taipei', now())::date + 7)::text as first, (timezone('Asia/Taipei', now())::date + 12)::text as second",
+    )
+  ).rows[0];
   const recipeId = crypto.randomUUID(),
     taskId = crypto.randomUUID(),
     taskOperation = crypto.randomUUID(),
@@ -356,7 +362,7 @@ test("restock v2: partial keeps task open, replay is idempotent, expiry and loca
         actual_unit: "顆",
         actual_price: 15,
         storage_location: "cold",
-        expires_on: "2026-09-20",
+        expires_on: dates.first,
       },
     ]),
     taskId,
@@ -373,7 +379,7 @@ test("restock v2: partial keeps task open, replay is idempotent, expiry and loca
   );
   const expiresOnly = (value: Date | string) =>
     (value instanceof Date ? value.toISOString() : String(value)).slice(0, 10);
-  expect(expiresOnly(batch.rows[0].expires_on)).toBe("2026-09-20");
+  expect(expiresOnly(batch.rows[0].expires_on)).toBe(dates.first);
   expect(batch.rows[0].location).toBe("cold");
   expect(Number(batch.rows[0].unit_cost)).toBe(15);
   const replay = await db.query<{ value: { count: number; replayed: boolean } }>(
@@ -389,7 +395,7 @@ test("restock v2: partial keeps task open, replay is idempotent, expiry and loca
           actual_unit: "顆",
           actual_price: 15,
           storage_location: "cold",
-          expires_on: "2026-09-20",
+          expires_on: dates.first,
         },
       ]),
       taskId,
@@ -430,7 +436,7 @@ test("restock v2: partial keeps task open, replay is idempotent, expiry and loca
           actual_unit: "顆",
           actual_price: 15,
           storage_location: "pantry",
-          expires_on: "2026-09-25",
+          expires_on: dates.second,
         },
       ]),
       taskId,
