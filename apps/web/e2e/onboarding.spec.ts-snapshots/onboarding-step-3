@@ -4,7 +4,7 @@
   - paragraph: /首次設定 · \d+ 登入與通行證/
   - progressbar "第 3 步，共 3 步"
   - strong: 最後一步，登入並成立你的主廚檔案。
-  - paragraph: 同步設定後蓋章啟程；這一步不會建立、清空或修改冰箱庫存。
+  - paragraph: Email 驗證後，一次成立檔案並啟程；這一步不會建立、清空或修改冰箱庫存。
   - heading "登入並同步主廚檔案" [level=2]
   - paragraph: 設定會跟著帳號，不會只留在這台裝置。
   - paragraph: 本機 Preview 使用測試資料；正式環境會先要求登入。
@@ -24,4 +24,4 @@
   - img "CooCoo 親筆簽名"
   - text: VERIFIED
   - button "‹ 上一步"
-  - button "蓋章，成立主廚檔案"
+  - button "成立主廚檔案並開始"

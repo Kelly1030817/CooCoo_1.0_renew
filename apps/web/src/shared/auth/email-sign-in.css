@@ -1,0 +1,52 @@
+.email-sign-in {
+  display: grid;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  text-align: left;
+}
+.email-sign-in label {
+  display: grid;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 700;
+}
+.email-sign-in input {
+  width: 100%;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #c9bdb0;
+  border-radius: 12px;
+  background: #fff;
+  color: #263544;
+  font-size: 16px;
+}
+.email-sign-in button {
+  padding: 12px;
+  border-radius: 12px;
+  background: #263544;
+  color: #fff;
+  font-weight: 700;
+}
+.email-sign-in button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.email-sign-in p,
+.email-sign-in small {
+  overflow-wrap: anywhere;
+  font-size: 13px;
+}
+.email-sign-in [role="alert"] {
+  color: #ba1a1a;
+}
+.email-sign-in-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.email-sign-in .email-sign-in-actions button {
+  background: #f2ece5;
+  color: #263544;
+  font-size: 13px;
+}

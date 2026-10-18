@@ -1,13 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { FormProvider } from "react-hook-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { OnboardingProfile } from "@coocoo/contracts";
+import { AppStateSchema, type OnboardingProfile } from "@coocoo/contracts";
 import { api, json } from "@/shared/api/client";
 import { stateQueryKey } from "@/entities/app-state/model";
 import { saveOnboardingDraft } from "@/shared/model/onboarding-draft";
 import { queryClient } from "@/app/query-client";
 import { authSessionQueryKey, useAuthSession } from "@/shared/auth/session";
-import { onboardingRedirectTo, startGoogleAuth, supabase } from "@/shared/auth/supabase";
+import { supabase } from "@/shared/auth/supabase";
 import { ChefAvatar, type ChefMood } from "@/widgets/onboarding/ChefAvatar";
 import { OnboardingStep1 } from "@/widgets/onboarding/OnboardingStep1";
 import { OnboardingStep2 } from "@/widgets/onboarding/OnboardingStep2";
@@ -41,7 +41,7 @@ export function OnboardingPage({
   const [mood, setMood] = useState<ChefMood>("listen");
   const [nodding, setNodding] = useState(false);
   const [stamped, setStamped] = useState(false);
-  const [sealDropped, setSealDropped] = useState(false);
+  const finishing = useRef(false);
   const [error, setError] = useState("");
   const cheer = (nextMood: ChefMood) => {
     setMood(nextMood);
@@ -54,20 +54,20 @@ export function OnboardingPage({
     if (callbackIssue) setError(callbackIssue);
   }, [callbackIssue]);
 
-  useEffect(() => {
-    if (!stamped) return undefined;
-    const timer = window.setTimeout(() => setSealDropped(true), 1450);
-    return () => window.clearTimeout(timer);
-  }, [stamped]);
-
   const mutation = useMutation({
     mutationFn: async (complete: OnboardingProfile) => {
       await api("/onboarding", json("PUT", complete));
+      const state = await api("/state", undefined, AppStateSchema);
+      if (state.onboardingProfile?.status !== "complete") {
+        throw new Error("設定尚未確認儲存，草稿仍保留，請重試。");
+      }
+      query.setQueryData(stateQueryKey, state);
       return complete;
     },
     onSuccess: async (complete) => {
       saveOnboardingDraft(complete);
-      await query.invalidateQueries({ queryKey: stateQueryKey });
+      setStamped(true);
+      cheer("sealed");
       onComplete();
     },
     onError: (reason) => {
@@ -77,20 +77,20 @@ export function OnboardingPage({
   const busy = confirming || mutation.isPending;
 
   const confirmSignedIn = async () => {
-    if (!supabase || authStatus === "signed-in") return true;
+    if (!supabase) return true;
     setConfirming(true);
     setError("");
     try {
       const { data, error: authError } = await supabase.auth.getSession();
       if (authError || !data.session) {
         queryClient.setQueryData(authSessionQueryKey, null);
-        setError("主廚設定已保存在草稿；請先完成登入，再按一次蓋章。");
+        setError("主廚設定已保存在草稿；請先完成登入，再按一次開始。");
         return false;
       }
       queryClient.setQueryData(authSessionQueryKey, data.session);
       return true;
     } catch {
-      setError("暫時無法確認登入狀態，請檢查網路後再按一次蓋章。");
+      setError("暫時無法確認登入狀態，請檢查網路後再按一次開始。");
       return false;
     } finally {
       setConfirming(false);
@@ -98,21 +98,22 @@ export function OnboardingPage({
   };
 
   const stampOrFinish = async () => {
-    if (!stamped) {
-      if (!(await confirmSignedIn())) return;
-      setStamped(true);
-      cheer("sealed");
-      return;
-    }
+    if (finishing.current) return;
+    finishing.current = true;
     setError("");
-    await form.handleSubmit(
-      (values) => {
-        mutation.mutate(completeOnboardingProfile(values, new Date().toISOString()));
-      },
-      () => {
-        setError("請完成本步必要資料");
-      },
-    )();
+    try {
+      if (!(await confirmSignedIn())) return;
+      await form.handleSubmit(
+        async (values) => {
+          await mutation.mutateAsync(completeOnboardingProfile(values, new Date().toISOString()));
+        },
+        () => setError("請完成必要資料"),
+      )();
+    } catch {
+      // The mutation reports the failure and keeps the draft available for retry.
+    } finally {
+      finishing.current = false;
+    }
   };
 
   return (
@@ -192,12 +193,8 @@ export function OnboardingPage({
                   profile={profile}
                   authStatus={authStatus}
                   supabaseConfigured={Boolean(supabase)}
-                  step={step}
                   stamped={stamped}
-                  sealDropped={sealDropped}
-                  onGoogleSignIn={(currentStep) => {
-                    void startGoogleAuth(onboardingRedirectTo(currentStep));
-                  }}
+                  sealDropped={stamped}
                 />
               )}
               {error && (
@@ -212,7 +209,7 @@ export function OnboardingPage({
             <button
               type="button"
               className="ghost"
-              disabled={step === 1}
+              disabled={step === 1 || busy}
               onClick={() => {
                 setMood("listen");
                 update({ currentStep: Math.max(1, step - 1) });
@@ -223,14 +220,16 @@ export function OnboardingPage({
             <small>
               {valid
                 ? step === 3 && authStatus !== "signed-in"
-                  ? "蓋章時會確認登入"
+                  ? "請先完成 Email 驗證"
                   : "資料會先保存在草稿"
                 : "請完成本步必要資料"}
             </small>
             <button
               type="button"
               className={`primary ${step === 3 && stamped ? "ready" : ""}`}
-              disabled={!valid || busy || (step === 3 && stamped && !sealDropped)}
+              disabled={
+                !valid || busy || (step === 3 && Boolean(supabase) && authStatus !== "signed-in")
+              }
               onClick={
                 step === 3
                   ? () => {
@@ -242,15 +241,7 @@ export function OnboardingPage({
                     }
               }
             >
-              {busy
-                ? step === 3 && stamped
-                  ? "儲存中…"
-                  : "確認中…"
-                : step === 3
-                  ? stamped
-                    ? "啟程！進入今日"
-                    : "蓋章，成立主廚檔案"
-                  : "繼續 ›"}
+              {busy ? "確認並儲存中…" : step === 3 ? "成立主廚檔案並開始" : "繼續 ›"}
             </button>
           </footer>
         </section>

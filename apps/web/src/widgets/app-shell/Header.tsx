@@ -1,3 +1,4 @@
+import { EmailSignIn } from "@/shared/auth/EmailSignIn";
 import { CatalogAdminModal } from "../../features/recipes/CatalogAdminModal";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -6,7 +7,7 @@ import { api } from "../../shared/api/client";
 import { useUi } from "../../app/ui-context";
 import { Modal, ModalHeader } from "../../shared/ui/Modal";
 import { BrandLogo } from "../../shared/ui/BrandLogo";
-import { currentPageRedirectTo, supabase, startGoogleAuth } from "../../shared/auth/supabase";
+import { supabase } from "../../shared/auth/supabase";
 import { readOnboardingDraft } from "../../shared/model/onboarding-draft";
 
 import { RotateCcw, CookingPot } from "lucide-react";
@@ -77,21 +78,9 @@ export function ProfileModal({ onClose, onReplayOnboarding, enabled = true }: Pr
   const { data } = useAppState(enabled);
   const ui = useUi();
   const query = useQueryClient();
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
+  const [showEmailSignIn, setShowEmailSignIn] = useState(false);
   const draft = readOnboardingDraft();
   const refresh = () => query.invalidateQueries({ queryKey: stateQueryKey });
-
-  const handleGoogleSignIn = async () => {
-    setBusy(true);
-    setError("");
-    try {
-      await startGoogleAuth(currentPageRedirectTo());
-    } catch (e) {
-      setBusy(false);
-      setError(e instanceof Error ? e.message : "Google 登入啟動失敗");
-    }
-  };
 
   const handleSignOut = async () => {
     await supabase?.auth.signOut();
@@ -142,20 +131,15 @@ export function ProfileModal({ onClose, onReplayOnboarding, enabled = true }: Pr
           ) : (
             <button
               type="button"
-              disabled={busy}
-              onClick={handleGoogleSignIn}
+              onClick={() => setShowEmailSignIn(true)}
               className="text-[11px] font-black text-amber-950 bg-amber-100 hover:bg-amber-200 border border-amber-300 px-2.5 py-1 rounded-lg transition-colors"
             >
-              {busy ? "登入中…" : "登入雲端"}
+              Email 登入
             </button>
           )}
         </div>
 
-        {error && (
-          <p role="alert" className="offline-error text-xs text-error">
-            {error}
-          </p>
-        )}
+        {showEmailSignIn && !data?.session.user && <EmailSignIn />}
 
         {/* Current Chef Profile Overview */}
         <div className="bg-amber-50/80 border border-amber-200 rounded-2xl p-3 space-y-2">
@@ -197,10 +181,10 @@ export function ProfileModal({ onClose, onReplayOnboarding, enabled = true }: Pr
             >
               <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
             </svg>
-            <h4 className="text-xs font-black text-amber-300">五步主廚檔案設定</h4>
+            <h4 className="text-xs font-black text-amber-300">三步主廚檔案設定</h4>
           </div>
           <p className="text-[11px] text-stone-300 leading-relaxed">
-            想重新調整自煮目標、料理偏好、廚具適配度或提醒節奏，可以再次檢視五步設定。
+            想重新調整自煮目標、料理偏好、廚具適配度或提醒節奏，可以再次檢視三步設定。
           </p>
           <button
             type="button"
@@ -220,7 +204,7 @@ export function ProfileModal({ onClose, onReplayOnboarding, enabled = true }: Pr
               <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
               <path d="M3 3v5h5" />
             </svg>
-            <span>重新檢視五步主廚檔案設定 ➔</span>
+            <span>重新檢視三步主廚檔案設定 ➔</span>
           </button>
         </div>
       </div>

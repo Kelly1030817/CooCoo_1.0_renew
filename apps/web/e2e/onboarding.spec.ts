@@ -97,9 +97,7 @@ test("completing onboarding keeps inventory flags false", async ({ page }) => {
   const requestPromise = page.waitForRequest(
     (request) => request.url().includes("/api/v1/onboarding") && request.method() === "PUT",
   );
-  await page.getByRole("button", { name: "蓋章，成立主廚檔案" }).click();
-  await expect(page.getByRole("button", { name: "啟程！進入今日" })).toBeEnabled({ timeout: 3000 });
-  await page.getByRole("button", { name: "啟程！進入今日" }).click();
+  await page.getByRole("button", { name: "成立主廚檔案並開始" }).click();
   const request = await requestPromise;
   expect(JSON.parse(request.postData() ?? "{}")).toMatchObject({
     inventoryReviewed: false,

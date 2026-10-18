@@ -1,4 +1,5 @@
 import type { OnboardingProfile } from "@coocoo/contracts";
+import { EmailSignIn } from "@/shared/auth/EmailSignIn";
 import { Award } from "lucide-react";
 import { StepCard } from "./StepCard";
 import { PassportTicket } from "./PassportTicket";
@@ -9,20 +10,16 @@ export type OnboardingStep3Props = {
   profile: OnboardingProfile;
   authStatus: AuthStatus;
   supabaseConfigured: boolean;
-  step: number;
   stamped: boolean;
   sealDropped: boolean;
-  onGoogleSignIn: (step: number) => void;
 };
 
 export function OnboardingStep3({
   profile,
   authStatus,
   supabaseConfigured,
-  step,
   stamped,
   sealDropped,
-  onGoogleSignIn,
 }: OnboardingStep3Props) {
   return (
     <>
@@ -32,19 +29,14 @@ export function OnboardingStep3({
         </span>
         <div>
           <strong>最後一步，登入並成立你的主廚檔案。</strong>
-          <p>同步設定後蓋章啟程；這一步不會建立、清空或修改冰箱庫存。</p>
+          <p>Email 驗證後，一次成立檔案並啟程；這一步不會建立、清空或修改冰箱庫存。</p>
         </div>
       </div>
       <StepCard title="登入並同步主廚檔案" description="設定會跟著帳號，不會只留在這台裝置。">
         {supabaseConfigured && authStatus === "loading" && (
           <p className="safety-note">正在確認登入狀態…</p>
         )}
-        {supabaseConfigured && authStatus === "signed-out" && (
-          <button type="button" className="wide-action" onClick={() => onGoogleSignIn(step)}>
-            <span>使用 Google 登入</span>
-            <span>›</span>
-          </button>
-        )}
+        {supabaseConfigured && authStatus === "signed-out" && <EmailSignIn />}
         {authStatus === "signed-in" && (
           <p className="safety-note safe">
             {supabaseConfigured

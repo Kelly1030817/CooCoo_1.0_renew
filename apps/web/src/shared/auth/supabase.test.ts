@@ -31,7 +31,7 @@ describe("Supabase email authentication", () => {
       ),
     ).toEqual({
       code: "unexpected_failure",
-      message: "Google 登入未完成，請稍後重試；若持續發生，請檢查 OAuth 用戶端憑證設定。",
+      message: "登入未完成，請回到 CooCoo 使用 Email 驗證碼重新登入。",
     });
   });
 
@@ -39,7 +39,7 @@ describe("Supabase email authentication", () => {
     expect(readAuthCallbackIssue("#access_token=token&token_type=bearer")).toBeNull();
   });
 
-  test("builds an onboarding oauth return URL that includes the step", () => {
+  test("builds an onboarding email return URL that includes the step", () => {
     const prev = globalThis.window;
     globalThis.window = {
       location: { origin: "http://localhost:5173" },

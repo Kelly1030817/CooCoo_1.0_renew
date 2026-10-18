@@ -117,7 +117,10 @@ describe("shopping v2 acceptance", () => {
       },
     ];
     const r = repo(state);
-    const svc = new CooCooService(r);
+    const svc = new CooCooService(r, {
+      now: () => new Date("2026-09-13T04:00:00.000Z"),
+      id: () => crypto.randomUUID(),
+    });
     const before = r.value.expEvents.length;
     const result = svc.restock(command(r.value, task.id, task.revision));
     expect("mealTaskStatus" in result && result.mealTaskStatus).toBe("ready");
@@ -183,7 +186,7 @@ describe("shopping v2 acceptance", () => {
     expect(replanned?.status).toBe("needs_replan");
     expect(replanned?.currentMeal).toEqual({ date: "2026-09-13", slot: "dinner", servings: 2 });
   });
-  test("S13 task items require expiry", () => {
+  test("S13 task items require a non-expired expiry", () => {
     const state = createSeedState();
     const recipe = brandSafeRecipes[0];
     state.inventory = [];
@@ -231,6 +234,24 @@ describe("shopping v2 acceptance", () => {
         ],
       }),
     ).toThrow("EXPIRY_REQUIRED");
+    expect(() =>
+      svc.restock({
+        operationId: "s13-expired",
+        mealTaskId: task.id,
+        shortageRevision: task.revision,
+        purchasedItems: [
+          {
+            shoppingItemId: "i1",
+            shortageId: sh.id,
+            actualQuantity: sh.quantity,
+            actualUnit: sh.unit,
+            storageLocation: "cold",
+            expiresOn: "2000-01-01",
+          },
+        ],
+      }),
+    ).toThrow("EXPIRED_PURCHASE");
+    expect(state.inventory).toHaveLength(0);
   });
   test("S16 command restock without a task still intakes", () => {
     const state = createSeedState();

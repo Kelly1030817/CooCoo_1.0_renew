@@ -3,23 +3,11 @@ import { describe, expect, test } from "vitest";
 import { AuthRecoveryPanel } from "./AuthRecoveryPanel";
 
 describe("AuthRecoveryPanel", () => {
-  test("offers Google reauthentication without asking the user to redo onboarding", () => {
-    const html = renderToStaticMarkup(
-      <AuthRecoveryPanel busy={false} error="" onGoogleSignIn={() => undefined} />,
-    );
-
-    expect(html).toContain("使用 Google 重新登入");
+  test("offers email recovery while preserving onboarding", () => {
+    const html = renderToStaticMarkup(<AuthRecoveryPanel />);
     expect(html).toContain("主廚相談室設定仍保留著");
-    expect(html).not.toContain("disabled");
-  });
-
-  test("shows progress and a friendly error", () => {
-    const html = renderToStaticMarkup(
-      <AuthRecoveryPanel busy error="Google 登入暫時無法開始" onGoogleSignIn={() => undefined} />,
-    );
-
-    expect(html).toContain("正在前往 Google…");
-    expect(html).toContain("disabled");
-    expect(html).toContain("Google 登入暫時無法開始");
+    expect(html).toContain("Email 登入");
+    expect(html).toContain("寄送驗證碼");
+    expect(html).not.toContain("Google");
   });
 });

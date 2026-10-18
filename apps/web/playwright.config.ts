@@ -30,6 +30,7 @@ export default defineConfig({
       reuseExistingServer: false,
       timeout: 120_000,
       env: {
+        VITE_USE_REAL_API: "true",
         VITE_SUPABASE_URL: "http://127.0.0.1:54321",
         VITE_SUPABASE_PUBLISHABLE_KEY:
           "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNjQwMDAwMDAwfQ.e2e",

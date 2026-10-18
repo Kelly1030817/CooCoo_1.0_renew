@@ -10,8 +10,8 @@
     - text: 本機訪客模式
     - heading "本機訪客" [level=3]
     - paragraph: 自煮紀錄暫存於此瀏覽器，登入可跨裝置同步備份
-    - button "Google 登入"
-    - button "重新檢視五步主廚檔案設定 ➔"
+    - button "Email 登入"
+    - button "重新檢視三步主廚檔案設定 ➔"
   - text: 本週主目標
   - heading "料理次數" [level=3]
   - strong: 0 / 1
