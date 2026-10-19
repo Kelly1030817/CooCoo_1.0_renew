@@ -10,7 +10,7 @@ import { BrandLogo } from "../../shared/ui/BrandLogo";
 import { supabase } from "../../shared/auth/supabase";
 import { readOnboardingDraft } from "../../shared/model/onboarding-draft";
 
-import { RotateCcw, CookingPot } from "lucide-react";
+import { RotateCcw } from "lucide-react";
 import type { AppRoute } from "../../app/routing/routes";
 
 function catalogAdminModalNode(onClose: () => void) {
@@ -212,30 +212,4 @@ export function ProfileModal({ onClose, onReplayOnboarding, enabled = true }: Pr
   );
 }
 
-export type CookwareModalProps = {
-  onClose: () => void;
-  enabled?: boolean;
-};
-
-export function CookwareModal({ onClose, enabled = true }: CookwareModalProps) {
-  const { data } = useAppState(enabled);
-  return (
-    <Modal label="廚房裝備設定" onClose={onClose}>
-      <ModalHeader title="我的廚房裝備" onClose={onClose} />
-      <div className="space-y-sm">
-        {data?.cookware.map((item) => (
-          <div key={item.id} className="rounded-2xl bg-surface-container-low p-md">
-            <CookingPot aria-hidden="true" className="inline size-5 text-secondary" />
-            <strong className="ml-2 text-sm text-slate-blue">{item.name}</strong>
-            <p className="mt-1 text-[10px] text-on-surface-variant">
-              {item.brand} {item.model} · {item.capacity || `${item.wattage}W`}
-            </p>
-          </div>
-        ))}
-      </div>
-      <button onClick={onClose} className="primary-btn mt-lg w-full">
-        完成設定
-      </button>
-    </Modal>
-  );
-}
+export { CookwareModal, type CookwareModalProps } from "@/features/settings/CookwareSettingsModal";

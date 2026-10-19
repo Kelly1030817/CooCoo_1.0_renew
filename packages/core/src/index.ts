@@ -1005,6 +1005,13 @@ export class CooCooService {
   updateSettings(patch: Partial<Pick<AppState, "cookware">>) {
     const s = this.state();
     Object.assign(s, patch);
+    if (patch.cookware && s.onboardingProfile) {
+      s.onboardingProfile.cookware = patch.cookware.map((item) => ({
+        type: item.type,
+        capacity: item.capacity,
+        limitations: [],
+      }));
+    }
     this.repository.write(s);
     return s;
   }

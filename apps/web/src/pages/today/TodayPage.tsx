@@ -77,6 +77,12 @@ export function TodayPage() {
   });
   const purchaseBudget = recipeSettings.data?.purchaseBudget ?? 100;
   const today = dateInTimeZone(new Date()) ?? "";
+  const recommendationContext = JSON.stringify({
+    user: data?.session.user?.id,
+    cookware: data?.cookware,
+    inventory: data?.inventory,
+    profile: data?.onboardingProfile,
+  });
 
   const openChefConsultation = () => {
     ui.open(
@@ -127,7 +133,7 @@ export function TodayPage() {
     return () => {
       active = false;
     };
-  }, [energyLow, today]);
+  }, [energyLow, today, recommendationContext]);
 
   useEffect(() => {
     let active = true;
@@ -158,7 +164,7 @@ export function TodayPage() {
     return () => {
       active = false;
     };
-  }, [purchaseBudget, energyLow, today]);
+  }, [purchaseBudget, energyLow, today, recommendationContext]);
 
   const choices = [decision?.primary, ...(decision?.alternatives || [])].filter(
     (item): item is RecipePackage => Boolean(item),
@@ -470,7 +476,10 @@ export function TodayPage() {
                   </a>
                   <a href="/me" className="diag-action-btn text">
                     <CookingPot aria-hidden="true" />
-                    前往「我的」新增或調整廚具
+                    前往「我的 → 廚具設定」新增或調整
+                  </a>
+                  <a href="/recipes?tab=compose" className="diag-action-btn secondary">
+                    前往「食譜」自由搭配現有食材
                   </a>
                 </div>
               </div>
@@ -606,7 +615,6 @@ export function TodayPage() {
                   <button
                     type="button"
                     className="cook-choice"
-                    disabled={ticketMode === "purchase" && missingCount > 0}
                     onClick={() => {
                       if (ticketMode === "purchase" && missingCount > 0) {
                         openPurchaseReminder();

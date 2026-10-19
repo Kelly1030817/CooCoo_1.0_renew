@@ -114,6 +114,7 @@ export function recommend(
   const eligible: RecipeRecommendation[] = [];
   const needsConfirmation: RecipeRecommendation[] = [];
   const seen = new Set<string>();
+  const rejected: Array<{ title: string; reasons: string[]; score: number }> = [];
   for (const source of recipes) {
     const title = normalize(source.title);
     if (seen.has(title) || (!request.allowRepeat && excludedTitles.map(normalize).includes(title)))
@@ -125,25 +126,44 @@ export function recommend(
       estimatedCost: Math.ceil(source.estimatedCost * factor),
       ingredients: source.ingredients.map((i) => ({ ...i, quantity: i.quantity * factor })),
     };
-    if (
-      !evaluateRecipe(recipe, {
-        restrictions: context.restrictions,
-        cookwareTypes: context.cookwareTypes,
-        dailyBudget:
-          context.perMealBudget === null ? null : context.perMealBudget * context.servings,
-        energyLevel: request.energy || "normal",
-      }).eligible
-    )
+    const eligibility = evaluateRecipe(recipe, {
+      restrictions: context.restrictions,
+      cookwareTypes: context.cookwareTypes,
+      dailyBudget: context.perMealBudget === null ? null : context.perMealBudget * context.servings,
+      energyLevel: request.energy || "normal",
+    });
+    if (!eligibility.eligible) {
+      rejected.push({ title: recipe.title, reasons: eligibility.reasons, score: 1000 });
       continue;
+    }
     const result = evaluatePurchase(recipe, context.inventory, prices, now);
-    if (request.mode === "inventory_only" && result.missing.length) continue;
+    const missingReasons = [
+      ...result.issues,
+      ...result.missing.map((item) => `缺少 ${item.name} ${item.quantity} ${item.unit}`),
+    ];
+    if (request.mode === "inventory_only" && result.missing.length) {
+      rejected.push({ title: recipe.title, reasons: missingReasons, score: result.missing.length });
+      continue;
+    }
     if (
       request.mode === "small_purchase" &&
       (new Set(result.missing.map((i) => normalize(i.ingredientKey))).size > 2 ||
         (result.estimatedPurchaseCost !== null &&
           result.estimatedPurchaseCost > request.purchaseBudget))
-    )
+    ) {
+      rejected.push({
+        title: recipe.title,
+        reasons: [
+          ...missingReasons,
+          ...(result.estimatedPurchaseCost !== null &&
+          result.estimatedPurchaseCost > request.purchaseBudget
+            ? ["補買金額超過預算"]
+            : []),
+        ],
+        score: result.missing.length,
+      });
       continue;
+    }
     seen.add(title);
     (result.budgetStatus === "unknown" ? needsConfirmation : eligible).push(result);
   }
@@ -157,12 +177,25 @@ export function recommend(
       0,
     ) - (r.estimatedPurchaseCost ?? 0);
   eligible.sort((a, b) => score(b) - score(a) || a.recipe.title.localeCompare(b.recipe.title));
+  const noMatchNotice = !context.cookwareTypes.length
+    ? "尚未登記廚具，無法確認可用的加熱設備。請到「我的 → 廚具設定」新增並儲存。"
+    : !recipes.length
+      ? "食譜庫目前沒有已發布的食譜，可到「食譜 → 自由搭配」依現有食材提出料理。"
+      : rejected.length
+        ? `目前沒有完全符合條件的食譜。${rejected
+            .sort((a, b) => a.score - b.score)
+            .slice(0, 3)
+            .map((item) => `${item.title}：${item.reasons.join("、")}`)
+            .join("；")}。包、盒無法直接換算成克或顆，請確認實際數量；不會假設你已有調味料。`
+        : "符合條件的菜色已在近期煮過或安排；可改用自由搭配選擇現有食材。";
   return {
     mode: request.mode,
     eligible,
     needsConfirmation,
     notice: eligible.length
       ? "依已發布食譜、庫存與限制推薦；補買價格為估算。"
-      : "目前沒有可確認符合條件的新菜色。可確認庫存、切換模式或主動選擇重複菜色。",
+      : needsConfirmation.length
+        ? `有 ${needsConfirmation.length} 道候選仍有價格或單位待確認。請先盤點庫存與實際數量，或改用自由搭配；確認前不會標示為可直接料理。`
+        : noMatchNotice,
   };
 }

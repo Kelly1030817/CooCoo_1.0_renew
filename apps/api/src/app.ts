@@ -151,6 +151,7 @@ const catalogContext: typeof cloudPlanningContext = async (user, week) => {
   return {
     ...c,
     strictCatalog: true,
+    recommendationNotice: inventoryOnly.notice,
     recipes: inventoryOnly.eligible.map((r) => r.recipe),
     purchaseCandidates: [...withPurchase.eligible, ...withPurchase.needsConfirmation]
       .filter((item) => item.missing.length)

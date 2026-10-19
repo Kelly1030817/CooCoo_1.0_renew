@@ -102,6 +102,7 @@ export function MePage() {
     ui.close();
     saveOnboardingDraft({
       ...readOnboardingDraft(),
+      ...data.onboardingProfile,
       currentStep: 1,
       status: "draft",
     });

@@ -663,8 +663,8 @@ export type Recipe = Static<typeof RecipeSchema>;
 
 export const CookwareProfileSchema = Type.Object({
   id: IdSchema,
-  type: Type.String(),
-  name: Type.String(),
+  type: Type.String({ minLength: 1, maxLength: 40, pattern: "\\S" }),
+  name: Type.String({ minLength: 1, maxLength: 40, pattern: "\\S" }),
   brand: Type.String(),
   model: Type.String(),
   capacity: Type.String(),
