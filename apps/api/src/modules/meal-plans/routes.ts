@@ -209,6 +209,8 @@ export function planningRoutes(deps: PlanningDependencies) {
           restrictions: context.restrictions,
           cookware: context.cookware,
           budget: context.perMealBudget,
+          servings: context.servings,
+          confirmedPantry: body.confirmedPantry ?? [],
         };
         let allowAi = true;
         let cached: RecipeGeneration | null | undefined;
@@ -234,6 +236,8 @@ export function planningRoutes(deps: PlanningDependencies) {
               budget: context.perMealBudget,
               energyLevel: "normal",
               inventory: context.inventory,
+              servings: context.servings,
+              confirmedPantry: body.confirmedPantry ?? [],
               recipes: deps.catalog ? await deps.catalog.published() : undefined,
             },
             undefined,

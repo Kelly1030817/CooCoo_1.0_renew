@@ -18,6 +18,33 @@ const context = {
 };
 
 describe("meal planning HTTP routes", () => {
+  test("passes servings and explicit pantry confirmations to generation without rescaling step facts", async () => {
+    const recipe = { ...structuredClone(brandSafeRecipes[0]), servings: 2 };
+    const adapter = new Elysia().use(
+      planningRoutes({
+        authenticate: async () => ({ id: "user-1" }),
+        context: async () => ({ ...context, servings: 2 }),
+        repository: new MemoryPlanningRepository(),
+        generate: async (input) => {
+          expect(input.servings).toBe(2);
+          expect(input.confirmedPantry).toEqual(["鹽", "油"]);
+          return { recipe, source: "openrouter", notice: null };
+        },
+      }),
+    );
+    const response = await adapter.handle(
+      new Request("http://localhost/api/v1/recipes/generate", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ ingredientIds: ["inventory-1"], confirmedPantry: ["鹽", "油"] }),
+      }),
+    );
+    expect(response.status).toBe(200);
+    const result = (await response.json()).data.recipe;
+    expect(result.servings).toBe(2);
+    expect(result.ingredients[0].quantity).toBe(recipe.ingredients[0].quantity);
+    expect(result.steps[0].instruction).toBe(recipe.steps[0].instruction);
+  });
   let repository: MemoryPlanningRepository;
   let app: { handle(request: Request): Response | Promise<Response> };
 

@@ -685,6 +685,9 @@ export const RecipeGenerateSchema = Type.Object({
   ingredientIds: Type.Array(IdSchema, { minItems: 1 }),
   style: Type.Optional(Type.String()),
   excludeTitle: Type.Optional(Type.String()),
+  confirmedPantry: Type.Optional(
+    Type.Array(Type.Union([Type.Literal("鹽"), Type.Literal("油")]), { uniqueItems: true }),
+  ),
 });
 export const CookingOutcomeCommandSchema = Type.Object({
   completionKey: IdSchema,
