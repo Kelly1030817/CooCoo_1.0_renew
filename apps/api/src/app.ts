@@ -104,7 +104,9 @@ const fail = (error: unknown) => {
     error: {
       code,
       message:
-        messages[code] ||
+        (code === "RECIPE_AI_FAILED:OPENROUTER_403_KEY_LIMIT_EXCEEDED"
+          ? "AI 服務金鑰的累計使用上限已達，暫時無法產生食譜。請由服務管理者至 OpenRouter 調整金鑰上限後再試。庫存未扣除。"
+          : messages[code]) ||
         (code.startsWith("RECIPE_AI_FAILED:")
           ? `AI 未能產生符合目前食材、數量與廚具的料理，也沒有可直接使用的備援食譜。庫存未扣除。錯誤代碼：${code.split(":")[1]}`
           : "操作未完成，請稍後再試。"),

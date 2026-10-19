@@ -169,6 +169,13 @@ export async function generateRecipe(
     (item) =>
       item.recipe.title !== context.excludeTitle && fitsSelectedIngredients(item.recipe, context),
   )?.recipe;
+  if (fallback && context.recipes)
+    return {
+      recipe: alignRecipeToStock(fallback, context),
+      source: "catalog",
+      notice: "使用已通過檢核的食譜庫料理，本次未呼叫 AI。",
+      aiAttempted: false,
+    };
   let aiAttempted = false;
   let failure = "AI_UNAVAILABLE";
   if (allowAi && process.env.OPENROUTER_API_KEY) {
@@ -207,7 +214,7 @@ export async function generateRecipe(
     } catch (error) {
       const code = error instanceof Error ? error.message : "";
       failure =
-        /^(OPENROUTER_\d{3}|OPENROUTER_EMPTY_RESPONSE|AI_SCHEMA_INVALID|AI_RECIPE_GUIDANCE_INCOMPLETE|AI_RECIPE_UNSAFE|AI_RECIPE_STOCK_MISMATCH)$/.test(
+        /^(OPENROUTER_\d{3}|OPENROUTER_403_KEY_LIMIT_EXCEEDED|OPENROUTER_EMPTY_RESPONSE|AI_SCHEMA_INVALID|AI_RECIPE_GUIDANCE_INCOMPLETE|AI_RECIPE_UNSAFE|AI_RECIPE_STOCK_MISMATCH)$/.test(
           code,
         )
           ? code

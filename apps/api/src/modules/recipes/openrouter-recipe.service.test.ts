@@ -6,10 +6,89 @@ import {
   alignRecipeToStock,
 } from "./openrouter-recipe.service";
 import { brandSafeRecipes, evaluateRecipe } from "@coocoo/core";
+import { OpenRouterHttpError } from "../ai/openrouter-json-client";
+import { firstMealRecipe } from "../catalog/curated-first-meal";
 
 const reviewed = brandSafeRecipes.find((item) => item.title === "胡麻雞絲拌麵")!;
 
 describe("recipe safety fallback", () => {
+  test("uses a matching curated catalog meal without calling AI, and requires confirmed salt", async () => {
+    let calls = 0;
+    const context = {
+      style: "一鍋到底",
+      ingredientNames: ["小白菜", "雞蛋"],
+      servings: 2,
+      restrictions: [],
+      cookware: [{ type: "快煮鍋", capacity: null, limitations: [] }],
+      budget: null,
+      energyLevel: "normal" as const,
+      confirmedPantry: ["鹽"],
+      recipes: [firstMealRecipe],
+      inventory: [
+        { ingredientKey: "小白菜", quantity: 250, unit: "克", daysLeft: 7 },
+        { ingredientKey: "雞蛋", quantity: 32, unit: "顆", daysLeft: 7 },
+      ],
+    };
+    const client = {
+      generate: async () => {
+        calls++;
+        throw new Error("must not call AI");
+      },
+    };
+    const result = await generateRecipe(context, client);
+    expect(calls).toBe(0);
+    expect(result).toMatchObject({
+      source: "catalog",
+      aiAttempted: false,
+      recipe: { servings: 2, title: firstMealRecipe.title },
+    });
+    expect(result.recipe.ingredients.find((i) => i.name === "雞蛋")).toMatchObject({
+      quantity: 4,
+      isPantryStaple: false,
+    });
+    expect(result.recipe.ingredients.find((i) => i.name === "鹽")?.isPantryStaple).toBe(true);
+    await expect(
+      generateRecipe({ ...context, confirmedPantry: [] }, client, false),
+    ).rejects.toThrow("RECIPE_AI_FAILED:AI_UNAVAILABLE");
+    await expect(
+      generateRecipe(
+        {
+          ...context,
+          inventory: [{ ingredientKey: "雞蛋", quantity: 32, unit: "顆", daysLeft: 7 }],
+        },
+        client,
+        false,
+      ),
+    ).rejects.toThrow("RECIPE_AI_FAILED:AI_UNAVAILABLE");
+  });
+  test("preserves a confirmed provider key limit when no safe fallback exists", async () => {
+    const previous = process.env.OPENROUTER_API_KEY;
+    process.env.OPENROUTER_API_KEY = "test";
+    try {
+      await expect(
+        generateRecipe(
+          {
+            style: "一鍋到底",
+            ingredientNames: ["小白菜", "雞蛋"],
+            servings: 2,
+            restrictions: [],
+            cookware: [{ type: "快煮鍋", capacity: null, limitations: [] }],
+            budget: null,
+            energyLevel: "normal",
+            inventory: [],
+          },
+          {
+            generate: async () => {
+              throw new OpenRouterHttpError(403, "KEY_LIMIT_EXCEEDED");
+            },
+          },
+        ),
+      ).rejects.toThrow("RECIPE_AI_FAILED:OPENROUTER_403_KEY_LIMIT_EXCEEDED");
+    } finally {
+      if (previous === undefined) delete process.env.OPENROUTER_API_KEY;
+      else process.env.OPENROUTER_API_KEY = previous;
+    }
+  });
   test("quick pots and pressure cookers do not satisfy stove-specific recipes", () => {
     const recipe = { ...reviewed, cookwareTypes: ["瓦斯爐"] };
     for (const appliance of ["快煮鍋", "電子壓力鍋", "電鍋"]) {
