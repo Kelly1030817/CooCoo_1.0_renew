@@ -30,6 +30,7 @@ export interface MealPlanningContext {
   recipes?: RecipePackage[];
   purchaseCandidates?: RecipeRecommendation[];
   strictCatalog?: boolean;
+  recommendationNotice?: string;
 }
 const normalize = (value: string) => value.trim().toLocaleLowerCase("zh-TW");
 export function assertDate(date: string) {
@@ -118,7 +119,8 @@ export function createTodayDecision(
     source: context.strictCatalog ? "catalog" : "brand_safe",
     notice: recipes.length
       ? `依你的飲食限制、廚具、時間與庫存挑選${context.strictCatalog ? "已發布" : "品牌"}食譜。`
-      : "目前沒有符合飲食限制、廚具與庫存的餐點，請調整設定後再試。",
+      : context.recommendationNotice ||
+        "目前沒有符合飲食限制、廚具與庫存的餐點，請調整設定後再試。",
   };
 }
 export function createMealPlan(

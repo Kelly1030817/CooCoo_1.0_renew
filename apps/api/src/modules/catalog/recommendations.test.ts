@@ -53,6 +53,45 @@ const prices: IngredientPrice[] = [
   },
 ];
 describe("quantity and purchase recommendations", () => {
+  test("explains an empty cookware list without claiming stock or restrictions were the cause", () => {
+    const result = recommend(
+      [recipe()],
+      { ...context, cookwareTypes: [] },
+      { mode: "inventory_only", purchaseBudget: 100 },
+      [],
+      [],
+      now,
+    );
+    expect(result.eligible).toHaveLength(0);
+    expect(result.notice).toContain("尚未登記廚具");
+    expect(result.notice).toContain("廚具設定");
+  });
+  test("shows the actual missing quantities and ambiguous package units after cookware is set", () => {
+    const result = recommend(
+      [recipe()],
+      {
+        ...context,
+        cookwareTypes: ["快煮鍋"],
+        inventory: [{ ingredientKey: "雞蛋", quantity: 4, unit: "盒", daysLeft: 14 }],
+      },
+      { mode: "inventory_only", purchaseBudget: 100 },
+      [],
+      [],
+      now,
+    );
+    expect(result.eligible).toHaveLength(0);
+    expect(result.notice).toContain("雞蛋庫存單位待確認");
+    expect(result.notice).toContain("缺少 雞蛋 2 顆");
+    expect(result.notice).toContain("缺少 油 5 ml");
+    expect(result.notice).not.toContain("缺少廚具");
+  });
+  test("reports lack of published recipes and repetition separately", () => {
+    const request = { mode: "inventory_only" as const, purchaseBudget: 100 };
+    expect(recommend([], context, request, [], [], now).notice).toContain("沒有已發布");
+    expect(recommend([recipe()], context, request, [], [recipe().title], now).notice).toContain(
+      "近期煮過或安排",
+    );
+  });
   test("pantry stock is required and whole-package price determines affordability", () => {
     expect(
       recommend(

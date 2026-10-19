@@ -4,6 +4,40 @@ import { SqliteTestHarness } from "./shared/infrastructure/sqlite-test-harness";
 
 describe("HTTP contract adapter", () => {
   beforeEach(() => repository.reset());
+  test("saving cookware persists settings without changing inventory and rejects blank types", async () => {
+    const initial = repository.read();
+    const items = [
+      {
+        id: crypto.randomUUID(),
+        type: "快煮鍋",
+        name: "快煮鍋",
+        brand: "",
+        model: "",
+        capacity: "2 公升",
+        wattage: 0,
+      },
+    ];
+    const response = await app.handle(
+      new Request("http://localhost/api/v1/settings/cookware", {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(items),
+      }),
+    );
+    expect(response.status).toBe(200);
+    const saved = repository.read();
+    expect(saved.cookware).toEqual(items);
+    expect(saved.inventory).toEqual(initial.inventory);
+    const invalid = await app.handle(
+      new Request("http://localhost/api/v1/settings/cookware", {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify([{ ...items[0], type: "   " }]),
+      }),
+    );
+    expect(invalid.status).toBe(422);
+    expect(repository.read().cookware).toEqual(items);
+  });
   test("returns the current state envelope", async () => {
     const response = await app.handle(new Request("http://localhost/api/v1/state"));
     expect(response.status).toBe(200);
