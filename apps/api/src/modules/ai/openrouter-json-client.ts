@@ -3,7 +3,7 @@ import type { TSchema } from "@sinclair/typebox";
 interface OpenRouterResponse {
   model?: string;
   choices?: Array<{ message?: { content?: string | null } }>;
-  error?: { message?: string };
+  error?: { message?: string; metadata?: { limit_source?: string } };
   usage?: { cost?: number; prompt_tokens?: number; completion_tokens?: number };
 }
 
@@ -27,8 +27,11 @@ export interface OpenRouterJsonRequest {
 }
 
 export class OpenRouterHttpError extends Error {
-  constructor(readonly status: number) {
-    super(`OPENROUTER_${status}`);
+  constructor(
+    readonly status: number,
+    reason?: "KEY_LIMIT_EXCEEDED",
+  ) {
+    super(`OPENROUTER_${status}${reason ? `_${reason}` : ""}`);
     this.name = "OpenRouterHttpError";
   }
 }
@@ -90,7 +93,13 @@ export class OpenRouterJsonClient {
       signal: AbortSignal.timeout(30_000),
     });
     const body = (await response.json()) as OpenRouterResponse;
-    if (!response.ok) throw new OpenRouterHttpError(response.status);
+    if (!response.ok)
+      throw new OpenRouterHttpError(
+        response.status,
+        response.status === 403 && body.error?.metadata?.limit_source === "openrouter_key_limit"
+          ? "KEY_LIMIT_EXCEEDED"
+          : undefined,
+      );
     const content = body.choices?.[0]?.message?.content;
     if (!content) throw new Error("OPENROUTER_EMPTY_RESPONSE");
     return {

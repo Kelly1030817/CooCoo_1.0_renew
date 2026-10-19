@@ -3,6 +3,33 @@ import { Type } from "@sinclair/typebox";
 import { OpenRouterJsonClient } from "./openrouter-json-client";
 
 describe("OpenRouter structured client", () => {
+  test.each([
+    ["openrouter_key_limit", "OPENROUTER_403_KEY_LIMIT_EXCEEDED"],
+    ["guardrail", "OPENROUTER_403"],
+    [undefined, "OPENROUTER_403"],
+  ])(
+    "classifies only confirmed key limits without exposing provider messages (%s)",
+    async (source, code) => {
+      const fetcher = (async (_url: string | URL | Request, _init?: RequestInit) =>
+        new Response(
+          JSON.stringify({
+            error: {
+              message: "private account detail sk-or-v1-test",
+              metadata: { limit_source: source },
+            },
+          }),
+          { status: 403 },
+        )) as typeof fetch;
+      await expect(
+        new OpenRouterJsonClient("secret", "test-model", fetcher).generate({
+          system: "system",
+          prompt: "prompt",
+          schema: Type.Object({ ok: Type.Boolean() }),
+          schemaName: "test",
+        }),
+      ).rejects.toMatchObject({ name: "OpenRouterHttpError", status: 403, message: code });
+    },
+  );
   test("sends strict privacy, schema, image and usage controls", async () => {
     let request: RequestInit | undefined;
     const fetcher = (async (_url: string | URL | Request, init?: RequestInit) => {

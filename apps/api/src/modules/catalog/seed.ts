@@ -3,6 +3,7 @@ import type { CatalogReview, RecipePackage } from "@coocoo/contracts";
 import { inspectRecipe, RULE_VERSION, SAFETY_SOURCE } from "./quality";
 import { recipeFingerprint } from "./recommendations";
 import type { CatalogRepository } from "./repository";
+import { firstMealRecipe } from "./curated-first-meal";
 
 const retiredSeedIds = [
   "a1111111-1111-4111-8111-111111111111",
@@ -13,16 +14,18 @@ const seedIds = [
   "a1111111-1111-4111-8111-111111111112",
   "a2222222-2222-4222-8222-222222222223",
   "a3333333-3333-4333-8333-333333333334",
+  "a4444444-4444-4444-8444-444444444444",
 ];
 const eventIds = [
   "b1111111-1111-4111-8111-111111111112",
   "b2222222-2222-4222-8222-222222222223",
   "b3333333-3333-4333-8333-333333333334",
+  "b4444444-4444-4444-8444-444444444444",
 ];
 
 export function reviewedSeedRecipes() {
   const accepted: RecipePackage[] = [];
-  return brandSafeRecipes.map((source, index) => {
+  return [...brandSafeRecipes, firstMealRecipe].map((source, index) => {
     const recipe = { ...structuredClone(source), source: "catalog" as const };
     const review = inspectRecipe(recipe, accepted);
     if (!review.pass)
