@@ -1,8 +1,123 @@
 import { describe, expect, test } from "bun:test";
-import { buildRecipePrompt, generateRecipe } from "./openrouter-recipe.service";
-import { brandSafeRecipes } from "@coocoo/core";
+import {
+  buildRecipePrompt,
+  generateRecipe,
+  fitsSelectedIngredients,
+  alignRecipeToStock,
+} from "./openrouter-recipe.service";
+import { brandSafeRecipes, evaluateRecipe } from "@coocoo/core";
+
+const reviewed = brandSafeRecipes.find((item) => item.title === "胡麻雞絲拌麵")!;
 
 describe("recipe safety fallback", () => {
+  test("quick pots and pressure cookers do not satisfy stove-specific recipes", () => {
+    const recipe = { ...reviewed, cookwareTypes: ["瓦斯爐"] };
+    for (const appliance of ["快煮鍋", "電子壓力鍋", "電鍋"]) {
+      expect(
+        evaluateRecipe(recipe, {
+          restrictions: [],
+          cookwareTypes: [appliance],
+          dailyBudget: null,
+          energyLevel: "normal",
+        }).eligible,
+      ).toBe(false);
+    }
+    expect(
+      evaluateRecipe(recipe, {
+        restrictions: [],
+        cookwareTypes: ["電磁爐"],
+        dailyBudget: null,
+        energyLevel: "normal",
+      }).eligible,
+    ).toBe(true);
+  });
+  test("aligns model aliases and units to the actual batch for accurate cooking deductions", () => {
+    const recipe = structuredClone(reviewed);
+    recipe.ingredients = [
+      {
+        ...recipe.ingredients[0],
+        ingredientKey: "egg",
+        name: "雞蛋",
+        quantity: 2,
+        unit: "顆",
+        isPantryStaple: true,
+      },
+    ];
+    const context = {
+      style: "家常",
+      ingredientNames: ["雞蛋"],
+      restrictions: [],
+      cookware: [{ type: "電磁爐", capacity: null, limitations: [] }],
+      budget: null,
+      energyLevel: "normal" as const,
+      inventory: [{ ingredientKey: "雞蛋", name: "雞蛋", quantity: 32, unit: "顆", daysLeft: 7 }],
+    };
+    const aligned = alignRecipeToStock(recipe, context);
+    expect(aligned.ingredients[0]).toMatchObject({
+      ingredientKey: "雞蛋",
+      unit: "顆",
+      quantity: 2,
+      isPantryStaple: false,
+    });
+    expect(recipe.ingredients[0].ingredientKey).toBe("egg");
+  });
+  test("does not offer an unstocked reviewed recipe when AI is unavailable", async () => {
+    await expect(
+      generateRecipe(
+        {
+          style: "一鍋到底",
+          ingredientNames: ["小白菜", "雞蛋"],
+          servings: 2,
+          restrictions: [],
+          cookware: [{ type: "快煮鍋", capacity: null, limitations: [] }],
+          budget: null,
+          energyLevel: "normal",
+          confirmedPantry: ["鹽", "油"],
+          inventory: [
+            { ingredientKey: "小白菜", quantity: 250, unit: "克", daysLeft: 7 },
+            { ingredientKey: "雞蛋", quantity: 32, unit: "顆", daysLeft: 7 },
+          ],
+        },
+        undefined,
+        false,
+      ),
+    ).rejects.toThrow("RECIPE_AI_FAILED:AI_UNAVAILABLE");
+  });
+  test("rejects too much stock, unconfirmed seasoning, a different appliance and different servings", () => {
+    const context = {
+      style: "家常",
+      ingredientNames: reviewed.ingredients.map((item) => item.name),
+      restrictions: [],
+      cookware: [{ type: "電磁爐", capacity: null, limitations: [] }],
+      budget: 100,
+      energyLevel: "normal" as const,
+      inventory: reviewed.ingredients.map((item) => ({ ...item, daysLeft: 7 })),
+    };
+    expect(fitsSelectedIngredients(reviewed, context)).toBe(true);
+    const excessive = structuredClone(reviewed);
+    excessive.ingredients[0].quantity *= 2;
+    expect(fitsSelectedIngredients(excessive, context)).toBe(false);
+    expect(
+      fitsSelectedIngredients(reviewed, {
+        ...context,
+        cookware: [{ type: "快煮鍋", capacity: null, limitations: [] }],
+      }),
+    ).toBe(false);
+    expect(fitsSelectedIngredients(reviewed, { ...context, servings: reviewed.servings + 1 })).toBe(
+      false,
+    );
+    const seasoned = structuredClone(reviewed);
+    seasoned.ingredients.push({
+      ...seasoned.ingredients[0],
+      ingredientKey: "salt",
+      name: "鹽",
+      quantity: 1,
+      unit: "克",
+      isPantryStaple: true,
+    });
+    expect(fitsSelectedIngredients(seasoned, context)).toBe(false);
+    expect(fitsSelectedIngredients(seasoned, { ...context, confirmedPantry: ["鹽"] })).toBe(true);
+  });
   test("labels a valid generated result as OpenRouter and keeps its billed cost", async () => {
     const previous = process.env.OPENROUTER_API_KEY;
     process.env.OPENROUTER_API_KEY = "test";
@@ -13,12 +128,12 @@ describe("recipe safety fallback", () => {
       const result = await generateRecipe(
         {
           style: "家常",
-          ingredientNames: [],
+          ingredientNames: reviewed.ingredients.map((item) => item.name),
           restrictions: [],
           cookware: [{ type: "電磁爐", capacity: null, limitations: [] }],
           budget: 100,
           energyLevel: "normal",
-          inventory: [],
+          inventory: reviewed.ingredients.map((item) => ({ ...item, daysLeft: 7 })),
         },
         { generate: async () => ({ value: recipe, model: "test-model", costUsd: 0.01 }) },
       );
@@ -39,7 +154,7 @@ describe("recipe safety fallback", () => {
     try {
       const result = await generateRecipe({
         style: "家常",
-        ingredientNames: [],
+        ingredientNames: reviewed.ingredients.map((item) => item.name),
         restrictions: [
           {
             id: "egg",
@@ -52,7 +167,7 @@ describe("recipe safety fallback", () => {
         cookware: [{ type: "電磁爐", capacity: null, limitations: [] }],
         budget: 100,
         energyLevel: "normal",
-        inventory: [],
+        inventory: reviewed.ingredients.map((item) => ({ ...item, daysLeft: 7 })),
       });
       expect(result.source).toBe("brand_safe");
       expect(result.recipe.title).toBe("胡麻雞絲拌麵");
@@ -75,12 +190,12 @@ describe("recipe safety fallback", () => {
         {
           style: "家常",
           excludeTitle: recipe.title,
-          ingredientNames: [],
+          ingredientNames: reviewed.ingredients.map((item) => item.name),
           restrictions: [],
           cookware: [{ type: "電磁爐", capacity: null, limitations: [] }],
           budget: 100,
           energyLevel: "normal",
-          inventory: [],
+          inventory: reviewed.ingredients.map((item) => ({ ...item, daysLeft: 7 })),
         },
         { generate: async () => ({ value: recipe, model: "test-model", costUsd: 0.01 }) },
       );
@@ -100,14 +215,14 @@ describe("recipe safety fallback", () => {
       expect(
         generateRecipe({
           style: "家常",
-          ingredientNames: [],
+          ingredientNames: reviewed.ingredients.map((item) => item.name),
           restrictions: [],
           cookware: [{ type: "微波爐", capacity: null, limitations: [] }],
           budget: 100,
           energyLevel: "normal",
-          inventory: [],
+          inventory: reviewed.ingredients.map((item) => ({ ...item, daysLeft: 7 })),
         }),
-      ).rejects.toThrow("NO_SAFE_RECIPE_AVAILABLE");
+      ).rejects.toThrow("RECIPE_AI_FAILED:AI_UNAVAILABLE");
     } finally {
       if (previous) process.env.OPENROUTER_API_KEY = previous;
     }
@@ -120,7 +235,7 @@ describe("recipe safety fallback", () => {
       cookware: [{ type: "多功能快煮鍋", capacity: "1.5L", limitations: ["不可油炸"] }],
       budget: 100,
       energyLevel: "normal",
-      inventory: [],
+      inventory: reviewed.ingredients.map((item) => ({ ...item, daysLeft: 7 })),
     });
     expect(prompt).toContain("多功能快煮鍋");
     expect(prompt).toContain("1.5L");
@@ -136,7 +251,7 @@ describe("recipe safety fallback", () => {
       cookware: [{ type: "電磁爐", capacity: null, limitations: [] }],
       budget: null,
       energyLevel: "normal",
-      inventory: [],
+      inventory: reviewed.ingredients.map((item) => ({ ...item, daysLeft: 7 })),
     });
     expect(prompt).toContain("一份權威料理包");
     expect(prompt).toContain("compactInstruction");

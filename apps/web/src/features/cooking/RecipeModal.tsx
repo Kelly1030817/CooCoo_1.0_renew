@@ -14,15 +14,18 @@ import {
 import { requestFirstCookingPushPermission } from "./push-permission";
 import { instructionForMode, toggledGuidanceMode } from "./recipe-guidance";
 import "./RecipeModal.css";
+const EMPTY_PANTRY: string[] = [];
 
 export function RecipeModal({
   ingredientIds,
   style,
+  confirmedPantry = EMPTY_PANTRY,
   onClose,
   onComplete,
 }: {
   ingredientIds: string[];
   style: string;
+  confirmedPantry?: string[];
   onClose: () => void;
   onComplete?: () => void;
 }) {
@@ -33,11 +36,11 @@ export function RecipeModal({
   useEffect(() => {
     api<RecipeGeneration>(
       "/recipes/generate",
-      json("POST", { operationId: crypto.randomUUID(), ingredientIds, style }),
+      json("POST", { operationId: crypto.randomUUID(), ingredientIds, style, confirmedPantry }),
     )
       .then(setGeneration)
       .catch((reason: Error) => setError(reason.message));
-  }, [ingredientIds, style]);
+  }, [ingredientIds, style, confirmedPantry]);
   if (cookingPackage)
     return (
       <CookingMode
@@ -92,6 +95,16 @@ export function RecipeModal({
           <span key={item}>{item}</span>
         ))}
       </div>
+      <section className="mt-md text-sm" aria-label="本次食材用量">
+        <h4 className="font-bold">本次 {recipe.servings} 人份總用量</h4>
+        <ul>
+          {recipe.ingredients.map((item) => (
+            <li key={item.ingredientKey}>
+              {item.name}：{item.quantity} {item.unit}
+            </li>
+          ))}
+        </ul>
+      </section>
       <ol className="mt-md space-y-sm">
         {recipe.steps.map((step) => (
           <li key={step.id} className="flex gap-sm rounded-2xl bg-surface-container-low p-md">
@@ -123,6 +136,7 @@ export function RecipeModal({
                   ingredientIds,
                   style,
                   excludeTitle: recipe.title,
+                  confirmedPantry,
                 }),
               ),
             )

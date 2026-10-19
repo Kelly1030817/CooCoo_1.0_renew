@@ -188,6 +188,7 @@ function FreeformComposePanel() {
   const ui = useUi();
   const { prepIds, addToTray, removeFromTray, clearTray } = usePrepTray();
   const [style, setStyle] = useState(composeStyles[0]);
+  const [confirmedPantry, setConfirmedPantry] = useState<string[]>([]);
   if (!data) return null;
   const selected = data.inventory.filter((item) => prepIds.includes(item.id));
   const available = data.inventory
@@ -202,6 +203,7 @@ function FreeformComposePanel() {
       <RecipeModal
         ingredientIds={selected.map((item) => item.id)}
         style={style}
+        confirmedPantry={confirmedPantry}
         onClose={ui.close}
         onComplete={() => {
           clearTray();
@@ -236,6 +238,26 @@ function FreeformComposePanel() {
           使用「我的」已設定的廚具：
           {data.cookware.map((item) => item.name || item.type).join("、") || "尚未設定"}
         </small>
+      </div>
+      <div className="compose-section">
+        <strong>這餐可用的常備調味料</strong>
+        <p>有才勾選；產生食譜後仍須確認用量，不會新增未知的總庫存。</p>
+        <div className="flex gap-md">
+          {["鹽", "油"].map((name) => (
+            <label key={name} className="flex items-center gap-sm">
+              <input
+                type="checkbox"
+                checked={confirmedPantry.includes(name)}
+                onChange={(event) =>
+                  setConfirmedPantry((items) =>
+                    event.target.checked ? [...items, name] : items.filter((item) => item !== name),
+                  )
+                }
+              />
+              我有{name}
+            </label>
+          ))}
+        </div>
       </div>
       <div className="compose-section">
         <div className="compose-section-header">

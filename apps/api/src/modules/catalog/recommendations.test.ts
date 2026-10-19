@@ -71,7 +71,7 @@ describe("quantity and purchase recommendations", () => {
       [recipe()],
       {
         ...context,
-        cookwareTypes: ["快煮鍋"],
+        cookwareTypes: ["電磁爐"],
         inventory: [{ ingredientKey: "雞蛋", quantity: 4, unit: "盒", daysLeft: 14 }],
       },
       { mode: "inventory_only", purchaseBudget: 100 },

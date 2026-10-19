@@ -89,7 +89,7 @@ const fail = (error: unknown) => {
     RECOMMENDATION_CHANGED: "庫存或食譜已更新，請重新選擇。",
     SETTINGS_CONFLICT: "設定已在其他裝置更新，請重新載入後確認。",
     OWNER_ROLE_REQUIRED: "此功能僅限管理者。",
-    NO_SAFE_RECIPE_AVAILABLE: "目前沒有符合飲食限制、廚具與預算的餐點。",
+    NO_SAFE_RECIPE_AVAILABLE: "目前沒有符合飲食限制、廚具與庫存用量的餐點。",
     PLANNED_MEAL_NOT_FOUND: "找不到這份預計餐點。",
     MEAL_NOT_EDITABLE: "這份餐點已完成或取消，無法再調整。",
     MEAL_SLOT_OCCUPIED: "這個時段已經安排其他餐點。",
@@ -103,7 +103,11 @@ const fail = (error: unknown) => {
   return {
     error: {
       code,
-      message: messages[code] || "操作未完成，請稍後再試。",
+      message:
+        messages[code] ||
+        (code.startsWith("RECIPE_AI_FAILED:")
+          ? `AI 未能產生符合目前食材、數量與廚具的料理，也沒有可直接使用的備援食譜。庫存未扣除。錯誤代碼：${code.split(":")[1]}`
+          : "操作未完成，請稍後再試。"),
       requestId: requestId(),
     },
   };
