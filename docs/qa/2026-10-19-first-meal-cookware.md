@@ -21,5 +21,6 @@
 ## 驗證邊界
 
 - 單元／API 測試 191 項通過；新增廚具瀏覽器回歸 3 項通過（空清單新增、編輯後重新整理、庫存不變、取消、重複名稱、失敗重試）。
-- 完整 `bun run verify`、正式站發布與真實帳號寫入讀回：待驗證。
+- 完整 `bun run verify` 通過：191 項單元／API 測試、Web build、API typecheck、30 項瀏覽器測試。Lint 僅有既有 providers.tsx 的 Fast Refresh 警告；瀏覽器使用 MSW，未啟動本機 API，連線檢查曾出現 health proxy ECONNREFUSED，測試全部通過。
+- 正式站發布與真實帳號寫入讀回：待驗證。
 - iPhone Safari／Android Chrome 真機與實際第一餐料理、庫存扣除、餐份及 EXP：待驗證。
