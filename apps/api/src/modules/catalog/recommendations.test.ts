@@ -296,8 +296,8 @@ describe("quantity and purchase recommendations", () => {
   });
   test("curated seed is complete, unique and passes the deterministic gate", () => {
     const seeds = reviewedSeedRecipes();
-    expect(seeds).toHaveLength(3);
-    expect(new Set(seeds.map((seed) => seed.fingerprint)).size).toBe(3);
+    expect(seeds).toHaveLength(4);
+    expect(new Set(seeds.map((seed) => seed.fingerprint)).size).toBe(4);
     expect(seeds.every((seed) => seed.review.pass && seed.recipe.source === "catalog")).toBe(true);
   });
   test("starter prices are traceable, unique and cover common package units", () => {

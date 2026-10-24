@@ -82,7 +82,7 @@ export function RecipeModal({
     <Modal label={recipe.title} onClose={onClose} wide>
       <ModalHeader
         title={recipe.title}
-        kicker={`${recipe.totalMinutes} 分鐘 · ${recipe.servings} 人份 · NT$ ${recipe.estimatedCost}`}
+        kicker={`${recipe.totalMinutes} 分鐘 · ${recipe.servings} 人份 · ${recipe.estimatedCost > 0 ? `預估 NT$ ${recipe.estimatedCost}` : "成本待確認"}`}
         onClose={onClose}
       />
       {generation.notice && (
@@ -199,7 +199,7 @@ export function RecipePackageModal({
     <Modal label={recipePackage.title} onClose={onClose} wide>
       <ModalHeader
         title={recipePackage.title}
-        kicker={`${recipePackage.totalMinutes} 分鐘 · ${recipePackage.servings} 人份 · NT$ ${recipePackage.estimatedCost}`}
+        kicker={`${recipePackage.totalMinutes} 分鐘 · ${recipePackage.servings} 人份 · ${recipePackage.estimatedCost > 0 ? `預估 NT$ ${recipePackage.estimatedCost}` : "成本待確認"}`}
         onClose={onClose}
       />
       <div className="meal-tags">
